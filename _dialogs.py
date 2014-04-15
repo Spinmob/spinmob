@@ -1,126 +1,79 @@
-import wx as _wx
-try:    _prefs
-except: _prefs = {}
-#
-# Dialogs
-#
-def Save(filters="*.*", text='save THIS!', default_directory='default_directory'):
+import PyQt4.QtGui as _qt
+import os          as _os
 
-    global _prefs
+
+def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_directory'):
+    """
+    Pops up a save dialog and returns the string path of the selected file.
+    """
+    
+    # if this type of pref doesn't exist, we need to make a new one
+    if _settings.has_key(default_directory): default = _settings[default_directory]
+    else:                                    default = ""
+    
+    # pop up the dialog
+    result = str(_qt.QFileDialog.getSaveFileName(None,text,default,filters))
+    
+    if result == '': return None
+    else:
+        _settings[default_directory] = _os.path.split(result)[0]
+        return result 
+
+
+def open_single(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
+    """
+    Pops up a dialog for opening a single file. Returns a string path or None.
+    """
+    
+    # if this type of pref doesn't exist, we need to make a new one
+    if _settings.has_key(default_directory): default = _settings[default_directory]
+    else:                                    default = ""
+    
+    # pop up the dialog
+    result = str(_qt.QFileDialog.getOpenFileName(None,text,default,filters))
+    
+    if result == '': return None
+    else:
+        _settings[default_directory] = _os.path.split(result)[0]
+        return result 
+
+
+def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
+    """
+    Pops up a dialog for opening more than one file. Returns a list of string paths or None.
+    """
+    
+    # if this type of pref doesn't exist, we need to make a new one
+    if _settings.has_key(default_directory): default = _settings[default_directory]
+    else:                                    default = ""
+    
+    # pop up the dialog
+    result = list(_qt.QFileDialog.getOpenFileNames(None,text,default,filters))
+    for n in range(len(result)): result[n] = str(result[n])    
+    
+    if len(result)==0: return
+    else:
+        _settings[default_directory] = _os.path.split(result[0])[0]
+        return result 
+
+
+def select_directory(text='Select a directory, POCKETPANTS!', default_directory='default_directory'):
 
     # if this type of pref doesn't exist, we need to make a new one
-    if _prefs.has_key(default_directory): default = _prefs[default_directory]
-    else:                                default = ""
-
-    # define the dialog object.  Doesn't opent he window
-    dialog = _wx.FileDialog(None,
-                           message = text,
-                           defaultDir = default,
-                           wildcard = filters,
-                           style = _wx.SAVE|_wx.OVERWRITE_PROMPT)
-
-    # This is the command that pops up the dialog for the user
-    if dialog.ShowModal() == _wx.ID_OK:
-
-       # update the default path so you don't have to keep navigating
-       _prefs[default_directory] = dialog.GetDirectory()
-
-       # not sure if you need to, but destroy the object
-       dialog.Destroy()
-
-       return(dialog.GetPath())
-
-    else:   return(None)
+    if _settings.has_key(default_directory): default = _settings[default_directory]
+    else:                                    default = ""
+    
+    # pop up the dialog
+    result = str(_qt.QFileDialog.getExistingDirectory(None,text,default))
+    
+    if result == '': return None
+    else:
+        _settings[default_directory] = _os.path.split(result)[0]
+        return result 
 
 
 
 
 
-
-def SingleFile(filters="*.*", text='select a file, fungus pants!', default_directory='default_directory'):
-
-    global _prefs
-
-    # if this type of pref doesn't exist, we need to make a new one
-    if _prefs.has_key(default_directory): default = _prefs[default_directory]
-    else:                                 default = ""
-
-    # define the dialog object.  Doesn't opent he window
-    dialog = _wx.FileDialog(None,
-                           message = text,
-                           defaultDir = default,
-                           wildcard = filters,
-                           style = _wx.OPEN)
-
-    # This is the command that pops up the dialog for the user
-    if dialog.ShowModal() == _wx.ID_OK:
-
-	    # get the paths for returning
-	    path = dialog.GetPath()
-
-	    # update the default path so you don't have to keep navigating
-	    _prefs[default_directory] = dialog.GetDirectory()
-
-	    # not sure if you need to, but destroy the object
-	    dialog.Destroy()
-
-	    return(path)
-    else:   return(None)
-
-def Directory(text='select a directory, hairhead!', default_directory='default_directory'):
-
-    global _prefs
-
-    # if this type of pref doesn't exist, we need to make a new one
-    if _prefs.has_key(default_directory): default = _prefs[default_directory]
-    else:                                 default = ""
-
-    # define the dialog object.  Doesn't opent he window
-    dialog = _wx.DirDialog(None,
-                           message = text,
-                           defaultPath = default,
-                           style = _wx.DD_DEFAULT_STYLE)
-
-    # This is the command that pops up the dialog for the user
-    if not dialog.ShowModal() == _wx.ID_OK: return None
-
-    # update the default path so you don't have to keep navigating
-    _prefs[default_directory] = dialog.GetPath()
-
-    # not sure if you need to, but destroy the object
-    dialog.Destroy()
-
-    return(dialog.GetPath())
-
-
-
-
-
-
-def MultipleFiles(filters="*.*", text='select some files, facehead!', default_directory='default_directory'):
-
-    global _prefs
-
-    # if this type of pref doesn't exist, we need to make a new one
-    if _prefs.has_key(default_directory): default = _prefs[default_directory]
-    else:                                default = ""
-
-    # define the dialog object.  Doesn't opent he window
-    dialog = _wx.FileDialog(None,
-                           message = text,
-                           defaultDir = default,
-                           wildcard = filters,
-                           style = _wx.OPEN | _wx.MULTIPLE)
-
-    # This is the command that pops up the dialog for the user
-    if not dialog.ShowModal() == _wx.ID_OK: return None
-
-    # update the default path so you don't have to keep navigating
-    _prefs[default_directory] = dialog.GetDirectory()
-
-    # not sure if you need to, but destroy the object
-    dialog.Destroy()
-
-    return(dialog.GetPaths())
 
 

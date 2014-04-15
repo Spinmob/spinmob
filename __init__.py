@@ -1,52 +1,35 @@
-#######################################################################
-# Set up the wx and matplotlib environment for use with pyshell/pycrust
-#######################################################################
+import os           as _os
+import matplotlib   as _mpl
+import pylab
 
-import wx as _wx
+# Start the QApplication. Not sure why it has to be done this way.
+import PyQt4.QtCore as _qtc
+import PyQt4.Qt     as _qt
 
-# setup matplotlib and wx so it works well with pyshell/pycrust
-import matplotlib as _mpl
-if not _mpl.get_backend() == 'WXAgg': _mpl.use('wxAgg') # set the backend (must do this first)
+# make sure we have a valid qt application for dialogs etc...
+_qtapp = _qtc.QCoreApplication.instance()    
+if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
+
+
+#_qtapp = _qt.qApp
+#if _qtapp == None: 
+#    print "Creating QApplication"
+#    _qtapp = _qt.QApplication(_os.sys.argv)
+
+print "\nWelcome to spinmob 2013-11-20!\n"
+
+# some defaults
 _mpl.rcParams['figure.facecolor']='w'
 
-import pylab
-pylab.ion()          # turn on interactive mode
+import _settings
+settings = _settings.settings()
 
-import scipy
-import numpy
+import _plot             as plot        ; plot._settings = settings
+import _data             as data        ; data._settings = settings
+import _dialogs          as dialogs     ; dialogs._settings = settings
+import _pylab_tweaks     as tweaks      ; tweaks._settings = settings
+import _useful_functions as fun         ; fun._settings = settings
+import _fit              as fit         ; fit._settings = settings
 
-# now get the global application
-_app = _wx.GetApp()
-if _app == None: _app = _wx.PySimpleApp()
-
-#############################
-# Spinmob stuff
-#############################
-
-# create the user preferences object (sets up prefs directory and stuff)
-import _prefs
-prefs = _prefs.Prefs()
-
-
-
-import _dialogs as dialogs; reload(dialogs); dialogs._prefs       = prefs
-import _pylab_colorslider              ;_pylab_colorslider._prefs = prefs
-import _plot as plot                   ;plot._prefs               = prefs
-import _functions as fun               ;fun._prefs                = prefs
-import _models as models               ;models._prefs             = prefs
-import _fitting as fit                 ;fit._prefs                = prefs
-import _data as data                   ;data._prefs               = prefs
-
-data._data_types._prefs = prefs
-
-# pull some of the common functions to the top
-import scipy.constants
-printer   = fun.printer
-constants = scipy.constants
-
-
-xscale = plot.tweaks.xscale
-yscale = plot.tweaks.yscale
-
-# now do the big reload chain.
+plot.tweaks._pylab_colormap._settings = settings
 

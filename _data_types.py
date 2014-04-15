@@ -1,36 +1,26 @@
-import pylab as _pylab
-import time
-import wx as _wx
 import os as _os
-from mpl_toolkits.mplot3d import Axes3D
 
-import _functions as _fun             ;reload(_fun)
+import _useful_functions as _fun      ;reload(_fun)
 import _pylab_tweaks as _pt           ;reload(_pt)
 import _dialogs                       ;reload(_dialogs)
+
+if __name__=='__main__': 
+    import _settings
+    _settings = _settings.settings()
+    _dialogs._settings = _settings
+    import PyQt4.QtGui as _qt
+    _qtapp = _qt.QApplication(_os.sys.argv)
 
 # do this so all the scripts will work with all the numpy functions
 from numpy import *
 fun = _fun
 
-t0 = 0
-def TimerStart():
-    """
-    Starts a timer.
-    """
-    global t0
-    t0 = time.time()
-
-def Time():
-    """
-    Returns time since last TimerStart()
-    """
-    return time.time() - t0
 
 
 #
 # This is the base class, which currently rocks.
 #
-class standard:
+class databox:
 
     # this is used by the load_file to rename some of the annoying
     # column names that aren't consistent between different types of data files (and older data files)
@@ -39,36 +29,13 @@ class standard:
     obnoxious_ckeys = {}
     #obnoxious_ckeys = {"example_annoying1" : "unified_name1",
     #                   "example_annoying2" : "unified_name2"}
-
-
-
-
-    # this is just a data class with some inherited features
-
-    # These are the current working data sets used by plotting functions.
-    # The raw data from the file (after load_file()) are stored in columns and header
-    ydata          = None
-    xdata          = None
-    eydata         = None
-    X              = None
-    Y              = None
-    Z              = None
-
-    xscript        = None
-    yscript        = None
-    eyscript       = None
-
+    
     directory      = "default_directory"
-    xlabel         = "xlabel"
-    ylabel         = "ylabel"
-    legend_string  = "(no legend_string set)"
-    title          = "title"
     path           = "(no path)"
 
     debug          = False  # Use this to print debug info in various places
     delimiter      = None   # delimiter of the ascii file. If "None" this will just use any whitespace
-    file_extension = "*"    # when asking the user for a file, use this as the filter
-
+    
     headers = {}            # this dictionary will hold the header information
     columns = {}            # this dictionary will hold the data columns
     ckeys   = []            # we need a special list of column keys to keep track of their order during data assembly
@@ -82,23 +49,28 @@ class standard:
         set's the n'th column to x (n can be a column name too)
         """
         if type(n) == str:
-            self.insert_column(data_array=x, ckey=str(n), index='end')
+            self.insert_column(data_array=x, ckey=n, index='end')
+            
         elif type(n) in [int, long] and n > len(self.ckeys)-1:
             self.insert_column(data_array=x, ckey='_column'+str(len(self.ckeys)), index='end')
+
         else:
             self.columns[self.ckeys[n]] = array(x)
 
     def __len__(self):
         return len(self.ckeys)
 
+    def __getslice__(self,i,j):
+        output = []
+        for n in range(i,min(j, len(self))): output.append(self[n])
+        return output
 
     #
     # functions that are often overwritten in modified data classes
     #
-    def __init__(self, delimiter=None, file_extension="*", debug=False, **kwargs):
+    def __init__(self, delimiter=None, debug=False, **kwargs):
         """
         delimiter                   The delimiter the file uses. None means "white space"
-        file_extension              Default file extension when navigating files
         debug                       Displays some partial debug information while running
         """
 
@@ -115,11 +87,17 @@ class standard:
 
         self.debug     = debug
         self.delimiter = delimiter
-        self.file_extension = file_extension
-
+        
     # create a simple initializer command for the user.
     initialize = __init__
 
+    def __repr__(self):
+        
+        s = "\nDatabox Instance"
+        s = s+"\n  header elements: "+str(len(self.hkeys))
+        s = s+"\n  columns of data: "+str(len(self.ckeys))
+        s = s+"\n"
+        return s
 
     #
     # really useful functions
@@ -143,32 +121,25 @@ class standard:
 
         if default_directory==None: default_directory = self.directory
 
-        # this loads the file, getting the header and the column values,
-        if self.debug: print "resetting all the file-specific stuff, path =", path
-
-        self.clear_columns()
-        self.clear_headers()
-
-        self.xdata   = None
-        self.ydata   = None
-        self.eydata  = None
-
         if path=="ask":
-            path = _dialogs.SingleFile(filters=self.file_extension,
+            path = _dialogs.open_single(filters=filters,
                                        default_directory=self.directory,
                                        text=text)
         self.path = path
 
         if path==None:
             print "Aborted."
-            return False
+            return None
 
+        # this loads the file, getting the header and the column values,
+        if self.debug: print "resetting all the file-specific stuff, path =", path
+
+        self.clear_columns()
+        self.clear_headers()
+        
         # open said file for reading, read in all the lines and close
-        t0 = time.time()
-        if self.debug: print time.time()-t0, "seconds: starting read_lines()"
         self.lines = _fun.read_lines(path)
-        if self.debug: print time.time()-t0, "seconds: done."
-
+        
         # break up the path into parts and take the last bit (and take a stab at the legend string)
         self.legend_string = path.split(_os.path.sep)[-1]
         if self.legend_string[0] == '_': self.legend_string = '|' + self.legend_string
@@ -178,7 +149,6 @@ class standard:
 
 
         # read in the header information
-        if self.debug: print time.time()-t0, "seconds: start reading headers"
         ckeys_line = -2
         for n in range(len(self.lines)):
             # split the line by the delimiter
@@ -259,8 +229,9 @@ class standard:
 
         # Make sure first_data_line isn't None (which happens if there's no data)
         if first_data_line == "auto":
-            print "Could not find a line of pure data!"
-            return
+            print "\nCould not find a line of pure data! Perhaps check the delimiter?"
+            print "The default delimiter is whitespace. For csv files, set delimiter=','\n"
+            return self
 
 
 
@@ -285,7 +256,7 @@ class standard:
         else:
             # it is an invalid ckeys line. Generate our own!
             self.ckeys = []
-            for m in range(0, column_count): self.ckeys.append("column_"+str(m))
+            for m in range(0, column_count): self.ckeys.append("c"+str(m))
 
 
         # for good measure, make sure to trim down the ckeys array to the size of the data columns
@@ -294,50 +265,55 @@ class standard:
 
 
         # now we have a valid set of column ckeys one way or another, and we know first_data_line.
-        if header_only: return
+        if header_only: return False
+
 
 
         # initialize the columns arrays
         # I did benchmarks and there's not much improvement by using numpy-arrays here.
         for label in self.ckeys: self.columns[label] = []
 
-        # start grabbing the data
-        if self.debug: print time.time()-t0, "seconds: starting to read data"
-
-        TimerStart()
-        for n in range(first_data_line, len(self.lines)):
-            # split the line up
-            s = self.lines[n].strip().split(self.delimiter)
-
-            # now start filling the column, ignoring the empty or bad data lines
-            for m in range(len(s)):
-                try:        self.columns[self.ckeys[m]].append(float(s[m]))
-                except:
-                    try:    self.columns[self.ckeys[m]].append(complex(s[m][1:len(s[m])-1]))
-                    except: pass
-
-
-        if self.debug: print time.time()-t0, "seconds: yeah."
-
-        # now loop over the columns and make them all hard-core numpy columns!
-        TimerStart()
-        for k in self.ckeys: self.columns[k] = array(self.columns[k])
-
-        if self.debug: print time.time()-t0, "seconds: totally."
-
+        
+        # now loop over the remainder of the file
+        z = genfromtxt(path, delimiter=self.delimiter, skip_header=first_data_line).transpose()       
+        
+        
+        # Add all the columns
+        for n in range(len(self.ckeys)): self[self.ckeys[n]] = z[n]
+        
+       
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
             if self.columns.has_key(k):
                 if self.debug: print "renaming column",k,self.obnoxious_ckeys[k]
                 self.columns[self.obnoxious_ckeys[k]] = self.columns[k]
+                
+        return self
 
+    def get_header_string(self):
+        """
+        Returns the string that will go at the top of a saved file.
+        """
+        # get the delimiter
+        if self.delimiter==None: delimiter = "\t"
+        else:                    delimiter = self.delimiter
+        
+        s = ""
+        for k in self.hkeys:
+            # if this is a numpy array, turn it into a list
+            if type(self.headers[k]) == type(array([])):
+                self.headers[k] = self.headers[k].tolist()
 
-    def save_file(self, path="ask"):
+            s = s + k + delimiter + str(self.headers[k]) + "\n"
+        
+        return s
+
+    def save_file(self, path="ask", filters="*.dat"):
         """
         This will save all the header info and columns to an ascii file.
         """
 
-        if path=="ask": path = _dialogs.Save(self.file_extension, default_directory=self.directory)
+        if path=="ask": path = _dialogs.save(filters, default_directory=self.directory)
         if path in ["", None]:
             print "Aborted."
             return False
@@ -354,18 +330,9 @@ class standard:
 
         # open the file and write the header
         f = open(path, 'w')
-        for k in self.hkeys:
-            # if this is a numpy array, turn it into a list
-            if type(self.headers[k]) == type(array([])):
-                self.headers[k] = self.headers[k].tolist()
-
-            f.write(k + delimiter)
-
-            # just write it
-            f.write(str(self.headers[k]) + "\n")
-
-        # now write the ckeys line
-        f.write("\n")
+        f.write(self.get_header_string()+"\n")
+        
+        # now write the ckeys
         elements = []
         for ckey in self.ckeys: elements.append(str(ckey))
         f.write(_fun.join(elements,delimiter)+"\n")
@@ -417,54 +384,7 @@ class standard:
 
 
 
-    def plot_and_pop_data_points(self, xkey=0, ykey=1, ekey=None, ckeys=[], **kwargs):
-        """
-        This will plot the columns specified by the scripts and then wait for clicks
-        from the user, popping data points nearest the clicks. Right-click quits.
-
-        xkey,ykey,ekey      column keys to plot
-        ckeys               list of columns to pop, using pop_data_point()
-
-        Set ckeys=[] to pop from all columns, and ckey="these" to pop only from the
-        plotted columns, or a list of ckeys from which to pop.
-        """
-
-        if ckeys == "these": ckeys = [xkey, ykey, ekey]
-
-        # plot the data. This should generate self.xdata and self.ydata
-        self.plot(xkey, ykey, ekey, **kwargs)
-        a = _pylab.gca()
-
-        # start the loop to remove data points
-        raw_input("Zoom in on the region of interest. <enter>")
-        print "Now click near the data points you want to pop. Right-click to finish."
-        poppies = []
-        while True:
-            # get a click
-            clicks = _pt.ginput()
-            if len(clicks)==0: return poppies
-            [cx,cy] = clicks[0]
-
-            # search through x and y for the closest point to this click
-            diff = (self.xdata-cx)**2 + (self.ydata-cy)**2
-            i    = _fun.index(min(diff), diff)
-
-            # now pop!
-            poppies.append(self.pop_data_point(i, ckeys))
-
-            # now get the current zoom so we can replot
-            xlim = a.get_xlim()
-            ylim = a.get_ylim()
-
-            # replot and rezoom
-            _pylab.hold(True)
-            self.plot(xkey, ykey, ekey, **kwargs)
-            a.set_xlim(xlim)
-            a.set_ylim(ylim)
-            _pylab.hold(False)
-            _pylab.draw()
-
-
+    
 
 
     def execute_script(self, script, g={}):
@@ -601,7 +521,6 @@ class standard:
             except:
                 print
                 print "ERROR: Could not evaluate '"+str(script)+"'"
-                _wx.Yield()
                 return [None, None]
 
 
@@ -673,6 +592,25 @@ class standard:
                 self.ckeys.insert(index, ckey)
 
 
+    def copy_headers(self, other_databox):
+        """
+        Loops over the hkeys of the other_databox and sets this databoxes' header.
+        """
+        for k in other_databox.hkeys: self.insert_header(k, other_databox.h(k))
+
+    def copy_columns(self, other_databox):
+        """
+        Loops over the ckeys of the other_databox and sets this databoxes' columns.
+        """
+        for k in other_databox.ckeys: self.insert_column(other_databox[k], k)
+
+    def copy_all(self, other_databox):
+        """
+        Copies the header and columns from other_databox.
+        """
+        self.copy_headers(other_databox)
+        self.copy_columns(other_databox)
+
     def insert_header(self, hkey, value, index='end'):
         """
         This will insert/overwrite a value to the header and hkeys.
@@ -687,7 +625,7 @@ class standard:
         self.headers[str(hkey)] = value
         if not hkey in self.hkeys:
             if index=='end':
-                self.hkeys.insert(-1,str(hkey))
+                self.hkeys.append(str(hkey))
             else:
                 self.hkeys.insert(index, str(hkey))
 
@@ -765,7 +703,13 @@ class standard:
         """
         self.hkeys    = []
         self.headers  = {}
-
+    
+    def clear_all(self):
+        """
+        Removes all headers and columns from the databox.
+        """
+        self.clear_columns()
+        self.clear_headers()
 
     
 
@@ -786,7 +730,7 @@ class standard:
 
 
 
-    def get_XYZ(self, xaxis=None, yaxis=None, xlabel=None, ylabel=None, xcoarsen=0, ycoarsen=0):
+    def get_XYZ(self, xaxis=None, yaxis=None, xcoarsen=0, ycoarsen=0):
 
         """
         This will assemble the X, Y, Z data for a 2d colorplot or surface.
@@ -812,11 +756,9 @@ class standard:
         # initialize the axis labels
         X=[]
         for n in range(len(Z)): X.append(n)
-        self.xlabel = "x-step number"
-
+        
         Y=[]
         for n in range(len(Z[0])): Y.append(n)
-        self.ylabel = "y-step number"
         Y.reverse()
 
         # now if we're supposed to, pop off the first column as Y labels
@@ -824,8 +766,7 @@ class standard:
 
             # just pop off the first column (Z columns are already reversed)
             Y = Z.pop(0)
-            self.ylabel = "y-values"
-
+            
             # pop the first element of the X-data
             X.pop(0)
 
@@ -834,8 +775,7 @@ class standard:
         elif not yaxis==None:
             Y = list(self.c(yaxis))
             Y.reverse()
-            self.ylabel = yaxis
-
+            
 
 
         # if we're supposed to, pop off the top row for the x-axis values
@@ -844,8 +784,7 @@ class standard:
             for n in range(len(Z)):
                 X.append(Z[n].pop(-1))
 
-            self.xlabel = "x-values"
-
+            
             # pop the first element of the Y-data
             Y.pop(-1)
 
@@ -856,102 +795,19 @@ class standard:
             # trim X down to the length of the Zd.ZX row
             X.resize(len(Z[:])-1)
 
-            self.xlabel = xaxis
-
 
 
         # now if we're supposed to coarsen, do so (produces a numpy array)
-        self.X = _fun.coarsen_array(X, xcoarsen)
-        self.Y = _fun.coarsen_array(Y, ycoarsen)
+        X = _fun.coarsen_array(X, xcoarsen)
+        Y = _fun.coarsen_array(Y, ycoarsen)
 
         # Z has to be transposed to make the data file look like the plot
-        self.Z = _fun.coarsen_matrix(Z, xcoarsen, ycoarsen).transpose()
+        Z = _fun.coarsen_matrix(Z, xcoarsen, ycoarsen).transpose()
 
-        # if we specified labels, they trump everything
-        if xlabel: self.xlabel = xlabel
-        if ylabel: self.ylabel = ylabel
-
-        return
+        return X, Y, Z
 
 
-    def get_columns_from_XYZ(self, corner="x"):
-        """
-        Assuming you have arryas self.X and self.Y along with the matrix
-        self.Z, clear out the current column data and regenerate it from XYZ
-        using X values for column labels, and the corner argument for the first
-        column label.
-        """
-        self.clear_columns()
-
-        # do the necessary transforms to make the saved data in the file
-        # arranged as plotted
-        Y = list(self.Y); Y.reverse()
-        self.insert_column(Y, corner)
-
-        # same for the Z's
-        for n in range(len(self.X)):
-            Zn = list(self.Z[:,n]); Zn.reverse()
-            self.insert_column(Zn, str(self.X[n]))
-
-
-
-    def plot_XYZ(self, cmap="Blues", plot="image", **kwargs):
-        """
-        This is 8 million times faster than pseudocolor I guess, but it won't handle unevenly spaced stuff.
-
-        You need to generate X, Y and Z first, probably using get_XYZ.
-
-        cmap    Name of the matplotlib cmap to use
-        plot    Type of plot, "image" for fast colorplot, "mountains" for slow 3d plot
-        """
-
-        # if we don't have the data, tell the user
-        if self.X == None or self.Y == None or self.Z == None:
-            print "You haven't assembled the surface data yet. Use get_XYZ first!"
-            return
-
-        # try the user's colormap
-        try:
-            colormap = eval("_pylab.cm."+cmap)
-        except:
-            print "ERROR: Invalid colormap, using default."
-            colormap = _pylab.cm.Blues
-
-        # at this point we have X, Y, Z and a colormap, so plot the mf.
-        f=_pylab.gcf()
-        f.clear()
-
-        if plot.lower() == "mountains":
-            X, Y = meshgrid(self.X, self.Y)
-            a = Axes3D(f)
-            a.plot_surface(X, Y, self.Z, rstride=2, cstride=2, cmap=colormap, **kwargs)
-
-        else:
-            # assume X and Y are the bin centers and figure out the bin widths
-            x_width = abs(float(self.X[-1] - self.X[0])/(len(self.X)-1))
-            y_width = abs(float(self.Y[-1] - self.Y[0])/(len(self.Y)-1))
-
-            # do whatever transformation is required
-            X = self.X
-            Y = self.Y
-            Z = self.Z
-
-            # reverse the Z's
-            Z = list(Z); Z.reverse(); Z = array(Z)
-
-            _pylab.imshow(Z, cmap=colormap,
-                      extent=[X[0]-x_width/2.0, X[-1]+x_width/2.0,
-                      Y[0]+y_width/2.0, Y[-1]-y_width/2.0], **kwargs)
-            _pylab.colorbar()
-            _pt.image_set_aspect(1.0)
-
-        # set the title and labels
-        self.title = self.path
-        a = _pylab.gca()
-        a.set_title(self.title)
-        a.set_xlabel(self.xlabel)
-        a.set_ylabel(self.ylabel)
-
+    
 
 
     def c(self, n):
@@ -964,28 +820,42 @@ class standard:
 
     __getitem__ = c
 
-    def h(self, hkey):
+    def h(self, *args, **kwargs):
         """
-        This function searches through hkeys for one *containing* the supplied key string,
-        and returns that header value. It's mostly for shortening coding.
-
+        This function searches through hkeys for one *containing* a key string
+        supplied by args[0] and returns that header value.         
+        
         Also can take integers, returning the key'th header value.
+        
+        kwargs can be specified to set header elements.
         """
-        # if this is an index
-        if type(hkey) in [int, long]: return self.headers[self.hkeys[hkey]]
+        
+        # first loop over kwargs if there are any to set header elements
+        for k in kwargs.keys():
+            self.insert_header(k, kwargs[k])
+                
+        # Meow search for a key if specified
+        if len(args):
+            # this can be shortened. Eventually, it'd be nice to get a tuple back!
+            hkey = args[0]
+            
+            # if this is an index
+            if type(hkey) in [int, long]: return self.headers[self.hkeys[hkey]]
+    
+            # if this is an exact match
+            elif hkey in self.hkeys:      return self.headers[hkey]
+    
+            # Look for a fragment.
+            else:
+                for k in self.hkeys:
+                    if k.find(hkey) >= 0:
+                        return self.headers[k]
+                print
+                print "ERROR: Couldn't find '"+str(hkey) + "' in header."
+                print "Possible values:"
+                print self.hkeys
+                print
+                return None
 
-        # if this is an exact match
-        if hkey in self.hkeys: return self.headers[hkey]
-
-        # Look for a fragment.
-        for k in self.hkeys:
-            if k.find(hkey) >= 0:
-                return self.headers[k]
-        print
-        print "ERROR: Couldn't find '"+str(hkey) + "' in header."
-        print "Possible values:"
-        print self.hkeys
-        print
-        return None
-
+            
 

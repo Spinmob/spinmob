@@ -1,20 +1,24 @@
-import pylab as _pylab
-import numpy as _numpy
-import matplotlib as _mpl
-import wx as _wx
-import time as _time
-from matplotlib.font_manager import FontProperties as _FontProperties
-import os as _os
+import os                as _os
+import pylab             as _pylab
+import matplotlib        as _mpl
+import numpy             as _n
+import _useful_functions as _fun
+import _pylab_colormap 
 
-import _dialogs
-import _functions as _fun
-import _pylab_colorslider as _pc
-import _plot
+image_colormap = _pylab_colormap.colormap_interface
+
+from matplotlib.font_manager import FontProperties as _FontProperties
+
+if __name__ == '__main__':
+    import _settings
+    _settings = _settings.settings()
 
 
 line_attributes = ["linestyle","linewidth","color","marker","markersize","markerfacecolor","markeredgewidth","markeredgecolor"]
-
 image_undo_list = []
+
+
+
 
 def add_text(text, x=0.01, y=0.01, axes="gca", draw=True, **kwargs):
     """
@@ -27,6 +31,13 @@ def add_text(text, x=0.01, y=0.01, axes="gca", draw=True, **kwargs):
     if draw: _pylab.draw()
 
 def auto_zoom(zoomx=1, zoomy=1, axes="gca", x_space=0.04, y_space=0.04, draw=True):
+    """
+    Looks at the bounds of the plotted data and zooms accordingly, leaving some
+    space around the data.
+    """
+
+    _pylab.ioff()
+
     if axes=="gca": axes = _pylab.gca()
 
     a = axes
@@ -67,18 +78,17 @@ def auto_zoom(zoomx=1, zoomy=1, axes="gca", x_space=0.04, y_space=0.04, draw=Tru
         ymin = min(ydata)
         ymax = max(ydata)
 
-
         # we want a 3% white space boundary surrounding the data in our plot
         # so set the range accordingly
         if zoomx: a.set_xlim(xmin-x_space*(xmax-xmin), xmax+x_space*(xmax-xmin))
         if zoomy: a.set_ylim(ymin-y_space*(ymax-ymin), ymax+y_space*(ymax-ymin))
 
-        if draw: _pylab.draw()
+        if draw:
+            _pylab.ion()
+            _pylab.draw()
 
     else:
         return
-
-
 
 def click_estimate_slope():
     """
@@ -87,17 +97,13 @@ def click_estimate_slope():
     Right-click aborts.
     """
 
-    c1 = ginput()
+    c1 = _pylab.ginput()
     if len(c1)==0:
-        raise_pyshell()
         return None
 
-    c2 = ginput()
+    c2 = _pylab.ginput()
     if len(c2)==0:
-        raise_pyshell()
         return None
-
-    raise_pyshell()
 
     return (c1[0][1]-c2[0][1])/(c1[0][0]-c2[0][0])
 
@@ -111,17 +117,13 @@ def click_estimate_curvature():
     Right-click aborts.
     """
 
-    c1 = ginput()
+    c1 = _pylab.ginput()
     if len(c1)==0:
-        raise_pyshell()
         return None
 
-    c2 = ginput()
+    c2 = _pylab.ginput()
     if len(c2)==0:
-        raise_pyshell()
         return None
-
-    raise_pyshell()
 
     return 2*(c2[0][1]-c1[0][1])/(c2[0][0]-c1[0][0])**2
 
@@ -132,31 +134,15 @@ def click_estimate_difference():
     Right-click aborts.
     """
 
-    c1 = ginput()
+    c1 = _pylab.ginput()
     if len(c1)==0:
-        raise_pyshell()
         return None
 
-    c2 = ginput()
+    c2 = _pylab.ginput()
     if len(c2)==0:
-        raise_pyshell()
         return None
-
-    raise_pyshell()
 
     return [c2[0][0]-c1[0][0], c2[0][1]-c1[0][1]]
-
-def close_sliders():
-
-    # get the list of open windows
-    w = _wx.GetTopLevelWindows()
-
-    # loop over them and close all the type colorsliderframe's
-    for x in w:
-        # if it's of the right class
-        if x.__class__.__name__ == _pc._pcf.ColorSliderFrame.__name__:
-            x.Close()
-
 
 def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
     """
@@ -174,126 +160,9 @@ def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
 
     manipulate_shown_data(D, fxname=None, fyname=fyname, **kwargs)
 
-def integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
-    """
-    Numerically integrates the data visible on the current/specified axes using
-    scale*fun.integrate_data(x,y). Modifies the visible data using
-    manipulate_shown_data(**kwargs)
-    
-    autozero is the number of data points used to estimate the background
-    for subtraction. If autozero = 0, no background subtraction is performed.    
-    """
-
-    def I(x,y):
-        xout, iout = _fun.integrate_data(x,y, autozero=autozero)
-        print "Total =", scale*iout[-1]
-        return xout, scale*iout
-
-    if fyname==1: fyname = str(scale)+" * Integral"
-
-    manipulate_shown_data(I, fxname=None, fyname=fyname, **kwargs)
 
 
-
-def image_sliders(image="top", colormap="_last"):
-    close_sliders()
-    _pc.GuiColorMap(image, colormap)
-
-
-def _old_format_figure(figure='gcf', tall=False, draw=True, figheight=10.5, figwidth=8.0, **kwargs):
-    """
-
-    This formats the figure in a compact way with (hopefully) enough useful
-    information for printing large data sets. Used mostly for line and scatter
-    plots with long, information-filled titles.
-
-    Chances are somewhat slim this will be ideal for you but it very well might
-    and is at least a good starting point.
-
-    """
-
-    for k in kwargs.keys(): print "NOTE: '"+k+"' is not an option used by spinmob.tweaks.format_figure()"
-
-    if figure == 'gcf': figure = _pylab.gcf()
-
-    # get the window of the figure
-    figure_window = get_figure_window(figure)
-    #figure_window.SetPosition([0,0])
-
-    # assume two axes means twinx
-    window_width=645
-    legend_position=1.01
-
-    # set the size of the window
-    if(tall): figure_window.SetSize([window_width,680])
-    else:     figure_window.SetSize([window_width,520])
-
-    figure.set_figwidth(figwidth)
-    figure.set_figheight(figheight)
-
-    # first, find overall bounds of the figure.
-    ymin = 1.0
-    ymax = 0.0
-    xmin = 1.0
-    xmax = 0.0
-    for axes in figure.get_axes():
-        (x,y,dx,dy) = axes.get_position().bounds
-        if y    < ymin: ymin = y
-        if y+dy > ymax: ymax = y+dy
-        if x    < xmin: xmin = x
-        if x+dx > xmax: xmax = x+dx
-
-    # Fraction of the figure's height to use for all the plots.
-    if tall: h = 0.7
-    else:    h = 0.5
-    
-    # buffers around edges
-    bt = 0.07
-    bb = 0.05
-    w  = 0.55
-    bl = 0.20    
-    
-    xscale =  w        / (xmax-xmin)
-    yscale = (h-bt-bb) / (ymax-ymin)
-    
-    for axes in figure.get_axes():
-
-        (x,y,dx,dy) = axes.get_position().bounds
-        
-        y  = 1-h+bb + (y-ymin)*yscale
-        dy = dy * yscale
-            
-        x  = bl
-        dx = dx * xscale
-
-        axes.set_position([x,y,dx,dy])
-
-        # set the position of the legend
-        _pylab.axes(axes) # set the current axes
-        if len(axes.lines)>0:
-            _pylab.legend(loc=[legend_position, 0], borderpad=0.02, prop=_FontProperties(size=7))
-
-        # set the label spacing in the legend
-        if axes.get_legend():
-            if tall: axes.get_legend().labelsep = 0.007
-            else:    axes.get_legend().labelsep = 0.01
-            axes.get_legend().set_visible(1)
-
-        # set up the title label
-        axes.title.set_horizontalalignment('right')
-        axes.title.set_size(8)
-        axes.title.set_position([1.4,1.02])
-        axes.title.set_visible(1)
-        #axes.yaxis.label.set_horizontalalignment('center')
-        #axes.xaxis.label.set_horizontalalignment('center')
-
-    # get the shell window
-    if draw:
-        shell_window = get_pyshell()
-        figure_window.Raise()
-        shell_window.Raise()
-
-def format_figure(figure='gcf', tall=False, draw=True, **kwargs):
+def format_figure(figure=None, tall=False, draw=True):
     """
     This formats the figure in a compact way with (hopefully) enough useful
     information for printing large data sets. Used mostly for line and scatter
@@ -301,23 +170,18 @@ def format_figure(figure='gcf', tall=False, draw=True, **kwargs):
 
     Chances are somewhat slim this will be ideal for you but it very well might
     and is at least a good starting point.
+
+    figure=None     specify a figure object. None will use gcf()
+
     """
+    _pylab.ioff()
 
-    for k in kwargs.keys(): print "NOTE: '"+k+"' is not an option used by spinmob.tweaks.format_figure()"
+    if figure == None: figure = _pylab.gcf()
 
-    if figure == 'gcf': figure = _pylab.gcf()
+    if tall: set_figure_window_geometry(figure, (0,0), (550,700))
+    else:    set_figure_window_geometry(figure, (0,0), (550,400))
 
-    # get the window of the figure
-    figure_window = get_figure_window(figure)
-    #figure_window.SetPosition([0,0])
-
-    # assume two axes means twinx
-    window_width=figure_window.GetSize()[0]
     legend_position=1.01
-
-    # set the size of the window
-    if(tall): figure_window.SetSize([window_width,window_width*680./645.])
-    else:     figure_window.SetSize([window_width,window_width*520./645.])
 
     # first, find overall bounds of all axes.
     ymin = 1.0
@@ -332,24 +196,26 @@ def format_figure(figure='gcf', tall=False, draw=True, **kwargs):
         if x+dx > xmax: xmax = x+dx
 
     # Fraction of the figure's width and height to use for all the plots.
-    w  = 0.55
-    if tall: h = 0.77
-    else:    h = 0.75
-    
+    w = 0.55
+    h = 0.75
+
     # buffers on left and bottom edges
     bb = 0.12
-    bl = 0.12    
-    
+    bl = 0.12
+
     xscale = w / (xmax-xmin)
     yscale = h / (ymax-ymin)
-    
+
+    # save this for resetting
     current_axes = _pylab.gca()
+
+    # loop over the axes
     for axes in figure.get_axes():
 
         (x,y,dx,dy) = axes.get_position().bounds
         y  = bb + (y-ymin)*yscale
         dy = dy * yscale
-            
+
         x  = bl + (x-xmin)*xscale
         dx = dx * xscale
 
@@ -362,8 +228,7 @@ def format_figure(figure='gcf', tall=False, draw=True, **kwargs):
 
         # set the label spacing in the legend
         if axes.get_legend():
-            if tall: axes.get_legend().labelsep = 0.007
-            else:    axes.get_legend().labelsep = 0.01
+            axes.get_legend().labelsep = 0.01
             axes.get_legend().set_visible(1)
 
         # set up the title label
@@ -376,11 +241,95 @@ def format_figure(figure='gcf', tall=False, draw=True, **kwargs):
 
     _pylab.axes(current_axes)
 
-    # get the shell window
     if draw:
-        shell_window = get_pyshell()
-        figure_window.Raise()
-        shell_window.Raise()
+        _pylab.ion()
+        _pylab.draw()
+
+def get_figure_window(figure='gcf'):
+    """
+    This will search through the wx windows and return the one containing the figure
+    """
+
+    if figure == 'gcf': figure = _pylab.gcf()
+    return figure.canvas.GetParent()
+
+def get_figure_window_geometry(fig='gcf'):
+    """
+    This will currently only work for Qt4Agg and WXAgg backends.
+    Returns position, size
+
+    postion = [x, y]
+    size    = [width, height]
+
+    fig can be 'gcf', a number, or a figure object.
+    """
+
+    if type(fig)==str:          fig = _pylab.gcf()
+    elif _fun.is_a_number(fig): fig = _pylab.figure(fig)
+
+    # Qt4Agg backend. Probably would work for other Qt stuff
+    if _pylab.get_backend().find('Qt') >= 0:
+        size = fig.canvas.window().size()
+        pos  = fig.canvas.window().pos()
+        return [[pos.x(),pos.y()], [size.width(),size.height()]]
+    
+    else:
+        print "get_figure_window_geometry() only implemented for QtAgg backend."
+        return None
+
+
+def image_format_figure(figure=None, draw=True):
+    """
+    This formats the figure in a compact way with (hopefully) enough useful
+    information for printing large data sets. Used mostly for line and scatter
+    plots with long, information-filled titles.
+
+    Chances are somewhat slim this will be ideal for you but it very well might
+    and is at least a good starting point.
+
+    figure=None     specify a figure object. None will use gcf()
+
+    """
+    _pylab.ioff()
+
+    if figure == None: figure = _pylab.gcf()
+
+    set_figure_window_geometry(figure, (0,0), (550,470))
+
+    axes = figure.axes[0]
+
+    # set up the title label
+    axes.title.set_horizontalalignment('right')
+    axes.title.set_size(8)
+    axes.title.set_position([1.27,1.02])
+    axes.title.set_visible(1)
+
+    if draw:
+        _pylab.ion()
+        _pylab.draw()
+
+def integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
+    """
+    Numerically integrates the data visible on the current/specified axes using
+    scale*fun.integrate_data(x,y). Modifies the visible data using
+    manipulate_shown_data(**kwargs)
+
+    autozero is the number of data points used to estimate the background
+    for subtraction. If autozero = 0, no background subtraction is performed.
+    """
+
+    def I(x,y):
+        xout, iout = _fun.integrate_data(x,y, autozero=autozero)
+        print "Total =", scale*iout[-1]
+        return xout, scale*iout
+
+    if fyname==1: fyname = str(scale)+" * Integral"
+
+    manipulate_shown_data(I, fxname=None, fyname=fyname, **kwargs)
+
+
+
+
 
 def impose_legend_limit(limit=30, axes="gca", **kwargs):
     """
@@ -392,7 +341,7 @@ def impose_legend_limit(limit=30, axes="gca", **kwargs):
     # make these axes current
     _pylab.axes(axes)
 
-    # loop over all the lines
+    # loop over all the lines_pylab.
     for n in range(0,len(axes.lines)):
         if n >  limit-1 and not n==len(axes.lines)-1: axes.lines[n].set_label("_nolegend_")
         if n == limit-1 and not n==len(axes.lines)-1: axes.lines[n].set_label("...")
@@ -417,12 +366,12 @@ def image_coarsen(xlevel=0, ylevel=0, image="auto", method='average'):
     """
     This will coarsen the image data by binning each xlevel+1 along the x-axis
     and each ylevel+1 points along the y-axis
-    
+
     type can be 'average', 'min', or 'max'
     """
     if image == "auto": image = _pylab.gca().images[0]
 
-    Z = _numpy.array(image.get_array())
+    Z = _n.array(image.get_array())
 
     # store this image in the undo list
     global image_undo_list
@@ -443,7 +392,7 @@ def image_neighbor_smooth(xlevel=0.2, ylevel=0.2, image="auto"):
     """
     if image == "auto": image = _pylab.gca().images[0]
 
-    Z = _numpy.array(image.get_array())
+    Z = _n.array(image.get_array())
 
     # store this image in the undo list
     global image_undo_list
@@ -467,7 +416,7 @@ def image_neighbor_smooth(xlevel=0.2, ylevel=0.2, image="auto"):
     new_Z.append(Z[-1]*1.0)
 
     # images have transposed data
-    image.set_array(_numpy.array(new_Z))
+    image.set_array(_n.array(new_Z))
 
     # update the plot
     _pylab.draw()
@@ -581,8 +530,8 @@ def image_click_xshift(axes = "gca"):
     if axes == "gca": axes = _pylab.gca()
 
     try:
-        p1 = ginput()
-        p2 = ginput()
+        p1 = _pylab.ginput()
+        p2 = _pylab.ginput()
 
         xshift = p2[0][0]-p1[0][0]
 
@@ -604,8 +553,8 @@ def image_click_yshift(axes = "gca"):
     if axes == "gca": axes = _pylab.gca()
 
     try:
-        p1 = ginput()
-        p2 = ginput()
+        p1 = _pylab.ginput()
+        p2 = _pylab.ginput()
 
         yshift = p2[0][1]-p1[0][1]
 
@@ -643,7 +592,7 @@ def image_shift(xshift=0, yshift=0, axes="gca"):
 def image_set_clim(zmin=None, zmax=None, axes="gca"):
     """
     This will set the clim (range) of the colorbar.
-    
+
     Setting zmin or zmax to None will not change them.
     Setting zmin or zmax to "auto" will auto-scale them to include all the data.
     """
@@ -651,8 +600,8 @@ def image_set_clim(zmin=None, zmax=None, axes="gca"):
 
     image = axes.images[0]
 
-    if zmin=='auto': zmin = _numpy.min(image.get_array())
-    if zmax=='auto': zmax = _numpy.max(image.get_array())
+    if zmin=='auto': zmin = _n.min(image.get_array())
+    if zmax=='auto': zmax = _n.max(image.get_array())
 
     if zmin==None: zmin = image.get_clim()[0]
     if zmax==None: zmax = image.get_clim()[1]
@@ -661,6 +610,10 @@ def image_set_clim(zmin=None, zmax=None, axes="gca"):
 
     _pylab.draw()
 
+def image_sliders(image="top", colormap="_last"):
+    return "NO!"    
+    
+    
 def image_ubertidy(figure="gcf", aspect=1.0, fontsize=18, fontweight='bold', fontname='Arial', ylabel_pad=0.007, xlabel_pad=0.010, colorlabel_pad=0.1, borderwidth=3.0, tickwidth=2.0, window_size=(550,500)):
 
     if figure=="gcf": figure = _pylab.gcf()
@@ -736,88 +689,182 @@ def is_a_number(s):
 
 
 
+#
+#def manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyname=1, clear=1, pause=False, **kwargs):
+#    """
+#    Loops over the visible data on the specified axes and modifies it based on
+#    the function f(xdata, ydata), which must return new_xdata, new_ydata
+#
+#    input_axes  which axes to pull the data from
+#    output_axes which axes to dump the manipulated data (None for new figure)
+#
+#    fxname      the name of the function on x
+#    fyname      the name of the function on y
+#                1 means "use f.__name__"
+#                0 or None means no change.
+#                otherwise specify a string
+#
+#    **kwargs are sent to axes.plot
+#    """
+#
+#    # get the axes
+#    if input_axes == "gca": a1 = _pylab.gca()
+#    else:                   a1 = input_axes
+#
+#    # get the xlimits
+#    xmin, xmax = a1.get_xlim()
+#
+#    # get the name to stick on the x and y labels
+#    if fxname==1: fxname = f.__name__
+#    if fyname==1: fyname = f.__name__
+#
+#    # get the output axes
+#    if output_axes == None:
+#        _pylab.figure(a1.figure.number+1)
+#        a2 = _pylab.axes()
+#    else:
+#        a2 = output_axes
+#
+#    if clear: a2.clear()
+#
+#    # loop over the data
+#    for line in a1.get_lines():
+#        if isinstance(line, _mpl.lines.Line2D):
+#            x, y = line.get_data()
+#            x, y, e = _fun.trim_data(x,y,None,[xmin,xmax])
+#            new_x, new_y = f(x,y)
+#            _xy_data(new_x,new_y, clear=0, label=line.get_label(), draw=pause, **kwargs)
+#            if pause:
+#                format_figure()
+#                raw_input("<enter> ")
+#
+#    # set the labels and title.
+#    if fxname in [0,None]:  a2.set_xlabel(a1.get_xlabel())
+#    else:                   a2.set_xlabel(fxname+"[ "+a1.get_xlabel()+" ]")
+#
+#    if fyname in [0,None]:  a2.set_ylabel(a1.get_ylabel())
+#    else:                   a2.set_ylabel(fyname+"[ "+a1.get_ylabel()+" ]")
+#
+#    _pylab.draw()
+#
+#def manipulate_shown_xdata(fx, fxname=1, **kwargs):
+#    """
+#    This defines a function f(xdata,ydata) returning fx(xdata), ydata and
+#    runs manipulate_shown_data() with **kwargs sent to this. See
+#    manipulate_shown_data() for more info.
+#    """
+#    def f(x,y): return fx(x), y
+#    f.__name__ = fx.__name__
+#    manipulate_shown_data(f, fxname=fxname, fyname=None, **kwargs)
+#
+#def manipulate_shown_ydata(fy, fyname=1, **kwargs):
+#    """
+#    This defines a function f(xdata,ydata) returning xdata, fy(ydata) and
+#    runs manipulate_shown_data() with **kwargs sent to this. See
+#    manipulate_shown_data() for more info.
+#    """
+#    def f(x,y): return x, fy(y)
+#    f.__name__ = fy.__name__
+#    manipulate_shown_data(f, fxname=None, fyname=fyname, **kwargs)
 
-def manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyname=1, clear=1, pause=False, **kwargs):
+def _print_figures(figures, arguments='', file_format='pdf', target_width=8.5, target_height=11.0, target_pad=0.5):
     """
-    Loops over the visible data on the specified axes and modifies it based on
-    the function f(xdata, ydata), which must return new_xdata, new_ydata
-
-    input_axes  which axes to pull the data from
-    output_axes which axes to dump the manipulated data (None for new figure)
-
-    fxname      the name of the function on x
-    fyname      the name of the function on y
-                1 means "use f.__name__"
-                0 or None means no change.
-                otherwise specify a string
-
-    **kwargs are sent to axes.plot
+    figure printing loop designed to be launched in a separate thread.
     """
 
-    # get the axes
-    if input_axes == "gca": a1 = _pylab.gca()
-    else:                   a1 = input_axes
+    for fig in figures:
+        # output the figure to postscript
+        path = _os.path.join(_settings.path_temp,"graph."+file_format)
 
-    # get the xlimits
-    xmin, xmax = a1.get_xlim()
+        # get the dimensions of the figure in inches
+        w=fig.get_figwidth()
+        h=fig.get_figheight()
 
-    # get the name to stick on the x and y labels
-    if fxname==1: fxname = f.__name__
-    if fyname==1: fyname = f.__name__
+        # we're printing to 8.5 x 11, so aim for 7.5 x 10
+        target_height = target_height-2*target_pad
+        target_width  = target_width -2*target_pad
 
-    # get the output axes
-    if output_axes == None:
-        _pylab.figure(a1.figure.number+1)
-        a2 = _pylab.axes()
+        # depending on the aspect we scale by the vertical or horizontal value
+        if 1.0*h/w > target_height/target_width:
+            # scale down according to the vertical dimension
+            new_h = target_height
+            new_w = w*target_height/h
+        else:
+            # scale down according to the hozo dimension
+            new_w = target_width
+            new_h = h*target_width/w
+
+        fig.set_figwidth(new_w)
+        fig.set_figheight(new_h)
+
+        # save it
+        fig.savefig(path, bbox_inches=_pylab.matplotlib.transforms.Bbox(
+            [[-target_pad, new_h-target_height-target_pad],
+             [target_width-target_pad, target_height-target_pad]]))
+
+        # set it back
+        fig.set_figheight(h)
+        fig.set_figwidth(w)
+
+
+        if not arguments == '':
+            c = _settings['print_command'] + ' ' + arguments + ' "' + path + '"'
+        else:
+            c = _settings['print_command'] + ' "' + path + '"'
+
+        print c
+        _os.system(c)
+
+
+def printer(figure='gcf', arguments='', threaded=False, file_format='pdf'):
+    """
+    Quick function that saves the specified figure as a postscript and then
+    calls the command defined by spinmob.prefs['print_command'] with this
+    postscript file as the argument.
+
+    figure='gcf'    can be 'all', a number, or a list of numbers
+    """
+
+    global _settings
+
+    if not _settings.has_key('print_command'):
+        print "No print command setup. Set the user variable settings['print_command']."
+        return
+
+    if   figure=='gcf': figure=[_pylab.gcf().number]
+    elif figure=='all': figure=_pylab.get_fignums()
+    if not getattr(figure,'__iter__',False): figure = [figure]
+
+    print "figure numbers in queue:", figure
+
+    figures=[]
+    for n in figure: figures.append(_pylab.figure(n))
+
+    # now run the ps printing command
+    if threaded:
+        # store the canvas type of the last figure
+        canvas_type = type(figures[-1].canvas)
+
+        # launch the aforementioned function as a separate thread
+        _thread.start_new_thread(_print_figures, (figures,arguments,file_format,))
+
+        # wait until the thread is running
+        _time.sleep(0.25)
+
+        # wait until the canvas type has returned to normal
+        t0 = _time.time()
+        while not canvas_type == type(figures[-1].canvas) and _time.time()-t0 < 5.0:
+            _time.sleep(0.1)
+        if _time.time()-t0 >= 5.0:
+            print "WARNING: Timed out waiting for canvas to return to original state!"
+
+        # bring back the figure and command line
+        _pylab.draw()
+        _pylab_tweaks.get_pyshell()
+
     else:
-        a2 = output_axes
-
-    if clear: a2.clear()
-
-    # loop over the data
-    for line in a1.get_lines():
-        if isinstance(line, _mpl.lines.Line2D):
-            x, y = line.get_data()
-            x, y, e = _fun.trim_data(x,y,None,[xmin,xmax])
-            new_x, new_y = f(x,y)
-            _plot.xy.data(new_x,new_y, clear=0, label=line.get_label(), draw=pause, **kwargs)
-            if pause:
-                format_figure()
-                raise_pyshell()
-                raw_input("<enter> ")
-
-    # set the labels and title.
-    if fxname in [0,None]:  a2.set_xlabel(a1.get_xlabel())
-    else:                   a2.set_xlabel(fxname+"[ "+a1.get_xlabel()+" ]")
-
-    if fyname in [0,None]:  a2.set_ylabel(a1.get_ylabel())
-    else:                   a2.set_ylabel(fyname+"[ "+a1.get_ylabel()+" ]")
-
-    if not kwargs.has_key('title'): 
-        a2.title.set_text(get_pyshell_command() + "\n" + a1.title.get_text())
-
-    _pylab.draw()
-
-def manipulate_shown_xdata(fx, fxname=1, **kwargs):
-    """
-    This defines a function f(xdata,ydata) returning fx(xdata), ydata and
-    runs manipulate_shown_data() with **kwargs sent to this. See
-    manipulate_shown_data() for more info.
-    """
-    def f(x,y): return fx(x), y
-    f.__name__ = fx.__name__
-    manipulate_shown_data(f, fxname=fxname, fyname=None, **kwargs)
-
-def manipulate_shown_ydata(fy, fyname=1, **kwargs):
-    """
-    This defines a function f(xdata,ydata) returning xdata, fy(ydata) and
-    runs manipulate_shown_data() with **kwargs sent to this. See
-    manipulate_shown_data() for more info.
-    """
-    def f(x,y): return x, fy(y)
-    f.__name__ = fy.__name__
-    manipulate_shown_data(f, fxname=None, fyname=fyname, **kwargs)
-
+        _print_figures(figures, arguments, file_format)
+        _pylab.draw()
 
 
 def shift(xshift=0, yshift=0, progressive=0, axes="gca"):
@@ -842,8 +889,8 @@ def shift(xshift=0, yshift=0, progressive=0, axes="gca"):
     for m in range(0,len(lines)):
         if isinstance(lines[m], _mpl.lines.Line2D):
             # get the actual data values
-            xdata = _numpy.array(lines[m].get_xdata())
-            ydata = _numpy.array(lines[m].get_ydata())
+            xdata = _n.array(lines[m].get_xdata())
+            ydata = _n.array(lines[m].get_ydata())
 
             # add the offset
             if progressive:
@@ -860,7 +907,13 @@ def shift(xshift=0, yshift=0, progressive=0, axes="gca"):
 
     auto_zoom()
 
-
+def raise_figure_window(f=0):
+    """
+    Raises the supplied figure number or figure window.
+    """
+    if _fun.is_a_number(f): f = _pylab.figure(f)
+    f.canvas.manager.window.raise_()
+    
 
 def reverse_draw_order(axes="current"):
     """
@@ -984,7 +1037,38 @@ def set_title(axes="current", title=""):
     _pylab.draw()
 
 
+def set_figure_window_geometry(fig='gcf', position=None, size=None):
+    """
+    This will currently only work for Qt4Agg and WXAgg backends.
 
+    postion = [x, y]
+    size    = [width, height]
+
+    fig can be 'gcf', a number, or a figure object.
+    """
+
+    if type(fig)==str:          fig = _pylab.gcf()
+    elif _fun.is_a_number(fig): fig = _pylab.figure(fig)
+
+    # Qt4Agg backend. Probably would work for other Qt stuff
+    if _pylab.get_backend().find('Qt') >= 0:
+        w = fig.canvas.window()
+
+        if not size == None:
+            w.resize(size[0],size[1])
+            
+        if not position == None:
+            w.move(position[0], position[1])
+
+    # WXAgg backend. Probably would work for other Qt stuff.
+    elif _pylab.get_backend().find('WX') >= 0:
+        w = fig.canvas.Parent
+
+        if not size == None:
+            w.SetSize(size)
+
+        if not position == None:
+            w.SetPosition(position)
 
 def set_xrange(xmin="same", xmax="same", axes="gca"):
     if axes == "gca": axes = _pylab.gca()
@@ -1184,8 +1268,6 @@ def smooth_selected_trace(trim=True, axes="gca"):
         if isinstance(line, _mpl.lines.Line2D):
             # first highlight it
             fatten_line(line)
-            raise_figure_window()
-            raise_pyshell()
 
             # get the smoothing factor
             ready = 0
@@ -1231,13 +1313,13 @@ def coarsen_all_traces(coarsen=1, axes="all", figure=None):
     if axes=="all":
         if not figure: f = _pylab.gcf()
         axes = f.axes
-        
+
     if not _fun.is_iterable(axes): axes = [axes]
 
-    for a in axes:    
+    for a in axes:
         # get the lines from the plot
         lines = a.get_lines()
-    
+
         # loop over the lines and trim the data
         for line in lines:
             if isinstance(line, _mpl.lines.Line2D):
@@ -1336,8 +1418,8 @@ def yscale(scale='log'):
     _pylab.yscale(scale)
     _pylab.draw()
 
-def ubertidy(figure="gcf", zoom=True, width=None, height=None, fontsize=15, fontweight='normal', fontname='Arial',
-             borderwidth=1.5, tickwidth=1, ticks_point="in", xlabel_pad=0.013, ylabel_pad=0.010, window_size=[550,550]):
+def ubertidy(figure="gcf", zoom=True, width=None, height=None, fontsize=12, fontweight='normal', fontname='Arial',
+             borderwidth=1.2, tickwidth=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.008, window_size=[550,400]):
     """
 
     This guy performs the ubertidy from the helper on the first window.
@@ -1348,8 +1430,7 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, fontsize=15, font
     if figure=="gcf": f = _pylab.gcf()
     else:             f = figure
 
-    # first set the size of the window
-    f.canvas.Parent.SetSize(window_size)
+    set_figure_window_geometry(fig=f, size=window_size)
 
     for n in range(len(f.axes)):
         # get the axes
@@ -1528,9 +1609,9 @@ def save_figure_raw_data(figure="gcf", **kwargs):
     """
     This will just output an ascii file for each of the traces in the shown figure.
 
-    **kwargs are sent to dialogs.Save()    
+    **kwargs are sent to dialogs.Save()
     """
-    
+
     # choose a path to save to
     path = _dialogs.Save(**kwargs)
     if path=="": return "aborted."
@@ -1539,18 +1620,18 @@ def save_figure_raw_data(figure="gcf", **kwargs):
     if figure=="gcf": figure = _pylab.gcf()
 
     for n in range(len(figure.axes)):
-        a = figure.axes[n]        
-        
+        a = figure.axes[n]
+
         for m in range(len(a.lines)):
             l = a.lines[m]
-            
+
             x = l.get_xdata()
             y = l.get_ydata()
 
             p = _os.path.split(path)
             p = _os.path.join(p[0], "axes" + str(n) + " line" + str(m) + " " + p[1])
             print p
-            
+
             # loop over the data
             f = open(p, 'w')
             for j in range(0, len(x)):
@@ -1644,41 +1725,6 @@ def load_plot(clear=1, offset=0, axes="gca"):
 
 
 
-def get_figure_window(figure='gcf'):
-    """
-    This will search through the wx windows and return the one containing the figure
-    """
-
-    if figure == 'gcf': figure = _pylab.gcf()
-
-    return figure.canvas.GetParent()
-
-
-def get_pyshell():
-    """
-    This will search through the wx windows and return the pyshell
-    """
-
-    # starting from the top, grab ALL the wx windows available
-    w = _wx.GetTopLevelWindows()
-
-    for x in w:
-        if type(x) == _wx.py.shell.ShellFrame or type(x) == _wx.py.crust.CrustFrame: return x
-
-    return False
-
-def get_pyshell_command(n=0):
-    """
-    Returns a string of the n'th previous pyshell command.
-    """
-    if n: return str(get_pyshell().shell.history[n-1])
-    else: return str(get_pyshell().shell.GetText().split('\n>>> ')[-1].split('\n')[0].strip())
-
-def raise_figure_window(figure='gcf'):
-    get_figure_window(figure).Raise()
-
-def raise_pyshell():
-    get_pyshell().Raise()
 
 def modify_legend(axes="gca"):
     # get the axes
@@ -1728,122 +1774,7 @@ def legend(location='best', fontsize=16, axes="gca"):
     _pylab.draw()
 
 
-class GaelInput(object):
-    """
-    Class that create a callable object to retrieve mouse click in a
-    blocking way, a la MatLab. Based on Gael Varoquaux's almost-working
-    object. Thanks Gael! I've wanted to get this working for years!
 
-    -Jack
-    """
-
-    debug  = False
-    cid    = None   # event connection object
-    clicks = []     # list of click coordinates
-    n      = 1      # number of clicks we're waiting for
-    lines  = False   # if we should draw the lines
-
-    def on_click(self, event):
-        """
-        Event handler that will be passed to the current figure to
-        retrieve clicks.
-        """
-
-        # write the debug information if we're supposed to
-        if self.debug: print "button "+str(event.button)+": "+str(event.xdata)+", "+str(event.ydata)
-
-        # if this event's a right click we're done
-        if event.button == 3:
-            self.done = True
-            return
-
-        # if it's a valid click (and this isn't an extra event
-        # in the queue), append the coordinates to the list
-        if event.inaxes and not self.done:
-            self.clicks.append([event.xdata, event.ydata])
-
-            # now if we're supposed to draw lines, do so
-            if self.lines and len(self.clicks) > 1:
-                event.inaxes.plot([self.clicks[-1][0], self.clicks[-2][0]],
-                                  [self.clicks[-1][1], self.clicks[-2][1]],
-                                  color='w', linewidth=2.0, scalex=False, scaley=False)
-                event.inaxes.plot([self.clicks[-1][0], self.clicks[-2][0]],
-                                  [self.clicks[-1][1], self.clicks[-2][1]],
-                                  color='k', linewidth=1.0, scalex=False, scaley=False)
-                _pylab.draw()
-
-        # if we have n data points, we're done
-        if len(self.clicks) >= self.n and self.n is not 0:
-            self.done = True
-            return
-
-
-    def __call__(self, n=1, timeout=0, debug=False, lines=False):
-        """
-        Blocking call to retrieve n coordinate pairs through mouse clicks.
-
-        n=1             number of clicks to collect. Set n=0 to keep collecting
-                        points until you click with the right mouse button.
-
-        timeout=30      maximum number of seconds to wait for clicks before giving up.
-                        timeout=0 to disable
-
-        debug=False     show each click event coordinates
-
-        lines=False     draw lines between clicks
-        """
-
-        # just for printing the coordinates
-        self.debug = debug
-
-        # for drawing lines
-        self.lines = lines
-
-        # connect the click events to the on_click function call
-        self.cid = _pylab.connect('button_press_event', self.on_click)
-
-        # initialize the list of click coordinates
-        self.clicks = []
-
-        # wait for n clicks
-        self.n    = n
-        self.done = False
-        t         = 0.0
-        while not self.done:
-            # key step: yield the processor to other threads
-            _wx.Yield();
-            _time.sleep(0.05)
-
-            # check for a timeout
-            t += 0.02
-            if timeout and t > timeout: print "ginput timeout"; break;
-
-        # All done! Disconnect the event and return what we have
-        _pylab.disconnect(self.cid)
-        self.cid = None
-
-        return _numpy.array(self.clicks)
-
-
-
-def ginput(n=1, timeout=0, show=True, lines=False):
-    """
-    Simple functional call for physicists. This will wait for n clicks from the user and
-    return a list of the coordinates of each click.
-
-    n=1             number of clicks to collect, n=0 for "wait until right click"
-    timeout=30      maximum number of seconds to wait for clicks before giving up.
-                    timeout=0 to disable
-    show=True       print the clicks as they are received
-    lines=False     draw lines between clicks
-
-    This is my original implementation, and I'm leaving it here because it behaves a little
-    differently than the eventual version that was added to matplotlib. I would recommend using
-    the official version if you can!
-    """
-
-    x = GaelInput()
-    return x(n, timeout, show, lines)
 
 #
 # Style cycle, available for use in plotting
