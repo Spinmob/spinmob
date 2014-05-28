@@ -179,7 +179,7 @@ class fitter():
             if self.results and not self.results[1]==None:            
                 s = s + "\nFIT RESULTS (reduced chi squared = {:s})\n".format(str(self.reduced_chi_squareds()))
                 for n in range(len(self._pnames)): 
-                    s = s + "  {:10s} = {:G} +/- {:G}\n".format(self._pnames[n], self.results[0][n], self.results[1][n][n])
+                    s = s + "  {:10s} = {:G} +/- {:G}\n".format(self._pnames[n], self.results[0][n], _n.sqrt(self.results[1][n][n]))
             
             elif self.results and self.results[1] == None: 
                 s = s + "\nFIT DID NOT CONVERGE\n"
@@ -665,10 +665,10 @@ class fitter():
             self._error("You must complete a fit first.")
 
         # use the fit as a guess        
-        _pguess = self.results[0]
+        self._pguess = self.results[0]
         
         self.autoscale_eydata()
-        self.fit(_pguess=_pguess)
+        self.fit(pguess=self._pguess)
         return self
 
     def plot(self, p=None, **kwargs):
@@ -792,7 +792,7 @@ class fitter():
             if self.results and not self.results[1]==None:
                 t1 = "Fit: "                
                 for i in range(len(self._pnames)):
-                    t1 = t1 + self._pnames[i] + "={:G}$\pm${:G}, ".format(self.results[0][i], self.results[1][i][i])
+                    t1 = t1 + self._pnames[i] + "={:G}$\pm${:G}, ".format(self.results[0][i], _n.sqrt(self.results[1][i][i]))
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
                 
             elif self.results:

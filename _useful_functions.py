@@ -199,7 +199,7 @@ def coarsen_matrix(Z, xlevel=0, ylevel=0, method='average'):
     """
     This returns a coarsened numpy matrix.
 
-    method can be 'average', 'max', or 'min'
+    method can be 'average', 'maximum', or 'minimum'
     """
 
     # coarsen x
