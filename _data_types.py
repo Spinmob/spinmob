@@ -807,18 +807,18 @@ class databox:
         return X, Y, Z
 
 
-    
-
 
     def c(self, n):
         """
-        Returns the n'th column if it's an integer, otherwis the column based
+        Returns the n'th column if it's an integer, otherwise the column based
         on key.
         """
         if type(n) == str:  return self.columns[n]
         else:               return self.columns[self.ckeys[n]]
 
     __getitem__ = c
+    
+    
 
     def h(self, *args, **kwargs):
         """
