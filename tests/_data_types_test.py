@@ -46,14 +46,27 @@ class Test_databox(_ut.TestCase):
         self.module_path = self.module_path[0]
         if self.debug: print "self.module_path=", self.module_path
         
-        self.fixtures_path = 'spinmob\\tests\\fixtures\\data_types\\'
-        self.filename = 'simple_xy_data.dat'
-
-        self.data_path = self.module_path + self.fixtures_path + self.filename
+        self.fixtures_path = os.path.join('spinmob', 'tests', 'fixtures', 'data_types')
+        midPath = os.path.join(self.module_path, self.fixtures_path)        
+        
+        filename = 'simple_xy_data.dat'
+        self.data_path = os.path.join(midPath, filename)
         if self.debug: print "self.data_path =", self.data_path
 
         # setup a default databox to be used for testing.
         self.databox = _dt.databox()
+        
+        # Path to a different data set fixture, with headers
+        filename = 'CSV_xy.dat'
+        self.data_path2 = os.path.join(midPath, filename)                                      
+                                      
+        self.databoxCSV = _dt.databox(delimiter=', ')
+
+        filename = 'headers_xy.dat'
+        self.data_path3 = os.path.join(midPath, filename)
+
+        # This is not a good idea, as you get all the spinmob prints
+        #self.databoxDebug = _dt.databox(debug=True, delimiter=',    ')
 
 
     def tearDown(self):
@@ -65,7 +78,6 @@ class Test_databox(_ut.TestCase):
         self.module_path   = None
         self.data_path     = None
         self.fixtures_path = None
-        self.filename      = None
         self.databox       = None
 
 
@@ -94,13 +106,50 @@ class Test_databox(_ut.TestCase):
 
         self.assertEqual(val, exp)
 
+    def test_defaultDelimiter(self):
+        val = self.databox.delimiter
+        exp = None
+
+        self.assertEqual(val, exp)        
+
+    def test_CSVDelimiter(self):
+        val = self.databoxCSV.delimiter
+        exp = ', '
+        
+        self.assertEqual(val, exp)        
 
 
+    def test_load_fileCSV(self):
+        """
+        Test loading a CSV file
+        """
+        self.databoxCSV.load_file(path=self.data_path2)
+
+        # Check a value of the loaded file, first level
+        val = self.databoxCSV[0][1]
+        
+        # The expected response
+        exp = 90.0
+
+        self.assertEqual(val, exp)
+
+
+    def test_pop_data_point(self):
+        self.databox.load_file(path=self.data_path)
+        
+        
+        # Check a value of the loaded file, first level
+        val = self.databox.pop_data_point(3, ckeys=[0])
+        
+        # The expected response
+        exp = [100.0]      
+        self.assertEqual(val, exp)
 
 
 
 if __name__ == "__main__":
-    test()
+    #test()
+    _ut.main()
 
 
 
