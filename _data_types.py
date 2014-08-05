@@ -418,6 +418,10 @@ class databox:
         NOTE: You shouldn't try to use variables like 'c=...' or 'h=...' because
         they are already column and header functions!
 
+        Returns
+        -------
+        numpy array
+
         """
         if self.debug: print "Generating column '"+str(name)+"' = "+str(script)+"..."
 
@@ -735,6 +739,8 @@ class databox:
         """
         This will assemble the X, Y, Z data for a 2d colorplot or surface.
 
+        Parameters
+        ----------
         yaxis=None          What values to use for the y-axis data. "first" means take the first column
                             yaxis=None means just use bin number
         xaxis=None          What values to use for the x-axis data, can be a header array
