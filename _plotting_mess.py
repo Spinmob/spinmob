@@ -401,7 +401,7 @@ def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabel='',               \
             title='', shell_history=1, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
             coarsen=0, style=None,  clear=True, axes=None, xscale='linear', yscale='linear', grid=False,       \
-            legend='best', autoformat=True, tall=False, draw=True, **kwargs):
+            legend='best', legend_max=20, autoformat=True, tall=False, draw=True, **kwargs):
     """
     Plots specified data.
 
@@ -424,9 +424,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     grid=False          Should we draw a grid on the axes?
     legend='best'       where to place the legend (see pylab.legend())
                         Set this to None to ignore the legend.
+    legend_max=20       number of legend entries before it's truncated with '...'
     autoformat=True     Should we format the figure for printing?
-    False          Should the format be tall?
+    False               Should the format be tall?
     draw=True           whether or not to draw the plot after plotting
+
 
     **kwargs are sent to pylab.errorbar()
     """
@@ -466,10 +468,13 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         if ydata[n] == None: ydata[n] = _n.arange(len(xdata[n]))
 
     # check that the labels is a list of strings of the same length
-    if not _fun.is_iterable(label): label = [label]
-    if len(label) < len(ydata):
-        for n in range(len(ydata)-1): label.append(label[0])
+    if not _fun.is_iterable(label): label = [label]*N
+    while len(label) < len(ydata):  label.append(label[0])
 
+    # concatenate if necessary
+    if len(label) > legend_max:
+        label[legend_max-2] = '...'
+        for n in range(legend_max-1,len(label)-1): label[n] = "_nolegend_"
 
     # clear the figure?
     if clear and not axes: _pylab.gcf().clear() # axes cleared later
@@ -819,7 +824,7 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     _pylab.draw()
 
     # add the color sliders
-    if colormap: 
+    if colormap:
         if _colormap: _colormap.close()
         _colormap = _pt.image_colormap(colormap, image=a.images[0])
 

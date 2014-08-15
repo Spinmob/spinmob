@@ -16,7 +16,7 @@ if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
 #    print "Creating QApplication"
 #    _qtapp = _qt.QApplication(_os.sys.argv)
 
-print "\nWelcome to spinmob 2014-05-28!\n"
+print "\nWelcome to spinmob 2014-08-15!\n"
 
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
