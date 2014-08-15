@@ -182,13 +182,14 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
         em = None
         ep = None
     else:
+
         # do the elliptical error transformation
         em = []
         ep = []
-        if eydata==None:
-            em = None
-            ep = None
-        else:
+
+        # loop over all the eydata
+        for n in range(len(eydata)):
+
             if eydata[n] == None:
                 em.append(None)
                 ep.append(None)
@@ -199,8 +200,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
                 ep.append(0.5*((er+ei) - (er-ei)*_n.cos(p[n]))/m[n] )
 
             # convert to degrees
-            if phase=='degrees':
-                if not ep[n]==None: ep[n] = ep[n]*180.0/_n.pi
+            if phase=='degrees' and not ep[n]==None: ep[n] = ep[n]*180.0/_n.pi
 
 
     if phase=='degrees':         plabel = plabel + " (degrees)"
@@ -240,6 +240,7 @@ def magphase_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exs
 
     **kwargs are sent to spinmob.plot.mag_phase.data()
     """
+    print ds
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, **kwargs)
 
 def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=None, **kwargs):
