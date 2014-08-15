@@ -1,1 +1,3 @@
 *.pyc
+.SyncID
+.SyncIgnore
