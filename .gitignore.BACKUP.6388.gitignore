@@ -1,0 +1,4 @@
+*.pyc
+.SyncID
+.SyncIgnore
+.SyncArchive
