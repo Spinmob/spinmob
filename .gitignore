@@ -1,4 +1,4 @@
 *.pyc
 .SyncID
 .SyncIgnore
-.SyncArchive
+.SyncArchive/

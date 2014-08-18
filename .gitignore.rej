@@ -1,0 +1,26 @@
+diff a/.gitignore b/.gitignore	(rejected hunks)
+@@ -0,0 +1,24 @@
++__init__.pyc
++_data.pyc
++_data_types.pyc
++_dialogs.pyc
++_fit.pyc
++_fitting_mess.pyc
++_plot.pyc
++_plot_complex.pyc
++_plot_image.pyc
++_plot_magphase.pyc
++_plot_parametric.pyc
++_plot_realimag.pyc
++_plot_xy.pyc
++_plotting_mess.pyc
++_pylab_colormap.pyc
++_pylab_tweaks.pyc
++_settings.pyc
++_useful_functions.pyc
++_fitting.pyc
++_functions.pyc
++_models.pyc
++_prefs.pyc
++_pylab_colorslider.pyc
++_pylab_colorslider_frame.pyc
