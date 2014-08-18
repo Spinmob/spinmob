@@ -7,16 +7,16 @@ import PyQt4.QtCore as _qtc
 import PyQt4.Qt     as _qt
 
 # make sure we have a valid qt application for dialogs etc...
-_qtapp = _qtc.QCoreApplication.instance()    
+_qtapp = _qtc.QCoreApplication.instance()
 if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
 
 
 #_qtapp = _qt.qApp
-#if _qtapp == None: 
+#if _qtapp == None:
 #    print "Creating QApplication"
 #    _qtapp = _qt.QApplication(_os.sys.argv)
 
-print "\nWelcome to spinmob 2014-05-28!\n"
+print "\nWelcome to spinmob 2014-08-15!\n"
 
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
@@ -29,7 +29,6 @@ import _data             as data        ; data._settings = settings
 import _dialogs          as dialogs     ; dialogs._settings = settings
 import _pylab_tweaks     as tweaks      ; tweaks._settings = settings
 import _useful_functions as fun         ; fun._settings = settings
-import _fit              as fit         ; fit._settings = settings
 
 plot.tweaks._pylab_colormap._settings = settings
 
