@@ -162,6 +162,21 @@ class Test_databox(_ut.TestCase):
         exp = [993.9, 713.0, 70.4, -14.7, -51.6]      
         self.assertListEqual(val, exp)
 
+    def test_execute_scriptList(self):
+        self.databox.load_file(path=self.data_path)
+
+        str1 = 'y where  y=c(1)'     
+        str2 = 'x where x = c(0)'
+        
+        val = self.databox.execute_script([str1, str2])
+        val = _n.around(val, 1)  # Round to 1 decimal place
+        val = val[0]
+        val = val.tolist()  # Convert numpy array to a list
+        val = val[0:5]   # Just check the first five elements
+        
+        exp = [0.2, 0.2, 1.2, 2.4, 4.2]      
+        self.assertListEqual(val, exp)
+
 
     def test___len__(self):
         self.databox.load_file(path=self.data_path)   
@@ -308,6 +323,14 @@ class Test_databox(_ut.TestCase):
         exp = [85.0, 90.0, 95.0, 100.0, 105.0] 
         self.assertListEqual(val, exp)     
 
+
+    def test_insert_global(self):
+        self.databox.load_file(path=self.data_path3) 
+        
+        d = sm.data.databox()
+        
+        
+        self.databox.insert_global(thing=d)
 
 
 if __name__ == "__main__":
