@@ -3,7 +3,7 @@ import pylab             as _pylab
 import matplotlib        as _mpl
 import numpy             as _n
 import _useful_functions as _fun
-import _pylab_colormap 
+import _pylab_colormap
 
 image_colormap = _pylab_colormap.colormap_interface
 
@@ -144,7 +144,7 @@ def click_estimate_difference():
 
     return [c2[0][0]-c1[0][0], c2[0][1]-c1[0][1]]
 
-def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
+def _differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
     """
     Differentiates the data visible on the specified axes using
     fun.derivative_fit() (if neighbors > 0), and derivative() otherwise.
@@ -272,7 +272,7 @@ def get_figure_window_geometry(fig='gcf'):
         size = fig.canvas.window().size()
         pos  = fig.canvas.window().pos()
         return [[pos.x(),pos.y()], [size.width(),size.height()]]
-    
+
     else:
         print "get_figure_window_geometry() only implemented for QtAgg backend."
         return None
@@ -308,7 +308,7 @@ def image_format_figure(figure=None, draw=True):
         _pylab.ion()
         _pylab.draw()
 
-def integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
+def _integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
     """
     Numerically integrates the data visible on the current/specified axes using
     scale*fun.integrate_data(x,y). Modifies the visible data using
@@ -611,9 +611,9 @@ def image_set_clim(zmin=None, zmax=None, axes="gca"):
     _pylab.draw()
 
 def image_sliders(image="top", colormap="_last"):
-    return "NO!"    
-    
-    
+    return "NO!"
+
+
 def image_ubertidy(figure="gcf", aspect=1.0, fontsize=18, fontweight='bold', fontname='Arial', ylabel_pad=0.007, xlabel_pad=0.010, colorlabel_pad=0.1, borderwidth=3.0, tickwidth=2.0, window_size=(550,500)):
 
     if figure=="gcf": figure = _pylab.gcf()
@@ -689,83 +689,83 @@ def is_a_number(s):
 
 
 
-#
-#def manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyname=1, clear=1, pause=False, **kwargs):
-#    """
-#    Loops over the visible data on the specified axes and modifies it based on
-#    the function f(xdata, ydata), which must return new_xdata, new_ydata
-#
-#    input_axes  which axes to pull the data from
-#    output_axes which axes to dump the manipulated data (None for new figure)
-#
-#    fxname      the name of the function on x
-#    fyname      the name of the function on y
-#                1 means "use f.__name__"
-#                0 or None means no change.
-#                otherwise specify a string
-#
-#    **kwargs are sent to axes.plot
-#    """
-#
-#    # get the axes
-#    if input_axes == "gca": a1 = _pylab.gca()
-#    else:                   a1 = input_axes
-#
-#    # get the xlimits
-#    xmin, xmax = a1.get_xlim()
-#
-#    # get the name to stick on the x and y labels
-#    if fxname==1: fxname = f.__name__
-#    if fyname==1: fyname = f.__name__
-#
-#    # get the output axes
-#    if output_axes == None:
-#        _pylab.figure(a1.figure.number+1)
-#        a2 = _pylab.axes()
-#    else:
-#        a2 = output_axes
-#
-#    if clear: a2.clear()
-#
-#    # loop over the data
-#    for line in a1.get_lines():
-#        if isinstance(line, _mpl.lines.Line2D):
-#            x, y = line.get_data()
-#            x, y, e = _fun.trim_data(x,y,None,[xmin,xmax])
-#            new_x, new_y = f(x,y)
-#            _xy_data(new_x,new_y, clear=0, label=line.get_label(), draw=pause, **kwargs)
-#            if pause:
-#                format_figure()
-#                raw_input("<enter> ")
-#
-#    # set the labels and title.
-#    if fxname in [0,None]:  a2.set_xlabel(a1.get_xlabel())
-#    else:                   a2.set_xlabel(fxname+"[ "+a1.get_xlabel()+" ]")
-#
-#    if fyname in [0,None]:  a2.set_ylabel(a1.get_ylabel())
-#    else:                   a2.set_ylabel(fyname+"[ "+a1.get_ylabel()+" ]")
-#
-#    _pylab.draw()
-#
-#def manipulate_shown_xdata(fx, fxname=1, **kwargs):
-#    """
-#    This defines a function f(xdata,ydata) returning fx(xdata), ydata and
-#    runs manipulate_shown_data() with **kwargs sent to this. See
-#    manipulate_shown_data() for more info.
-#    """
-#    def f(x,y): return fx(x), y
-#    f.__name__ = fx.__name__
-#    manipulate_shown_data(f, fxname=fxname, fyname=None, **kwargs)
-#
-#def manipulate_shown_ydata(fy, fyname=1, **kwargs):
-#    """
-#    This defines a function f(xdata,ydata) returning xdata, fy(ydata) and
-#    runs manipulate_shown_data() with **kwargs sent to this. See
-#    manipulate_shown_data() for more info.
-#    """
-#    def f(x,y): return x, fy(y)
-#    f.__name__ = fy.__name__
-#    manipulate_shown_data(f, fxname=None, fyname=fyname, **kwargs)
+
+def _manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyname=1, clear=1, pause=False, **kwargs):
+    """
+    Loops over the visible data on the specified axes and modifies it based on
+    the function f(xdata, ydata), which must return new_xdata, new_ydata
+
+    input_axes  which axes to pull the data from
+    output_axes which axes to dump the manipulated data (None for new figure)
+
+    fxname      the name of the function on x
+    fyname      the name of the function on y
+                1 means "use f.__name__"
+                0 or None means no change.
+                otherwise specify a string
+
+    **kwargs are sent to axes.plot
+    """
+
+    # get the axes
+    if input_axes == "gca": a1 = _pylab.gca()
+    else:                   a1 = input_axes
+
+    # get the xlimits
+    xmin, xmax = a1.get_xlim()
+
+    # get the name to stick on the x and y labels
+    if fxname==1: fxname = f.__name__
+    if fyname==1: fyname = f.__name__
+
+    # get the output axes
+    if output_axes == None:
+        _pylab.figure(a1.figure.number+1)
+        a2 = _pylab.axes()
+    else:
+        a2 = output_axes
+
+    if clear: a2.clear()
+
+    # loop over the data
+    for line in a1.get_lines():
+        if isinstance(line, _mpl.lines.Line2D):
+            x, y = line.get_data()
+            x, y, e = _fun.trim_data(x,y,None,[xmin,xmax])
+            new_x, new_y = f(x,y)
+            _xy_data(new_x,new_y, clear=0, label=line.get_label(), draw=pause, **kwargs)
+            if pause:
+                format_figure()
+                raw_input("<enter> ")
+
+    # set the labels and title.
+    if fxname in [0,None]:  a2.set_xlabel(a1.get_xlabel())
+    else:                   a2.set_xlabel(fxname+"[ "+a1.get_xlabel()+" ]")
+
+    if fyname in [0,None]:  a2.set_ylabel(a1.get_ylabel())
+    else:                   a2.set_ylabel(fyname+"[ "+a1.get_ylabel()+" ]")
+
+    _pylab.draw()
+
+def _manipulate_shown_xdata(fx, fxname=1, **kwargs):
+    """
+    This defines a function f(xdata,ydata) returning fx(xdata), ydata and
+    runs manipulate_shown_data() with **kwargs sent to this. See
+    manipulate_shown_data() for more info.
+    """
+    def f(x,y): return fx(x), y
+    f.__name__ = fx.__name__
+    manipulate_shown_data(f, fxname=fxname, fyname=None, **kwargs)
+
+def _manipulate_shown_ydata(fy, fyname=1, **kwargs):
+    """
+    This defines a function f(xdata,ydata) returning xdata, fy(ydata) and
+    runs manipulate_shown_data() with **kwargs sent to this. See
+    manipulate_shown_data() for more info.
+    """
+    def f(x,y): return x, fy(y)
+    f.__name__ = fy.__name__
+    manipulate_shown_data(f, fxname=None, fyname=fyname, **kwargs)
 
 def _print_figures(figures, arguments='', file_format='pdf', target_width=8.5, target_height=11.0, target_pad=0.5):
     """
@@ -913,7 +913,7 @@ def raise_figure_window(f=0):
     """
     if _fun.is_a_number(f): f = _pylab.figure(f)
     f.canvas.manager.window.raise_()
-    
+
 
 def reverse_draw_order(axes="current"):
     """
@@ -1056,7 +1056,7 @@ def set_figure_window_geometry(fig='gcf', position=None, size=None):
 
         if not size == None:
             w.resize(size[0],size[1])
-            
+
         if not position == None:
             w.move(position[0], position[1])
 
@@ -1241,11 +1241,10 @@ def coarsen_line(line, coarsen=1, draw=True):
     ydata = _fun.coarsen_array(ydata, coarsen)
 
     # don't do anything if we don't have any data left
-    if len(ydata) == 0:
-        print "There's nothing left in "+str(line)+"!"
-    else:
-        # otherwise set the data with the new arrays
-        line.set_data(xdata, ydata)
+    if len(ydata) == 0: print "There's nothing left in "+str(line)+"!"
+
+    # otherwise set the data with the new arrays
+    else: line.set_data(xdata, ydata)
 
     # we refresh in real time for giggles
     if draw: _pylab.draw()

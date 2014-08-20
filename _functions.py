@@ -1,73 +1,128 @@
-#############################################################
-# various functions that I like to use
-import numpy                        as _n
-import pylab                        as _pylab
-import cPickle                      as _cPickle
-import os                           as _os
-import thread                       as _thread
-import shutil                       as _shutil
-import wx                           as _wx
-import time                         as _time
+#import wx    as _wx
+import numpy as _n
+import os    as _os
 
-from scipy.integrate import quad
-
-import _dialogs                    ;reload(_dialogs)
-import _pylab_tweaks               ;reload(_pylab_tweaks)
-_pt = _pylab_tweaks
-
-# Functions from other libraries
-average = _n.average
-
-try:    _prefs
-except: _prefs = None
-
-def _print_figures(figures, arguments='', file_format='pdf', target_width=8.5, target_height=11.0, target_pad=0.5):
+def coarsen_array(array, level=1, method='average', keep_trash=True):
     """
-    figure printing loop designed to be launched in a separate thread.
+    Returns a shorter array of averaged / binned data (every level+1 data points).
+
+    method='average'    Can also be, 'min', 'max', or 'quadrature' for coarsening
+                        uncorrelated errors.
+    keep_trash=True     If set to False, the leftover data will be thrown away.
+                        Otherwise, the leftover data will be averaged and
+                        appended to the array.
     """
 
-    for fig in figures:
-        # output the figure to postscript
-        path = _os.path.join(_prefs.temp_dir,"graph."+file_format)
-        
-        # get the dimensions of the figure in inches
-        w=fig.get_figwidth()
-        h=fig.get_figheight()
-        
-        # we're printing to 8.5 x 11, so aim for 7.5 x 10
-        target_height = target_height-2*target_pad
-        target_width  = target_width -2*target_pad
-       
-        # depending on the aspect we scale by the vertical or horizontal value
-        if 1.0*h/w > target_height/target_width:
-            # scale down according to the vertical dimension
-            new_h = target_height
-            new_w = w*target_height/h
-        else:
-            # scale down according to the hozo dimension
-            new_w = target_width
-            new_h = h*target_width/w  
-            
-        fig.set_figwidth(new_w)
-        fig.set_figheight(new_h)
-                
-        # save it
-        fig.savefig(path, bbox_inches=_pylab.matplotlib.transforms.Bbox(
-            [[-target_pad, new_h-target_height-target_pad],
-             [target_width-target_pad, target_height-target_pad]]))
+    if array==None: return None
 
-        # set it back
-        fig.set_figheight(h)
-        fig.set_figwidth(w)
-        
+    # make sure it's a numpy array
+    a = _n.array(array)
 
-        if not arguments == '':
-            c = _prefs['print_command'] + ' ' + arguments + ' "' + path + '"'
-        else:
-            c = _prefs['print_command'] + ' "' + path + '"'
+    # quick return if no calculation necessary
+    if level < 1: return a
 
-        print c
-        _os.system(c)
+    # make sure it's divisible by the level+1
+
+    # get the leftovers
+    leftovers = a[len(a)-len(a)%(level+1):]
+
+    # truncate a
+    a = a[0:len(a)-len(a)%(level+1)]
+
+    # average method
+    if method == 'average':
+        # s is the output array
+        s = a[0:len(a):level+1]
+
+        # sum the values
+        for n in range(1,level+1): s = s + a[n:len(a):level+1]
+
+        # divide by number of elements
+        s = s/(level+1.0)
+
+        # append the trash point
+        if keep_trash and len(leftovers)>0:
+            s = _n.append(s,_n.average(leftovers))
+
+    elif method == 'max':
+        # s is the output array
+        s = a[0:len(a):level+1]
+
+        # sum the values
+        for n in range(1,level+1): s = _n.maximum(s, a[n:len(a):level+1])
+
+        # append the trash point
+        if keep_trash and len(leftovers)>0:
+            s = _n.append(s,max(leftovers))
+
+    elif method == 'min':
+        # s is the output array
+        s = a[0:len(a):level+1]
+
+        # sum the values
+        for n in range(1,level+1): s = _n.minimum(s, a[n:len(a):level+1])
+
+        # append the trash point
+        if keep_trash and len(leftovers)>0:
+            s = _n.append(s,min(leftovers))
+
+    # quadrature method
+    else:
+        # sum the values squared
+        s = a[0:len(a):level+1]**2
+        for n in range(1,level+1): s = s + a[n:len(a):level+1]**2
+
+        # divide by number of elements
+        s = _n.sqrt(s/(level+1.0))
+
+        # append the trash point
+        if keep_trash and len(leftovers)>0:
+            s = _n.append(s,_n.sqrt(_n.average(leftovers**2)))
+
+    return s
+
+def erange(start, end, steps):
+    """
+    Returns a numpy array over the specified range taking geometric steps.
+
+    See also numpy.logspace()
+    """
+    if start == 0:
+        print "Nothing you multiply zero by gives you anything but zero. Try picking something small."
+        return None
+    if end == 0:
+        print "It takes an infinite number of steps to get to zero. Try a small number?"
+        return None
+
+    # figure out our multiplication scale
+    x = (1.0*end/start)**(1.0/(steps-1))
+
+    # now generate the array
+    ns = _n.array(range(0,steps))
+    a =  start*_n.power(x,ns)
+
+    # tidy up the last element (there's often roundoff error)
+    a[-1] = end
+
+    return a
+
+def is_a_number(s):
+    """
+    This takes an object and determines whether it's a number or a string
+    representing a number.
+    """
+
+    if is_iterable(s): return False
+
+    try: complex(s);   return True
+    except:            return False
+
+def is_iterable(a):
+    """
+    Test if something is iterable.
+    """
+    return hasattr(a, '__iter__')
+
 
 
 def append_to_file(path, string):
@@ -125,10 +180,6 @@ def assemble_covariance(error, correlation):
         for m in range(0, len(error)):
             covariance[n].append(correlation[n][m]*error[n]*error[m])
     return _n.array(covariance)
-def avg(array):
-    return(float(sum(array))/float(len(array)))
-
-
 
 
 
@@ -138,83 +189,8 @@ def avg(array):
 def chi_squared(p, f, xdata, ydata):
     return(sum( (ydata - f(p,xdata))**2 ))
 
-def coarsen_array(array, level=1, method='average'):
-    """
-    Returns a shorter array of binned data (every level+1 data points).
-    
-    method can be 'average', 'max', 'min', or 'all'
-                  'all' returns (average, max, min)
-                  
-    returns a new array.
-    """
-
-    if level is 0 or array==None: return array
-
-    # we do all of them for speed reasons (no string comparison at each step)
-    average = _n.array(array[0::level+1])
-    maximum = _n.array(array[0::level+1])
-    minimum = _n.array(array[0::level+1])
-    
-    temp = _n.array([0.0]); temp.resize(level+1)
-
-    # loop over 0, 2, 4, ...
-    for n in range(0, len(array), level+1):
-        
-        # loop over this bin
-        for m in range(n, n+level+1):
-            # make sure we're not past the end of the array
-            if m < len(array):    temp[m-n] = array[m]
-            # otherwise give it a useful value (the average of the others)
-            else:                 temp[m-n] = _n.average(temp[0:m-n])
-        
-        # append the average to the new array
-        average[n/(level+1)] = _n.average(temp)
-        maximum[n/(level+1)] = _n.max(temp)
-        minimum[n/(level+1)] = _n.min(temp)
-        
-    if method=="average": return average
-    if method=="min"    : return minimum
-    if method=="max"    : return maximum
-    else                : return average, maximum, minimum
 
 
-
-def coarsen_data(xdata, ydata, yerror=None, level=1):
-    """
-    This does averaging of the data, returning coarsened (numpy) [xdata, ydata, yerror]
-    Errors are averaged in quadrature.
-    """
-
-    new_xdata = []
-    new_ydata = []
-    new_error = []
-
-    # if level = 1, loop over 0, 2, 4, ...
-    for n in range(0, len(xdata), level+1):
-        count = 0.0
-        sumx  = 0.0
-        sumy  = 0.0
-        sume2 = 0.0 # sum squared
-
-        # if n==2, loop 2, 3
-        for m in range(n, n+level+1):
-            if m < len(xdata):
-                sumx  += xdata[m]
-                sumy  += ydata[m]
-                try:
-                    sume2 += yerror[m]**2
-                except:
-                    sume2 = 1.0
-                count += 1.0
-
-        new_xdata.append(sumx/count)
-        new_ydata.append(sumy/count)
-        new_error.append(sume2**0.5/count)
-
-    xdata = _n.array(new_xdata)
-    ydata = _n.array(new_ydata)
-    if not yerror==None: yerror = _n.array(new_error)
-    return [xdata,ydata,yerror]
 
 
 
@@ -222,25 +198,25 @@ def coarsen_data(xdata, ydata, yerror=None, level=1):
 def coarsen_matrix(Z, xlevel=0, ylevel=0, method='average'):
     """
     This returns a coarsened numpy matrix.
-    
-    method can be 'average', 'max', or 'min'
+
+    method can be 'average', 'maximum', or 'minimum'
     """
-    
+
     # coarsen x
-    if not ylevel: 
+    if not ylevel:
         Z_coarsened = Z
     else:
-        temp = []        
+        temp = []
         for z in Z: temp.append(coarsen_array(z, ylevel, method))
-        Z_coarsened = _n.array(temp)    
-    
+        Z_coarsened = _n.array(temp)
+
     # coarsen y
     if xlevel:
         Z_coarsened = Z_coarsened.transpose()
         temp = []
         for z in Z_coarsened: temp.append(coarsen_array(z, xlevel, method))
         Z_coarsened = _n.array(temp).transpose()
-    
+
     return Z_coarsened
 
 
@@ -491,30 +467,6 @@ def elements_are_strings(array, start_index=0, end_index=-1):
         if not type(array[n]) == str: return 0
     return 1
 
-def erange(start, end, steps):
-    """
-    Returns a numpy array over the specified range taking geometric steps.
-
-    See also numpy.logspace()
-    """
-    if start == 0:
-        print "Nothing you multiply zero by gives you anything but zero. Try picking something small."
-        return None
-    if end == 0:
-        print "It takes an infinite number of steps to get to zero. Try a small number?"
-        return None
-
-    # figure out our multiplication scale
-    x = (1.0*end/start)**(1.0/(steps-1))
-
-    # now generate the array
-    ns = _n.array(range(0,steps))
-    a =  start*_n.power(x,ns)
-
-    # tidy up the last element (there's often roundoff error)
-    a[-1] = end
-
-    return a
 
 
 def find_N_peaks(array, N=4, max_iterations=100, rec_max_iterations=3, recursion=1):
@@ -757,6 +709,40 @@ def frange(start, end, inc=1.0):
     return start + ns*inc
 
 
+def get_shell_history():
+    """
+    This only works with some shells.
+    """
+    # try for ipython
+    if 'get_ipython' in globals():
+        a = list(get_ipython().history_manager.input_hist_raw)
+        a.reverse()
+        return a
+
+    elif _os.environ.has_key('SPYDER_SHELL_ID'):
+        try:
+            p = _os.path.join(_settings.path_user, ".spyder2", ".history.py")
+            a = read_lines(p)
+            a.reverse()
+            return a
+        except:
+            pass
+
+    # otherwise try pyshell or pycrust (requires wx)
+    else:
+        try:
+            import wx
+            for x in wx.GetTopLevelWindows():
+                if type(x) in [wx.py.shell.ShellFrame, wx.py.crust.CrustFrame]:
+                    a = x.shell.GetText().split(">>>")
+                    a.reverse()
+                    return a
+        except:
+            pass
+
+    return ['shell history not available']
+
+
 def imax(array):
     """
     Returns the index of the maximum of array.
@@ -817,36 +803,6 @@ def insert_ordered(value, array):
     array.insert(index, value)
     return index
 
-def integrate(f, x1, x2):
-    """
-    f(x) = ...
-    integrated from x1 to x2
-    """
-
-    return quad(f, x1, x2)[0]
-
-def integrate2d(f, x1, x2, y1, y2):
-    """
-    f(x,y) = ...
-    integrated from x1 to x2, y1 to y2
-    """
-    def fx(y):
-        def g(x): return f(x,y)
-        return integrate(g, x1, x2)
-
-    return quad(fx, y1, y2)[0]
-
-def integrate3d(f, x1, x2, y1, y2, z1, z2):
-    """
-    f(x,y,z) = ...
-    integrated from x1 to x2, y1 to y2, z1 to z2
-    """
-
-    def fxy(z):
-        def g(x,y): return f(x,y,z)
-        return(integrate2d(g, x1, x2, y1, y2))
-
-    return quad(fxy, z1, z2)[0]
 
 
 
@@ -950,12 +906,6 @@ def invert_increasing_function(f, f0, xmin, xmax, tolerance, max_iterations=100)
     print "Couldn't find value!"
     return 0.5*(xmin+xmax)
 
-def is_a_number(s):
-    try: float(s); return True
-    except:
-        try: complex(s); return True
-        except: return False
-
 
 def is_close(x, array, fraction=0.0001):
     """
@@ -975,11 +925,7 @@ def is_close(x, array, fraction=0.0001):
 
     return(result)
 
-def is_iterable(a):
-    """
-    Test if something is iterable.
-    """
-    return hasattr(a, '__iter__')
+
 
 
 
@@ -1005,55 +951,6 @@ def load_object(path="ask", text="Load a pickled object."):
     object._path = path
     return object
 
-def printer(figure='gcf', arguments='', threaded=False, file_format='pdf'):
-    """
-    Quick function that saves the specified figure as a postscript and then
-    calls the command defined by spinmob.prefs['print_command'] with this
-    postscript file as the argument.
-
-    figure='gcf'    can be 'all', a number, or a list of numbers
-    """
-
-    global _prefs
-
-    if not _prefs.has_key('print_command'):
-        print "No print command setup. Set the user variable prefs['print_command']."
-        return
-
-    if   figure=='gcf': figure=[_pylab.gcf().number]
-    elif figure=='all': figure=_pylab.get_fignums()
-    if not getattr(figure,'__iter__',False): figure = [figure]
-
-    print "figure numbers in queue:", figure
-
-    figures=[]
-    for n in figure: figures.append(_pylab.figure(n))
-
-    # now run the ps printing command
-    if threaded:
-        # store the canvas type of the last figure
-        canvas_type = type(figures[-1].canvas)        
-        
-        # launch the aforementioned function as a separate thread
-        _thread.start_new_thread(_print_figures, (figures,arguments,file_format,))
-
-        # wait until the thread is running
-        _time.sleep(0.25)
-
-        # wait until the canvas type has returned to normal
-        t0 = _time.time()
-        while not canvas_type == type(figures[-1].canvas) and _time.time()-t0 < 5.0: 
-            _time.sleep(0.1)
-        if _time.time()-t0 >= 5.0:
-            print "WARNING: Timed out waiting for canvas to return to original state!"
-
-        # bring back the figure and command line
-        _pylab.draw()
-        _pylab_tweaks.get_pyshell()
-
-    else:   
-        _print_figures(figures, arguments, file_format)
-        _pylab.draw()
 
 
 def psd(t, y, pow2=False, window=None):
@@ -1099,7 +996,7 @@ def psd(t, y, pow2=False, window=None):
     P = _n.real(fft*fft.conj())
     P = P / len(y)**2
 
-    Fpos = psdfreq(t, pow2=False)
+    Fpos = psdfreq(t, pow2=pow2)
     Ppos = P[0:len(P)/2] + P[0:-len(P)/2]
     Ppos[0] = Ppos[0]/2.0
 
@@ -1107,6 +1004,51 @@ def psd(t, y, pow2=False, window=None):
     Ppos  = Ppos/(Fpos[1]-Fpos[0])
 
     return Fpos, Ppos
+
+def fft(t, y, pow2=False, window=None):
+    """
+    FFT of y, assuming complex or real-valued inputs.
+
+    This goes through the numpy fourier transform process, assembling and returning
+    (frequencies, complex fft) given time and signal data y.
+
+    powers_of_2     Set this to true if you only want to keep the first 2^n data
+                    points (speeds up the FFT substantially)
+
+    window          can be set to any of the windowing functions in numpy,
+                    e.g. window="hanning"
+    """
+    # make sure they're numpy arrays
+    y = _n.array(y)
+
+    # if we're doing the power of 2, do it
+    if pow2:
+        keep  = 2**int(_n.log2(len(y)))
+
+        # now resize the data
+        y.resize(keep)
+        t.resize(keep)
+
+    # try to get the windowing function
+    w = None
+    if window:
+        try:
+            w = eval("_n."+window, globals())
+        except:
+            print "ERROR: Bad window!"
+            return
+
+    # apply the window
+    if w:
+        a = w(len(y))
+        y = len(y) * a * y / sum(a)
+
+    # do the actual fft, and normalize
+    fft = _n.fft.fft(y) / len(t)
+
+    f = _n.fft.fftfreq(len(t), t[1]-t[0])
+
+    return _n.concatenate([f[len(f)/2+1:],f[0:len(f)/2]]) , _n.concatenate([fft[len(fft)/2+1:],fft[0:len(fft)/2]])
 
 def psdfreq(t, pow2=False):
     """
@@ -1130,8 +1072,6 @@ def read_lines(path):
     f.close()
 
     return(a)
-
-
 
 def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
     """
@@ -1165,6 +1105,7 @@ def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
             replace_in_files(search,replace,depth,paths,False)
 
     return
+
 def replace_lines_in_files(search_string, replacement_line):
     """
     Finds lines containing the search string and replaces the whole line with
@@ -1220,8 +1161,6 @@ def shift_feature_to_x0(xdata, ydata, x0=0, feature=imax):
     i = feature(ydata)
     return xdata-xdata[i]+x0, ydata
 
-
-
 def smooth(array, index, amount):
     """
 
@@ -1246,7 +1185,6 @@ def smooth(array, index, amount):
 
     return(sum/count)
 
-
 def smooth_array(array, amount=1):
     """
 
@@ -1265,7 +1203,6 @@ def smooth_array(array, amount=1):
 
     return new_array
 
-
 def smooth_data(xdata, ydata, yerror, amount=1):
     """
     Returns smoothed [xdata, ydata, yerror]. Does not destroy the input arrays.
@@ -1278,8 +1215,6 @@ def smooth_data(xdata, ydata, yerror, amount=1):
 
     return [new_xdata, new_ydata, new_yerror]
 
-
-
 def sort_matrix(a,n=0):
     """
     This will rearrange the array a[n] from lowest to highest, and
@@ -1289,7 +1224,6 @@ def sort_matrix(a,n=0):
     """
     a = _n.array(a)
     return a[:,a[n,:].argsort()] # this is magic.
-
 
 def submatrix(matrix,i1,i2,j1,j2):
     """
@@ -1303,34 +1237,30 @@ def submatrix(matrix,i1,i2,j1,j2):
         new.append(matrix[i][j1:j2+1])
     return _n.array(new)
 
-
-
-
-
-
-def trim_data(xdata, ydata, yerror, xrange):
+def trim_data(xmin, xmax, xdata, *args):
     """
-    Removes all the data except that between min(xrange) and max(xrange)
+    Removes all the data except that between xmin and xmax, assuming xdata is
+    increasing sorted.
+
     This does not destroy the input arrays.
+
+    Additional arguments must be arrays matching xdata in length.
     """
 
-    if xrange == None: return [_n.array(xdata), _n.array(ydata), _n.array(yerror)]
+    # make sure we handle the Nones
+    if xmin==None: xmin = min(xdata) - 1
+    if xmax==None: xmax = max(xdata) + 1
 
-    xmax = max(xrange)
-    xmin = min(xrange)
+    # Find the indices spanning the range
+    x = _n.array(xdata)
+    i1 = x.searchsorted(xmin, 'left')
+    i2 = x.searchsorted(xmax, 'right')
 
-    x = []
-    y = []
-    ye= []
-    for n in range(0, len(xdata)):
-        if xdata[n] >= xmin and xdata[n] <= xmax:
-            x.append(xdata[n])
-            y.append(ydata[n])
-            if not yerror == None: ye.append(yerror[n])
+    # trim the args data
+    output = [x[i1:i2]]
+    for n in range(len(args)): output.append(_n.array(args[n])[i1:i2])
 
-    if yerror == None: ye = None
-    else: ye = _n.array(ye)
-    return [_n.array(x), _n.array(y), ye]
+    return tuple(output)
 
 def ubersplit(s, delimiters=['\t','\r',' ']):
 
