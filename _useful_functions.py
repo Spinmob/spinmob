@@ -267,24 +267,6 @@ def data_to_file(path, xarray, yarray, delimiter=" ", mode="w"):
 
 
 
-def decompose_covariance(c):
-    """
-    This decomposes a covariance matrix into an error vector and a correlation matrix
-    """
-
-    # make it a kickass copy of the original
-    c = _n.array(c)
-
-    # first get the error vector
-    e = []
-    for n in range(0, len(c[0])): e.append(_n.sqrt(c[n][n]))
-
-    # now cycle through the matrix, dividing by e[1]*e[2]
-    for n in range(0, len(c[0])):
-        for m in range(0, len(c[0])):
-            c[n][m] = c[n][m] / (e[n]*e[m])
-
-    return [_n.array(e), _n.array(c)]
 
 def derivative(xdata, ydata):
     """
