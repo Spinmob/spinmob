@@ -247,7 +247,7 @@ def format_figure(figure=None, tall=False, draw=True):
 
 def get_figure_window(figure='gcf'):
     """
-    This will search through the wx windows and return the one containing the figure
+    This will search through the windows and return the one containing the figure
     """
 
     if figure == 'gcf': figure = _pylab.gcf()
