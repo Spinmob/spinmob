@@ -1,7 +1,7 @@
 Overview
 ========
 
-Spinmob is a scientific data analysis and plotting package I wrote during graduate school (and have since been making less and less studip <-- actual typo I decided to leave in) to move past expensive, buggy, poorly-documented programs like Origin, weaker programs like Excel. It turns out python is just awesomer than everything else, and it behaves the same on all computers for free. Ultimately, this plus Inkscape were all I needed to go from data to publication. In upcoming releases I will also add what my lab uses to take data.
+Spinmob is a scientific data analysis and plotting package I wrote during graduate school (and have since been making less and less studip ← actual typo I decided to leave in) to move past expensive, buggy, poorly-documented programs like Origin, weaker programs like Excel. It turns out python is just awesomer than everything else, and it behaves the same on all computers for free. Ultimately, this plus Inkscape were all I needed to go from data to publication. In upcoming releases I will also add what my lab uses to take data.
 
 The main features are 
 
