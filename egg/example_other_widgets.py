@@ -1,5 +1,5 @@
 import numpy as _n          # This library adds all kinds of numerical functions
-import egg                  # this is our graphical window builder
+import spinmob.egg as egg   # this is our graphical window builder
 
 
 

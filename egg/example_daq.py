@@ -1,6 +1,6 @@
 import numpy as _n
 import time  as _t
-import egg
+import spinmob.egg as egg
 
 
 

@@ -1,8 +1,9 @@
 import time     as _t
-import _data    as _d
 import os       as _os
 import numpy    as _n
-import egg      as _egg
+
+import spinmob as _spinmob
+_d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
@@ -333,7 +334,7 @@ class BaseObject():
 
     def block_signals(self):
         """
-        Prevents the widget from sending signals. 
+        Prevents the widget from sending signals.
         """
         self._widget.blockSignals(True)
 
@@ -408,7 +409,7 @@ class Button(BaseObject):
     def set_checked(self, value=True, block_signals=False):
         """
         This will set whether the button is checked.
-        
+
         Setting block_signals=True will temporarily disable signals
         from the button when setting the value.
         """
@@ -491,7 +492,7 @@ class NumberBox(BaseObject):
     def set_value(self, value, block_signals=False):
         """
         Sets the current value of the number box.
-        
+
         Setting block_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
@@ -630,7 +631,7 @@ class Table(BaseObject):
         """
         Sets the value at column, row. This will create elements dynamically,
         and in a totally stupid while-looping way.
-        
+
         Setting block_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
@@ -1199,12 +1200,12 @@ class TreeDictionary(BaseObject):
     def set_value(self, name, value, block_signals=False, ignore_error=False):
         """
         Sets the variable of the supplied name to the supplied value.
-        
+
         Setting block_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
         if block_signals: self.block_signals()
-        
+
         # first clean up the name
         name = self._clean_up_name(name)
 
@@ -1223,7 +1224,7 @@ class TreeDictionary(BaseObject):
         else: x.setValue(value)
 
         if block_signals: self.unblock_signals()
-        
+
         return self
 
     __setitem__ = set_value
@@ -1345,7 +1346,7 @@ class DataboxWithButtons(_d.databox, GridLayout):
         Function you should overwrite for what to do after loading a file.
         """
         return
-    
+
     def pre_load(self):
         """
         Function you should overwrite if you want to do something prior to loading.
@@ -1462,7 +1463,7 @@ class DataboxPlot(GridLayout):
 
         # load settings if a settings file exists and initialize
         self.load_gui_settings()
-        
+
 
     def _button_multi_clicked(self):    self.save_gui_settings()
     def _button_enabled_clicked(self):  self.save_gui_settings()

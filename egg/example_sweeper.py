@@ -1,6 +1,6 @@
 import numpy as _n
 import time  as _t
-import egg
+import spinmob.egg as egg
 
 
 
@@ -29,8 +29,8 @@ t_raw = tabs.add_tab("Raw Plots")
 
 # add a databox plotter object to the tab
 data_raw = t_raw.add_object(egg.gui.DataboxWithButtons(), alignment=0)
-plot_ms  = t_raw.add_object(egg.pyqtgraph.PlotWidget(), 0,1, alignment=0)
-plot_ps  = t_raw.add_object(egg.pyqtgraph.PlotWidget(), 0,2, alignment=0)
+plot_ms  = t_raw.add_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Magnitude')), 0,1, alignment=0)
+plot_ps  = t_raw.add_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Phase')),     0,2, alignment=0)
 
 # link the axes
 plot_ps.plotItem.setXLink(plot_ms.plotItem)
@@ -47,8 +47,6 @@ settings.add_parameter('sweep/x_steps', 200, type='float')
 
 
 ##### DATA OBJECTS
-
-# add various parameters to use later
 
 # load previous settings if they exist
 settings.load()

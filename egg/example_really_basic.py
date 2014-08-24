@@ -1,4 +1,4 @@
-import egg
+import spinmob.egg as egg
 
 # Create a window with the title 'Hello World!'
 w = egg.gui.Window('Hello World!')
