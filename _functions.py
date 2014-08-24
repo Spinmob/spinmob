@@ -1,6 +1,8 @@
 #import wx    as _wx
-import numpy as _n
-import os    as _os
+import numpy   as _n
+import os      as _os
+import shutil  as _shutil
+import spinmob as _s
 
 def coarsen_array(array, level=1, method='average', keep_trash=True):
     """
@@ -669,11 +671,10 @@ def fit_linear(xdata, ydata):
     x = xdata
     y = ydata
 
-    ax  = avg(x)
-    ay  = avg(y)
-    axx = avg(x*x)
-    ayy = avg(y*y)
-    ayx = avg(y*x)
+    ax  = _n.average(x)
+    ay  = _n.average(y)
+    axx = _n.average(x*x)
+    ayx = _n.average(y*x)
 
     slope     = (ayx - ay*ax) / (axx - ax*ax)
     intercept = ay - slope*ax
@@ -940,8 +941,8 @@ def join(array_of_strings, delimiter=' '):
     return(output)
 
 
-def load_object(path="ask", text="Load a pickled object."):
-    if path=="ask": path = _dialogs.SingleFile("*.pickle", text=text)
+def _load_object(path="ask", text="Load a pickled object."):
+    if path=="ask": path = _s.dialogs.SingleFile("*.pickle", text=text)
     if path == "": return None
 
     f = open(path, "r")
@@ -1080,7 +1081,7 @@ def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
 
     # have the user select some files
     if paths=="ask":
-        paths = _dialogs.MultipleFiles('DIS AND DAT|*.*')
+        paths = _s.dialogs.MultipleFiles('DIS AND DAT|*.*')
     if paths == []: return
 
     for path in paths:
@@ -1093,7 +1094,6 @@ def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
             if lines[n].find(search) >= 0:
                 lines[n] = lines[n].replace(search,replace)
                 print path.split(_os.path.pathsep)[-1]+ ': "'+lines[n]+'"'
-                _wx.Yield()
 
         # only write if we're not confirming
         if not confirm:
@@ -1114,7 +1114,7 @@ def replace_lines_in_files(search_string, replacement_line):
 
 
     # have the user select some files
-    paths = _dialogs.MultipleFiles('DIS AND DAT|*.*')
+    paths = _s.dialogs.MultipleFiles('DIS AND DAT|*.*')
     if paths == []: return
 
     for path in paths:
@@ -1136,8 +1136,8 @@ def reverse(array):
     l.reverse()
     return _n.array(l)
 
-def save_object(object, path="ask", text="Save this object where?"):
-    if path=="ask": path = _dialogs.Save("*.pickle", text=text)
+def _save_object(object, path="ask", text="Save this object where?"):
+    if path=="ask": path = _s.dialogs.Save("*.pickle", text=text)
     if path == "": return
 
     if len(path.split(".")) <= 1 or not path.split(".")[-1] == "pickle":

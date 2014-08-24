@@ -1,9 +1,12 @@
 import os                as _os
 import pylab             as _pylab
+import time              as _time
+import thread            as _thread
 import matplotlib        as _mpl
 import numpy             as _n
-import _functions as _fun
+import _functions        as _fun
 import _pylab_colormap
+import spinmob           as _s
 
 image_colormap = _pylab_colormap.colormap_interface
 
@@ -144,7 +147,7 @@ def click_estimate_difference():
 
     return [c2[0][0]-c1[0][0], c2[0][1]-c1[0][1]]
 
-def _differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
+def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
     """
     Differentiates the data visible on the specified axes using
     fun.derivative_fit() (if neighbors > 0), and derivative() otherwise.
@@ -156,7 +159,7 @@ def _differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
     else:
         def D(x,y): return _fun.derivative(x,y)
 
-    if fyname==1: fyname = str(neighbors)+'-neighbor D'
+    if fyname==1: fyname = '$\\partial_{x(\\pm'+str(neighbors)+')}$'
 
     manipulate_shown_data(D, fxname=None, fyname=fyname, **kwargs)
 
@@ -307,29 +310,6 @@ def image_format_figure(figure=None, draw=True):
     if draw:
         _pylab.ion()
         _pylab.draw()
-
-def _integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
-    """
-    Numerically integrates the data visible on the current/specified axes using
-    scale*fun.integrate_data(x,y). Modifies the visible data using
-    manipulate_shown_data(**kwargs)
-
-    autozero is the number of data points used to estimate the background
-    for subtraction. If autozero = 0, no background subtraction is performed.
-    """
-
-    def I(x,y):
-        xout, iout = _fun.integrate_data(x,y, autozero=autozero)
-        print "Total =", scale*iout[-1]
-        return xout, scale*iout
-
-    if fyname==1: fyname = str(scale)+" * Integral"
-
-    manipulate_shown_data(I, fxname=None, fyname=fyname, **kwargs)
-
-
-
-
 
 def impose_legend_limit(limit=30, axes="gca", **kwargs):
     """
@@ -681,6 +661,25 @@ def image_ubertidy(figure="gcf", aspect=1.0, fontsize=18, fontweight='bold', fon
     _pylab.draw()
 
 
+def integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
+    """
+    Numerically integrates the data visible on the current/specified axes using
+    scale*fun.integrate_data(x,y). Modifies the visible data using
+    manipulate_shown_data(**kwargs)
+
+    autozero is the number of data points used to estimate the background
+    for subtraction. If autozero = 0, no background subtraction is performed.
+    """
+
+    def I(x,y):
+        xout, iout = _fun.integrate_data(x, y, autozero=autozero)
+        print "Total =", scale*iout[-1]
+        return xout, scale*iout
+
+    if fyname==1: fyname = "$"+str(scale)+"\\times \\int dx$"
+
+    manipulate_shown_data(I, fxname=None, fyname=fyname, **kwargs)
+
 
 
 def is_a_number(s):
@@ -690,7 +689,7 @@ def is_a_number(s):
 
 
 
-def _manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyname=1, clear=1, pause=False, **kwargs):
+def manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyname=1, clear=1, pause=False, **kwargs):
     """
     Loops over the visible data on the specified axes and modifies it based on
     the function f(xdata, ydata), which must return new_xdata, new_ydata
@@ -711,6 +710,8 @@ def _manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyna
     if input_axes == "gca": a1 = _pylab.gca()
     else:                   a1 = input_axes
 
+
+
     # get the xlimits
     xmin, xmax = a1.get_xlim()
 
@@ -729,25 +730,37 @@ def _manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fyna
 
     # loop over the data
     for line in a1.get_lines():
+
+        # if it's a line, do the manipulation
         if isinstance(line, _mpl.lines.Line2D):
+
+            # get the data
             x, y = line.get_data()
-            x, y, e = _fun.trim_data(x,y,None,[xmin,xmax])
+
+            # trim the data according to the current zoom level
+            x, y = _fun.trim_data(xmin, xmax, x, y)
+
+            # do the manipulation
             new_x, new_y = f(x,y)
-            _xy_data(new_x,new_y, clear=0, label=line.get_label(), draw=pause, **kwargs)
+
+            # plot the new
+            _s.plot.xy.data(new_x, new_y, clear=0, label=line.get_label().replace("_", "-"), axes=a2, **kwargs)
+
+            # pause after each curve if we're supposed to
             if pause:
-                format_figure()
+                _pylab.draw()
                 raw_input("<enter> ")
 
     # set the labels and title.
     if fxname in [0,None]:  a2.set_xlabel(a1.get_xlabel())
-    else:                   a2.set_xlabel(fxname+"[ "+a1.get_xlabel()+" ]")
+    else:                   a2.set_xlabel(fxname+"("+a1.get_xlabel()+")")
 
     if fyname in [0,None]:  a2.set_ylabel(a1.get_ylabel())
-    else:                   a2.set_ylabel(fyname+"[ "+a1.get_ylabel()+" ]")
+    else:                   a2.set_ylabel(fyname+"("+a1.get_ylabel()+")")
 
     _pylab.draw()
 
-def _manipulate_shown_xdata(fx, fxname=1, **kwargs):
+def manipulate_shown_xdata(fx, fxname=1, **kwargs):
     """
     This defines a function f(xdata,ydata) returning fx(xdata), ydata and
     runs manipulate_shown_data() with **kwargs sent to this. See
@@ -757,7 +770,7 @@ def _manipulate_shown_xdata(fx, fxname=1, **kwargs):
     f.__name__ = fx.__name__
     manipulate_shown_data(f, fxname=fxname, fyname=None, **kwargs)
 
-def _manipulate_shown_ydata(fy, fyname=1, **kwargs):
+def manipulate_shown_ydata(fy, fyname=1, **kwargs):
     """
     This defines a function f(xdata,ydata) returning xdata, fy(ydata) and
     runs manipulate_shown_data() with **kwargs sent to this. See
@@ -867,7 +880,6 @@ def instaprint(figure='gcf', arguments='', threaded=False, file_format='pdf'):
 
         # bring back the figure and command line
         _pylab.draw()
-        _pylab_tweaks.get_pyshell()
 
     else:
         _print_figures(figures, arguments, file_format)
@@ -1561,7 +1573,7 @@ def export_figure(dpi=200, figure="gcf", path="ask"):
     """
     if figure=="gcf": figure = _pylab.gcf()
 
-    if path=="ask": path = _dialogs.Save("*.*", default_directory="save_plot_default_directory")
+    if path=="ask": path = _s.dialogs.Save("*.*", default_directory="save_plot_default_directory")
 
     if path=="":
         print "aborted."
@@ -1577,7 +1589,7 @@ def save_plot(axes="gca", path="ask"):
     global line_attributes
 
     # choose a path to save to
-    if path=="ask": path = _dialogs.Save("*.plot", default_directory="save_plot_default_directory")
+    if path=="ask": path = _s.dialogs.Save("*.plot", default_directory="save_plot_default_directory")
 
     if path=="":
         print "aborted."
@@ -1619,7 +1631,7 @@ def save_figure_raw_data(figure="gcf", **kwargs):
     """
 
     # choose a path to save to
-    path = _dialogs.Save(**kwargs)
+    path = _s.dialogs.Save(**kwargs)
     if path=="": return "aborted."
 
     # if no argument was given, get the current axes
@@ -1647,7 +1659,7 @@ def save_figure_raw_data(figure="gcf", **kwargs):
 
 def load_plot(clear=1, offset=0, axes="gca"):
     # choose a path to load the file from
-    path = _dialogs.SingleFile("*.*", default_directory="save_plot_default_directory")
+    path = _s.dialogs.SingleFile("*.*", default_directory="save_plot_default_directory")
 
     if path=="": return
 
@@ -1942,5 +1954,6 @@ class style_cycle:
 style = style_cycle(colors     = ['k','r','b','g','m'],
                     markers    = ['o', '^', 's'],
                     linestyles = ['-'])
+
 
 
