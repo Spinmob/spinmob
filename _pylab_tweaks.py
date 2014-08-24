@@ -2,7 +2,7 @@ import os                as _os
 import pylab             as _pylab
 import matplotlib        as _mpl
 import numpy             as _n
-import _useful_functions as _fun
+import _functions as _fun
 import _pylab_colormap
 
 image_colormap = _pylab_colormap.colormap_interface

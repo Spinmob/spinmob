@@ -4,7 +4,7 @@ import numpy        as _n
 import itertools    as _itertools
 import time         as _time
 
-import _useful_functions as _fun
+import _functions as _fun
 import _pylab_tweaks     as _pt
 import _data             as _data
 
