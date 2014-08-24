@@ -1,22 +1,20 @@
 import os   as _os
-import glob as _glob
 import matplotlib   as _mpl
 import pylab        as _pylab
 import PyQt4.QtGui  as _qt
 import PyQt4.QtCore as _qtcore
 from functools import partial as _partial
-import time as _time
 import _pylab_tweaks
 
 
 # make sure we have an application
 if __name__ == '__main__':
-    _qtapp = _qtcore.QCoreApplication.instance()    
-    
-    if not _qtapp: 
-        print "_pylab_colormap.py: Creating QApplication"        
+    _qtapp = _qtcore.QCoreApplication.instance()
+
+    if not _qtapp:
+        print "_pylab_colormap.py: Creating QApplication"
         _qtapp = _qt.QApplication(_os.sys.argv)
-    
+
     import _settings
     _settings = _settings.settings()
 
@@ -66,7 +64,7 @@ class colormap():
         if name == "" or not type(name)==str: return "Error: Bad name."
 
         # assemble the path to the colormap
-        path = _os.path.join(_settings.path_colormaps, name+".cmap")
+        path = _os.path.join(_settings.path_home, "colormaps", name+".cmap")
 
         # make sure the file exists
         if not _os.path.exists(path):
@@ -92,14 +90,20 @@ class colormap():
 
     def save_colormap(self, name=None):
         """
-        Saves the colormap with the specified name. None means use internal 
+        Saves the colormap with the specified name. None means use internal
         name. (See get_name())
         """
         if name == None: name = self.get_name()
         if name == "" or not type(name)==str: return "Error: invalid name."
 
+        # get the colormaps directory
+        colormaps = _os.path.join(_settings.path_home, 'colormaps')
+
+        # make sure we have the colormaps directory
+        _settings.MakeDir(colormaps)
+
         # assemble the path to the colormap
-        path = _os.path.join(_settings.path_colormaps, name+".cmap")
+        path = _os.path.join(_settings.path_home, 'colormaps', name+".cmap")
 
         # open the file and overwrite
         f = open(path, 'w')
@@ -117,7 +121,7 @@ class colormap():
         if name == "" or not type(name)==str: return "Error: invalid name."
 
         # assemble the path to the colormap
-        path = _os.path.join(_settings.path_colormaps, name+".cmap")
+        path = _os.path.join(_settings.path_home, 'colormaps', name+".cmap")
         _os.unlink(path)
 
         return self
@@ -257,7 +261,7 @@ class colormap_interface(colormap):
         # create the main window
         self._window = _qt.QMainWindow()
         self._window.setWindowTitle("Colormap")
-        
+
         # main widget inside window
         self._central_widget = _qt.QWidget()
         self._window.setCentralWidget(self._central_widget)
@@ -271,7 +275,7 @@ class colormap_interface(colormap):
 
         self.show()
 
-    
+
 
     def _build_gui(self):
         """
@@ -304,21 +308,18 @@ class colormap_interface(colormap):
         self._load_cmap_list()
 
         # add the save and delete buttons
-        self._button_load   = _qt.QPushButton("Load",   self._central_widget)
         self._button_save   = _qt.QPushButton("Save",   self._central_widget)
         self._button_delete = _qt.QPushButton("Delete", self._central_widget)
-        self._button_load.setFixedWidth(70)
         self._button_save.setFixedWidth(70)
         self._button_delete.setFixedWidth(70)
 
         # layouts
         self._layout.addWidget(self._combobox_cmaps, 1,1, 1,3, _qtcore.Qt.Alignment(0))
-        self._layout.addWidget(self._button_load,    1,4, 1,1, _qtcore.Qt.Alignment(1))
         self._layout.addWidget(self._button_save,    1,5, 1,1, _qtcore.Qt.Alignment(1))
         self._layout.addWidget(self._button_delete,  1,6, 1,2, _qtcore.Qt.Alignment(1))
 
         # actions
-        self._button_load  .clicked.connect(self._button_load_clicked)
+        self._combobox_cmaps.currentIndexChanged.connect(self._signal_load)
         self._button_save  .clicked.connect(self._button_save_clicked)
         self._button_delete.clicked.connect(self._button_delete_clicked)
 
@@ -392,16 +393,16 @@ class colormap_interface(colormap):
         self._sliders[-1].setDisabled(True)
 
 
-    def _button_load_clicked(self):
+    def _signal_load(self):
         """
         Load the selected cmap.
         """
         # set our name
         self.set_name(str(self._combobox_cmaps.currentText()))
 
-        # load the colormap        
+        # load the colormap
         self.load_colormap()
-        
+
         # rebuild the interface
         self._build_gui()
 
@@ -482,17 +483,23 @@ class colormap_interface(colormap):
         """
         Searches the colormaps directory for all files, populates the list.
         """
+        # store the current name
+        name = self.get_name()
+
         # clear the list
+        self._combobox_cmaps.blockSignals(True)
         self._combobox_cmaps.clear()
 
-        paths = _os.listdir(_settings.path_colormaps)
+        # list the existing contents
+        paths = _settings.ListDir('colormaps')
 
         # loop over the paths and add the names to the list
-        for path in paths: self._combobox_cmaps.addItem(_os.path.splitext(path)[0])
+        for path in paths:
+            self._combobox_cmaps.addItem(_os.path.splitext(path)[0])
 
         # try to select the current name
-        self._combobox_cmaps.setCurrentIndex(self._combobox_cmaps.findText(self.get_name()))
-
+        self._combobox_cmaps.setCurrentIndex(self._combobox_cmaps.findText(name))
+        self._combobox_cmaps.blockSignals(False)
 
     def close(self):
         """

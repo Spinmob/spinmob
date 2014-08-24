@@ -17,34 +17,25 @@ class settings():
     prefs = {}
 
 
-    def __init__(self):
+    def __init__(self, name="spinmob"):
         """
         This class holds all the user-variables, paths etc...
         """
-        
+
         # assemble the home and temp directory path for this environment
-        self.path_user      = _os.path.expanduser('~')      
-        self.path_home      = _os.path.join(self.path_user, ".spinmob")
-        self.path_temp      = _os.path.join(self.path_home, 'temp')
-        self.path_settings  = _os.path.join(self.path_home, 'preferences.txt')
-        self.path_colormaps = _os.path.join(self.path_home, 'colormaps')
+        self.path_user      = _os.path.expanduser('~')
+        self.path_home      = _os.path.join(self.path_user, "."+name)
+        self.path_settings  = _os.path.join(self.path_home, 'settings.txt')
 
         # see if this is the first time running (no home directory)
         if not _os.path.exists(self.path_home):
-            print "Creating "+self.path_home
+            print "\nFirst run: creating "+self.path_home
             _os.mkdir(self.path_home)
 
-        if not _os.path.exists(self.path_temp):
-            print "Creating "+self.path_temp
-            _os.mkdir(self.path_temp)
-
         if not _os.path.exists(self.path_settings):
-            print "Creating "+self.path_settings
+            print " Creating "+self.path_settings + "\n"
             open(self.path_settings, 'w').close()
 
-        if not _os.path.exists(self.path_colormaps):
-            print "Creating "+self.path_colormaps
-            _os.mkdir(self.path_colormaps)
 
         # now read in the prefs file
         lines = read_lines(self.path_settings)
@@ -64,13 +55,13 @@ class settings():
             s = s + key + " = " + str(self.prefs[key]) + '\n'
         return s
 
-    def __repr__(self): 
+    def __repr__(self):
         s = '\nSPINMOB SETTINGS\n'
         for key in self.prefs.keys():
-            s = s + "  " + key + " = " + str(self.prefs[key]) + '\n'
+            s = s + "\n" + key + " = " + str(self.prefs[key]) + '\n'
         return s
 
-    def keys(self): return self.prefs.keys()
+    def keys(self):         return self.prefs.keys()
     def has_key(self, key): return self.prefs.has_key(key)
 
     def List(self):
@@ -111,6 +102,28 @@ class settings():
         Removes all settings.
         """
         for key in self.keys(): self.Remove(key)
+
+    def MakeDir(self, path="temp"):
+        """
+        Creates a directory of the specified path in the .spinmob directory.
+        """
+        full_path = _os.path.join(self.path_home, path)
+
+        # only make it if it doesn't exist!
+        if not _os.path.exists(full_path): _os.makedirs(full_path)
+
+    def ListDir(self, path="temp"):
+        """
+        Returns a list of files in the specified path (directory), or an
+        empty list if the directory doesn't exist.
+        """
+        full_path = _os.path.join(self.path_home, path)
+
+        # only if the path exists!
+        if _os.path.exists(full_path) and _os.path.isdir(full_path):
+            return _os.listdir(full_path)
+        else:
+            return []
 
     def Dump(self):
         """

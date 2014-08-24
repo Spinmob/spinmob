@@ -773,8 +773,15 @@ def _print_figures(figures, arguments='', file_format='pdf', target_width=8.5, t
     """
 
     for fig in figures:
+
+        # get the temp path
+        temp_path = _os.path.join(_settings.path_home, "temp")
+
+        # make the temp folder
+        _settings.MakeDir(temp_path)
+
         # output the figure to postscript
-        path = _os.path.join(_settings.path_temp,"graph."+file_format)
+        path = _os.path.join(temp_path, "graph."+file_format)
 
         # get the dimensions of the figure in inches
         w=fig.get_figwidth()
@@ -808,18 +815,18 @@ def _print_figures(figures, arguments='', file_format='pdf', target_width=8.5, t
 
 
         if not arguments == '':
-            c = _settings['print_command'] + ' ' + arguments + ' "' + path + '"'
+            c = _settings['instaprint'] + ' ' + arguments + ' "' + path + '"'
         else:
-            c = _settings['print_command'] + ' "' + path + '"'
+            c = _settings['instaprint'] + ' "' + path + '"'
 
         print c
         _os.system(c)
 
 
-def printer(figure='gcf', arguments='', threaded=False, file_format='pdf'):
+def instaprint(figure='gcf', arguments='', threaded=False, file_format='pdf'):
     """
     Quick function that saves the specified figure as a postscript and then
-    calls the command defined by spinmob.prefs['print_command'] with this
+    calls the command defined by spinmob.prefs['instaprint'] with this
     postscript file as the argument.
 
     figure='gcf'    can be 'all', a number, or a list of numbers
@@ -827,8 +834,8 @@ def printer(figure='gcf', arguments='', threaded=False, file_format='pdf'):
 
     global _settings
 
-    if not _settings.has_key('print_command'):
-        print "No print command setup. Set the user variable settings['print_command']."
+    if not _settings.has_key('instaprint'):
+        print "No print command setup. Set the user variable settings['instaprint']."
         return
 
     if   figure=='gcf': figure=[_pylab.gcf().number]

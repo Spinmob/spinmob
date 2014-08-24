@@ -32,4 +32,4 @@ import _functions   as fun         ; fun._settings = settings
 
 plot.tweaks._pylab_colormap._settings = settings
 
-printer = tweaks.printer
+instaprint = tweaks.instaprint
