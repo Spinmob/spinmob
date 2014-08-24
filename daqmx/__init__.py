@@ -1,8 +1,8 @@
 import PyDAQmx  as _mx
-
 import numpy    as _n
-import egg
-_settings = egg._settings
+
+import spinmob as _s
+_settings = _s.settings
 
 from collections import Iterable
 
@@ -52,10 +52,10 @@ class task_base:
         """
         Sets a setting, but only if it's valid.
         """
-        if key in self.settings.keys(): 
+        if key in self.settings.keys():
             self.settings[key] = value
             self._post_setitem(key,value)
-        
+
     def __call__(self, **kwargs):
         """
         Modifies settings based on kwargs.
@@ -164,10 +164,10 @@ class ai_task(task_base):
         # make sure we don't exceed the max
         ai_max_rate = _mx.float64()
         _mx.DAQmxGetSampClkMaxRate(self._handle, _mx.byref(ai_max_rate))
-        if self['ai_rate'] > ai_max_rate.value: 
+        if self['ai_rate'] > ai_max_rate.value:
             print "ERROR: ai_rate is too high! Current max = "+str(ai_max_rate.value)
             return False
-        
+
         _mx.DAQmxCfgSampClkTiming(self._handle, self["ai_clock_source"], self["ai_rate"],
                                   self["ai_clock_edge"], self["ai_mode"], self["ai_samples"])
 
@@ -185,7 +185,7 @@ class ai_task(task_base):
 
         # in test mode, just check that it doesn't fail and clean up.
         if test: self.clean()
-        
+
         # otherwise, start the show!
         else:
             debug("input start")
@@ -235,7 +235,7 @@ class ai_task(task_base):
         debug("clear input task")
         _mx.DAQmxClearTask(self._handle)
 
-        
+
 
 
 class ao_task(task_base):
@@ -328,15 +328,15 @@ class ao_task(task_base):
 
         # Configure the clock
         debug("output clock")
-        
+
         # make sure we don't exceed the max
         #ao_max_rate = _mx.float64()
         #_mx.DAQmxGetSampClkMaxRate(self._handle, _mx.byref(ao_max_rate))
-        #if self['ao_rate'] > ao_max_rate.value: 
+        #if self['ao_rate'] > ao_max_rate.value:
         #    print "ERROR: ao_rate is too high! Current max = "+str(ao_max_rate.value)
-        #    self.clean()            
+        #    self.clean()
         #    return False
-        
+
         _mx.DAQmxCfgSampClkTiming(self._handle, self["ao_clock_source"], self["ao_rate"],
                                   self["ao_clock_edge"], self["ao_mode"], samples)
 
@@ -380,7 +380,7 @@ class ao_task(task_base):
         complete = _mx.bool32()
         while not (complete): _mx.DAQmxGetTaskComplete(self._handle, _mx.byref(complete))
         self.clean()
-        
+
 
     def clean(self):
         """
@@ -405,12 +405,12 @@ class daqmx_system:
         self.device_names = self.get_device_names()
 
         # create a databox to hold everything
-        self.databox = egg.databox()
-        
+        self.databox = _s.data.databox()
+
         # print the info
         print self.__repr__()
-        
-        
+
+
     def __getitem__(self, device):
         """
         Accepts either integer or device name. Returns device name.
@@ -419,8 +419,8 @@ class daqmx_system:
         else:                               return device
 
     def __repr__(self):
-        if self.device_names == []: return "\ndaq_system:\n  No DAQmx devices detected."        
-        else:                       
+        if self.device_names == []: return "\ndaq_system:\n  No DAQmx devices detected."
+        else:
             s = "\ndaqmx_system devices"
             for n in range(len(self)):
                 s = s+"\n  "+str(n)+": "+str(self.device_names[n])
@@ -434,10 +434,10 @@ class daqmx_system:
         Also updates self.device_names
         """
         _mx.DAQmxGetSysDevNames(buffer_string, buffer_length)
-        
+
         # massage the returned string
         self.device_names = strip_buffer(buffer_string).split(', ')
-        
+
         # check that there are systems present!
         if self.device_names == ['']:
             self.device_names = []
@@ -460,7 +460,7 @@ class daqmx_system:
         an integer or a string name.
         """
         _mx.DAQmxGetDevAOPhysicalChans(self[device], buffer_string, buffer_length)
-        
+
         names = strip_buffer(buffer_string).split(', ')
         if names == ['']:   return None
         else:               return names
@@ -471,7 +471,7 @@ class daqmx_system:
         can be an integer or a string name.
         """
         _mx.DAQmxGetDevTerminals(self[device], buffer_string, buffer_length)
-        
+
         names = strip_buffer(buffer_string).split(', ')
         if names == ['']:   return None
         else:               return names
@@ -494,20 +494,20 @@ class daqmx_system:
 
         # clear the data. This could be used as a thread check.
         d = self.databox
-        d.clear()       
+        d.clear()
 
         # if ai_channels is a single element, make it into a list.
         if not isinstance(ai_channels, Iterable): ai_channels = [ai_channels]
-        
+
         # turn the indices into strings
         ai_channel_names          = self.get_ai_channel_names(device)
-        if not ai_channel_names: 
+        if not ai_channel_names:
             error("No AI channels present!")
             return
-        
+
         # add all the selected channels to the list
         ai_selected_channel_names = []
-        for n in range(len(ai_channels)): 
+        for n in range(len(ai_channels)):
             ai_selected_channel_names.append(ai_channel_names[ai_channels[n]])
 
         # save the header info
@@ -522,18 +522,18 @@ class daqmx_system:
         ai = ai_task(**d.headers)
 
         # start it!
-        if ai.start(): 
-            
+        if ai.start():
+
             # store the time column
             d['t'] = _n.linspace(0, ai_time-1.0/ai['ai_rate'], ai['ai_samples'])
-            
-            # retrieve the data            
+
+            # retrieve the data
             vs = ai.read_and_clean()
-            
-            # store the data            
+
+            # store the data
             for n in range(len(vs)): d[d.h('ai_channels')[n]] = vs[n]
-        
-        # Return databox. Could be empty.        
+
+        # Return databox. Could be empty.
         return d
 
 
@@ -568,10 +568,10 @@ class daqmx_system:
 
         # turn the indices into strings
         ao_channel_names          = self.get_ao_channel_names(device)
-        if not ao_channel_names: 
+        if not ao_channel_names:
             error("No AO channels present!")
             return
-        
+
         ao_selected_channel_names = []
         for n in range(len(ao_channels)):
             ao_selected_channel_names.append(ao_channel_names[ao_channels[n]])
@@ -614,9 +614,9 @@ class daqmx_system:
         if ao.start():
             ao.wait_and_clean()
             return True
-        
+
         return False
-        
+
 
     def ao_ai_single_device(self, device=0,
                             ai_channels=[0,3], ai_time=0.1, ai_rate=10000,
@@ -651,33 +651,33 @@ class daqmx_system:
 
         autozero= True           Set the output voltage to zero at the end. Can
                                  also be a list.
-                                 
+
         Example:
             ao_single_device(0, [1], ['sin(a*t)'], 0.1, a=2*3.14)
 
             will generate the waveform sin(2*3.14*t) for 0.1 seconds on device 0
             channel 1
         """
-        
+
         # clear out the databox
         d = self.databox
-        d.clear()        
-        
+        d.clear()
+
         # make sure there are ai and ao channels
         ai_channel_names          = self.get_ai_channel_names(device)
-        if not ai_channel_names: 
+        if not ai_channel_names:
             error("No AI channels present!")
             return
-        
+
         ao_channel_names          = self.get_ao_channel_names(device)
-        if not ao_channel_names: 
+        if not ao_channel_names:
             error("No AO channels present!")
             return
-        
-        
-        
-        ##### Create the output task        
-        
+
+
+
+        ##### Create the output task
+
         # This keeps long-term memory from becoming a problem
         ao_waveforms = list(ao_waveforms)
 
@@ -716,7 +716,7 @@ class daqmx_system:
                 ao_waveforms[n] = _n.concatenate([ao_waveforms[n],[0.0,0.0]])
             else:
                 ao_waveforms[n] = _n.concatenate([ao_waveforms[n],[ao_waveforms[n][-1],ao_waveforms[n][-1]]])
-           
+
         # set the waveforms
         ao(ao_waveforms = ao_waveforms)
 
@@ -731,7 +731,7 @@ class daqmx_system:
         ai_selected_channel_names = []
         for n in range(len(ai_channels)):
             ai_selected_channel_names.append(ai_channel_names[ai_channels[n]])
-            
+
         # create the task and modify the default parameters
         ai = ai_task(ai_trigger_source    = "/"+self[device]+"/ao/StartTrigger",
                      ai_channels          = ai_selected_channel_names, # names of channels
@@ -751,17 +751,17 @@ class daqmx_system:
         ai.start()
         ao.start()
 
-        # retrieve the data            
+        # retrieve the data
         vs = ai.read_and_clean()
-        
-        # store the data            
+
+        # store the data
         for n in range(len(vs)): d[d.h('ai_channels')[n]] = vs[n]
-    
+
         # clean up the ao task.
         ao.wait_and_clean()
 
         return d
-        
+
 
 
 
@@ -774,8 +774,7 @@ class daqmx_system:
 if __name__ == "__main__":
     debug_enabled=False
     s = daqmx_system()
-    
-    
-    
-    
-    
+
+
+
+
