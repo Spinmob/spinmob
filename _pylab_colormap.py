@@ -269,6 +269,9 @@ class colormap_interface(colormap):
         # add all the controls
         self._build_gui()
 
+        # disable the save (just loaded)
+        self._button_save.setEnabled(False)
+
         # set the location
         pos, size = _pylab_tweaks.get_figure_window_geometry()
         self._window.move(pos[0]+size[0],pos[1])
@@ -397,6 +400,7 @@ class colormap_interface(colormap):
         """
         Load the selected cmap.
         """
+
         # set our name
         self.set_name(str(self._combobox_cmaps.currentText()))
 
@@ -406,12 +410,16 @@ class colormap_interface(colormap):
         # rebuild the interface
         self._build_gui()
 
+        self._button_save.setEnabled(False)
+
+
     def _button_save_clicked(self):
         """
         Save the selected cmap.
         """
         self.set_name(str(self._combobox_cmaps.currentText()))
         self.save_colormap()
+        self._button_save.setEnabled(False)
         self._load_cmap_list()
 
     def _button_delete_clicked(self):
@@ -428,6 +436,8 @@ class colormap_interface(colormap):
         """
         Updates the color of the slider.
         """
+        self._button_save.setEnabled(True)
+
         cp = self._colorpoint_list[n]
 
         # if they're linked, set both
@@ -452,6 +462,8 @@ class colormap_interface(colormap):
         """
         Create a new colorpoint.
         """
+        self._button_save.setEnabled(True)
+
         self.insert_colorpoint(self._colorpoint_list[n][0],
                                self._colorpoint_list[n][1],
                                self._colorpoint_list[n][2])
@@ -461,6 +473,8 @@ class colormap_interface(colormap):
         """
         Remove a new colorpoint.
         """
+        self._button_save.setEnabled(True)
+
         self.pop_colorpoint(n)
         self._build_gui()
 
@@ -468,6 +482,8 @@ class colormap_interface(colormap):
         """
         updates the colormap / plot
         """
+        self._button_save.setEnabled(True)
+
         self.modify_colorpoint(n, self._sliders[n].value()*0.001, self._colorpoint_list[n][1], self._colorpoint_list[n][2])
 
 
@@ -475,6 +491,8 @@ class colormap_interface(colormap):
         """
         Opens the dialog.
         """
+        self._button_save.setEnabled(True)
+
         if top: self._color_dialogs_top[n].open()
         else:   self._color_dialogs_bottom[n].open()
 
