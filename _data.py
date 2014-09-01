@@ -6,212 +6,16 @@ import numpy as _n
 import scipy.optimize as _opt
 import pylab as _p
 import textwrap as _textwrap
+import spinmob as _s
 
 
-###################
-# Random functions
-###################
 
-def _elements_are_numbers(array, start_index=0, end_index=-1):
-    """
-    Tests whether the elements of the supplied array are numbers.
-    """
 
-    if len(array) == 0: return 0
 
-    output_value=1
 
-    if end_index < 0: end_index=len(array)-1
-    for n in array:
-        try: float(n)
-        except:
-            try:
-                complex(n)
-                output_value=2
-            except:
-                try:
-                    complex(n.replace('(','').replace(')',''))
-                    output_value=2
-                except:
-                    return 0
-    return output_value
 
-def _index(value, array):
-    """
-    Array search that behaves like I want it to. Totally dumb, I know.
-    """
-    i = array.searchsorted(value)
-    if i == len(array): return -1
-    else:               return i
 
-def _is_iterable(a):
-    """
-    Determine whether the object is iterable.
-    """
-    return hasattr(a, '__iter__')
 
-def _is_a_number(s):
-    """
-    This takes an object and determines whether it's a number or a string
-    representing a number.
-    """
-    if _is_iterable(s): return False
-
-    try: complex(s);   return True
-    except:            return False
-
-def _auto_zoom(zoomx=1, zoomy=1, axes="gca", x_space=0.04, y_space=0.04, draw=True):
-    """
-    Looks at the bounds of the plotted data and zooms accordingly, leaving some
-    space around the data.
-    """
-
-    if axes=="gca": axes = _p.gca()
-
-    a = axes
-
-    # get all the lines
-    lines = a.get_lines()
-
-    # get the current limits, in case we're not zooming one of the axes.
-    x1, x2 = a.get_xlim()
-    y1, y2 = a.get_ylim()
-
-    xdata = []
-    ydata = []
-    for n in range(0,len(lines)):
-        # store this line's data
-
-        # build up a huge data array
-        if isinstance(lines[n], _p.Line2D):
-            x, y = lines[n].get_data()
-
-            for n in range(len(x)):
-                # if we're not zooming x and we're in range, append
-                if not zoomx and x[n] >= x1 and x[n] <= x2:
-                    xdata.append(x[n])
-                    ydata.append(y[n])
-
-                elif not zoomy and y[n] >= y1 and y[n] <= y2:
-                    xdata.append(x[n])
-                    ydata.append(y[n])
-
-                elif zoomy and zoomx:
-                    xdata.append(x[n])
-                    ydata.append(y[n])
-
-    if len(xdata):
-        xmin = min(xdata)
-        xmax = max(xdata)
-        ymin = min(ydata)
-        ymax = max(ydata)
-
-        # we want a 3% white space boundary surrounding the data in our plot
-        # so set the range accordingly
-        if zoomx: a.set_xlim(xmin-x_space*(xmax-xmin), xmax+x_space*(xmax-xmin))
-        if zoomy: a.set_ylim(ymin-y_space*(ymax-ymin), ymax+y_space*(ymax-ymin))
-
-        if draw: _p.draw()
-
-    else:
-        return
-
-def _set_figure_window_geometry(fig='gcf', position=None, size=None):
-    """
-    This will currently only work for Qt4Agg and WXAgg backends.
-
-    postion = [x, y]
-    size    = [width, height]
-
-    fig can be 'gcf', a number, or a figure object.
-    """
-
-    if type(fig)==str:          fig = _p.gcf()
-    elif _is_a_number(fig): fig = _p.figure(fig)
-
-    # Qt4Agg backend. Probably would work for other Qt stuff
-    if _p.get_backend().find('Qt') >= 0:
-        w = fig.canvas.window()
-
-        if not size == None:
-            w.resize(size[0],size[1])
-
-        if not position == None:
-            print "test"
-            w.move(position[0], position[1])
-
-    # WXAgg backend. Probably would work for other Qt stuff.
-    elif _p.get_backend().find('WX') >= 0:
-        w = fig.canvas.Parent
-
-        if not size == None:
-            w.SetSize(size)
-
-        if not position == None:
-            w.SetPosition(position)
-
-def _raise_figure_window(f=0):
-    """
-    Raises the supplied figure number or figure window.
-    """
-    if _is_a_number(f): f = _p.figure(f)
-    f.canvas.manager.window.raise_()
-
-def _coarsen_array(a, level=2, method='mean'):
-    """
-    Returns a coarsened (binned) version of the data. Currently supports
-    any of the numpy array operations, e.g. min, max, mean, std, ...
-
-    level=2 means every two data points will be binned.
-    level=0 just returns the array
-    """
-    # make sure it's a numpy object
-    a = _n.array(a)
-
-    # quickest option
-    if level==0: return a
-
-    # otherwise assemble the python code to execute
-    code = 'a.reshape(-1, level).'+method+'(axis=1)'
-
-    # execute, making sure the array can be reshaped!
-    try: return eval(code, dict(a=a[0:int(len(a)/level)*level], level=level))
-    except:
-        print "ERROR: Could not coarsen array with method "+repr(method)
-        return a
-
-def _trim_data(xmin, xmax, xdata, *args):
-    """
-    Removes all the data except that between xmin and xmax. This does not
-    mutilate the input arrays.
-
-    xmin and xmax can be None
-
-    Additional arrays can be supplied via args, but they must match xdata in
-    shape.
-    """
-
-    # make sure it's a numpy array
-    if not isinstance(xdata, _n.ndarray): xdata = _n.array(xdata)
-
-    # make sure xmin and xmax are numbers
-    if xmin == None: xmin = min(xdata)
-    if xmax == None: xmax = max(xdata)
-
-    # get all the indices satisfying the trim condition
-    ns = _n.argwhere((xdata >= xmin) & (xdata <= xmax)).transpose()[0]
-
-    # trim the xdata
-    output = []
-    output.append(xdata[ns])
-
-    # trim the rest
-    for a in args:
-        # make sure it's a numpy array
-        if not isinstance(a, _n.ndarray): a = _n.array(a)
-        output.append(a[ns])
-
-    return output
 
 
 
@@ -370,7 +174,7 @@ class databox:
             if len(s) and s[-1].strip() == '': s.pop(-1)
 
             # first check and see if this is a data line (all elements are numbers)
-            if first_data_line=="auto" and _elements_are_numbers(s):
+            if first_data_line=="auto" and _s.fun.elements_are_numbers(s):
                 # we've reached the first data line
                 first_data_line = n
 
@@ -565,7 +369,7 @@ class databox:
 
         # If the script is not a list of scripts, return the script value.
         # This is the termination of a recursive call.
-        if not _is_iterable(script):
+        if not _s.fun.is_iterable(script):
 
             # special case
             if script == None: return None
@@ -988,7 +792,7 @@ class fitter():
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of truncation values
                               xmax          = None,     # list of truncation values
-                              coarsen       = 0,        # how much to coarsen the data
+                              coarsen       = 1,        # how much to coarsen the data
 
                               # styles of plots
                               style_data   = dict(marker='o', color='b',   ls=''),
@@ -1047,7 +851,7 @@ class fitter():
         elif self._settings.has_key(key):
 
             # make sure it's a list.
-            if not _is_iterable(value) or isinstance(value, dict):
+            if not _s.fun.is_iterable(value) or isinstance(value, dict):
                 value = [value]
 
             # make sure it matches the data.
@@ -1074,7 +878,7 @@ class fitter():
         s = "\nSETTINGS\n"
         for k in keys:
             # for the clunky style settings, loop over the list
-            if k[0:5] == 'style' and _is_iterable(self[k]):
+            if k[0:5] == 'style' and _s.fun.is_iterable(self[k]):
                 s = s+"  {:15s} [".format(k)
                 for n in range(len(self[k])):
                     s = s+str(self[k][n])
@@ -1196,8 +1000,8 @@ class fitter():
         bg = self._bg_raw
 
         # make sure f and bg are lists of matching length
-        if not _is_iterable(f) : f  = [f]
-        if not _is_iterable(bg): bg = [bg]
+        if not _s.fun.is_iterable(f) : f  = [f]
+        if not _s.fun.is_iterable(bg): bg = [bg]
         while len(bg) < len(f): bg.append(None)
 
         # get a comma-delimited string list of parameter names
@@ -1254,8 +1058,8 @@ class fitter():
         """
 
         # make sure xdata and ydata are lists of data sets
-        if not _is_iterable(xdata[0]): xdata = [xdata]
-        if not _is_iterable(ydata[0]): ydata = [ydata]
+        if not _s.fun.is_iterable(xdata[0]): xdata = [xdata]
+        if not _s.fun.is_iterable(ydata[0]): ydata = [ydata]
 
         # make sure these lists are the same length
         while len(ydata) < len(xdata): ydata.append(ydata[0])
@@ -1269,7 +1073,7 @@ class fitter():
         # assemble the errors
         # example eydata: None, 3, [None, 3] or [None, [1,2,1,2,1]]
         # makes sure it's at least a list of the right length
-        if not _is_iterable(eydata): eydata = [eydata]*len(xdata)
+        if not _s.fun.is_iterable(eydata): eydata = [eydata]*len(xdata)
 
         # make sure the lengths match
         # example eydata at this point: [None, None], [3,3], [None,3] or [None, [1,2,1,2,1]]
@@ -1286,7 +1090,7 @@ class fitter():
                 eydata[n] = _n.ones(len(xdata[n])) * (max(ydata[n])-min(ydata[n]))/20.
 
             # use constant error bars
-            elif _is_a_number(eydata[n]): eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
+            elif _s.fun.is_a_number(eydata[n]): eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
 
             eydata[n] = _n.array(eydata[n]) * 1.0
 
@@ -1330,20 +1134,21 @@ class fitter():
             if (not self['xmin'][n]==None and self['xmin'][n] > max(self.xdata[n])) \
             or (not self['xmax'][n]==None and self['xmax'][n] < min(self.xdata[n])):
                 self._error("This combination of xmin, xmax, and xdata results in no trimmed data!")
-                x, y, ey = _trim_data(None, None,
+                x, y, ey = _s.fun.trim_data(None, None,
                                      self.xdata[n], self.ydata[n], self.eydata[n])
             else:
-                x, y, ey = _trim_data(self['xmin'][n], self['xmax'][n],
+                x, y, ey = _s.fun.trim_data(self['xmin'][n], self['xmax'][n],
                                      self.xdata[n], self.ydata[n], self.eydata[n])
 
             # coarsen the data
-            x  = _coarsen_array(x,  self['coarsen'][n], 'average')
-            y  = _coarsen_array(y,  self['coarsen'][n], 'average')
-            ey = _coarsen_array(ey, self['coarsen'][n], 'quadrature')
+            if self['coarsen'][n] == 0: self['coarsen'][n] = 1
+            x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
+            y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
+            ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'])
 
             # store the result
-            self._xdata_massaged.append(x)
-            self._ydata_massaged.append(y)
+            self. _xdata_massaged.append(x)
+            self. _ydata_massaged.append(y)
             self._eydata_massaged.append(ey)
 
             # keep track of the number of data points
@@ -1667,7 +1472,7 @@ class fitter():
                             **self['style_data'][n])
 
             # set the plot range according to just the data
-            _auto_zoom(axes=a2, draw=False)
+            _s.tweaks.auto_zoom(axes=a2, draw=False)
             a2.set_autoscale_on(False)
 
             # add the _pguess curves
@@ -1696,7 +1501,7 @@ class fitter():
             if not r==None:
                 a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])), **self['style_data'][n])
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_fit'][n])
-                _auto_zoom(axes=a1, draw=False)
+                _s.tweaks.auto_zoom(axes=a1, draw=False)
 
             # tidy up
             _p.xlabel('xdata['+str(n)+']')
@@ -1728,7 +1533,7 @@ class fitter():
 
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
 
-            #_set_figure_window_geometry('gcf',None,[550,670])
+            #_s.tweaks.set_figure_window_geometry('gcf',None,[550,670])
 
         # turn back to interactive and show the plots.
         _p.ion()
@@ -1753,7 +1558,7 @@ class fitter():
             return
 
 
-        if   _is_a_number(n): n = [n]
+        if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):   n = range(len(self.xdata))
 
         # loop over the specified plots
@@ -1782,7 +1587,7 @@ class fitter():
             self._error("No data. Please use set_data() and plot() prior to zooming.")
             return
 
-        if   _is_a_number(n): n = [n]
+        if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):   n = range(len(self.xdata))
 
         # loop over the specified plots
@@ -1808,7 +1613,7 @@ class fitter():
 
         args and kwargs are sent to pylab.ginput()
         """
-        _raise_figure_window(figure_number)
+        _s.tweaks.raise_figure_window(figure_number)
         return _p.ginput(**kwargs)
 
 

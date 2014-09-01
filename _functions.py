@@ -4,84 +4,28 @@ import os      as _os
 import shutil  as _shutil
 import spinmob as _s
 
-def coarsen_array(array, level=1, method='average', keep_trash=True):
+def coarsen_array(a, level=2, method='mean'):
     """
-    Returns a shorter array of averaged / binned data (every level+1 data points).
-
-    method='average'    Can also be, 'min', 'max', or 'quadrature' for coarsening
-                        uncorrelated errors.
-    keep_trash=True     If set to False, the leftover data will be thrown away.
-                        Otherwise, the leftover data will be averaged and
-                        appended to the array.
+    Returns a coarsened (binned) version of the data. Currently supports
+    any of the numpy array operations, e.g. min, max, mean, std, ...
+    
+    level=2 means every two data points will be binned.
+    level=0 or 1 just returns a copy of the array
     """
-
-    if array==None: return None
-
     # make sure it's a numpy array
-    a = _n.array(array)
+    a = _n.array(a)
+    
+    # quickest option
+    if level in [0,1,False]: return a
 
-    # quick return if no calculation necessary
-    if level < 1: return a
+    # otherwise assemble the python code to execute
+    code = 'a.reshape(-1, level).'+method+'(axis=1)'
 
-    # make sure it's divisible by the level+1
-
-    # get the leftovers
-    leftovers = a[len(a)-len(a)%(level+1):]
-
-    # truncate a
-    a = a[0:len(a)-len(a)%(level+1)]
-
-    # average method
-    if method == 'average':
-        # s is the output array
-        s = a[0:len(a):level+1]
-
-        # sum the values
-        for n in range(1,level+1): s = s + a[n:len(a):level+1]
-
-        # divide by number of elements
-        s = s/(level+1.0)
-
-        # append the trash point
-        if keep_trash and len(leftovers)>0:
-            s = _n.append(s,_n.average(leftovers))
-
-    elif method == 'max':
-        # s is the output array
-        s = a[0:len(a):level+1]
-
-        # sum the values
-        for n in range(1,level+1): s = _n.maximum(s, a[n:len(a):level+1])
-
-        # append the trash point
-        if keep_trash and len(leftovers)>0:
-            s = _n.append(s,max(leftovers))
-
-    elif method == 'min':
-        # s is the output array
-        s = a[0:len(a):level+1]
-
-        # sum the values
-        for n in range(1,level+1): s = _n.minimum(s, a[n:len(a):level+1])
-
-        # append the trash point
-        if keep_trash and len(leftovers)>0:
-            s = _n.append(s,min(leftovers))
-
-    # quadrature method
-    else:
-        # sum the values squared
-        s = a[0:len(a):level+1]**2
-        for n in range(1,level+1): s = s + a[n:len(a):level+1]**2
-
-        # divide by number of elements
-        s = _n.sqrt(s/(level+1.0))
-
-        # append the trash point
-        if keep_trash and len(leftovers)>0:
-            s = _n.append(s,_n.sqrt(_n.average(leftovers**2)))
-
-    return s
+    # execute, making sure the array can be reshaped!
+    try: return eval(code, dict(a=a[0:int(len(a)/level)*level], level=level))
+    except:
+        print "ERROR: Could not coarsen array with method "+repr(method)
+        return a
 
 def erange(start, end, steps):
     """
@@ -113,15 +57,14 @@ def is_a_number(s):
     This takes an object and determines whether it's a number or a string
     representing a number.
     """
-
-    if is_iterable(s): return False
+    if _s.fun.is_iterable(s): return False
 
     try: complex(s);   return True
     except:            return False
 
 def is_iterable(a):
     """
-    Test if something is iterable.
+    Determine whether the object is iterable.
     """
     return hasattr(a, '__iter__')
 
@@ -441,6 +384,10 @@ def dumbguy_minimize(f, xmin, xmax, xstep):
     return x, this
 
 def elements_are_numbers(array, start_index=0, end_index=-1):
+    """
+    Tests whether the elements of the supplied array are numbers.
+    """
+
     if len(array) == 0: return 0
 
     output_value=1
@@ -757,10 +704,12 @@ def imin(array):
     return index(min(array), array)
 
 def index(value, array):
-    for n in range(0,len(array)):
-        if value == array[n]:
-            return(n)
-    return(-1)
+    """
+    Array search that behaves like I want it to. Totally dumb, I know.
+    """
+    i = array.searchsorted(value)
+    if i == len(array): return -1
+    else:               return i
 
 def index_nearest(value, array):
     """
@@ -1239,28 +1188,34 @@ def submatrix(matrix,i1,i2,j1,j2):
 
 def trim_data(xmin, xmax, xdata, *args):
     """
-    Removes all the data except that between xmin and xmax, assuming xdata is
-    increasing sorted.
+    Removes all the data except that in which xdata is between xmin and xmax. 
+    This does not mutilate the input arrays, and additional arrays
+    can be supplied via args (provided they match xdata in shape)
 
-    This does not destroy the input arrays.
-
-    Additional arguments must be arrays matching xdata in length.
+    xmin and xmax can be None
     """
 
-    # make sure we handle the Nones
-    if xmin==None: xmin = min(xdata) - 1
-    if xmax==None: xmax = max(xdata) + 1
+    # make sure it's a numpy array
+    if not isinstance(xdata, _n.ndarray): xdata = _n.array(xdata)
 
-    # Find the indices spanning the range
-    x = _n.array(xdata)
-    i1 = x.searchsorted(xmin, 'left')
-    i2 = x.searchsorted(xmax, 'right')
+    # make sure xmin and xmax are numbers
+    if xmin == None: xmin = min(xdata)
+    if xmax == None: xmax = max(xdata)
 
-    # trim the args data
-    output = [x[i1:i2]]
-    for n in range(len(args)): output.append(_n.array(args[n])[i1:i2])
+    # get all the indices satisfying the trim condition
+    ns = _n.argwhere((xdata >= xmin) & (xdata <= xmax)).transpose()[0]
 
-    return tuple(output)
+    # trim the xdata
+    output = []
+    output.append(xdata[ns])
+
+    # trim the rest
+    for a in args:
+        # make sure it's a numpy array
+        if not isinstance(a, _n.ndarray): a = _n.array(a)
+        output.append(a[ns])
+
+    return output
 
 def ubersplit(s, delimiters=['\t','\r',' ']):
 
