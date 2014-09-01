@@ -1,0 +1,3426 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\begin_modules
+enumitem
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Python Tutorial for the Sankey Lab
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Installing everything
+\end_layout
+
+\begin_layout Subsection
+Windows 7
+\end_layout
+
+\begin_layout Enumerate
+Install 
+\begin_inset CommandInset href
+LatexCommand href
+name "Python(x,y)"
+target "https://code.google.com/p/pythonxy/"
+
+\end_inset
+
+.
+ It has everything.
+ Almost.
+\end_layout
+
+\begin_layout Enumerate
+Install 
+\begin_inset CommandInset href
+LatexCommand href
+name "pyqtgraph"
+target "http://www.pyqtgraph.org/"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Mac OSX
+\end_layout
+
+\begin_layout Enumerate
+Install 
+\begin_inset CommandInset href
+LatexCommand href
+name "Homebrew"
+target "http://brew.sh/"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+For python 2.7, use these commands in the terminal (for other pythons, modify
+ appropriately):
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+$ brew install python 
+\end_layout
+
+\begin_layout Itemize
+$ brew install pyqt 
+\end_layout
+
+\begin_layout Itemize
+$ brew install gfortran 
+\end_layout
+
+\begin_layout Itemize
+$ brew install pkg-config 
+\end_layout
+
+\begin_layout Itemize
+$ easy_install pip 
+\end_layout
+
+\begin_layout Itemize
+$ pip-2.7 install numpy (note: on some macs this might be pip2.7)
+\end_layout
+
+\begin_layout Itemize
+$ pip-2.7 install scipy 
+\end_layout
+
+\begin_layout Itemize
+$ pip-2.7 install matplotlib 
+\end_layout
+
+\begin_layout Itemize
+$ pip-2.7 install spyder (note: recently couldn't find this package on at
+ least one mac, but spyderlib now has a dmg for osx)
+\end_layout
+
+\begin_layout Itemize
+$ pip-2.7 install pyqtgraph 
+\end_layout
+
+\end_deeper
+\begin_layout Section
+Spyder
+\end_layout
+
+\begin_layout Subsection
+Getting Spyder up and running
+\end_layout
+
+\begin_layout Enumerate
+First, open 
+\series bold
+Spyder
+\series default
+, a.k.a.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+the most amazing coding environment I have ever seen
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In Windows, this should be in your start menu, under Python(x,y).
+ In OSX, this should be an application, or you can type 
+\begin_inset Quotes eld
+\end_inset
+
+spyder
+\begin_inset Quotes erd
+\end_inset
+
+ into the interpreter.
+ When it launches (takes awhile), you should see something like this:
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/Spyder1.png
+	width 14cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+On the left is a file editor, on the right is the 
+\begin_inset Quotes eld
+\end_inset
+
+object inspector
+\begin_inset Quotes erd
+\end_inset
+
+ (above) and the interpreter area (below).
+ We will use the editor and interpreter (sometimes called the 
+\begin_inset Quotes eld
+\end_inset
+
+python console
+\begin_inset Quotes erd
+\end_inset
+
+) a 
+\emph on
+lot
+\emph default
+.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Close the existing interpreter, right click the gray area, and select 
+\begin_inset Quotes eld
+\end_inset
+
+Open a Python interpreter
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This gives you a clean slate to work with.
+ Note: you can also run 
+\series bold
+Spyder (light)
+\series default
+ if you just want to play with a interpreter & no editor.
+ I often do this when plotting so as to save screen space.
+ Here is 
+\series bold
+Spyder (light)
+\series default
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/Spyder2.png
+	width 10cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For pure interpreter testing in this tutorial, you will sometimes see these
+ images, but the functionality is the same as the interpreter embedded in
+ the editor above.
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Writing a script and running it in the interpreter
+\end_layout
+
+\begin_layout Standard
+Let's run our first python script:
+\end_layout
+
+\begin_layout Enumerate
+In the editor, delete all the junk at the top of the file and write the
+ following code:
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+print "Hello world!"
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+a = 27
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Select from the menu 
+\begin_inset Quotes eld
+\end_inset
+
+File -> Save As...
+\begin_inset Quotes erd
+\end_inset
+
+ and save the file into a convenient directory of your choosing (we will
+ use this directory for all of our tutorial scripts).
+\end_layout
+
+\begin_layout Enumerate
+Select from the menu 
+\begin_inset Quotes eld
+\end_inset
+
+Run -> Configure...
+\begin_inset Quotes erd
+\end_inset
+
+, and make sure it looks like the one below, and click 
+\begin_inset Quotes eld
+\end_inset
+
+OK
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/Spyder3.png
+	width 8cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Execute in a new dedicated Python interpreter:
+\series default
+ ensures that your script will run with a clean slate every time.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Working directory:
+\series default
+ you will not have to modify this; it is the first directory Python checks
+ whenever you specify a filename.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Interact with the Python interpreter after execution:
+\series default
+ this allows us to play around and troubleshoot after the script has completed.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Run the script! Either press the 
+\begin_inset Quotes eld
+\end_inset
+
+run file
+\begin_inset Quotes erd
+\end_inset
+
+ button, type F5, or select from the menu 
+\begin_inset Quotes eld
+\end_inset
+
+Run -> Run
+\begin_inset Quotes erd
+\end_inset
+
+.
+ You should see the following:
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/Spyder4.png
+	width 14cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The three lines of code in the editor window have now been executed by a
+ fresh, new python interpreter.
+ The first line printed the 
+\series bold
+string
+\series default
+ (section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Strings"
+
+\end_inset
+
+) 
+\begin_inset Quotes eld
+\end_inset
+
+Hello world!
+\begin_inset Quotes erd
+\end_inset
+
+, the second (blank) did nothing, and the third, set the 
+\series bold
+variable 
+\series default
+(section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Math"
+
+\end_inset
+
+) named 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+ to value 27.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+=
+\begin_inset Quotes erd
+\end_inset
+
+ sign is used to assign values to variables.
+ Note that this last command did not produce any visible result in the interpret
+er.
+ However, it did do some stuff behind the scenes.
+ If we now type
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a
+\end_layout
+
+\end_inset
+
+into the interpreter and press enter, we see the value of a.
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a
+\end_layout
+
+\begin_layout Plain Layout
+
+27
+\end_layout
+
+\end_inset
+
+furthermore, we can attempt some math using 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+ (discussed more in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Math"
+
+\end_inset
+
+):
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a+7
+\end_layout
+
+\begin_layout Plain Layout
+
+34
+\end_layout
+
+\end_inset
+
+we could also do all of the stuff in the editor window right in the command
+ line, i.e.:
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> print "Hello world!"
+\end_layout
+
+\begin_layout Plain Layout
+
+Hello world!
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+So, basically that's it.
+ You write a bunch of stuff in a file (the 
+\begin_inset Quotes eld
+\end_inset
+
+script
+\begin_inset Quotes erd
+\end_inset
+
+) then run it in the interpreter.
+ Whatever is defined in the script can be then monkeyed with in the interpreter.
+\end_layout
+
+\begin_layout Section
+Python Basics
+\end_layout
+
+\begin_layout Subsection
+Built-in math
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Math"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Python is a calculator.
+ You can add, subtract, multiply, exponentiate numbers, and divide as shown
+ below, and python will respond as you might expect:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> 1+1 
+\end_layout
+
+\begin_layout Plain Layout
+
+2 
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> 2*2 
+\end_layout
+
+\begin_layout Plain Layout
+
+4 
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> 2**5
+\end_layout
+
+\begin_layout Plain Layout
+
+32
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> 5/3
+\end_layout
+
+\begin_layout Plain Layout
+
+1
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I intentionally wrote a weird result on the last command (try this!) to
+ illustrate a common issue with those new to python: unless you somehow
+ tell python you are working with non-integers, python will perform calculations
+ using 
+\emph on
+integer math
+\emph default
+, meaning 5/3 = 1 remainder 2.
+ To get the remainder, use the 
+\begin_inset Quotes eld
+\end_inset
+
+mod
+\begin_inset Quotes erd
+\end_inset
+
+ operation:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> 5%3
+\end_layout
+
+\begin_layout Plain Layout
+
+2
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Why default to integer math? Because it's 
+\emph on
+fast
+\emph default
+.
+ If you want to stick to 
+\begin_inset Quotes eld
+\end_inset
+
+floating point
+\begin_inset Quotes erd
+\end_inset
+
+ math (i.e.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+having a decimal point
+\begin_inset Quotes erd
+\end_inset
+
+), just add a decimal point in the right place.
+ Whenever python combines integers with floating point numbers, the result
+ is a floating point number.
+ More examples:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> 3.0/2
+\end_layout
+
+\begin_layout Plain Layout
+
+1.5
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> 2.0**0.5
+\end_layout
+
+\begin_layout Plain Layout
+
+1.4142135623730951
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> (5+2.0)/2
+\end_layout
+
+\begin_layout Plain Layout
+
+3.5
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note, however, that this decision is made in the order of operations.
+ So the third command above was computed as (5+2.0)/2 = 7.0/2 = 3.5, but
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> (5+2.0)/(3/2)
+\end_layout
+
+\begin_layout Plain Layout
+
+7.0
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note also: this behavior depends on the shell you are using.
+ As of 2014, the spyder shell will always assume floating point, and other
+ python shells do not.
+ Hence, it is best to 
+\emph on
+always
+\emph default
+ take this into consideration so that when you send someone your code it
+ doesn't fall apart completely! 
+\end_layout
+
+\begin_layout Subsection
+Variables
+\end_layout
+
+\begin_layout Standard
+Like most programming languages, values can be store in 
+\series bold
+variables
+\series default
+, for later use, e.g.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a = 5.0/2.0
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> b = 3.0*a
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> a+b
+\end_layout
+
+\begin_layout Plain Layout
+
+10.0
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Good times.
+\end_layout
+
+\begin_layout Subsection
+Functions
+\end_layout
+
+\begin_layout Standard
+Functions are objects that receive inputs, do things with those inputs,
+ and make some outputs.
+ Let's define one at the command line:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> def f(x,y): return x*y
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Press enter twice after this to finish defining the function
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Note you can also make multiline functions at the command line.
+ How this works is different from console to console.
+\end_layout
+
+\end_inset
+
+.
+ This function takes two inputs, 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+, multiplies them, and returns the result.
+ Try it!
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> f(32,2)
+\end_layout
+
+\begin_layout Plain Layout
+
+64
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+You can also do things with the result of a function directly, e.g.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> f(32,2)*2+1
+\end_layout
+
+\begin_layout Plain Layout
+
+129
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This function is too simple, and super boring.
+ To define a multiline function, let's make a script in spyder and add this
+ code:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+def f2(x,y,z):
+\end_layout
+
+\begin_layout Plain Layout
+
+    print "x =", x
+\end_layout
+
+\begin_layout Plain Layout
+
+    print "y =", y
+\end_layout
+
+\begin_layout Plain Layout
+
+    return x+y*z
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+When we run this script, we can now use this function from the command line:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a = f2(1,2,3)
+\end_layout
+
+\begin_layout Plain Layout
+
+x = 1
+\end_layout
+
+\begin_layout Plain Layout
+
+y = 2
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here the function printed the x and y values we sent it, then returned x+y*z.
+ We stored this result (7) in the variable 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Note that python is very strict about indentation.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+contents
+\begin_inset Quotes erd
+\end_inset
+
+ of the function must all be indented by the same amount, and python stops
+ defining the function when it sees that you have stopped indenting.
+ Thus you can define several functions in one script (and run them in the
+ same script if you like!):
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+def f2(x,y,z):
+\end_layout
+
+\begin_layout Plain Layout
+
+    print "f2 executed"
+\end_layout
+
+\begin_layout Plain Layout
+
+    return x+y*z
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+def f3(x): 
+\end_layout
+
+\begin_layout Plain Layout
+
+	print "f3 executed"
+\end_layout
+
+\begin_layout Plain Layout
+
+    return x**x
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+print f3(2) + f2(1,2,3)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Try running this script and see if you understand the output.
+\end_layout
+
+\begin_layout Subsection
+Strings, Lists, Tuples, and Dictionaries
+\end_layout
+
+\begin_layout Standard
+There are many objects in python other than numbers, too.
+ I constantly use the following.
+\end_layout
+
+\begin_layout Subsubsection
+Strings
+\end_layout
+
+\begin_layout Standard
+One of the most amazing things python can do is manipulate text.
+ Text objects are called 
+\begin_inset Quotes eld
+\end_inset
+
+strings
+\begin_inset Quotes erd
+\end_inset
+
+ in python.
+ Let's make two strings:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> s1 = "my first string"
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> s2 = 'my "second" string'
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Strings are defined by enclosing some text within either single or double
+ quotes.
+ There is no difference, though enclosing by single quotes allows you to
+ use double quotes in the string itself, and 
+\emph on
+vis versa
+\emph default
+.
+ If you need to use both (or other funny characters like 
+\begin_inset Quotes eld
+\end_inset
+
+line breaks
+\begin_inset Quotes erd
+\end_inset
+
+, use 
+\begin_inset Quotes eld
+\end_inset
+
+escape characters
+\begin_inset Quotes erd
+\end_inset
+
+ which consist of a backslash 
+\begin_inset Quotes eld
+\end_inset
+
+
+\backslash
+
+\begin_inset Quotes erd
+\end_inset
+
+ followed by a character.
+ For example:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> s3 = "my 
+\backslash
+"third
+\backslash
+" string 
+\backslash
+n has a line break."
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\backslash
+
+\begin_inset Quotes erd
+\end_inset
+
+ allows you to include the quotes without ending the string, and the 
+\backslash
+n adds a line break.
+ Try inspecting s3:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> print s3
+\end_layout
+
+\begin_layout Plain Layout
+
+my "third" string 
+\end_layout
+
+\begin_layout Plain Layout
+
+ has a line break.
+\end_layout
+
+\begin_layout Plain Layout
+
+>>>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note the space on either side of 
+\backslash
+n is not necessary.
+\end_layout
+
+\begin_layout Standard
+Strings also have some amazing functionality, for example you can add them:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> s1+s3 
+\end_layout
+
+\begin_layout Plain Layout
+
+'my first stringmy "third" string
+\backslash
+n has a line break.'
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+You can get a particular character (zero corresponds to the first):
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> s1[3]
+\end_layout
+
+\begin_layout Plain Layout
+
+f
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+You can get a subset of characters:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> s1[3:8]
+\end_layout
+
+\begin_layout Plain Layout
+
+'first'
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+And you can split them:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> s1.split('s')
+\end_layout
+
+\begin_layout Plain Layout
+
+['my fir', 't ', 'tring']
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Note the difference between square brackets [] and parenthesis ().
+ Parenthesis are used for calling functions, and square brackets are used
+ for referencing data (in this case, the characters of the string).
+\end_layout
+
+\begin_layout Itemize
+Note also we have used a dot 
+\begin_inset Quotes eld
+\end_inset
+
+.
+\begin_inset Quotes erd
+\end_inset
+
+ to access built-in functionality of the string s1.
+ This split() function splits the string (in this case by the delimiter
+ 's') and returns a 
+\emph on
+list
+\emph default
+ (see next section) of three sub-strings, without affecting the original
+ string s1.
+ Such a function is referred to as a 
+\begin_inset Quotes eld
+\end_inset
+
+method of an object
+\begin_inset Quotes erd
+\end_inset
+
+ and is a nifty feature of 
+\begin_inset Quotes eld
+\end_inset
+
+object-oriented coding
+\begin_inset Quotes erd
+\end_inset
+
+.
+ All python objects have their own built-in functionality, as well as the
+ data they hold.
+ We'll talk more about this later! For now, just know that if you have an
+ object, you can see all of the things it can do by typing a 
+\begin_inset Quotes eld
+\end_inset
+
+.
+\begin_inset Quotes erd
+\end_inset
+
+ after your variable name and looking at the list that pops up in spyder.
+ Playtime ensues, and this is a great way to learn about objects!
+\end_layout
+
+\begin_layout Subsubsection
+Lists
+\end_layout
+
+\begin_layout Standard
+A list is an object that can hold many other objects (including other lists).
+ Let's create one.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a = [3.4, 27, "test"]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here the list is surrounded by square brackets, and each element is separated
+ by a comma.
+ This list has 3 elements: two numbers and a string.
+ To access an element or range of elements,
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a[1]
+\end_layout
+
+\begin_layout Plain Layout
+
+27
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> a[1:3]
+\end_layout
+
+\begin_layout Plain Layout
+
+[27, "test"]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These 
+\begin_inset Quotes eld
+\end_inset
+
+functions
+\begin_inset Quotes erd
+\end_inset
+
+ also return values and do not change the original list.
+ Try typing 
+\begin_inset Quotes eld
+\end_inset
+
+a.
+\begin_inset Quotes erd
+\end_inset
+
+ and looking for all of the list functionality.
+ You can remove elements with a.pop(), add elements with a.append(), sort
+ them, etc.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Tuples
+\end_layout
+
+\begin_layout Standard
+Tuples are like lists but they are defined with parenthesis instead of brackets:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> a = (3.4, 27, "test")
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> a[0]
+\end_layout
+
+\begin_layout Plain Layout
+
+3.4
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+You can read about the various differences between the two, but in practice
+ for me, I don't use them unless I have to because they don't have as much
+ functionality as lists.
+ They often appear in the context of function definitions for me, e.g.:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> def f(*a): print a
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Putting a * before the input specifies that you can call f() with as many
+ arguments as you like, and they will be stored in a 
+\emph on
+tuple
+\emph default
+ named 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+.
+ So:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> f(1,2,3,4,"test")
+\end_layout
+
+\begin_layout Plain Layout
+
+(1, 2, 3, 4, "test", )
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This adds some serious flexibility to function definitions!
+\end_layout
+
+\begin_layout Subsubsection
+Dictionaries
+\end_layout
+
+\begin_layout Standard
+Dictionaries are one of the most powerful python objects I have found.
+ As the name suggests, it's an object with which you can 
+\begin_inset Quotes eld
+\end_inset
+
+look up
+\begin_inset Quotes erd
+\end_inset
+
+ values.
+ Dictionaries are defined with some odd-looking syntax involving curly braces:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> d = {"python":"a programming language", 32:"entry 32", 44:128}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This dictionary has 3 entries.
+ Each entry has a 
+\begin_inset Quotes eld
+\end_inset
+
+key
+\begin_inset Quotes erd
+\end_inset
+
+ (i.e.
+ the thing to the left of the colon) and a 
+\begin_inset Quotes eld
+\end_inset
+
+value
+\begin_inset Quotes erd
+\end_inset
+
+ (i.e.
+ the thing to the right of the colon).
+ To access a list of keys or values:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> d.keys()
+\end_layout
+
+\begin_layout Plain Layout
+
+['python', 32, 44]
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> d.values()
+\end_layout
+
+\begin_layout Plain Layout
+
+['a programming language', 'entry 32', 128]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To get values and play with them:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> d["python"]
+\end_layout
+
+\begin_layout Plain Layout
+
+'a programming language'
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> d[32]
+\end_layout
+
+\begin_layout Plain Layout
+
+'entry 32'
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> d[44] + 1
+\end_layout
+
+\begin_layout Plain Layout
+
+129
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+And to add new entries or remove entries:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> d['new entry'] = 444
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> d.pop('python')
+\end_layout
+
+\begin_layout Plain Layout
+
+'a programming language'
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> d
+\end_layout
+
+\begin_layout Plain Layout
+
+{32: 'entry 32', 44: 128, 'new entry': 444}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So, now you have a few ways to store data.
+\end_layout
+
+\begin_layout Subsection
+Logic and Loops
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+If
+\begin_inset Quotes erd
+\end_inset
+
+ Statements
+\end_layout
+
+\begin_layout Standard
+Often you want to do different things based on logic.
+ For this, we use 
+\begin_inset Quotes eld
+\end_inset
+
+if
+\begin_inset Quotes erd
+\end_inset
+
+ statements.
+ Here is an example:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> if 3 == 2: print "what??"
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As with the inline function definitions above, you must push enter twice
+ to make this work.
+ Here python checks whether 3 is equal to 2, and if it is, it prints a confused
+ sentence.
+ Since python is logical, nothing will be printed.
+ If we change this line to
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> if 3 > 2: print "fine."
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+it will print 
+\begin_inset Quotes eld
+\end_inset
+
+fine.
+\begin_inset Quotes erd
+\end_inset
+
+, because 3 is actually greater than 2.
+ Let's define the following test function:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+def f(a):
+\end_layout
+
+\begin_layout Plain Layout
+
+    if a%2 == 0: 
+\end_layout
+
+\begin_layout Plain Layout
+
+        print "it's even."
+\end_layout
+
+\begin_layout Plain Layout
+
+        print "nice work."
+\end_layout
+
+\begin_layout Plain Layout
+
+    elif a%3 == 0:
+\end_layout
+
+\begin_layout Plain Layout
+
+        print "it's a multiple of 3."
+\end_layout
+
+\begin_layout Plain Layout
+
+    else:       
+\end_layout
+
+\begin_layout Plain Layout
+
+        print "I don't know."
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This function first checks if the argument is even by 
+\begin_inset Quotes eld
+\end_inset
+
+modding
+\begin_inset Quotes erd
+\end_inset
+
+ it with 2.
+ If it is even, it prints 
+\begin_inset Quotes eld
+\end_inset
+
+it's even
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+nice work
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The following line should be read 
+\begin_inset Quotes eld
+\end_inset
+
+else if
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+otherwise, if
+\begin_inset Quotes erd
+\end_inset
+
+.
+ If it's 
+\emph on
+not
+\emph default
+ even, this line of code is called: it checks if it is a multiple of 3 and
+ prints 
+\begin_inset Quotes eld
+\end_inset
+
+it's a multiple of 3
+\begin_inset Quotes erd
+\end_inset
+
+ if it is.
+ You can have as many 
+\begin_inset Quotes eld
+\end_inset
+
+elif
+\begin_inset Quotes erd
+\end_inset
+
+ statements as you like.
+ Finally, if none of the if's are satisfied, the 
+\begin_inset Quotes eld
+\end_inset
+
+else
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+otherwise
+\begin_inset Quotes erd
+\end_inset
+
+ code is called, and it prints 
+\begin_inset Quotes eld
+\end_inset
+
+I don't know.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Note that just like a function definition, indentation for if, elif, and
+ else statements is strictly obeyed.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+For
+\begin_inset Quotes erd
+\end_inset
+
+ Loops
+\end_layout
+
+\begin_layout Standard
+Often one needs to repeat an action many times, and for this I often use
+ 
+\begin_inset Quotes eld
+\end_inset
+
+for
+\begin_inset Quotes erd
+\end_inset
+
+ loops.
+ For example, say we have a long list of numbers and we need to print all
+ of the even values:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+for n in [0,1,2,3,4,5,6,7,8]:
+\end_layout
+
+\begin_layout Plain Layout
+
+    if n%2 == 0: print n
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that this is just iterating over the supplied list, and any list will
+ do.
+ For example, this can be written more succinctly as
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+for n in range(10):
+\end_layout
+
+\begin_layout Plain Layout
+
+    if n%2 == 0: print n
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+range()
+\begin_inset Quotes erd
+\end_inset
+
+ function returns a list, which is iterable.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+While
+\begin_inset Quotes erd
+\end_inset
+
+ Loops
+\end_layout
+
+\begin_layout Standard
+Sometimes you want to loop until some condition is met, but you do not know
+ ahead of time how many steps this will take.
+ For this we use a 
+\begin_inset Quotes eld
+\end_inset
+
+while
+\begin_inset Quotes erd
+\end_inset
+
+ loop.
+ For example, we might want to find the first prime number above 1000.
+ Here we first define a (totally inefficient) function to determine whether
+ a number is prime, then perform a 
+\begin_inset Quotes eld
+\end_inset
+
+while
+\begin_inset Quotes erd
+\end_inset
+
+ loop that tests numbers above 1000.
+\end_layout
+
+\begin_layout Standard
+
+\begin_inset listings
+lstparams "language=Python"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+def is_prime(x):
+\end_layout
+
+\begin_layout Plain Layout
+
+    for i in range(2,x):
+\end_layout
+
+\begin_layout Plain Layout
+
+        if x%i == 0:
+\end_layout
+
+\begin_layout Plain Layout
+
+            print x, "has factor", i
+\end_layout
+
+\begin_layout Plain Layout
+
+            return False
+\end_layout
+
+\begin_layout Plain Layout
+
+    return True
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+n = 1000
+\end_layout
+
+\begin_layout Plain Layout
+
+while not is_prime(n):
+\end_layout
+
+\begin_layout Plain Layout
+
+    n = n+1
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+print "First prime above 1000 =", n
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+This code results in the following output:
+\end_layout
+
+\begin_layout Standard
+
+\begin_inset listings
+lstparams "language=Python"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+1000 has factor 2
+\end_layout
+
+\begin_layout Plain Layout
+
+1001 has factor 7
+\end_layout
+
+\begin_layout Plain Layout
+
+1002 has factor 2
+\end_layout
+
+\begin_layout Plain Layout
+
+1003 has factor 17
+\end_layout
+
+\begin_layout Plain Layout
+
+1004 has factor 2
+\end_layout
+
+\begin_layout Plain Layout
+
+1005 has factor 3
+\end_layout
+
+\begin_layout Plain Layout
+
+1006 has factor 2
+\end_layout
+
+\begin_layout Plain Layout
+
+1007 has factor 19
+\end_layout
+
+\begin_layout Plain Layout
+
+1008 has factor 2
+\end_layout
+
+\begin_layout Plain Layout
+
+First prime above 1000 = 1009
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+I did not know that.
+ Thank you, python.
+\end_layout
+
+\begin_layout Subsection
+Comments (a.k.a.
+ the most important things you'll ever finally learn to use a few years
+ from now)
+\end_layout
+
+\begin_layout Standard
+Until now we have only written code.
+ The other thing we can (MUST) include in scripts is 
+\series bold
+\emph on
+comments
+\series default
+\emph default
+.
+ A comment is a portion of the script that python will ignore.
+ They are used primarily to give information to the human being that is
+ reading your code.
+ This includes other lab members and your future self.
+ I guarantee that no matter what I say, two things will happen to you: 
+\end_layout
+
+\begin_layout Enumerate
+You will write code without comments, because what you are doing is so simple
+ 
+\begin_inset Quotes eld
+\end_inset
+
+it doesn't need comments
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+You will return to your code 
+\begin_inset Formula $N$
+\end_inset
+
+ months later, have no idea what the code is doing, and lose several days
+ of progress trying to add one small feature.
+\end_layout
+
+\begin_layout Standard
+This is a promise, and you will find it happening even for 
+\begin_inset Formula $N\sim\pi$
+\end_inset
+
+.
+ I have yet to find a way to sufficiently emphasize the importance of comments
+ so as to avoid these events and for this I am sorry.
+\end_layout
+
+\begin_layout Standard
+There are several ways to add comments in python.
+ The simplest is to type the pound sign 
+\begin_inset Quotes eld
+\end_inset
+
+#
+\begin_inset Quotes erd
+\end_inset
+
+ before some code, e.g.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+# some notes about what is about to happen
+\end_layout
+
+\begin_layout Plain Layout
+
+print "some stuff" # some notes about this particular line
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What this will do is simply print 
+\begin_inset Quotes eld
+\end_inset
+
+some stuff
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Everything after the # signs on each line is ignored by python.
+ You can also use the # symbol to temporarily disable some code without
+ deleting it, and in spyder, you can select a big block of code and comment
+ all of it by typing ctrl-1.
+\end_layout
+
+\begin_layout Standard
+Another way to add comments is to place some code between triple quotes,
+ either
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+"""
+\end_layout
+
+\begin_layout Plain Layout
+
+Some stuff python will ignore.
+\end_layout
+
+\begin_layout Plain Layout
+
+You can write a few lines
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+or even some code:
+\end_layout
+
+\begin_layout Plain Layout
+
+x = 32
+\end_layout
+
+\begin_layout Plain Layout
+
+"""
+\end_layout
+
+\begin_layout Plain Layout
+
+print "some stuff."
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Everything but the print statement will be ignored.
+ Typically, the 
+\begin_inset Quotes eld
+\end_inset
+
+three quote
+\begin_inset Quotes erd
+\end_inset
+
+ comment is used below a function definition, such as:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+def f(x):
+\end_layout
+
+\begin_layout Plain Layout
+
+    """
+\end_layout
+
+\begin_layout Plain Layout
+
+    You can describe what the function does here.
+ In
+\end_layout
+
+\begin_layout Plain Layout
+
+    this case, it returns the square of x.
+\end_layout
+
+\begin_layout Plain Layout
+
+    """
+\end_layout
+
+\begin_layout Plain Layout
+
+    return x*x
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The great part about this type of commenting is that the information in
+ between the triple quotes will appears as the documentation of the function,
+ either above the function as you are typing it or when you type help(f).
+ 
+\end_layout
+
+\begin_layout Standard
+For example, we should comment the 
+\begin_inset Quotes eld
+\end_inset
+
+while loop
+\begin_inset Quotes erd
+\end_inset
+
+ code above:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+def is_prime(x):
+\end_layout
+
+\begin_layout Plain Layout
+
+    """
+\end_layout
+
+\begin_layout Plain Layout
+
+    Function that (in the silliest way possible)
+\end_layout
+
+\begin_layout Plain Layout
+
+    determines whether x is prime.
+\end_layout
+
+\begin_layout Plain Layout
+
+    """
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    # check if it is not prime
+\end_layout
+
+\begin_layout Plain Layout
+
+    for i in range(2,x):
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # if there is no remainder, i is
+\end_layout
+
+\begin_layout Plain Layout
+
+        # not a factor of x
+\end_layout
+
+\begin_layout Plain Layout
+
+        if x%i == 0:
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+            # print the naughty factor
+\end_layout
+
+\begin_layout Plain Layout
+
+            print x, "has factor", i
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+            return False
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    # no factors found!
+\end_layout
+
+\begin_layout Plain Layout
+
+    return True
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# look for the first prime number above 1000
+\end_layout
+
+\begin_layout Plain Layout
+
+n = 1000
+\end_layout
+
+\begin_layout Plain Layout
+
+while not is_prime(n):
+\end_layout
+
+\begin_layout Plain Layout
+
+    n = n+1
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+print "First prime above 1000 =", n
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Much easier to read!
+\end_layout
+
+\begin_layout Standard
+Advice: write the comments describing what is about to happen before writing
+ the code.
+ You will spend a lot more time debugging code than writing code, so having
+ clear, natural-language blocks of text will greatly simplify your experience.
+ I typically try to write more comments than code, because it simply does
+ not add a any time to the coding process compared to learning how the actual
+ code works or looking up functions online, etc.
+ It also will save you factors of 10 in debugging time.
+ 
+\end_layout
+
+\begin_layout Standard
+You'll see.
+ 
+\end_layout
+
+\begin_layout Standard
+A few years from now, anyway.
+\end_layout
+
+\begin_layout Subsection
+Modules
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Modules"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Python's built-in functionality (some of which is described above) can be
+ extended 
+\emph on
+dramatically
+\emph default
+ with 
+\begin_inset Quotes eld
+\end_inset
+
+modules
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For example, a common module for very fast numerical calculations, people
+ typically use the 
+\begin_inset Quotes eld
+\end_inset
+
+numpy
+\begin_inset Quotes erd
+\end_inset
+
+ module, which can be 
+\begin_inset Quotes eld
+\end_inset
+
+imported
+\begin_inset Quotes erd
+\end_inset
+
+ (after you install it, of course!) as follows:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> import numpy
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The module itself is an object, and after you run the above command, you
+ can access all the module's functionality with the dot 
+\begin_inset Quotes eld
+\end_inset
+
+.
+\begin_inset Quotes erd
+\end_inset
+
+, for example:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> numpy.linspace(0,10,3)
+\end_layout
+
+\begin_layout Plain Layout
+
+array([  0.,   5.,  10.])
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In this case, we used the linspace() function to create a 3-element 
+\emph on
+array
+\emph default
+ (discussed below) spanning the range 0 to 10.
+ There are a lot of modules.
+ We can also write our own modules.
+ If you don't like typing 
+\begin_inset Quotes eld
+\end_inset
+
+numpy
+\begin_inset Quotes erd
+\end_inset
+
+ all the time, you can shorten it:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> import numpy as np
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> np.linspace(0, np.pi, 5)
+\end_layout
+
+\begin_layout Plain Layout
+
+array([ 0.
+        ,  0.78539816,  1.57079633,  2.35619449,  3.14159265])
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Or you can import everything into your 
+\begin_inset Quotes eld
+\end_inset
+
+name space
+\begin_inset Quotes erd
+\end_inset
+
+ so that you have access to it directly:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> from numpy import *
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> linspace(0, pi, 5)
+\end_layout
+
+\begin_layout Plain Layout
+
+array([ 0.
+        ,  0.78539816,  1.57079633,  2.35619449,  3.14159265])
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I'm not a fan because it clutters the name space, making any modules I write
+ difficult to navigate with the pop-up code completion.
+\end_layout
+
+\begin_layout Standard
+All of python's modules are located in a single 
+\begin_inset Quotes eld
+\end_inset
+
+site-packages
+\begin_inset Quotes erd
+\end_inset
+
+ (
+\begin_inset Quotes eld
+\end_inset
+
+dist-packages
+\begin_inset Quotes erd
+\end_inset
+
+ on linux) folder.
+ To find the location of this folder on your computer, use the following
+ commands:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+>>> import sys
+\end_layout
+
+\begin_layout Plain Layout
+
+>>> for p in sys.path: print p
+\end_layout
+
+\begin_layout Plain Layout
+
+...
+\end_layout
+
+\begin_layout Plain Layout
+
+C:
+\backslash
+Python27
+\backslash
+lib
+\backslash
+site-packages
+\backslash
+spyderlib
+\backslash
+utils
+\backslash
+external
+\end_layout
+
+\begin_layout Plain Layout
+
+C:
+\backslash
+Python27
+\end_layout
+
+\begin_layout Plain Layout
+
+C:
+\backslash
+Python27
+\backslash
+Scripts
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+C:
+\backslash
+Python27
+\backslash
+Lib
+\backslash
+site-packages
+\end_layout
+
+\begin_layout Plain Layout
+
+...
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note you'll have to push enter twice after the for loop.
+ My actual list is larger than the one shown here, but you can quickly see
+ where 
+\begin_inset Quotes eld
+\end_inset
+
+site-packages
+\begin_inset Quotes erd
+\end_inset
+
+ lives on my computer.
+ Once you find this, remember it forever, because if you ever have to manually
+ install a python package (such as spinmob, described below), you will need
+ to have access to this folder.
+\end_layout
+
+\begin_layout Subsubsection
+The numpy module
+\end_layout
+
+\begin_layout Standard
+Python (like Matlab) is an interpreted language, meaning it is not compiled
+ into fast machine-level code before executing, meaning it is incredibly
+ slow.
+ The solution is to perform calculations using 
+\begin_inset Quotes eld
+\end_inset
+
+numpy arrays
+\begin_inset Quotes erd
+\end_inset
+
+ (like those above), which 
+\emph on
+are
+\emph default
+ compiled into fast machine-level code.
+ For example, if I want to numerically integrate the function 
+\begin_inset Formula $\int_{0}^{1}\sin(x)dx$
+\end_inset
+
+, I 
+\emph on
+could
+\emph default
+ do this:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+import numpy as np
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# create an array of a million x-values between 0 and 1 
+\end_layout
+
+\begin_layout Plain Layout
+
+xs = np.arange(0.0, 1.0, 1e-6)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# use python to loop over each value and add it to the sum:
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# start with sum = 0
+\end_layout
+
+\begin_layout Plain Layout
+
+sum = 0 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# loop over each element of the array
+\end_layout
+
+\begin_layout Plain Layout
+
+for x in xs:
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    # add this value times dx to the total sum
+\end_layout
+
+\begin_layout Plain Layout
+
+    sum = sum + np.sin(x) * 1e-6 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+print sum
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This works, and it is correct.
+ However, on my laptop, this takes about 10 seconds, because it takes time
+ for python to interpret what amounts to a million lines of code! If instead
+ I do the following:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+sum = np.sum(np.sin(xs)) * 1e-6
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I get the answer 
+\emph on
+immediately
+\emph default
+ because the underlying numpy code is blindingly fast.
+ Note that when I type np.sin(xs), numpy loops over the entire array, taking
+ sin() of each element, returning an array of the same size.
+ The command np.sum() then tell numpy to add all the elements together.
+\end_layout
+
+\begin_layout Standard
+In short, anything that can be done to an individual number in python can
+ also be done to a numpy array of any size or shape.
+ See the numpy documentation for more details!
+\end_layout
+
+\begin_layout Subsubsection
+The scipy module
+\end_layout
+
+\begin_layout Standard
+This is the other biggy.
+ In this module you will find fast-compiled code for solving differential
+ equations, taking smarter integrals than the one above, fitting, and a
+ whole lot more.
+ Definitely look into this module.
+ Basically every well-established mathematical trick you can think of has
+ already been created for you.
+\end_layout
+
+\begin_layout Section
+Git, Github & Spinmob
+\end_layout
+
+\begin_layout Standard
+Spinmob is a homemade library with for saving, loading, plotting, fitting,
+ and otherwise analyzing data.
+ It now also includes the 
+\begin_inset Quotes eld
+\end_inset
+
+Easy GUI Generator
+\begin_inset Quotes erd
+\end_inset
+
+ library we use for taking data.
+ More information (including a growing wiki-based tutorial!) can be found
+ at github:
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/Spinmob/spinmob"
+target "https://github.com/Spinmob/spinmob"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To install the spinmob module, you can simply download the source into a
+ (new) folder site-packages/spinmob/, but it is recommended instead to install
+ a 
+\begin_inset Quotes eld
+\end_inset
+
+git client
+\begin_inset Quotes erd
+\end_inset
+
+ and use this to perform a 
+\begin_inset Quotes eld
+\end_inset
+
+git clone
+\begin_inset Quotes erd
+\end_inset
+
+ into this directory.
+ Using git will allow you to get the latest version of the code, instantaneously
+ switch between different versions of the code, create a new branch, modify
+ the code, and / or submit updates / fixes to me via 
+\begin_inset Quotes eld
+\end_inset
+
+git pull requests
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsection
+Git Client
+\end_layout
+
+\begin_layout Standard
+Though 
+\emph on
+somewhat
+\emph default
+ clunky, my current favorite no-nonsense git client is 
+\begin_inset Quotes eld
+\end_inset
+
+SourceTree
+\begin_inset Quotes erd
+\end_inset
+
+, which can be freely downloaded here:
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.sourcetreeapp.com/"
+target "http://www.sourcetreeapp.com/"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+After installing and starting the program, you should see something like
+ this:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/sourcetree1.png
+	width 14cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Press the 
+\begin_inset Quotes eld
+\end_inset
+
+Clone / New
+\begin_inset Quotes erd
+\end_inset
+
+ button to begin adding a repository:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/sourcetree2.png
+	width 14cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The location of the spinmob 
+\begin_inset Quotes eld
+\end_inset
+
+Source Path / URL
+\begin_inset Quotes erd
+\end_inset
+
+ can be found on the spinmob github site mentioned above.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+Destination Path
+\begin_inset Quotes erd
+\end_inset
+
+ should be a (new) 
+\begin_inset Quotes eld
+\end_inset
+
+spinmob
+\begin_inset Quotes erd
+\end_inset
+
+ directory in python's 
+\begin_inset Quotes eld
+\end_inset
+
+site-packages
+\begin_inset Quotes erd
+\end_inset
+
+ directory (see section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Modules"
+
+\end_inset
+
+).
+ When the information is entered, press 
+\begin_inset Quotes eld
+\end_inset
+
+Clone
+\begin_inset Quotes erd
+\end_inset
+
+, and it should download the latest files from the online 
+\begin_inset Quotes eld
+\end_inset
+
+master
+\begin_inset Quotes erd
+\end_inset
+
+ branch.
+ If you then click 
+\begin_inset Quotes eld
+\end_inset
+
+Working Copy
+\begin_inset Quotes erd
+\end_inset
+
+, you should see all the files:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/sourcetree3.png
+	width 14cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note you may have to select 
+\begin_inset Quotes eld
+\end_inset
+
+All Files
+\begin_inset Quotes erd
+\end_inset
+
+ from the pull-down menu to see them all.
+ If you modify files, SourceTree will notice, and mark them in this area.
+ From here you can create your own branches, make your own modifications
+ to the source locally, and revert to the master branch / previous versions
+ if you mess something up.
+ None of this will affect the 
+\begin_inset Quotes eld
+\end_inset
+
+master
+\begin_inset Quotes erd
+\end_inset
+
+ branch, which is moderated by me.
+ 
+\end_layout
+
+\begin_layout Standard
+If you click the 
+\begin_inset Quotes eld
+\end_inset
+
+master
+\begin_inset Quotes erd
+\end_inset
+
+ branch, you can see all of the branches and history of spinmob, back to
+ the day it was first uploaded.
+ From here you can switch versions or update to the latest:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Images/sourcetree4.png
+	width 14cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Right-clicking any of the versions will bring up the option to 
+\begin_inset Quotes eld
+\end_inset
+
+Checkout...
+\begin_inset Quotes erd
+\end_inset
+
+, which means 
+\begin_inset Quotes eld
+\end_inset
+
+switch to this version
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This is useful for updating to the latest version and (if an update breaks
+ part of the code) roll back to a previous version without any headache.
+\end_layout
+
+\begin_layout Standard
+If you learn more about python, spinmob, and git, I will definitely welcome
+ 
+\begin_inset Quotes eld
+\end_inset
+
+pull requests
+\begin_inset Quotes erd
+\end_inset
+
+ for any fun code you would like to contribute to spinmob.
+ Let me know if you make / fix / enhance something!
+\end_layout
+
+\end_body
+\end_document
