@@ -151,7 +151,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     kwargs are sent to plot.xy.data()
     """
     _pylab.ioff()
-
+    
     # set up the figure and axes
     if figure == 'gcf': f = _pylab.gcf()
     if clear: f.clear()
@@ -498,7 +498,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         # calculate the x an y progressive shifts
         dx = xshift*(n/xshift_every)
         dy = yshift*(n/yshift_every)
-
+        
         # if we're supposed to coarsen the data, do so.
         x  = _fun.coarsen_array(xdata[n],  coarsen)
         y  = _fun.coarsen_array(ydata[n],  coarsen)
@@ -583,7 +583,6 @@ def xy_function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=Fa
     **kwargs are sent to spinmob.plot.xy.data()
 
     """
-
     function(f, xmin, xmax, steps, p, g, erange, plotter=xy_data, **kwargs)
 
 
@@ -747,8 +746,8 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
     if not kwargs.has_key('label'):  kwargs['label']  = labels
 
     # plot!
-    if complex_plane:    plotter(real(ydatas),imag(ydatas), **kwargs)
-    else:                plotter(xdatas, ydatas, **kwargs)
+    if complex_plane: plotter(real(ydatas),imag(ydatas), **kwargs)
+    else:             plotter(xdatas, ydatas, **kwargs)
 
 
 

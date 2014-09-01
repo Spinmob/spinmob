@@ -12,6 +12,8 @@ def coarsen_array(a, level=2, method='mean'):
     level=2 means every two data points will be binned.
     level=0 or 1 just returns a copy of the array
     """
+    if a==None: return None    
+    
     # make sure it's a numpy array
     a = _n.array(a)
     
