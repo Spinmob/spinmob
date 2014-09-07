@@ -15,23 +15,23 @@ w.set_position([0,0])
 w.set_column_stretch(1)
 
 # add the "go" button
-b = w.add_object(egg.gui.Button("Pretend to Acquire Data", checkable=True)).set_width(135)
-i = w.add_object(egg.gui.NumberBox(int=True)).set_width(50)
+b = w.place_object(egg.gui.Button("Pretend to Acquire Data", checkable=True)).set_width(135)
+i = w.place_object(egg.gui.NumberBox(int=True)).set_width(50)
 
 # add a tabbed interface for the plotting area,
 # spanning the first and second rows
-tabs = w.add_object(egg.gui.TabArea(), row_span=2)
+tabs = w.place_object(egg.gui.TabArea(), row_span=2)
 
 # add a tab for some plots
 t = tabs.add_tab("Plots")
 
 # add a databox plotter object to the tab
-p = t.add_object(egg.gui.DataboxPlot())
+p = t.place_object(egg.gui.DataboxPlot())
 
 # move to the second row and add a TreeDictionary for
 # our "settings"
 w.new_autorow()
-s = w.add_object(egg.gui.TreeDictionary('example_acquisition.cfg'), column_span=2)
+s = w.place_object(egg.gui.TreeDictionary('example_acquisition.cfg'), column_span=2)
 
 
 

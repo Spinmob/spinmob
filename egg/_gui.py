@@ -44,7 +44,7 @@ class GridLayout():
 
     def __getitem__(self, n): return self.objects[n]
 
-    def add_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=1):
+    def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=1):
         """
         This adds either one of our simplified objects or a QWidget to the
         grid at the specified position, appends the object to self.objects.
@@ -77,7 +77,7 @@ class GridLayout():
 
         return object
 
-    def remove_object(self, object=0):
+    def remove_object(self, object=0, delete=True):
         """
         Removes the supplied object from the grid. If object is an integer,
         it removes the n'th object.
@@ -92,11 +92,11 @@ class GridLayout():
         if hasattr(object, '_widget'):
             self._layout.removeWidget(object._widget)
             object._widget.hide()
-            object._widget.deleteLater()
+            if delete: object._widget.deleteLater()
         else:
             self._layout.removeWidget(object)
             object.hide()
-            object.deleteLater()
+            if delete: object.deleteLater()
 
     def clear(self):
         """
@@ -152,7 +152,7 @@ class Window(GridLayout):
         """
 
         # initialize the grid layout
-        GridLayout.__init__(self)
+        GridLayout.__init__(self, margins=True)
 
         # create the QtMainWindow,
         self._window = _g.Qt.QtGui.QMainWindow()
@@ -1296,7 +1296,7 @@ class TreeDictionary(BaseObject):
 
 
 
-class DataboxWithButtons(_d.databox, GridLayout):
+class DataboxLoadSave(_d.databox, GridLayout):
 
     def __init__(self, file_type="*.dat", **kwargs):
         """
@@ -1310,9 +1310,9 @@ class DataboxWithButtons(_d.databox, GridLayout):
         _d.databox.__init__(self, **kwargs)
 
         # create the controls
-        self.button_load     = self.add_object(Button("Load").set_width(50), alignment=1)
-        self.button_save     = self.add_object(Button("Save").set_width(50), alignment=1)
-        self.label_path      = self.add_object(Label(""), alignment=0)
+        self.button_load     = self.place_object(Button("Load").set_width(50), alignment=1)
+        self.button_save     = self.place_object(Button("Save").set_width(50), alignment=1)
+        self.label_path      = self.place_object(Label(""), alignment=0)
         self.set_column_stretch(2,100)
 
         # connect the signals to the buttons
@@ -1385,18 +1385,18 @@ class DataboxPlot(GridLayout):
         self._widget.setFixedWidth(620)
 
         # top row is main controls
-        self.add_object(Label("Raw Data:"), alignment=1)
-        self.button_load     = self.add_object(Button("Load")                .set_width(50), alignment=1)
-        self.button_save     = self.add_object(Button("Save")                .set_width(50), alignment=1)
-        self.button_autosave = self.add_object(Button("Auto", checkable=True).set_width(50), alignment=1)
-        self.number_file     = self.add_object(NumberBox(int=True, limits=(0,None))).set_width(50)
-        self._label_path     = self.add_object(Label(""))
+        self.place_object(Label("Raw Data:"), alignment=1)
+        self.button_load     = self.place_object(Button("Load")                .set_width(50), alignment=1)
+        self.button_save     = self.place_object(Button("Save")                .set_width(50), alignment=1)
+        self.button_autosave = self.place_object(Button("Auto", checkable=True).set_width(50), alignment=1)
+        self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None))).set_width(50)
+        self._label_path     = self.place_object(Label(""))
 
-        self.add_object(Label("")) # spacer
-        self.button_script     = self.add_object(Button("Show Script", checkable=True)).set_checked(False).set_width(70)
-        self.button_autoscript = self.add_object(Button("Auto",        checkable=True)).set_checked(True) .set_width(50)
-        self.button_multi      = self.add_object(Button("Multi",       checkable=True)).set_checked(True) .set_width(50)
-        self.button_enabled    = self.add_object(Button("Enabled",     checkable=True)).set_checked(True) .set_width(50)
+        self.place_object(Label("")) # spacer
+        self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False).set_width(70)
+        self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) .set_width(50)
+        self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) .set_width(50)
+        self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True) .set_width(50)
 
 
         self.set_column_stretch(5)
@@ -1405,19 +1405,19 @@ class DataboxPlot(GridLayout):
         self.new_autorow()
 
         # grid for the script
-        self._script_grid = self.add_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count())
+        self._script_grid = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count())
 
         # script grid
-        self.button_plot  = self._script_grid.add_object(Button("Try it!"),   2,3).set_width(50)
+        self.button_plot  = self._script_grid.place_object(Button("Try it!"),   2,3).set_width(50)
 
-        self.script = self._script_grid.add_object(TextBox("", multiline=True), 1,0, row_span=4)
+        self.script = self._script_grid.place_object(TextBox("", multiline=True), 1,0, row_span=4)
         self.script.set_height(81).set_width(564)
 
         # make sure the plot fills up the most space
         self.set_row_stretch(2)
 
         # plot area
-        self._plot_grid    = self.add_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count())
+        self._plot_grid    = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count())
 
         ##### set up the internal variables
 
@@ -1761,7 +1761,7 @@ class DataboxPlot(GridLayout):
                 self._plot_grid.new_autorow(row)
 
                 # add the plot
-                self.plot_widgets.append(self._plot_grid.add_object(_g.PlotWidget(), column_span=8))
+                self.plot_widgets.append(self._plot_grid.place_object(_g.PlotWidget(), column_span=8))
 
             # create new curves
             self._curves.append(_g.PlotCurveItem(pen = (len(self._curves), n)))

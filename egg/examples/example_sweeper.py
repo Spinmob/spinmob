@@ -15,22 +15,22 @@ w.set_position([0,0])
 w.set_column_stretch(1)
 
 # add the "go" button
-b_sweep  = w.add_object(egg.gui.Button("Sweep!",    checkable=True)).set_width(50)
-b_select = w.add_object(egg.gui.Button("Selection", checkable=True)).set_width(70)
-l_x      = w.add_object(egg.gui.Label("x:"), alignment=2)
-n_x      = w.add_object(egg.gui.NumberBox(int=False))
+b_sweep  = w.place_object(egg.gui.Button("Sweep!",    checkable=True)).set_width(50)
+b_select = w.place_object(egg.gui.Button("Selection", checkable=True)).set_width(70)
+l_x      = w.place_object(egg.gui.Label("x:"), alignment=2)
+n_x      = w.place_object(egg.gui.NumberBox(int=False))
 
 # add a tabbed interface for the plotting area,
 # spanning the first and second rows
-tabs = w.add_object(egg.gui.TabArea(), row_span=2)
+tabs = w.place_object(egg.gui.TabArea(), row_span=2)
 
 # add a tab for some plots
 t_raw = tabs.add_tab("Raw Plots")
 
 # add a databox plotter object to the tab
-data_raw = t_raw.add_object(egg.gui.DataboxWithButtons(), alignment=0)
-plot_ms  = t_raw.add_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Magnitude')), 0,1, alignment=0)
-plot_ps  = t_raw.add_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Phase')),     0,2, alignment=0)
+data_raw = t_raw.place_object(egg.gui.DataboxLoadSave(), alignment=0)
+plot_ms  = t_raw.place_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Magnitude')), 0,1, alignment=0)
+plot_ps  = t_raw.place_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Phase')),     0,2, alignment=0)
 
 # link the axes
 plot_ps.plotItem.setXLink(plot_ms.plotItem)
@@ -38,7 +38,7 @@ plot_ps.plotItem.setXLink(plot_ms.plotItem)
 # move to the second row and add a TreeDictionary for
 # our "settings"
 w.new_autorow()
-settings = w.add_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4)
+settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4)
 settings.add_parameter('sweep/x_start', -10, type='float')
 settings.add_parameter('sweep/x_stop',   10, type='float')
 settings.add_parameter('sweep/x_steps', 200, type='float')

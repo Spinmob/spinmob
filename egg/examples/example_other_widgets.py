@@ -18,7 +18,7 @@ window = egg.gui.Window('Hello World!')
 window.set_column_stretch(1,100)
 
 # top row (sub grid of misc controls defined below)
-top_row = window.add_object(egg.gui.GridLayout(), 0,0, column_span=2)
+top_row = window.place_object(egg.gui.GridLayout(), 0,0, column_span=2)
 
 
 
@@ -32,7 +32,7 @@ def dummy_function(a): print "dummy function received argument:", a
 def open_files(a):     print egg.dialogs.open_multiple(filters="*.txt")
 
 # add a buttons to the layout at grid position 0,0 (upper-left corner)
-b0 = top_row.add_object(egg.gui.Button("File Dialog"), 0,0)
+b0 = top_row.place_object(egg.gui.Button("File Dialog"), 0,0)
 
 # connect the button's "clicked" signal to a function
 window.connect(b0.signal_clicked, open_files)
@@ -44,7 +44,7 @@ window.connect(b0.signal_clicked, open_files)
 #########################################
 
 # make a number box, set its width
-n = top_row.add_object(egg.gui.NumberBox(), 7,0, alignment=2)
+n = top_row.place_object(egg.gui.NumberBox(), 7,0, alignment=2)
 n.set_width(50)
 
 # connect this control's "changed" signal to the dummy function
@@ -55,7 +55,7 @@ window.connect(n.signal_changed, dummy_function)
 #########################################
 # Line Edit
 #########################################
-top_row.add_object(egg.gui.TextBox("TextBox Object."),8,0)
+top_row.place_object(egg.gui.TextBox("TextBox Object."),8,0)
 
 
 #########################################
@@ -64,7 +64,7 @@ top_row.add_object(egg.gui.TextBox("TextBox Object."),8,0)
 
 # This button will toggle when pressed.
 # The function it fires will receive its current state.
-bt = top_row.add_object(egg.gui.Button("Checkable").set_checkable(), 5,0, alignment=1)
+bt = top_row.place_object(egg.gui.Button("Checkable").set_checkable(), 5,0, alignment=1)
 
 # yet another method to connect to a function
 bt.signal_clicked.connect(dummy_function)
@@ -74,7 +74,7 @@ bt.signal_clicked.connect(dummy_function)
 # Label
 #########################################
 
-l = top_row.add_object(egg.gui.Label("Some text goes here."), 6,0, alignment=1)
+l = top_row.place_object(egg.gui.Label("Some text goes here."), 6,0, alignment=1)
 
 
 #########################################
@@ -82,7 +82,7 @@ l = top_row.add_object(egg.gui.Label("Some text goes here."), 6,0, alignment=1)
 #########################################
 
 # add a line plot in the second row
-p1 = window.add_object(egg.pyqtgraph.PlotWidget(), 0,1)
+p1 = window.place_object(egg.pyqtgraph.PlotWidget(), 0,1)
 
 # create a "box" to hold data and header information
 data = egg.data.databox()
@@ -120,7 +120,7 @@ def acquire_and_plot(*a):
     data.insert_header('numberbox_value', n.get_value())
 
 # create a button to acquire / plot data
-b1 = top_row.add_object(egg.gui.Button("Acquire"), 1,0)
+b1 = top_row.place_object(egg.gui.Button("Acquire"), 1,0)
 
 # connect the button's "clicked" signal to the "acquire data" function
 window.connect(b1.signal_clicked, acquire_and_plot)
@@ -135,7 +135,7 @@ window.connect(b1.signal_clicked, acquire_and_plot)
 # function to save the databox we created above
 def save_data(a): data.save_file(filters="*.txt")
 
-b2 = top_row.add_object(egg.gui.Button("Save Data"), 2,0)
+b2 = top_row.place_object(egg.gui.Button("Save Data"), 2,0)
 window.connect(b2.signal_clicked, save_data)
 
 
@@ -145,7 +145,7 @@ window.connect(b2.signal_clicked, save_data)
 ##########################################
 #
 ## add a color plot to the second row spanning the right-most columns
-#p2 = window.add_object(egg.pyqtgraph.ImageView(), 1,1)
+#p2 = window.place_object(egg.pyqtgraph.ImageView(), 1,1)
 #
 ## function to plot an image
 #def randomize_image(*a): # note that *a will catch any number of arguments
@@ -160,7 +160,7 @@ window.connect(b2.signal_clicked, save_data)
 ##randomize_image()
 #
 ## add a randomizer button above it
-#b3 = top_row.add_object(egg.gui.Button("Randomize"), 3,0)
+#b3 = top_row.place_object(egg.gui.Button("Randomize"), 3,0)
 #
 ## connect b3's click to re-randomizing the plot
 #window.connect(b3.signal_clicked, randomize_image)
@@ -174,7 +174,7 @@ window.connect(b2.signal_clicked, save_data)
 #########################################
 
 # add a tab area to the 2nd row, spanning all columns
-tabs = window.add_object(egg.gui.TabArea(), 0,2, column_span=2)
+tabs = window.place_object(egg.gui.TabArea(), 0,2, column_span=2)
 
 # add two tabs
 t1 = tabs.add_tab("Parameter Tree!")
@@ -189,8 +189,8 @@ window.connect(tabs.signal_switched,            dummy_function)
 window.connect(tabs.signal_tab_close_requested, tabs.remove_tab)
 
 # add a button and a plot to the first tab
-t2.add_object(egg.pyqtgraph.PlotWidget(),0,0)
-t2.add_object(egg.pyqtgraph.PlotWidget(),1,0)
+t2.place_object(egg.pyqtgraph.PlotWidget(),0,0)
+t2.place_object(egg.pyqtgraph.PlotWidget(),1,0)
 
 
 
@@ -201,7 +201,7 @@ t2.add_object(egg.pyqtgraph.PlotWidget(),1,0)
 #########################################
 
 # add the table object to the second tab
-table = t3.add_object(egg.gui.Table(2,10))
+table = t3.place_object(egg.gui.Table(2,10))
 window.connect(table.signal_cell_changed, dummy_function)
 
 # a function that plays with the table
@@ -211,7 +211,7 @@ def do_something(a):
     print table.get_value(1,1)
 
 # make a button
-bt = t3.add_object(egg.gui.Button("Do something."),1,0)
+bt = t3.place_object(egg.gui.Button("Do something."),1,0)
 
 # make the button do something
 window.connect(bt.signal_clicked, do_something)
@@ -223,7 +223,7 @@ window.connect(bt.signal_clicked, do_something)
 #########################################
 
 # create the dictionary
-d = t4.add_object(egg.gui.TableDictionary(), 0,0).set_column_width(0,200).set_column_width(1,400).set_width(602)
+d = t4.place_object(egg.gui.TableDictionary(), 0,0).set_column_width(0,200).set_column_width(1,400).set_width(602)
 
 # setting and getting values
 d['test']         = 32
@@ -239,7 +239,7 @@ d(more_stuff="'strings need quotes'", comment_on_code='"this must be valid pytho
 #########################################
 
 # create the parameter tree
-tree = t1.add_object(egg.gui.TreeDictionary())
+tree = t1.place_object(egg.gui.TreeDictionary())
 
 tree.add_parameter('LOL_WUT', 32.5, type='float')
 tree.add_parameter('Some Category/parameter', '32')
