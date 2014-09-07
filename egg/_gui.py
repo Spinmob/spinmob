@@ -1,6 +1,7 @@
 import time     as _t
 import os       as _os
 import numpy    as _n
+from sys import platform as _platform
 
 import spinmob as _spinmob
 _d = _spinmob.data
@@ -8,6 +9,10 @@ _d = _spinmob.data
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
 _a = _g.mkQApp()
+
+# set the font if we're in linux
+if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
+
 
 class GridLayout():
 
@@ -143,7 +148,7 @@ class GridLayout():
 
 class Window(GridLayout):
 
-    def __init__(self, title='Window', size=[900,650]):
+    def __init__(self, title='Window', size=[700,500]):
         """
         This class is a simplified Qt window builder. Hopefully.
 
