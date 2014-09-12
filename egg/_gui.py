@@ -74,6 +74,8 @@ class GridLayout():
 
         # add the widget to the layout
         if hasattr(object, '_widget'): widget = object._widget
+
+        # allows the user to specify a standard widget
         else:                          widget = object
 
         self._layout.addWidget(widget, row, column,
