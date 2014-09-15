@@ -1497,7 +1497,7 @@ class DataboxPlot(GridLayout):
         """
         if checked:
             # get the path from the user
-            path = _egg.dialogs.save(filters=self._file_type)
+            path = _spinmob.dialogs.save(filters=self._file_type)
 
             # abort if necessary
             if not path:
@@ -1783,7 +1783,6 @@ class DataboxPlot(GridLayout):
             self._plot_grid.set_column_stretch(5)
 
 
-if __name__=='__main__': import example_sweeper
 
 
 
