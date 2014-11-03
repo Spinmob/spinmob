@@ -1144,7 +1144,7 @@ class fitter():
             if self['coarsen'][n] == 0: self['coarsen'][n] = 1
             x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
             y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
-            ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'])
+            ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
 
             # store the result
             self. _xdata_massaged.append(x)
