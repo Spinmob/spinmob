@@ -22,6 +22,53 @@ def error(message):
 
 
 
+def get_device_names():
+    """
+    Returns a list of names of DAQ devices present on the system.
+    """
+    _mx.DAQmxGetSysDevNames(buffer_string, buffer_length)
+
+    # massage the returned string
+    device_names = strip_buffer(buffer_string).split(', ')
+
+    # check that there are systems present!
+    if device_names == ['']: device_names = []
+        
+    # now strip and split this thing to return a names.
+    return device_names
+
+def get_ai_channel_names(device_name):
+    """
+    Returns a list of names of input channels on device. Device can be
+    an integer or a string name.
+    """
+    _mx.DAQmxGetDevAIPhysicalChans(device_name, buffer_string, buffer_length)
+    return strip_buffer(buffer_string).split(', ')
+
+def get_ao_channel_names(device_name):
+    """
+    Returns a list of names of input channels on device. Device can be
+    an integer or a string name.
+    """
+    _mx.DAQmxGetDevAOPhysicalChans(device_name, buffer_string, buffer_length)
+
+    names = strip_buffer(buffer_string).split(', ')
+    if names == ['']:   return None
+    else:               return names
+
+def get_terminal_names(device_name):
+    """
+    Returns a list of terminal names (could be used for triggering). Device
+    can be an integer or a string name.
+    """
+    _mx.DAQmxGetDevTerminals(device_name, buffer_string, buffer_length)
+
+    names = strip_buffer(buffer_string).split(', ')
+    if names == ['']:   return None
+    else:               return names
+
+
+
 
 class task_base:
 
@@ -84,25 +131,48 @@ class task_base:
 
 class ai_task(task_base):
 
-    settings = {"ai_task_name"      : "Default AI Task",
-                "ai_rate"           : 10000,
-                "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
-                "ai_samples"        : 1000,
-                "ai_timeout"        : 1000.0/10000.0 + 3.0,
-
-                "ai_clock_source"   : "",
-                "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-                "ai_trigger_source" : "please specify ai_trigger_source",
-                "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
-
-                "ai_channels"          : [],
-                "ai_min"               : -10.0,
-                "ai_max"               : 10.0,
-                "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
-                "ai_units"             : _mx.DAQmx_Val_Volts}
+    
 
 
+    def __init__(self, **kwargs):
+        """
+        "ai_task_name"      : "Default AI Task",
+        "ai_rate"           : 10000,
+        "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
+        "ai_samples"        : 1000,
+        "ai_timeout"        : 1000.0/10000.0 + 3.0,
+        
+        "ai_clock_source"   : "",
+        "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
+        "ai_trigger_source" : "please specify ai_trigger_source",
+        "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+        
+        "ai_channels"          : [],
+        "ai_min"               : -10.0,
+        "ai_max"               : 10.0,
+        "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
+        "ai_units"             : _mx.DAQmx_Val_Volts
+        """
+        self.settings = dict(
+                        {"ai_task_name"      : "Default AI Task",
+                         "ai_rate"           : 10000,
+                         "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
+                         "ai_samples"        : 1000,
+                         "ai_timeout"        : 1000.0/10000.0 + 3.0,
+                         
+                         "ai_clock_source"   : "",
+                         "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
+                         "ai_trigger_source" : "please specify ai_trigger_source",
+                         "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+                         
+                         "ai_channels"          : [0],
+                         "ai_min"               : -10.0,
+                         "ai_max"               : 10.0,
+                         "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
+                         "ai_units"             : _mx.DAQmx_Val_Volts})
 
+
+        task_base.__init__(self, **kwargs)
 
 
     def start(self, test=False, **kwargs):
@@ -241,7 +311,27 @@ class ai_task(task_base):
 class ao_task(task_base):
 
     _handle  = _mx.TaskHandle()
-    settings = {"ao_task_name"      : "Default Output Task",
+    def __init__(self, **kwargs):
+        """
+        "ao_task_name"      : "Default Output Task",
+        "ao_mode"           : _mx.DAQmx_Val_FiniteSamps,
+        "ao_timeout"        : 10.0,
+        
+        "ao_channels"       : [0],
+        "ao_rate"           : 10000,
+        "ao_waveforms"      : [[1,2,3,0]],
+        "ao_min"            : -10.0,
+        "ao_max"            : 10.0,
+        "ao_units"          : _mx.DAQmx_Val_Volts,
+        
+        "ao_clock_source"   : "",
+        "ao_clock_edge"     : _mx.DAQmx_Val_Rising,
+        
+        "ao_trigger_source" : "please specify ai_trigger_source",
+        "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope
+        """
+        self.settings = dict(
+               {"ao_task_name"      : "Default Output Task",
                 "ao_mode"           : _mx.DAQmx_Val_FiniteSamps,
                 "ao_timeout"        : 10.0,
 
@@ -256,7 +346,8 @@ class ao_task(task_base):
                 "ao_clock_edge"     : _mx.DAQmx_Val_Rising,
 
                 "ao_trigger_source" : "please specify ai_trigger_source",
-                "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope}
+                "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope})
+        task_base.__init__(self, **kwargs)
 
 
 
@@ -389,6 +480,9 @@ class ao_task(task_base):
         # cleanup
         debug("clear output task")
         _mx.DAQmxClearTask(self._handle)
+
+
+
 
 
 
@@ -773,7 +867,7 @@ class daqmx_system:
 #################
 if __name__ == "__main__":
     debug_enabled=False
-    s = daqmx_system()
+    ai = ai_task()
 
 
 
