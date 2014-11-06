@@ -56,6 +56,18 @@ def get_ao_channel_names(device_name):
     if names == ['']:   return None
     else:               return names
 
+def get_do_channel_names(device_name):
+    """
+    Returns a list of names of input channels on device. Device can be
+    an integer or a string name.
+    """
+    _mx.DAQmxGetDevDOLines(device_name, buffer_string, buffer_length)
+
+    names = strip_buffer(buffer_string).split(', ')
+    if names == ['']:   return None
+    else:               return names
+
+
 def get_terminal_names(device_name):
     """
     Returns a list of terminal names (could be used for triggering). Device
@@ -136,6 +148,17 @@ class ai_task(task_base):
 
     def __init__(self, **kwargs):
         """
+        Task object for analog input. Typical workflow is to create one of
+        these with the desired configuration (using kwargs, see below),
+        starting it, then reading the acquired data and cleaning up, e.g.:
+            
+            ai = ai_task(...)
+            ai.start()
+            ai.read_and_clean()
+        
+        Note, when you set ai_rate and start(), this will automatically
+        query the actual rate and update ai_rate internally!        
+        
         "ai_task_name"      : "Default AI Task",
         "ai_rate"           : 10000,
         "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
@@ -144,7 +167,7 @@ class ai_task(task_base):
         
         "ai_clock_source"   : "",
         "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-        "ai_trigger_source" : "please specify ai_trigger_source",
+        "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
         "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
         
         "ai_channels"          : [],
@@ -162,7 +185,7 @@ class ai_task(task_base):
                          
                          "ai_clock_source"   : "",
                          "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-                         "ai_trigger_source" : "please specify ai_trigger_source",
+                         "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
                          "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
                          
                          "ai_channels"          : [0],
@@ -313,11 +336,22 @@ class ao_task(task_base):
     _handle  = _mx.TaskHandle()
     def __init__(self, **kwargs):
         """
+        Creates a task to output analog waveforms. Typical workflow is 
+        to create the task of the desired configuration (see below), 
+        start it, then clean it up, e.g.:
+            
+            ao = ao_task()       # creates the task. kwargs set settings
+            ao.start()           # starts the task
+            ao.wait_and_clean()  # waits until the task is done and cleans up
+        
+        Note, when you set ao_rate and start(), this will automatically
+        query the actual rate and update ao_rate internally!        
+        
         "ao_task_name"      : "Default Output Task",
         "ao_mode"           : _mx.DAQmx_Val_FiniteSamps,
         "ao_timeout"        : 10.0,
         
-        "ao_channels"       : [0],
+        "ao_channels"       : [],   # must be a list of string channel names
         "ao_rate"           : 10000,
         "ao_waveforms"      : [[1,2,3,0]],
         "ao_min"            : -10.0,
@@ -327,9 +361,13 @@ class ao_task(task_base):
         "ao_clock_source"   : "",
         "ao_clock_edge"     : _mx.DAQmx_Val_Rising,
         
-        "ao_trigger_source" : "please specify ai_trigger_source",
-        "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope
+        "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
+        "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+        
+        "ao_export_signal"  : None, # a string, e.g. /PXI-6221/ao/StartTrigger
+        "ao_export_terminal": None  # a string, e.g. /PXI-6221/PFI0
         """
+        
         self.settings = dict(
                {"ao_task_name"      : "Default Output Task",
                 "ao_mode"           : _mx.DAQmx_Val_FiniteSamps,
@@ -344,9 +382,13 @@ class ao_task(task_base):
 
                 "ao_clock_source"   : "",
                 "ao_clock_edge"     : _mx.DAQmx_Val_Rising,
-
-                "ao_trigger_source" : "please specify ai_trigger_source",
-                "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope})
+        
+                "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
+                "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+                
+                "ao_export_signal"   : None,
+                "ao_export_terminal" : None})
+            
         task_base.__init__(self, **kwargs)
 
 
@@ -450,6 +492,10 @@ class ao_task(task_base):
                 _mx.byref(write_success),       # Output the number of successful write
                 None)                           # Reserved input (just put in None...)
         debug("success:", samples, write_success)
+
+        # if we're supposed to, export a signal
+        if not self['ao_export_signal'] and not self['ao_export_terminal']:
+            _mx.DAQmxExportSignal(self._handle, self['ao_export_signal'], self['ao_export_terminal'])
 
         if test:
             self.clean()
