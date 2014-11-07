@@ -365,7 +365,8 @@ class ao_task(task_base):
         "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
         "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
         
-        "ao_start_terminal" : None  # a string, e.g. /PXI-6221/PFI0
+        "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
+        "ao_export_terminal" : None
         """
         
         self.settings = dict(
@@ -386,7 +387,8 @@ class ao_task(task_base):
                 "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
                 "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
                 
-                "ao_StartTrigger_terminal" : None})
+                "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
+                "ao_export_terminal" : None})
             
         task_base.__init__(self, **kwargs)
 
@@ -473,8 +475,9 @@ class ao_task(task_base):
                                   self["ao_clock_edge"], self["ao_mode"], samples)
 
         # if we're supposed to, export a signal
-        if not self['ao_StartTrigger_terminal'] == None:
-            _mx.DAQmxExportSignal(self._handle, _mx.DAQmx_Val_StartTrigger, self['ao_StartTrigger_terminal'])
+        if not self['ao_export_terminal'] == None:
+            print "exporting"
+            _mx.DAQmxExportSignal(self._handle, self['ao_export_signal'], self['ao_export_terminal'])
 
         
 
