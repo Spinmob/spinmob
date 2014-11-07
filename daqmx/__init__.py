@@ -259,6 +259,7 @@ class ai_task(task_base):
         _mx.DAQmxGetSampClkMaxRate(self._handle, _mx.byref(ai_max_rate))
         if self['ai_rate'] > ai_max_rate.value:
             print "ERROR: ai_rate is too high! Current max = "+str(ai_max_rate.value)
+            self.clean()            
             return False
 
         _mx.DAQmxCfgSampClkTiming(self._handle, self["ai_clock_source"], self["ai_rate"],
@@ -364,8 +365,8 @@ class ao_task(task_base):
         "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
         "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
         
-        "ao_export_signal"  : None, # a string, e.g. /PXI-6221/ao/StartTrigger
-        "ao_export_terminal": None  # a string, e.g. /PXI-6221/PFI0
+        "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
+        "ao_export_terminal" : None
         """
         
         self.settings = dict(
@@ -386,7 +387,7 @@ class ao_task(task_base):
                 "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
                 "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
                 
-                "ao_export_signal"   : None,
+                "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
                 "ao_export_terminal" : None})
             
         task_base.__init__(self, **kwargs)
@@ -469,9 +470,15 @@ class ao_task(task_base):
         #    print "ERROR: ao_rate is too high! Current max = "+str(ao_max_rate.value)
         #    self.clean()
         #    return False
-
+        
         _mx.DAQmxCfgSampClkTiming(self._handle, self["ao_clock_source"], self["ao_rate"],
                                   self["ao_clock_edge"], self["ao_mode"], samples)
+
+        # if we're supposed to, export a signal
+        if not self['ao_export_terminal'] == None:
+            _mx.DAQmxExportSignal(self._handle, self['ao_export_signal'], self['ao_export_terminal'])
+
+        
 
         # update to the actual ao_rate (may be different than what was set)
         ao_rate = _mx.float64()
@@ -492,10 +499,6 @@ class ao_task(task_base):
                 _mx.byref(write_success),       # Output the number of successful write
                 None)                           # Reserved input (just put in None...)
         debug("success:", samples, write_success)
-
-        # if we're supposed to, export a signal
-        if not self['ao_export_signal'] and not self['ao_export_terminal']:
-            _mx.DAQmxExportSignal(self._handle, self['ao_export_signal'], self['ao_export_terminal'])
 
         if test:
             self.clean()
