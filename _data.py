@@ -232,14 +232,22 @@ class databox:
         # I did benchmarks and there's not much improvement by using numpy-arrays here.
         for label in self.ckeys: self.columns[label] = []
 
-
-        # now loop over the remainder of the file
-        z = _n.genfromtxt(path, delimiter=self.delimiter, skip_header=first_data_line).transpose()
-
+        # now loop over the remainder of the file, assuming complex
+        f = open(path,'r')
+        def conv(x): return x.replace('i','j')
+        
+        z = _n.genfromtxt((conv(x) for x in f), 
+                          delimiter=self.delimiter,
+                          skip_header=first_data_line, 
+                          dtype=complex).transpose()
+        f.close()        
 
         # Add all the columns
-        for n in range(len(self.ckeys)): self[self.ckeys[n]] = z[n]
+        for n in range(len(self.ckeys)):
 
+            # if any of the imaginary components are non-zero, use complex
+            if _n.any(_n.imag(z[n])): self[self.ckeys[n]] = z[n]
+            else:                     self[self.ckeys[n]] = _n.real(z[n])
 
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
