@@ -476,7 +476,6 @@ class ao_task(task_base):
 
         # if we're supposed to, export a signal
         if not self['ao_export_terminal'] == None:
-            print "exporting"
             _mx.DAQmxExportSignal(self._handle, self['ao_export_signal'], self['ao_export_terminal'])
 
         
