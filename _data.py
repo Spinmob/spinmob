@@ -803,7 +803,7 @@ class fitter():
         self._constants = []
 
         # default settings
-        self._settings = dict(autoplot      = False,     # whether we always plot when changing stuff
+        self._settings = dict(autoplot      = True,     # whether we always plot when changing stuff
                               plot_fit      = True,     # include f in plots?
                               plot_bg       = False,    # include bg in plots?
                               plot_ey       = True,     # include error bars?
@@ -827,16 +827,13 @@ class fitter():
                                    'style_fit', 'subtract_bg'])
 
         # settings that should not be lists in general (i.e. not one per data set)
-        self._single_settings = list(['silent'])
+        self._single_settings = list(['autoplot'])
 
         # set the functions
         self.set_functions(f, p, c, bg)
 
         # update the default settings
         for k in kwargs.keys(): self[k] = kwargs[k]
-
-        # turn on plot updates by default
-        if not kwargs.has_key('autoplot'): self['autoplot'] = True
 
 
     def set(self, **kwargs):
