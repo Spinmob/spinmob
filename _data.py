@@ -163,6 +163,7 @@ class databox:
         if self.legend_string[0] == '_': self.legend_string = '|' + self.legend_string
 
 
+
         ##### read in the header information
 
         for n in range(len(lines)):
@@ -175,9 +176,10 @@ class databox:
 
             # first check and see if this is a data line (all elements are numbers)
             if first_data_line=="auto" and _s.fun.elements_are_numbers(s):
+                
                 # we've reached the first data line
                 first_data_line = n
-
+                
                 # quit the header loop
                 break;
 
@@ -206,7 +208,19 @@ class databox:
         ##### at this point we've found the first_data_line,
 
         # look for the ckeys
-        self.ckeys = lines[first_data_line-1].strip().split(self.delimiter)
+        
+        # if the first data line is zero, there are no column headers
+        if first_data_line==0:
+            
+            # make up some column names
+            self.ckeys = []
+            for n in range(len(lines[0].strip().split(self.delimiter))):
+                self.ckeys.append('c'+str(n))
+
+        # otherwise assume there is a column heading just above the first data line    
+        else: self.ckeys = lines[first_data_line-1].strip().split(self.delimiter)
+
+
 
         # count the number of data columns
         column_count = len(lines[first_data_line].strip().split(self.delimiter))
@@ -233,14 +247,12 @@ class databox:
         for label in self.ckeys: self.columns[label] = []
 
         # now loop over the remainder of the file, assuming complex
-        f = open(path,'r')
         def conv(x): return x.replace('i','j')
         
-        z = _n.genfromtxt((conv(x) for x in f), 
+        # loop over the remaining data lines, converting to numbers
+        z = _n.genfromtxt((conv(x) for x in lines[first_data_line:]), 
                           delimiter=self.delimiter,
-                          skip_header=first_data_line, 
                           dtype=complex).transpose()
-        f.close()        
 
         # Add all the columns
         for n in range(len(self.ckeys)):
