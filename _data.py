@@ -11,15 +11,6 @@ import spinmob as _s
 
 
 
-
-
-
-
-
-
-
-
-
 #############################################################
 # Class for storing / manipulating / saving / loading data
 #############################################################
@@ -843,7 +834,8 @@ class fitter():
         """
         for k in kwargs.keys(): self[k] = kwargs[k]
 
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1125,7 +1117,8 @@ class fitter():
         self._clear_results()
 
         # plot if not in silent mode
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1199,7 +1192,8 @@ class fitter():
         self.results = _opt.leastsq(self._residuals_concatenated, self._pguess, full_output=1)
 
         # plot if necessary
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1394,7 +1388,8 @@ class fitter():
         self._clear_results()
 
         # replot
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1589,7 +1584,8 @@ class fitter():
 
         # now show the update.
         self._clear_results()
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1620,7 +1616,8 @@ class fitter():
 
         # now show the update.
         self._clear_results()
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
