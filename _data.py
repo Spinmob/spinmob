@@ -825,7 +825,8 @@ class fitter():
         """
         for k in kwargs.keys(): self[k] = kwargs[k]
 
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1574,7 +1575,8 @@ class fitter():
 
         # now show the update.
         self._clear_results()
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
@@ -1605,7 +1607,8 @@ class fitter():
 
         # now show the update.
         self._clear_results()
-        if self['autoplot']: self.plot()
+        if self._settings['autoplot'][0]: 
+            self.plot()
 
         return self
 
