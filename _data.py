@@ -158,25 +158,20 @@ class databox:
         lines = f.readlines()
         f.close()
 
-        # break up the path into parts and take the last bit (and take a stab at the legend string)
-        self.legend_string = path.split(_os.path.sep)[-1]
-        if self.legend_string[0] == '_': self.legend_string = '|' + self.legend_string
-
 
 
         ##### read in the header information
-
         for n in range(len(lines)):
 
             # split the line by the delimiter
             s = lines[n].strip().split(self.delimiter)
-
+            
             # remove a trailing whitespace entry if it exists.
             if len(s) and s[-1].strip() == '': s.pop(-1)
 
             # first check and see if this is a data line (all elements are numbers)
             if first_data_line=="auto" and _s.fun.elements_are_numbers(s):
-                
+
                 # we've reached the first data line
                 first_data_line = n
                 
@@ -208,24 +203,17 @@ class databox:
         ##### at this point we've found the first_data_line,
 
         # look for the ckeys
-        
-        # if the first data line is zero, there are no column headers
-        if first_data_line==0:
-            
-            # make up some column names
-            self.ckeys = []
-            for n in range(len(lines[0].strip().split(self.delimiter))):
-                self.ckeys.append('c'+str(n))
 
-        # otherwise assume there is a column heading just above the first data line    
+        # special case: no header
+        if first_data_line == 0: self.ckeys = []
+    
+        # start by assuming it's the previous line    
         else: self.ckeys = lines[first_data_line-1].strip().split(self.delimiter)
 
-
-
-        # count the number of data columns
+        # count the number of actual data columns for comparison
         column_count = len(lines[first_data_line].strip().split(self.delimiter))
-
-        # check to see if ckeys line is first_data_line-1, and that it is equal in length to the
+        
+        # check to see if ckeys is equal in length to the
         # number of data columns. If it isn't, it's a false ckeys line
         if len(self.ckeys) >= column_count:
             # it is close enough
@@ -239,21 +227,22 @@ class databox:
             self.ckeys = []
             for m in range(0, column_count): self.ckeys.append("c"+str(m))
 
-        # for good measure, make sure to trim down the ckeys array to the size of the data columns
-        for n in range(column_count, len(self.ckeys)): self.ckeys.pop(-1)
-
         # initialize the columns arrays
         # I did benchmarks and there's not much improvement by using numpy-arrays here.
         for label in self.ckeys: self.columns[label] = []
 
-        # now loop over the remainder of the file, assuming complex
-        def conv(x): return x.replace('i','j')
+        # define a quick function to convert i's to j's
+        def fix(x): return x.replace('i','j')
         
         # loop over the remaining data lines, converting to numbers
-        z = _n.genfromtxt((conv(x) for x in lines[first_data_line:]), 
+        z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]), 
                           delimiter=self.delimiter,
-                          dtype=complex).transpose()
+                          dtype=complex)
 
+        # fix for different behavior of genfromtxt on single columns
+        if len(z.shape)==2: z = z.transpose()
+        else:               z = [z]
+        
         # Add all the columns
         for n in range(len(self.ckeys)):
 
@@ -812,19 +801,24 @@ class fitter():
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of truncation values
                               xmax          = None,     # list of truncation values
+                              xlabel        = None,     # list of x labels
+                              ylabel        = None,     # list of y labels
+                              xscale        = 'linear', # axis scale type
+                              yscale        = 'linear', # axis scale type
                               coarsen       = 1,        # how much to coarsen the data
-
+                              
                               # styles of plots
-                              style_data   = dict(marker='o', color='b',   ls=''),
-                              style_fit    = dict(marker='', color='r',    ls='-'),
-                              style_guess  = dict(marker='', color='0.25', ls='-'),
-                              style_bg     = dict(marker='', color='k',    ls='-'))
+                              style_data   = dict(marker='+', color='b',   ls=''),
+                              style_fit    = dict(marker='',  color='r',    ls='-'),
+                              style_guess  = dict(marker='',  color='0.25', ls='-'),
+                              style_bg     = dict(marker='',  color='k',    ls='-'))
 
         # settings that don't require a re-fit
         self._safe_settings =list(['bg_names', 'fpoints', 'f_names',
                                    'plot_bg', 'plot_ey', 'plot_guess', 'plot_fit',
                                    'silent', 'style_bg', 'style_data', 'style_guess',
-                                   'style_fit', 'subtract_bg'])
+                                   'style_fit', 'subtract_bg', 'xscale', 'yscale',
+                                   'xlabel', 'ylabel'])
 
         # settings that should not be lists in general (i.e. not one per data set)
         self._single_settings = list(['autoplot'])
@@ -1057,7 +1051,7 @@ class fitter():
         self._clear_results()
 
 
-    def set_data(self, xdata=[1,2,3,4,5], ydata=[[1,2,1,2,1],[3,2,3,4,3]], eydata=None):
+    def set_data(self, xdata=[1,2,3,4,5], ydata=[[1,2,1,2,1],[3,2,3,4,3]], eydata=None, **kwargs):
         """
         This will handle the different types of supplied data and put everything
         in a standard format for processing.
@@ -1072,6 +1066,8 @@ class fitter():
                             data matching the dimensionality of xdata and ydata
 
         Results will be stored in self.xdata, self.ydata, self.eydata
+        
+        **kwargs are sent to set()
         """
 
         # make sure xdata and ydata are lists of data sets
@@ -1082,18 +1078,24 @@ class fitter():
         while len(ydata) < len(xdata): ydata.append(ydata[0])
         while len(xdata) < len(ydata): xdata.append(xdata[0])
 
-        # poop out of the number of ydata sets doesn't match the number of
+        # poop out if the number of ydata sets doesn't match the number of
         # functions
         if not len(ydata) == len(self._f):
-            return self._error("Naughty! There are more data sets than functions! If you want to fit many data sets simultaneously with one function, make a list of duplicated functions in set_functions().")
+            return self._error("Naughty! Number of data sets does not match the number of functions! If you want to fit many data sets simultaneously with one function, make a list of duplicated functions in set_functions().")
 
         # assemble the errors
         # example eydata: None, 3, [None, 3] or [None, [1,2,1,2,1]]
         # makes sure it's at least a list of the right length
         if not _s.fun.is_iterable(eydata): eydata = [eydata]*len(xdata)
 
-        # make sure the lengths match
         # example eydata at this point: [None, None], [3,3], [None,3] or [None, [1,2,1,2,1]]
+        
+        # catch the potentially ambiguous case [3,3] where this could either be "two constants"
+        # or "the error bars for each data point" (assume the latter if possible)        
+        if _s.fun.elements_are_numbers(eydata) and len(eydata) == len(ydata[0]):
+            eydata = [_n.array(eydata)]
+                
+        # make sure the lengths match
         while len(eydata) < len(ydata): eydata.append(eydata[0])
 
         # now make sure everything is a list of numpy arrays
@@ -1107,7 +1109,8 @@ class fitter():
                 eydata[n] = _n.ones(len(xdata[n])) * (max(ydata[n])-min(ydata[n]))/20.
 
             # use constant error bars
-            elif _s.fun.is_a_number(eydata[n]): eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
+            elif _s.fun.is_a_number(eydata[n]): 
+                eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
 
             eydata[n] = _n.array(eydata[n]) * 1.0
 
@@ -1124,9 +1127,28 @@ class fitter():
         # make sure we don't think our fit results are valid!
         self._clear_results()
 
+        # update settings (need to do this last to avoid plotting no data!)
+        self.set(**kwargs)
+
         # plot if not in silent mode
         if self['autoplot']: self.plot()
 
+        return self
+
+    def set_guess_to_fit(self):
+        """
+        If you have a fit result, set the guess parameters to the 
+        fit parameters.
+        """
+        if self.results == None: 
+            print "No fit results to use! Run fit() first."
+            return
+            
+        # loop over the results and set the guess values
+        for n in range(len(self._pguess)): self._pguess[n] = self.results[0][n]
+        
+        if self['autoplot']: self.plot()        
+        
         return self
 
     def _massage_data(self):
@@ -1452,13 +1474,27 @@ class fitter():
             a1.set_position([0.15, 0.75, 0.75, 0.15])
             a2.set_position([0.15, 0.15, 0.75, 0.55])
 
+            # set the scales
+            a1.set_xscale(self['xscale'][n])
+            a1.set_yscale(self['yscale'][n])
+            a2.set_xscale(self['xscale'][n])
+            a2.set_yscale(self['yscale'][n])
+
             # get the xdata for the curves
             if self['fpoints'][n] == None:
                 x = self._xdata_massaged[n]
             else:
-                x = _n.linspace(min(self._xdata_massaged[n]),
-                                max(self._xdata_massaged[n]),
-                                self['fpoints'][n])
+                # do exponential ranging if xscale is log
+                if self['xscale'][n] == 'log':
+                    x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
+                                    _n.log10(max(self._xdata_massaged[n])),
+                                    self['fpoints'][n], True, 10.0)
+
+                # otherwise do linear spacing                
+                else:                
+                    x = _n.linspace(min(self._xdata_massaged[n]),
+                                    max(self._xdata_massaged[n]),
+                                    self['fpoints'][n])
 
             # get the thing to subtract from ydata
             if self['subtract_bg'] and not self._bg[n]==None:
@@ -1521,8 +1557,10 @@ class fitter():
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
             # tidy up
-            _p.xlabel('xdata['+str(n)+']')
-            _p.ylabel('ydata['+str(n)+']')
+            if self['xlabel'][n] == None: _p.xlabel('xdata['+str(n)+']')
+            else:                         _p.xlabel(self['xlabel'][n])
+            if self['ylabel'][n] == None: _p.ylabel('ydata['+str(n)+']')
+            else:                         _p.ylabel(self['ylabel'][n])
             a1.set_ylabel('residuals')
 
             # Assemble the title
@@ -1550,7 +1588,6 @@ class fitter():
 
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
 
-            #_s.tweaks.set_figure_window_geometry('gcf',None,[550,670])
 
         # turn back to interactive and show the plots.
         _p.ion()
