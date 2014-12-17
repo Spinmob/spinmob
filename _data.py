@@ -1069,7 +1069,13 @@ class fitter():
         
         **kwargs are sent to set()
         """
-
+        
+        # warn the user
+        if eydata == None:
+            print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
+            print "  eydata = 0.1"
+            print "  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n"
+        
         # make sure xdata and ydata are lists of data sets
         if not _s.fun.is_iterable(xdata[0]): xdata = [xdata]
         if not _s.fun.is_iterable(ydata[0]): ydata = [ydata]
