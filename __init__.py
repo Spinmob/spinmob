@@ -24,11 +24,11 @@ _mpl.rcParams['figure.facecolor']='w'
 import _settings
 settings = _settings.settings()
 
-import _plot             as plot        ; plot._settings = settings
-import _data             as data        ; data._settings = settings
+import _plot             as plot        ; plot._settings    = settings
+import _data             as data        ; data._settings    = settings
 import _dialogs          as dialogs     ; dialogs._settings = settings
-import _pylab_tweaks     as tweaks      ; tweaks._settings = settings
-import _functions   as fun         ; fun._settings = settings
+import _pylab_tweaks     as tweaks      ; tweaks._settings  = settings
+import _functions        as fun         ; fun._settings     = settings
 
 plot.tweaks._pylab_colormap._settings = settings
 
