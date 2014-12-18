@@ -161,8 +161,13 @@ class databox:
 
 
         ##### read in the header information
+        self.header_lines = []
+        
         for n in range(len(lines)):
-
+            
+            # save the lines for the avid user.
+            self.header_lines.append(lines[n].strip())            
+            
             # split the line by the delimiter
             s = lines[n].strip().split(self.delimiter)
             
