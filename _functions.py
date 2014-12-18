@@ -61,8 +61,19 @@ def is_a_number(s):
     """
     if _s.fun.is_iterable(s): return False
 
-    try: complex(s);   return True
-    except:            return False
+    try:
+        float(s)
+        return 1
+    except:
+        try: 
+            complex(s)
+            return 2
+        except:            
+            try: 
+                complex(s.replace('(','').replace(')','').replace('i','j'))
+                return 2
+            except:            
+                return False
 
 def is_iterable(a):
     """
@@ -385,28 +396,24 @@ def dumbguy_minimize(f, xmin, xmax, xstep):
 
     return x, this
 
-def elements_are_numbers(array, start_index=0, end_index=-1):
+def elements_are_numbers(array):
     """
     Tests whether the elements of the supplied array are numbers.
     """
 
+    # empty case
     if len(array) == 0: return 0
 
-    output_value=1
+    output_value = 1
+    for x in array:
 
-    if end_index < 0: end_index=len(array)-1
-    for n in array:
-        try: float(n)
-        except:
-            try:
-                complex(n)
-                output_value=2
-            except:
-                try:
-                    complex(n.replace('(','').replace(')',''))
-                    output_value=2
-                except:
-                    return 0
+        # test it and die if it's not a number
+        test = is_a_number(x)
+        if not test: return False
+
+        # mention if it's complex
+        output_value = max(output_value,test)
+    
     return output_value
 
 def elements_are_strings(array, start_index=0, end_index=-1):
