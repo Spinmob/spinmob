@@ -164,10 +164,7 @@ class databox:
         self.header_lines = []
         
         for n in range(len(lines)):
-            
-            # save the lines for the avid user.
-            self.header_lines.append(lines[n].strip())            
-            
+                        
             # split the line by the delimiter
             s = lines[n].strip().split(self.delimiter)
             
@@ -178,13 +175,15 @@ class databox:
             if first_data_line=="auto" and _s.fun.elements_are_numbers(s):
 
                 # we've reached the first data line
-                first_data_line = n
+                first_data_line = n                                
                 
                 # quit the header loop
                 break;
 
-
             ### now we know it's a header line
+
+            # save the lines for the avid user.
+            self.header_lines.append(lines[n].strip())            
 
             # first thing to try is simply evaluating the remaining string
             try:
