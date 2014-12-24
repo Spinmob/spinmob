@@ -268,37 +268,30 @@ class Test_fitter(_ut.TestCase):
         filename = 'Bevington Ex 7p1.dat'
         self.data_path = os.path.join(midPath, filename)
 
+        # setup a default databox to be used for testing.
+        self.databox = _dt.databox()
+
 
     def tearDown(self):
         """
         """
-
         self.dt_path       = None
         self.module_path   = None
         self.data_path     = None
         self.fixtures_path = None
-
+        self.databox       = None
 
     def test_bevington_chi_squared(self):
         """
         Test against Example 7.1 in Bevington.
         """
-        
+        self.databox.load_file(path=self.data_path)
+        func = 'a1 + a2*x + a3*x**2.'
+        params = 'a1=-1., a2=0.04, a3=0.00006'
+        f = _dt.fitter(f=func, p=params)
+        f.set_data(self.databox[0], self.databox[1])
+        f.fit()
 
 
 if __name__ == "__main__":
-    #test()
     _ut.main()
-
-
-
-
-
-
-
-
-
-
-
-
-
