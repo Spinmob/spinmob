@@ -832,7 +832,7 @@ class fitter():
 
     def __init__(self, f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None, g=None, **kwargs):
         """
-        Creates an object for fitting data to nonlinear curves.
+        Creates an object for fitting data to functions.
 
         f  = function or list of functions
         p  = comma-delimited list of fit parameters
@@ -845,10 +845,9 @@ class fitter():
         **kwargs are sent to settings
 
         Typical workflow:
-            my_fitter = fitter('a*x+b', 'a,b')      # creates the fitter object
-            my_fitter.set_data([1,2,3],[1,2,1])     # sets the data to be fit
-            my_fitter.fit_leastsq()                 # does the fitting
-            my_fitter.plot()
+            my_fitter = fitter('a*x+b', 'a,b')    # creates the fitter object
+            my_fitter.set_data([1,2,3],[1,2,1])   # sets the data to be fit
+            my_fitter.fit()                       # does the fitting
 
         Tips:
 
