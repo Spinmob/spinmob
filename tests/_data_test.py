@@ -289,7 +289,7 @@ class Test_fitter(_ut.TestCase):
         func = 'a1 + a2*x + a3*x**2.'
         params = 'a1=-1., a2=0.04, a3=0.00006'
         f = _dt.fitter(f=func, p=params, autoplot=False)
-        f.set_data(self.databox[0], self.databox[1])
+        f.set_data(self.databox[0], self.databox[1], 0.05)
         f.fit()
         
         value_from_fit = f.reduced_chi_squared()
