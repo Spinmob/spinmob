@@ -8,5 +8,6 @@ install:
   - pip install pyqtgraph
   - pip install nose
   - pip install matplotlib
+  - pip install pyqt4
 
 script: tests/test.sh
