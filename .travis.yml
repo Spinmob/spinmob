@@ -7,5 +7,6 @@ install:
   - pip install numpy
   - pip install pyqtgraph
   - pip install nose
+  - pip install matplotlib
 
 script: tests/test.sh
