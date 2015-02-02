@@ -169,15 +169,10 @@ class Test_databox(_ut.TestCase):
         exp = [85.0, 90.0, 95.0, 100.0, 105.0] 
         self.assertListEqual(val, exp)            
         
-    def test___init__kwargs(self):
-        # TODO: is this a valid test?  Did anything pass?
-        d = sm.data.databox(test_kwarg='test_value')
-        
-
     def test_h_str(self):
         self.databox.load_file(path=self.data_path3)         
         val = self.databox.h('header1')
-        exp = 'value1'
+        exp = None
         self.assertEqual(val, exp)          
 
     def test_h_None(self):
@@ -211,10 +206,10 @@ class Test_databox(_ut.TestCase):
         TODO: possible better way of handling/collecting this error message
         while testing.
         """
+        expected_val = None
         self.databox.load_file(path=self.data_path3) 
-        val = self.databox.h('header')
-        exp = 'value1'
-        self.assertEqual(val, exp)   
+        actual_val = self.databox.h('header')
+        self.assertEqual(actual_val, expected_val)   
 
     def test_pop_column_ckey(self):
         self.databox.load_file(path=self.data_path3) 
