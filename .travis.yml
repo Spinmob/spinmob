@@ -32,4 +32,4 @@ install:
   - pip install nose
   - pip install matplotlib
 
-script: ./tests/test.sh
+script: tests/test.sh
