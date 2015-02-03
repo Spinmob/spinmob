@@ -30,6 +30,7 @@ install:
   - pip install numpy
   - pip install pyqtgraph
   - pip install nose
+  - pip install coverage
   - pip install matplotlib
 
 script: 
