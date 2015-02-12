@@ -34,4 +34,4 @@ install:
   - pip install matplotlib
 
 script: 
-  - nosetests -w ./script/ci/tests
+  - nosetests -w ./tests
