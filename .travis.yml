@@ -34,4 +34,4 @@ install:
   - pip install matplotlib
 
 script: 
-  - nosetests --with-coverage ./tests
+  - nosetests --with-coverage --cover-package=spinmob
