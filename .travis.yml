@@ -34,4 +34,4 @@ install:
   - pip install matplotlib
 
 script: 
-  - nosetests --with-coverage -w tests
+  - nosetests -w tests
