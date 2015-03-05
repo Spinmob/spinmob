@@ -14,7 +14,132 @@ _a = _g.mkQApp()
 if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
 
 
-class GridLayout():
+class BaseObject():
+
+    log = None
+
+    def __init__(self):
+        """
+        Base object containing stuff common to all of our objects. When
+        deriving objects from this, call BaseObject.__init__(self) as the
+        LAST step of the new __init__ function.
+        """
+        # for remembering settings; for child objects, overwrite both, and 
+        # add a load_gui_settings() to the init!
+        self._autosettings_path     = None
+        self._autosettings_controls = []
+        # common signals
+        return
+
+    def set_width(self, width):
+        """
+        Sets the width of the object. This is only valid for some controls, as
+        it just uses self.setFixedWidth.
+        """
+        self._widget.setFixedWidth(width)
+        return self
+
+    def set_height(self, height):
+        """
+        Sets the width of the object. This is only valid for some controls, as
+        it just uses self.setFixedHeight.
+        """
+        self._widget.setFixedHeight(height)
+        return self
+
+    def block_events(self):
+        """
+        Prevents the widget from sending signals.
+        """
+        self._widget.blockSignals(True)
+        self._widget.setUpdatesEnabled(False)
+
+    def unblock_events(self):
+        """
+        Allows the widget to send signals.
+        """
+        self._widget.blockSignals(False)
+        self._widget.setUpdatesEnabled(True)
+
+    def disable(self):
+        """
+        Disables the widget.
+        """
+        self._widget.setEnabled(False)
+        return self
+
+    def enable(self):
+        """
+        Enables the widget.
+        """
+        self._widget.setEnabled(True)
+        return self
+
+    def print_message(self, message="heya!"):
+        """
+        If self.log is defined to be an instance of TextLog, it print the
+        message there. Otherwise use the usual "print" to command line.
+        """
+        if self.log == None: print message
+        else:                self.log.append_text(message)
+
+    def save_gui_settings(self):
+        """
+        Saves just the current configuration of the controls (if we're supposed to).
+        """
+        
+        # only if we're supposed to!
+        if self._autosettings_path:
+
+            # for saving header info
+            d = _d.databox()
+            
+            # add all the controls settings
+            for x in self._autosettings_controls: self._store_gui_setting(d, x)
+            
+            # save the file
+            d.save_file(self._autosettings_path, force_overwrite=True)
+
+
+    def load_gui_settings(self):
+        """
+        Loads the settings (if we're supposed to).
+        """
+        # only do this if we're supposed to
+        if not None==self._autosettings_path:  
+        
+            # databox just for loading a cfg file
+            d = _d.databox()
+            
+            # if the load file succeeded
+            if not None == d.load_file(self._autosettings_path, header_only=True, quiet=True):
+                
+                # loop over the settings we're supposed to change
+                for x in self._autosettings_controls: self._load_gui_setting(d, x)
+        
+    def _load_gui_setting(self, databox, name):
+        """
+        Safely reads the header setting and sets the appropriate control
+        value. hkeys in the file are expected to have the format
+        "self.controlname"
+        """
+        # only do this if the key exists
+        if name in databox.hkeys:
+            try:    eval(name).set_value(databox.h(name))
+            except: print "ERROR: Could not load gui setting "+repr(name)
+
+    def _store_gui_setting(self, databox, name):
+        """
+        Stores the gui setting in the header of the supplied databox.
+        hkeys in the file are set to have the format
+        "self.controlname"
+        """
+        try:    databox.insert_header(name, eval(name + ".get_value()"))
+        except: print "ERROR: Could not store gui setting "+repr(name)
+
+
+
+class GridLayout(BaseObject):
 
     log = None
 
@@ -46,6 +171,9 @@ class GridLayout():
 
         # remove margins if necessary
         if not margins: self._layout.setContentsMargins(0,0,0,0)
+
+        
+
 
     def __getitem__(self, n): return self.objects[n]
 
@@ -162,6 +290,7 @@ class GridLayout():
         else:                self.log.append_text(message)
 
 
+    
 class Window(GridLayout):
 
     def __init__(self, title='Window', size=[700,500]):
@@ -309,71 +438,10 @@ class Window(GridLayout):
 
 
 
-class BaseObject():
-
-    log = None
-
-    def __init__(self):
-        """
-        Base object containing stuff common to all of our objects. When
-        deriving objects from this, call BaseObject.__init__(self) as the
-        LAST step of the new __init__ function.
-        """
-
-        # common signals
-        return
-
-    def set_width(self, width):
-        """
-        Sets the width of the object. This is only valid for some controls, as
-        it just uses self.setFixedWidth.
-        """
-        self._widget.setFixedWidth(width)
-        return self
-
-    def set_height(self, height):
-        """
-        Sets the width of the object. This is only valid for some controls, as
-        it just uses self.setFixedHeight.
-        """
-        self._widget.setFixedHeight(height)
-        return self
-
-    def block_signals(self):
-        """
-        Prevents the widget from sending signals.
-        """
-        self._widget.blockSignals(True)
-
-    def unblock_signals(self):
-        """
-        Allows the widget to send signals.
-        """
-        self._widget.blockSignals(False)
-
-    def disable(self):
-        """
-        Disables the widget.
-        """
-        self._widget.setEnabled(False)
-        return self
-
-    def enable(self):
-        """
-        Enables the widget.
-        """
-        self._widget.setEnabled(True)
-        return self
-
-    def print_message(self, message="heya!"):
-        """
-        If self.log is defined to be an instance of TextLog, it print the
-        message there. Otherwise use the usual "print" to command line.
-        """
-        if self.log == None: print message
-        else:                self.log.append_text(message)
 
 
+
+    
 
 class Button(BaseObject):
 
@@ -387,7 +455,8 @@ class Button(BaseObject):
 
         # signals
         self.signal_clicked = self._widget.clicked
-
+        self.signal_toggled = self._widget.toggled        
+        
         # Other stuff common to all objects
         BaseObject.__init__(self)
 
@@ -413,16 +482,16 @@ class Button(BaseObject):
         self._widget.setCheckable(checkable)
         return self
 
-    def set_checked(self, value=True, block_signals=False):
+    def set_checked(self, value=True, block_events=False):
         """
         This will set whether the button is checked.
 
-        Setting block_signals=True will temporarily disable signals
+        Setting block_events=True will temporarily disable signals
         from the button when setting the value.
         """
-        if block_signals: self._widget.blockSignals(True)
+        if block_events: self._widget.blockSignals(True)
         self._widget.setChecked(value)
-        if block_signals: self._widget.blockSignals(False)
+        if block_events: self._widget.blockSignals(False)
 
         return self
 
@@ -496,16 +565,16 @@ class NumberBox(BaseObject):
         """
         return self._widget.value()
 
-    def set_value(self, value, block_signals=False):
+    def set_value(self, value, block_events=False):
         """
         Sets the current value of the number box.
 
-        Setting block_signals=True will temporarily block the widget from
+        Setting block_events=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        if block_signals: self.block_signals()
+        if block_events: self.block_events()
         self._widget.setValue(value)
-        if block_signals: self.unblock_signals()
+        if block_events: self.unblock_events()
 
     def increment(self, n=1):
         """
@@ -524,7 +593,7 @@ class NumberBox(BaseObject):
 
 class TabArea(BaseObject):
 
-    def __init__(self, tabs_closable=True):
+    def __init__(self, tabs_closable=True, autosettings_path=None):
         """
         Simplified QTabWidget.
         """
@@ -540,15 +609,28 @@ class TabArea(BaseObject):
         self.signal_switched             = self._widget.currentChanged
         self.signal_tab_close_requested  = self._widget.tabCloseRequested
 
+        # connect signals
+        self.signal_switched.connect(self._tab_changed)
+
         # Other stuff common to all objects
         BaseObject.__init__(self)
+        
+        # list of controls we should auto-save / load
+        self._autosettings_path = autosettings_path
+        self._autosettings_controls = ["self"]
+        
+        # For tabs you have to load_gui after making the tabs
+        # self.load_gui_settings()
+
+    def _tab_changed(self, *a): self.save_gui_settings()
 
     def __getitem__(self, n): return self.tabs[n]
 
-    def add_tab(self, title="Yeah!"):
+    def add_tab(self, title="Yeah!", block_events=True):
         """
         Adds a tab to the area, and creates the layout for this tab.
         """
+        self._widget.blockSignals(block_events)
 
         # create a widget to go in the tab
         tab = GridLayout()
@@ -556,6 +638,8 @@ class TabArea(BaseObject):
 
         # create and append the tab to the list
         self._widget.addTab(tab._widget, title)
+
+        self._widget.blockSignals(False)
 
         return tab
 
@@ -579,11 +663,15 @@ class TabArea(BaseObject):
         """
         return self._widget.currentIndex()
 
+    get_value = get_current_tab
+
     def set_current_tab(self, n):
         """
         Returns the active tab index.
         """
         return self._widget.setCurrentIndex(n)
+
+    set_value = set_current_tab
 
 class Table(BaseObject):
 
@@ -634,16 +722,16 @@ class Table(BaseObject):
         if x==None: return x
         else:       return str(self._widget.item(row,column).text())
 
-    def set_value(self, column=0, row=0, value='', block_signals=False):
+    def set_value(self, column=0, row=0, value='', block_events=False):
         """
         Sets the value at column, row. This will create elements dynamically,
         and in a totally stupid while-looping way.
 
-        Setting block_signals=True will temporarily block the widget from
+        Setting block_events=True will temporarily block the widget from
         sending any signals when setting the value.
         """
 
-        if block_signals: self.block_signals()
+        if block_events: self.block_events()
 
         # dynamically resize
         while column > self._widget.columnCount()-1: self._widget.insertColumn(self._widget.columnCount())
@@ -652,7 +740,7 @@ class Table(BaseObject):
         # set the value
         self._widget.setItem(row, column, _g.Qt.QtGui.QTableWidgetItem(str(value)))
 
-        if block_signals: self.unblock_signals()
+        if block_events: self.unblock_events()
 
         return self
 
@@ -736,7 +824,7 @@ class TableDictionary(Table):
         """
 
         # block all signals during the update (to avoid re-calling this)
-        self.block_signals()
+        self.block_events()
 
         # loop over the rows
         for n in range(self.get_row_count()):
@@ -767,7 +855,7 @@ class TableDictionary(Table):
                     self._widget.item(n,1).setData(_g.QtCore.Qt.BackgroundRole, _g.Qt.QtGui.QColor('pink'))
 
         # unblock all signals
-        self.unblock_signals()
+        self.unblock_events()
 
     def get_item(self, key):
         """
@@ -1204,14 +1292,14 @@ class TreeDictionary(BaseObject):
 
     __getitem__ = get_value
 
-    def set_value(self, name, value, block_signals=False, ignore_error=False):
+    def set_value(self, name, value, block_events=False, ignore_error=False):
         """
         Sets the variable of the supplied name to the supplied value.
 
-        Setting block_signals=True will temporarily block the widget from
+        Setting block_events=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        if block_signals: self.block_signals()
+        if block_events: self.block_events()
 
         # first clean up the name
         name = self._clean_up_name(name)
@@ -1230,7 +1318,7 @@ class TreeDictionary(BaseObject):
         # otherwise just set the value
         else: x.setValue(value)
 
-        if block_signals: self.unblock_signals()
+        if block_events: self.unblock_events()
 
         return self
 
@@ -1446,12 +1534,12 @@ class DataboxPlot(GridLayout):
         self.button_plot      .signal_clicked.connect(self._button_plot_clicked)
         self.button_save      .signal_clicked.connect(self._button_save_clicked)
         self.button_load      .signal_clicked.connect(self._button_load_clicked)
-        self.button_autosave  .signal_clicked.connect(self._button_autosave_clicked)
-        self.button_script    .signal_clicked.connect(self._button_script_clicked)
-        self.button_autoscript.signal_clicked.connect(self._button_autoscript_clicked)
+        self.button_autosave  .signal_toggled.connect(self._button_autosave_clicked)
+        self.button_script    .signal_toggled.connect(self._button_script_clicked)
+        self.button_autoscript.signal_toggled.connect(self._button_autoscript_clicked)
 
-        self.button_multi     .signal_clicked.connect(self._button_multi_clicked)
-        self.button_enabled   .signal_clicked.connect(self._button_enabled_clicked)
+        self.button_multi     .signal_toggled.connect(self._button_multi_clicked)
+        self.button_enabled   .signal_toggled.connect(self._button_enabled_clicked)
         self.number_file      .signal_changed.connect(self._number_file_changed)
         self.script           .signal_changed.connect(self._script_changed)
 
@@ -1463,11 +1551,10 @@ class DataboxPlot(GridLayout):
                                        "self.number_file",
                                        "self.script"]
 
-        # update defaults
-        self._button_script_clicked(self.button_script.is_checked())
-
         # load settings if a settings file exists and initialize
         self.load_gui_settings()
+        self._synchronize_controls()
+        
 
 
     def _button_multi_clicked(self):    self.save_gui_settings()
@@ -1520,22 +1607,7 @@ class DataboxPlot(GridLayout):
         """
         self.load_file()
 
-    def save_gui_settings(self):
-        """
-        Saves just the current configuration of the controls (if we're supposed to).
-        """
-        if not self._autosettings_path == None:
-            self.save_file(self._autosettings_path,
-                           force_overwrite=True,
-                           just_settings=True)
-
-    def load_gui_settings(self):
-        """
-        Loads the settings (if we're supposed to).
-        """
-        if not self._autosettings_path == None:
-            self.load_file(self._autosettings_path,
-                           just_settings=True)
+    
 
     def save_file(self, path="ask", force_overwrite=False, just_settings=False):
         """
@@ -1564,7 +1636,6 @@ class DataboxPlot(GridLayout):
         just_settings=True will only load the configuration of the controls,
         and will not plot anything or run after_load_file
         """
-
         # if it's just the settings file, make a new databox
         if just_settings:
             d = _d.databox()
@@ -1576,7 +1647,8 @@ class DataboxPlot(GridLayout):
             header_only = False
 
         # import the settings if they exist in the header
-        if not d.load_file(path, filters=self._file_type, header_only=header_only, quiet=just_settings) == None:
+        if not None == d.load_file(path, filters=self._file_type, header_only=header_only, quiet=just_settings):
+            # loop over the autosettings and update the gui    
             for x in self._autosettings_controls: self._load_gui_setting(d, x)
 
         # always sync the internal data
@@ -1587,31 +1659,7 @@ class DataboxPlot(GridLayout):
             self.plot()
             self.after_load_file(self)
 
-    def _load_gui_setting(self, databox, name):
-        """
-        Safely reads the header setting and sets the appropriate control
-        value. hkeys in the file are expected to have the format
-        "databoxplot.controlname" and name is expected to have the format
-        "self.controlname"
-        """
-        # get the hkey
-        hkey = name.replace("self.", "databoxplot.")
-
-        # only do this if the key exists
-        if hkey in databox.hkeys:
-            try:    eval(name).set_value(databox.h(hkey))
-            except: print "ERROR: Could not load gui setting "+repr(name)
-
-    def _store_gui_setting(self, databox, name):
-        """
-        Stores the gui setting in the header of the databox.
-        hkeys in the file are set to have the format
-        "databoxplot.controlname" and name is expected to have the format
-        "self.controlname"
-        """
-        try:    databox.insert_header(name.replace("self.", "databoxplot."), eval(name + ".get_value()"))
-        except: print "ERROR: Could not store gui setting "+repr(name)
-
+    
     def after_load_file(self, databox_plot_instance):
         """
         Called after a file is loaded. Does nothing. Feel free to overwrite!
