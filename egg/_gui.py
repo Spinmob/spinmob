@@ -49,6 +49,20 @@ class GridLayout():
 
     def __getitem__(self, n): return self.objects[n]
 
+    def block_events(self):
+        """
+        This will tell the window widget to stop processing events.
+        """
+        self._widget.blockSignals(True)
+        self._widget.setUpdatesEnabled(False)
+
+    def unblock_events(self):
+        """
+        This will tell the window widget to start processing events again.
+        """
+        self._widget.blockSignals(False)
+        self._widget.setUpdatesEnabled(True)
+
     def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=1):
         """
         This adds either one of our simplified objects or a QWidget to the
@@ -171,20 +185,6 @@ class Window(GridLayout):
 
         # events
         self._window.closeEvent = self._event_close
-
-    def block_events(self):
-        """
-        This will tell the window widget to stop processing events.
-        """
-        self._widget.blockSignals(True)
-        self._widget.setUpdatesEnabled(False)
-
-    def unblock_events(self):
-        """
-        This will tell the window widget to start processing events again.
-        """
-        self._widget.blockSignals(False)
-        self._widget.setUpdatesEnabled(True)
 
     def close(self):
         """
@@ -1389,8 +1389,7 @@ class DataboxPlot(GridLayout):
 
         # Do all the tab-area initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
-        self._widget.setFixedWidth(620)
-
+        
         # top row is main controls
         self.place_object(Label("Raw Data:"), alignment=1)
         self.button_load     = self.place_object(Button("Load")                .set_width(50), alignment=1)
@@ -1405,26 +1404,25 @@ class DataboxPlot(GridLayout):
         self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) .set_width(50)
         self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True) .set_width(50)
 
-
+        # keep the buttons shaclackied together
         self.set_column_stretch(5)
 
         # second rows is the script
         self.new_autorow()
 
         # grid for the script
-        self._script_grid = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count())
+        self._script_grid = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
 
         # script grid
-        self.button_plot  = self._script_grid.place_object(Button("Try it!"),   2,3).set_width(50)
-
-        self.script = self._script_grid.place_object(TextBox("", multiline=True), 1,0, row_span=4)
-        self.script.set_height(81).set_width(564)
+        self.button_plot  = self._script_grid.place_object(Button("Try it!"), 2,3).set_width(50)
+        self.script       = self._script_grid.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
+        self.script.set_height(81)
 
         # make sure the plot fills up the most space
         self.set_row_stretch(2)
 
         # plot area
-        self._plot_grid    = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count())
+        self._plot_grid = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count(), alignment=0)
 
         ##### set up the internal variables
 
@@ -1752,6 +1750,9 @@ class DataboxPlot(GridLayout):
         """
         Removes all plots & curves, and rebuilds the gui.
         """
+        # don't show the plots as they are built
+        self._plot_grid.block_events() 
+        
         # remove extra curves & plots & buttons
         while len(self._curves):
             self._curves.pop(-1)
@@ -1768,21 +1769,17 @@ class DataboxPlot(GridLayout):
                 self._plot_grid.new_autorow(row)
 
                 # add the plot
-                self.plot_widgets.append(self._plot_grid.place_object(_g.PlotWidget(), column_span=8))
+                self.plot_widgets.append(self._plot_grid.place_object(_g.PlotWidget(), alignment=0))
 
             # create new curves
             self._curves.append(_g.PlotCurveItem(pen = (len(self._curves), n)))
             self.plot_widgets[-1].addItem(self._curves[-1])
 
-            # connect the buttons to functions on the fly
-            #print "connecting", len(self.buttons_save)-1
-            #self.buttons_save[-1].signal_clicked.connect(lambda: self.save_scripted_data(len(self.buttons_save)-1))
-            #print self.buttons_save
+            
 
-            # shaclacky the buttons together
-            self._plot_grid.set_column_stretch(5)
-
-
+        # show the plots
+        self._plot_grid.unblock_events()
+        
 
 
 
