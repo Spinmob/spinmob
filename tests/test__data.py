@@ -16,18 +16,18 @@ from unittest import TestLoader as _TL
 # this nicely.
 
 
-def test():
-    """
-    Run all tests in this module.
-    """
-
-    suite_databox  = _TL().loadTestsFromTestCase(Test_databox)
-    suite_fitter  = _TL().loadTestsFromTestCase(Test_fitter)
-
-    suites = [suite_databox, suite_fitter]
-    alltests = _ut.TestSuite(suites)
-
-    _ut.TextTestRunner(verbosity=2).run(alltests)
+#def test():
+#    """
+#    Run all tests in this module.
+#    """
+#
+#    suite_databox  = _TL().loadTestsFromTestCase(Test_databox)
+#    suite_fitter  = _TL().loadTestsFromTestCase(Test_fitter)
+#
+#    suites = [suite_databox, suite_fitter]
+#    alltests = _ut.TestSuite(suites)
+#
+#    _ut.TextTestRunner(verbosity=2).run(alltests)
 
 
 class Test_databox(_ut.TestCase):
