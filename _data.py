@@ -53,10 +53,10 @@ class databox:
         set's the n'th column to x (n can be a column name too)
         """
         if type(n) == str:
-            self.insert_column(data_array=x, ckey=n, index='end')
+            self.insert_column(data_array=x, ckey=n, index=None)
 
         elif type(n) in [int, long] and n > len(self.ckeys)-1:
-            self.insert_column(data_array=x, ckey='_column'+str(len(self.ckeys)), index='end')
+            self.insert_column(data_array=x, ckey='_column'+str(len(self.ckeys)), index=None)
 
         else:
             self.columns[self.ckeys[n]] = _n.array(x)
@@ -564,7 +564,7 @@ class databox:
         if name==None: name=thing.__name__
         self.extra_globals[name] = thing
 
-    def insert_header(self, hkey, value, index='end'):
+    def insert_header(self, hkey, value, index=None):
         """
         This will insert/overwrite a value to the header and hkeys.
 
@@ -577,8 +577,8 @@ class databox:
         # set the data
         self.headers[str(hkey)] = value
         if not hkey in self.hkeys:
-            if index=='end': self.hkeys.append(str(hkey))
-            else:            self.hkeys.insert(index, str(hkey))
+            if index==None: self.hkeys.append(str(hkey))
+            else:           self.hkeys.insert(index, str(hkey))
 
     def pop_header(self, hkey):
         """
