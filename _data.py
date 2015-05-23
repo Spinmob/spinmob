@@ -69,9 +69,6 @@ class databox:
         for n in range(i,min(j, len(self))): output.append(self[n])
         return output
 
-    #
-    # functions that are often overwritten in modified data classes
-    #
     def __init__(self, delimiter=None, debug=False):
         """
         delimiter                   The delimiter the file uses. None means "white space"
@@ -84,9 +81,6 @@ class databox:
 
         self.debug     = debug
         self.delimiter = delimiter
-
-    # create a simple initializer command for the user.
-    initialize = __init__
 
     def __repr__(self):
 
@@ -112,10 +106,6 @@ class databox:
 
         return globbies
 
-
-    #
-    # really useful functions
-    #
     def load_file(self, path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEPANTS.", default_directory=None, header_only=False, quiet=False):
         """
         This will clear the databox, load a file, storing the header info in self.headers, and the data in
@@ -311,37 +301,55 @@ class databox:
 
 
 
-    def pop_data_point(self, n, ckeys=[]):
+    def pop_data_point(self, n):
         """
         This will remove and return the n'th data point (starting at 0)
         in the supplied list of columns.
 
-        n       index of data point to pop
-        ckeys   which columns to do this to, specified by index or key
-                empty list means "every column"
+        n       index of data point to pop.
         """
 
-        # if it's empty, it's everything
-        if ckeys == []: ckeys = self.ckeys
-
-        # loop over the columns of interest and pop the data
+        # loop over the columns and pop the data
         popped = []
-        for k in ckeys:
-            if not k == None:
-                # first convert to a list
-                data = list(self.c(k))
+        for k in self.ckeys:
+            
+            # first convert to a list
+            data = list(self.c(k))
 
-                # pop the data
-                popped.append(data.pop(n))
+            # pop the data
+            popped.append(data.pop(n))
 
-                # now set this column again
-                self.insert_column(data, k)
+            # now set this column again
+            self.insert_column(_n.array(data), k)
 
         return popped
 
-
-
-
+    def insert_data_point(self, new_data, n=None):
+        """
+        Inserts a data point at index n. If n==None, appends to the end.
+        """
+        
+        if not len(new_data) == len(self.columns) and not len(self.columns)==0:
+            print "ERROR: new_data must have as many elements as there are columns."
+            return
+        
+        # otherwise, we just auto-add this data point as new columns        
+        elif len(self.columns)==0:
+            for i in range(len(new_data)): self[i] = [new_data[i]]
+    
+        # otherwise it matches length so just insert it.    
+        else:
+            for i in range(len(new_data)):
+                
+                # get the array and turn it into a list
+                data = list(self[i])
+    
+                # append or insert
+                if n == None: data.append(   new_data[i])
+                else:         data.insert(n, new_data[i])
+                
+                # reconvert to an array
+                self[i] = _n.array(data)
 
 
     def execute_script(self, script, g={}):
@@ -514,12 +522,14 @@ class databox:
 
 
 
-    def insert_column(self, data_array, ckey='temp', index='end'):
+    def insert_column(self, data_array, ckey='temp', index=None):
         """
         This will insert/overwrite a new column and fill it with the data from the
         the supplied array.
-
-        If ckey is an integer, use self.ckeys[ckey]
+        
+        data_array  data; can be a list, but will be converted to numpy array
+        ckey        name of the column; if an integer is supplied, uses self.ckeys[ckey]
+        index       where to insert this column. None => append to end.
         """
 
         # if it's an integer, use the ckey from the list
@@ -528,10 +538,8 @@ class databox:
         # append/overwrite the column value
         self.columns[ckey] = _n.array(data_array)
         if not ckey in self.ckeys:
-            if index=='end':
-                self.ckeys.append(ckey)
-            else:
-                self.ckeys.insert(index, ckey)
+            if index==None: self.ckeys.append(ckey)
+            else:           self.ckeys.insert(index, ckey)
 
 
     def copy_headers(self, other_databox):
@@ -581,8 +589,6 @@ class databox:
 
         if name==None: name=thing.__name__
         self.extra_globals[name] = thing
-
-
 
     def pop_header(self, hkey):
         """
@@ -650,8 +656,6 @@ class databox:
         """
         self.clear_columns()
         self.clear_headers()
-
-
 
     def rename_header(self, old_name, new_name):
         """
