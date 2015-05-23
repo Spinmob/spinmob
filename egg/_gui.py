@@ -293,7 +293,7 @@ class GridLayout(BaseObject):
     
 class Window(GridLayout):
 
-    def __init__(self, title='Window', size=[700,500]):
+    def __init__(self, title='Window', size=[700,500], autosettings_path=None):
         """
         This class is a simplified Qt window builder. Hopefully.
 
@@ -313,7 +313,17 @@ class Window(GridLayout):
         self._window.setCentralWidget(self._widget)
 
         # events
-        self._window.closeEvent = self._event_close
+        self._window.closeEvent  = self._event_close
+        self._window.resizeEvent = self._event_resize
+        self._window.moveEvent   = self._event_move
+
+        # autosettings path, to remember the window's position and size        
+        self._autosettings_path = autosettings_path
+
+        # reload the last settings if they exist
+        self._load_settings()
+    
+
 
     def close(self):
         """
@@ -333,12 +343,66 @@ class Window(GridLayout):
         print "\n\nShutting down...\n  arguments:", args
         self._window.deleteLater()
 
-    def _event_close(self, *args, **kwargs):
+    def _event_close(self, event):
         """
         Don't modify this.
         """
         self._is_open = False
         self.event_close()
+
+    def _event_resize(self, event):
+        """
+        Don't modify this.
+        """
+        self._save_settings()
+        return
+    
+    def _event_move(self, event):
+        """
+        Don't modify this.
+        """
+        self._save_settings()
+        return
+
+    def _save_settings(self):
+        """
+        Saves all the parameters to a text file.
+        """
+        if self._autosettings_path == None: return      
+        
+        # make the databox object
+        d = _d.databox()
+
+        # add the settings
+        p = self._window.pos()
+        s = self._window.size()
+        d.insert_header('x', p.x())
+        d.insert_header('y', p.y())
+        d.insert_header('w', s.width())
+        d.insert_header('h', s.height())
+        
+        # save it
+        d.save_file(self._autosettings_path, force_overwrite=True)
+
+    def _load_settings(self):
+        """
+        Loads all the parameters from a databox text file. If path=None,
+        loads from self.default_save_path.
+        """
+        if self._autosettings_path == None: return      
+        
+        # make the databox object
+        d = _d.databox()
+
+        # only load if it exists
+        if _os.path.exists(self._autosettings_path): 
+            d.load_file(self._autosettings_path, header_only=True)
+        else: return None
+
+        # update the window settings
+        self._window.move(  d.h('x'), d.h('y'))
+        self._window.resize(d.h('w'), d.h('h'))
+        
 
     def connect(self, signal, function):
         """
@@ -1830,4 +1894,9 @@ class DataboxPlot(GridLayout):
         
 
 
+
+if __name__ == "__main__":
+    
+    w = Window(autosettings_path="window.cfg")
+    w.show(False)
 
