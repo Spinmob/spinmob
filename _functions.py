@@ -3,6 +3,7 @@ import numpy   as _n
 import os      as _os
 import shutil  as _shutil
 import spinmob as _s
+import cPickle as _cPickle
 
 def coarsen_array(a, level=2, method='mean'):
     """
@@ -924,6 +925,8 @@ def psd(t, y, pow2=False, window=None):
 
     window          can be set to any of the windowing functions in numpy,
                     e.g. window="hanning"
+
+    returns frequencies, psd (y^2/Hz)
     """
     # make sure they're numpy arrays
     y = _n.array(y)

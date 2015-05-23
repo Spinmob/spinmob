@@ -1,5 +1,6 @@
-import numpy as _n
-import time  as _t
+import numpy   as _n
+import time    as _t
+import spinmob as _s
 from spinmob import egg
 
 
@@ -7,31 +8,27 @@ from spinmob import egg
 ##### GUI DESIGN
 
 # create the main window
-w = egg.gui.Window()
-
-# set the position on the screen and which column of the grid
-# should dominate (column 1 will hold the tabbed plot area)
-w.set_position([0,0])
-w.set_column_stretch(1)
+w = egg.gui.Window(autosettings_path='example_daq_w.cfg')
 
 # add the "go" button
 b = w.place_object(egg.gui.Button("Pretend to Acquire Data", checkable=True)).set_width(135)
 i = w.place_object(egg.gui.NumberBox(int=True)).set_width(50)
 
-# add a tabbed interface for the plotting area,
-# spanning the first and second rows
-tabs = w.place_object(egg.gui.TabArea(), row_span=2)
+# add a tabbed interface for the plotting area, spanning the first and second rows
+tabs = w.place_object(egg.gui.TabArea(), row_span=2, alignment=0)
 
 # add a tab for some plots
-t = tabs.add_tab("Plots")
+t1 = tabs.add_tab("Plots")
+t2 = tabs.add_tab("Analysis")
 
 # add a databox plotter object to the tab
-p = t.place_object(egg.gui.DataboxPlot())
+p1 = t1.place_object(egg.gui.DataboxPlot(autosettings_path='example_daq_p1.cfg'), alignment=0)
+p2 = t2.place_object(egg.gui.DataboxPlot(autosettings_path='example_daq_p2.cfg'), alignment=0)
 
 # move to the second row and add a TreeDictionary for
 # our "settings"
 w.new_autorow()
-s = w.place_object(egg.gui.TreeDictionary('example_acquisition.cfg'), column_span=2)
+s = w.place_object(egg.gui.TreeDictionary('example_daq_s.cfg'), column_span=2)
 
 
 
@@ -50,9 +47,6 @@ s.add_parameter("settings/other_stuff/quality",        value="round",      type=
 # load previous settings if they exist
 s.load()
 
-# create a databox to hold all the acquired data
-d = egg.data.databox()
-
 
 
 ##### FUNCTIONALITY
@@ -67,14 +61,17 @@ def get_fake_data():
         # first get all the extra numpy globals
         g = _n.__dict__
 
+        # get a quick handle on the databoxes
+        d1 = p1.databox
+        
         # update these globals with extra stuff needed for evaluation
-        g.update(dict(t=d[0]+s["settings/simulated_input/noise"]*_n.random.rand()))
-        y = eval(s["settings/simulated_input/source"], g)+_n.random.random(len(d['t']))
+        g.update(dict(t=d1[0]+s["settings/simulated_input/noise"]*_n.random.rand()))
+        y = eval(s["settings/simulated_input/source"], g)+_n.random.random(len(d1['t']))
 
     # default to zeros
     except:
         print "ERROR: Invalid source script."
-        y = d[0]*0.0
+        y = d1[0]*0.0
 
     # pretend this acquisition actually took time (avoids black holes)
     _t.sleep(s["settings/simulated_input/duration"])
@@ -100,23 +97,38 @@ def acquire_button_clicked(*a):
     and (i.get_value() < s["settings/simulated_input/iterations"] \
          or s["settings/simulated_input/iterations"] == 0):
 
+        # get a quick handle on the databoxes
+        d1 = p1.databox
+        d2 = p2.databox
+
         # reset the databox
-        d.clear()
-        d.update_headers(s.get_dictionary()[1], s.get_dictionary()[0])
+        d1.clear()
+        d2.clear()
+        d1.update_headers(s.get_dictionary()[1], s.get_dictionary()[0])
+        d2.update_headers(s.get_dictionary()[1], s.get_dictionary()[0])
 
         # create the fake time data
-        d['t'] = _n.linspace(0,s["settings/simulated_input/duration"], s["settings/simulated_input/points"])
+        d1['t'] = _n.linspace(0,s["settings/simulated_input/duration"], s["settings/simulated_input/points"])
 
-        # create the fake channel data
+        # create the fake channel data and do some analysis on it
         for n in range(s["settings/simulated_input/channels"]):
-            d['ch'+str(n)] = get_fake_data()
 
+            # get the channel name
+            c = 'ch'+str(n)
+
+            # create the data
+            d1[c] = get_fake_data()
+            
+            # get a power spectral density
+            d2['f'], d2[c] = _s.fun.psd(d1['t'], d1[c])
+            
         # increment the counter
         i.increment()
 
-        # update the plot
-        p.plot(d)
-
+        # update the plot (note updating d1 updates p1.databox by reference)
+        p1.plot()
+        p2.plot()
+        
         # process other window events so the GUI doesn't freeze!
         w.process_events()
 
