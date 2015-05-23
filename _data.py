@@ -324,9 +324,12 @@ class databox:
 
         return popped
 
-    def insert_data_point(self, new_data, n=None):
+    def insert_data_point(self, new_data, index=None):
         """
-        Inserts a data point at index n. If n==None, appends to the end.
+        Inserts a data point at index n. 
+        
+        new_data    a list or array of new data points, one for each column.
+        index       where to insert the point(s) in each column. None => append.
         """
         
         if not len(new_data) == len(self.columns) and not len(self.columns)==0:
@@ -345,12 +348,19 @@ class databox:
                 data = list(self[i])
     
                 # append or insert
-                if n == None: data.append(   new_data[i])
-                else:         data.insert(n, new_data[i])
+                if index == None: data.append(       new_data[i])
+                else:             data.insert(index, new_data[i])
                 
                 # reconvert to an array
                 self[i] = _n.array(data)
 
+    def append_data_point(self, new_data): 
+        """
+        Appends the supplied data point to the column(s).
+        
+        new_data    a list or array of new data points, one for each column.
+        """
+        return self.insert_data_point(new_data)
 
     def execute_script(self, script, g={}):
         """
@@ -522,26 +532,6 @@ class databox:
 
 
 
-    def insert_column(self, data_array, ckey='temp', index=None):
-        """
-        This will insert/overwrite a new column and fill it with the data from the
-        the supplied array.
-        
-        data_array  data; can be a list, but will be converted to numpy array
-        ckey        name of the column; if an integer is supplied, uses self.ckeys[ckey]
-        index       where to insert this column. None => append to end.
-        """
-
-        # if it's an integer, use the ckey from the list
-        if type(ckey) in [int, long]: ckey = self.ckeys[ckey]
-
-        # append/overwrite the column value
-        self.columns[ckey] = _n.array(data_array)
-        if not ckey in self.ckeys:
-            if index==None: self.ckeys.append(ckey)
-            else:           self.ckeys.insert(index, ckey)
-
-
     def copy_headers(self, other_databox):
         """
         Loops over the hkeys of the other_databox and sets this databoxes' header.
@@ -561,6 +551,19 @@ class databox:
         self.copy_headers(other_databox)
         self.copy_columns(other_databox)
 
+    def insert_global(self, thing, name=None):
+        """
+        Appends or overwrites the supplied object in the self.extra_globals.
+
+        Use this to expose execute_script() or _parse_script() etc... to external
+        objects and functions.
+
+        If name=None, use thing.__name__
+        """
+
+        if name==None: name=thing.__name__
+        self.extra_globals[name] = thing
+
     def insert_header(self, hkey, value, index='end'):
         """
         This will insert/overwrite a value to the header and hkeys.
@@ -576,19 +579,6 @@ class databox:
         if not hkey in self.hkeys:
             if index=='end': self.hkeys.append(str(hkey))
             else:            self.hkeys.insert(index, str(hkey))
-
-    def insert_global(self, thing, name=None):
-        """
-        Appends or overwrites the supplied object in the self.extra_globals.
-
-        Use this to expose execute_script() or _parse_script() etc... to external
-        objects and functions.
-
-        If name=None, use thing.__name__
-        """
-
-        if name==None: name=thing.__name__
-        self.extra_globals[name] = thing
 
     def pop_header(self, hkey):
         """
@@ -634,7 +624,43 @@ class databox:
             # pop it!
             return self.columns.pop(self.ckeys.pop(ckey))
 
+    def insert_column(self, data_array, ckey='temp', index=None):
+        """
+        This will insert/overwrite a new column and fill it with the data from the
+        the supplied array.
+        
+        data_array  data; can be a list, but will be converted to numpy array
+        ckey        name of the column; if an integer is supplied, uses self.ckeys[ckey]
+        index       where to insert this column. None => append to end.
+        """
 
+        # if it's an integer, use the ckey from the list
+        if type(ckey) in [int, long]: ckey = self.ckeys[ckey]
+
+        # append/overwrite the column value
+        self.columns[ckey] = _n.array(data_array)
+        if not ckey in self.ckeys:
+            if index==None: self.ckeys.append(ckey)
+            else:           self.ckeys.insert(index, ckey)
+
+    def append_column(self, data_array, ckey='temp'):
+        """
+        This will append a new column and fill it with the data from the
+        the supplied array.
+        
+        data_array  data; can be a list, but will be converted to numpy array
+        ckey        name of the column.
+        """
+        if not type(ckey) == str: 
+            print "ERROR: ckey should be a string!"
+            return
+
+        if ckey in self.ckeys: 
+            print "ERROR: ckey '"+ckey+"' already exists!"
+            return
+        
+        self.insert_column(data_array, ckey)
+        
     def clear_columns(self):
         """
         This will remove all the ckeys and columns.
