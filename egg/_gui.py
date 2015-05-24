@@ -615,7 +615,7 @@ class NumberBox(BaseObject):
                                   int=int, **kwargs)
 
         # signals
-        self.signal_changed = self._widget.valueChanged
+        self.signal_changed = self._widget.sigValueChanging
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
