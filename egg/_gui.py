@@ -8,6 +8,7 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
+import temporary_fixes as _temporary_fixes
 _a = _g.mkQApp()
 
 # set the font if we're in linux
@@ -611,7 +612,7 @@ class NumberBox(BaseObject):
         """
 
         # pyqtgraph spinbox
-        self._widget = _g.SpinBox(value=value, step=step, bounds=bounds,
+        self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds,
                                   int=int, **kwargs)
 
         # signals
@@ -639,6 +640,18 @@ class NumberBox(BaseObject):
         if block_events: self.block_events()
         self._widget.setValue(value)
         if block_events: self.unblock_events()
+
+    def set_step(self, value, block_events=False):
+        """
+        Sets the step of the number box.
+        
+        Setting block_events=True will temporarily block the widget from
+        sending any signals when setting the value.
+        """
+        if block_events: self.block_events()
+        self._widget.setSingleStep(value)
+        if block_events: self.unblock_events()
+
 
     def increment(self, n=1):
         """
