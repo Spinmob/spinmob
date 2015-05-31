@@ -370,7 +370,6 @@ class SpinBox(QtGui.QAbstractSpinBox):
         
 
     def updateText(self, prev=None):
-        #print "Update text."
         
         # get the number of decimal places to print
         decimals = self.opts.get('decimals')        
@@ -384,11 +383,19 @@ class SpinBox(QtGui.QAbstractSpinBox):
             # special case: if it's zero use the previous prefix
             if self.val == 0 and prev is not None:
                 (s, p) = fn.siScale(prev)
+                
+                # NOTE: Could have the user specify a format string and use it here
                 txt = ("%."+str(decimals)+"g %s%s") % (0, p, self.opts['suffix'])
             else:
+                # NOTE: Could have the user specify a format string and send it as an argument here
                 txt = fn.siFormat(float(self.val), precision=decimals, suffix=self.opts['suffix'])
+ 
+        # otherwise, format the string manually
         else:
+            # NOTE: Could have the user specify a format string and use it here
             txt = ('%.'+str(decimals)+'g%s') % (self.val , self.opts['suffix'])
+
+        # actually set the text
         self.lineEdit().setText(txt)
         self.lastText = txt
 

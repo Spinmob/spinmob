@@ -1567,6 +1567,7 @@ class DataboxPlot(GridLayout):
         self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False).set_width(70)
         self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) .set_width(50)
         self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) .set_width(50)
+        self.button_link_x     = self.place_object(Button("Link X",      checkable=True)).set_checked(True) .set_width(50)        
         self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True) .set_width(50)
 
         # keep the buttons shaclackied together
@@ -1616,6 +1617,7 @@ class DataboxPlot(GridLayout):
         self.button_autoscript.signal_toggled.connect(self._button_autoscript_clicked)
 
         self.button_multi     .signal_toggled.connect(self._button_multi_clicked)
+        self.button_link_x    .signal_toggled.connect(self._button_link_x_clicked)
         self.button_enabled   .signal_toggled.connect(self._button_enabled_clicked)
         self.number_file      .signal_changed.connect(self._number_file_changed)
         self.script           .signal_changed.connect(self._script_changed)
@@ -1634,11 +1636,24 @@ class DataboxPlot(GridLayout):
         
 
 
-    def _button_multi_clicked(self):    self.save_gui_settings()
-    def _button_enabled_clicked(self):  self.save_gui_settings()
-    def _number_file_changed(self):     self.save_gui_settings()
-    def _script_changed(self):          self.save_gui_settings()
+    def _button_enabled_clicked(self, *a):  self.save_gui_settings()
+    def _number_file_changed(self, *a):     self.save_gui_settings()
+    def _script_changed(self, *a):          self.save_gui_settings()
 
+    def _button_multi_clicked(self, *a):    
+        """
+        Called whenever someone clicks the Multi button.
+        """
+        self.plot()        
+        self.save_gui_settings()
+    
+    def _button_link_x_clicked(self, *a):   
+        """
+        Called whenever the Link X button is clicked.
+        """        
+        self._update_linked_axes()
+        self.save_gui_settings()
+    
     def _button_autoscript_clicked(self, checked):
         """
         Called whenever the button is clicked.
@@ -1846,7 +1861,7 @@ class DataboxPlot(GridLayout):
         """
         Updates the gui based on button configs.
         """
-        # internal multiplot flag
+        # internal multiplot flag (needed to pick up the toggle)
         self._multiplot = self.button_multi.get_value()
 
         # whether the script is visible
@@ -1860,7 +1875,7 @@ class DataboxPlot(GridLayout):
     def _synchronize_plots(self, n):
         """
         Makes sure there are n plots, buttons, etc as required by
-        the script.
+        the current script.
         """
 
         # if we don't have enough curves, clear everything and start over
@@ -1870,6 +1885,25 @@ class DataboxPlot(GridLayout):
 
         # remember the multiplot setting
         self._multiplot = self.button_multi.is_checked()
+
+    def _update_linked_axes(self):
+        """
+        Loops over the axes and links / unlinks them.
+        """
+        # no axes to link!
+        if len(self.plot_widgets) <= 1: return        
+        
+        # get the first plotItem
+        p = self.plot_widgets[0].plotItem
+        
+        # now loop through all the axes and link / unlink the axes
+        for n in range(1,len(self.plot_widgets)):
+            
+            # link or unlink the axis            
+            if self.button_link_x.is_checked(): 
+                self.plot_widgets[n].plotItem.setXLink(p)                        
+            else:
+                self.plot_widgets[n].plotItem.setXLink(None)
 
     def _rebuild_plots(self, n):
         """
@@ -1900,7 +1934,8 @@ class DataboxPlot(GridLayout):
             self._curves.append(_g.PlotCurveItem(pen = (len(self._curves), n)))
             self.plot_widgets[-1].addItem(self._curves[-1])
 
-            
+        # link / unlink the axes
+        self._update_linked_axes()
 
         # show the plots
         self._plot_grid.unblock_events()
@@ -1910,6 +1945,13 @@ class DataboxPlot(GridLayout):
 
 if __name__ == "__main__":
     
-    w = Window(autosettings_path="window.cfg")
+    w = Window(autosettings_path="w.cfg")
+    p = w.place_object(DataboxPlot(autosettings_path='p.cfg'), alignment=0)
+    p.databox['t']  = _n.linspace(0,100,1000)
+    p.databox['y1'] = _n.cos(p.databox['t'])
+    p.databox['y2'] = _n.sin(p.databox['t'])
+    p.databox['y3'] = _n.tan(p.databox['t'])
+    p.plot()
+    
     w.show(False)
 
