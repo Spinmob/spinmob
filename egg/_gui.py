@@ -106,6 +106,7 @@ class BaseObject():
         """
         Loads the settings (if we're supposed to).
         """
+        
         # only do this if we're supposed to
         if not None==self._autosettings_path:  
         
@@ -1329,6 +1330,15 @@ class TreeDictionary(BaseObject):
         for p in parameter.children():
             self._get_parameter_dictionary(k, dictionary, sorted_keys, p)
 
+    def send_to_databox_header(self, databox):
+        """
+        Sends all the information currently in the tree to the supplied 
+        databox's header, in alphabetical order. If the entries already 
+        exists, just updates them.
+        """
+        k, d = self.get_dictionary()
+        databox.update_headers(d,k)
+
     def get_dictionary(self):
         """
         Returns the list of parameters and a dictionary of values
@@ -1535,14 +1545,15 @@ class DataboxLoadSave(_d.databox, GridLayout):
 
 
 
-class DataboxPlot(GridLayout):
+class DataboxPlot(_d.databox, GridLayout):
 
-    def __init__(self, databox=None, file_type="*.dat", autosettings_path=None):
+    def __init__(self, file_type="*.dat", autosettings_path=None, **kwargs):
         """
         A collection of common controls and functionality for plotting, saving, and
-        loading a databox (stored in self.databox).
-
-        Settings databox=None will just create an empty databox.
+        loading data. This object inherits all databox functionality and adds
+        a gui to the mix.
+        
+        ROIs for each plot can be stored in self.ROIs as a list (sub-lists allowed)
 
         filetype is the filter sent to file dialogs (i.e. the default data file extension)
 
@@ -1554,7 +1565,8 @@ class DataboxPlot(GridLayout):
 
         # Do all the tab-area initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
-        
+        _d.databox.__init__(self, **kwargs)
+
         # top row is main controls
         self.place_object(Label("Raw Data:"), alignment=1)
         self.button_load     = self.place_object(Button("Load")                .set_width(50), alignment=1)
@@ -1591,21 +1603,20 @@ class DataboxPlot(GridLayout):
         self._plot_grid = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count(), alignment=0)
 
         ##### set up the internal variables
-
-        # databox holds the columns of data
-        if databox==None: databox = _d.databox()
-        self.databox              = databox
-
-        # file type is the extension, autosave directory is where to autosave
-        self._file_type          = file_type
+        
+        # will be set later. This is where files will be dumped to when autosaving        
         self._autosave_directory = None
+
+        # file type (e.g. *.dat) for the file dialogs
+        self._file_type = file_type
 
         # autosave settings path
         self._autosettings_path = autosettings_path
 
         # holds the curves and plot widgets for the data, and the buttons
-        self._curves = []
-        self.plot_widgets  = []
+        self._curves      = []
+        self.plot_widgets = []
+        self.ROIs         = []
 
         ##### Functionality of buttons etc...
 
@@ -1626,6 +1637,7 @@ class DataboxPlot(GridLayout):
         self._autosettings_controls = ["self.button_autoscript",
                                        "self.button_enabled",
                                        "self.button_multi",
+                                       "self.button_link_x",
                                        "self.button_script",
                                        "self.number_file",
                                        "self.script"]
@@ -1643,7 +1655,7 @@ class DataboxPlot(GridLayout):
     def _button_multi_clicked(self, *a):    
         """
         Called whenever someone clicks the Multi button.
-        """
+        """        
         self.plot()        
         self.save_gui_settings()
     
@@ -1659,6 +1671,7 @@ class DataboxPlot(GridLayout):
         Called whenever the button is clicked.
         """
         self._synchronize_controls()
+        self.plot()
         self.save_gui_settings()
 
     def _button_script_clicked(self, checked):
@@ -1699,8 +1712,6 @@ class DataboxPlot(GridLayout):
         """
         self.load_file()
 
-    
-
     def save_file(self, path="ask", force_overwrite=False, just_settings=False):
         """
         Saves the data in the databox to a file.
@@ -1712,13 +1723,13 @@ class DataboxPlot(GridLayout):
         if just_settings: d = _d.databox()
 
         # otherwise use the internal databox
-        else: d = self.databox
+        else: d = self
 
         # add all the controls settings
         for x in self._autosettings_controls: self._store_gui_setting(d, x)
 
         # save the file
-        d.save_file(path, self._file_type, force_overwrite)
+        _d.databox.save_file(d, path, self._file_type, force_overwrite)
 
     def load_file(self, path="ask", just_settings=False):
         """
@@ -1735,11 +1746,11 @@ class DataboxPlot(GridLayout):
 
         # otherwise use the internal databox
         else:
-            d = self.databox
+            d = self
             header_only = False
 
         # import the settings if they exist in the header
-        if not None == d.load_file(path, filters=self._file_type, header_only=header_only, quiet=just_settings):
+        if not None == _d.databox.load_file(d, path, filters=self._file_type, header_only=header_only, quiet=just_settings):
             # loop over the autosettings and update the gui    
             for x in self._autosettings_controls: self._load_gui_setting(d, x)
 
@@ -1749,10 +1760,10 @@ class DataboxPlot(GridLayout):
         # plot the data if this isn't just a settings load
         if not just_settings:
             self.plot()
-            self.after_load_file(self)
+            self.after_load_file()
 
     
-    def after_load_file(self, databox_plot_instance):
+    def after_load_file(self):
         """
         Called after a file is loaded. Does nothing. Feel free to overwrite!
 
@@ -1767,38 +1778,42 @@ class DataboxPlot(GridLayout):
         """
         self.plot()
 
-    def plot(self, databox=None):
+    def plot(self):
         """
         Sets the internal databox to the supplied value and plots it.
         If databox=None, this will plot the internal databox.
         """
 
-        # save the data!
-        if not databox==None: self.databox = databox
-
-        # make sure we're allowed to plot
-        if self.databox == None or not self.button_enabled.is_checked():
-            self._rebuild_plots(0)
+        # if we're disabled or have no data columns, clear everything!
+        if not self.button_enabled.is_checked() or len(self) == 0:
+            self._set_number_of_plots(0)
             return self
 
         # if there is no script, create a default
         if self.button_autoscript.is_checked():
 
             # if there is no data, leave it blank
-            if   len(self.databox)==0: s = "x = []; y = []"
+            if   len(self)==0: s = "x = []; y = []; xlabels=[]; ylabels=[]"
 
             # if there is one column, make up a one-column script
-            elif len(self.databox)==1: s = "x = [None]\ny = [d[0]]"
+            elif len(self)==1: s = "x = [None]\ny = [d[0]]\n\nxlabels=['Data Point']\nylabels=['d[0]']"
 
             # otherwise assume the first column is the x-axis for everything
             else:
+                # hard code the first columns
                 sx = "x = [ d[0]"
                 sy = "y = [ d[1]"
-                for n in range(2,len(self.databox)):
-                    sx = sx+", d[0]"
-                    sy = sy+", d["+str(n)+"]"
+                
+                # hard code the first labels
+                sxlabels = "xlabels = '" +self.ckeys[0]+"'"
+                sylabels = "ylabels = ['"+self.ckeys[1]+"'"
 
-                s = sx+" ]\n"+sy+" ]"
+                # loop over any remaining columns and append.
+                for n in range(2,len(self)):
+                    sy += ", d["+str(n)+"]"
+                    sylabels += ", '"+self.ckeys[n]+"'"
+
+                s = sx+" ]\n"+sy+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
 
             # only change it if the script is different
             if not s.strip() == str(self.script.get_text()).strip(): self.script.set_text(s)
@@ -1809,44 +1824,86 @@ class DataboxPlot(GridLayout):
         try:
             # get globals for sin, cos etc
             g = _n.__dict__
-            g.update(dict(d=self.databox))
-
-            # run the script. x & y should now be lists of data arrays
+            g.update(dict(d=self))
+            g.update(dict(xlabels='x', ylabels='y'))
+    
+            # run the script. 
             exec(self.script.get_text(), g)
+            
+            # x & y should now be data arrays, lists of data arrays or Nones            
             x = g['x']
             y = g['y']
-
+            
+            # make it the right shape
+            if x == None: x = [None]
+            if y == None: y = [None]
+            if not _spinmob.fun.is_iterable(x[0]) and not x[0] == None: x = [x]
+            if not _spinmob.fun.is_iterable(y[0]) and not y[0] == None: y = [y]
+            if len(x) == 1 and not len(y) == 1: x = x*len(y)
+            if len(y) == 1 and not len(x) == 1: y = y*len(x)            
+            
+            
+            # xlabels and ylabels should be strings or lists of strings
+            xlabels = g['xlabels']
+            ylabels = g['ylabels']
+    
             # make sure we have exactly the right number of plots
-            self._synchronize_plots(len(x))
-
+            self._set_number_of_plots(len(x))
+            self._update_linked_axes()
+    
             # return if there is nothing.
             if len(x) == 0: return
-
+    
             # now plot everything
-            for n in range(len(x)):
+            for n in range(max(len(x),len(y))-1,-1,-1):
+                                
+                # Create data for "None" cases.                
                 if x[n] == None: x[n] = range(len(y[n]))
                 if y[n] == None: y[n] = range(len(x[n]))
                 self._curves[n].setData(x[n],y[n])
-                #self.plot_widgets[n].autoRange()
-
-            # unpink the script
+                
+                # get the labels for the curves
+                
+                # if it's a string, use the same label for all axes
+                if type(xlabels) in [str,type(None)]: xlabel = xlabels
+                elif n < len(xlabels):                xlabel = xlabels[n]
+                else:                                 xlabel = ''
+                
+                if type(ylabels) in [str,type(None)]: ylabel = ylabels
+                elif n < len(ylabels):                ylabel = ylabels[n]
+                else:                                 ylabel = ''
+                
+                # set the labels
+                i = min(n, len(self.plot_widgets)-1)
+                self.plot_widgets[i].setLabel('left',   ylabel)
+                self.plot_widgets[i].setLabel('bottom', xlabel)
+                
+                # special case: hide if None
+                if xlabel == None: self.plot_widgets[i].getAxis('bottom').showLabel(False)
+                if ylabel == None: self.plot_widgets[i].getAxis('left')  .showLabel(False)
+                
+            # unpink the script, since it seems to have worked
             self.script.set_colors('black','white')
-
-            # if we're supposed to, autosave
-            if self.button_autosave.is_checked():
-
-                # save the file
-                self.save_file(_os.path.join(self._autosave_directory, "%04d " % (self.number_file.get_value()) + self._label_path.get_text()))
-
-                # increment the counter
-                self.number_file.increment()
-
+    
         # otherwise, look angry and don't autosave
         except: self.script.set_colors('black','pink')
 
         return self
 
-    def auto_scale(self, n=None):
+    def autosave(self):
+        """
+        Autosaves the currently stored data, but only if autosave is checked!
+        """
+        # make sure we're suppoed to        
+        if self.button_autosave.is_checked():
+    
+            # save the file
+            self.save_file(_os.path.join(self._autosave_directory, "%04d " % (self.number_file.get_value()) + self._label_path.get_text()))
+    
+            # increment the counter
+            self.number_file.increment()
+
+    def autozoom(self, n=None):
         """
         Auto-scales the axes to fit all the data in plot index n. If n == None,
         auto-scale everyone.
@@ -1861,9 +1918,7 @@ class DataboxPlot(GridLayout):
         """
         Updates the gui based on button configs.
         """
-        # internal multiplot flag (needed to pick up the toggle)
-        self._multiplot = self.button_multi.get_value()
-
+        
         # whether the script is visible
         self._script_grid._widget.setVisible(self.button_script.get_value())
 
@@ -1872,19 +1927,71 @@ class DataboxPlot(GridLayout):
         else:                                  self.script.enable()
 
 
-    def _synchronize_plots(self, n):
+    def _set_number_of_plots(self, n):
         """
-        Makes sure there are n plots, buttons, etc as required by
-        the current script.
+        Adjusts number of plots & curves to the desired value the gui.
         """
+        
+        # multi plot, right number of plots and curves = great!
+        if self.button_multi.is_checked()               \
+        and len(self._curves) == len(self.plot_widgets) \
+        and len(self._curves) == n: return
+    
+        # single plot, right number of curves = great!
+        if not self.button_multi.is_checked() \
+        and len(self.plot_widgets) == 1       \
+        and len(self._curves) == n: return
 
-        # if we don't have enough curves, clear everything and start over
-        # if multiplot has switched
-        if not n == len(self._curves) \
-        or not self.button_multi.is_checked() == self._multiplot: self._rebuild_plots(n)
+        # time to rebuild!
+        
+        # don't show the plots as they are built
+        self._plot_grid.block_events() 
 
-        # remember the multiplot setting
-        self._multiplot = self.button_multi.is_checked()
+        # make sure the number of curves is on target
+        while len(self._curves) > n: self._curves.pop(-1)
+        while len(self._curves) < n: self._curves.append(_g.PlotCurveItem(pen = (len(self._curves), n)))
+            
+        # figure out the target number of plots
+        if self.button_multi.is_checked(): n_plots = n
+        else:                              n_plots = min(n,1)
+        
+        # clear the plots
+        while len(self.plot_widgets):
+            
+            # pop the last plot widget and remove all items        
+            p = self.plot_widgets.pop(-1)
+            p.clear()
+            
+            # remove it from the grid
+            self._plot_grid.remove_object(p)
+            
+        # add new plots
+        for i in range(n_plots): 
+            self.plot_widgets.append(self._plot_grid.place_object(_g.PlotWidget(), 0, i, alignment=0))
+        
+        # loop over the curves and add them to the plots
+        for i in range(n): 
+            self.plot_widgets[min(i,len(self.plot_widgets)-1)].addItem(self._curves[i])
+        
+        # loop over the ROI's and add them
+        for i in range(len(self.ROIs)):
+
+            # get the ROIs for this plot
+            ROIs = self.ROIs[i]
+            if not _spinmob.fun.is_iterable(ROIs): ROIs = [ROIs]
+            
+            # loop over the ROIs for this plot
+            for ROI in ROIs: 
+                
+                # determine which plot to add the ROI to
+                m = min(i, len(self.plot_widgets)-1)
+                
+                # add the ROI to the appropriate plot
+                self.plot_widgets[m].addItem(ROI)
+                
+        # show the plots
+        self._plot_grid.unblock_events()
+        
 
     def _update_linked_axes(self):
         """
@@ -1905,40 +2012,10 @@ class DataboxPlot(GridLayout):
             else:
                 self.plot_widgets[n].plotItem.setXLink(None)
 
-    def _rebuild_plots(self, n):
-        """
-        Removes all plots & curves, and rebuilds the gui.
-        """
-        # don't show the plots as they are built
-        self._plot_grid.block_events() 
         
-        # remove extra curves & plots & buttons
-        while len(self._curves):
-            self._curves.pop(-1)
-            if len(self.plot_widgets): self._plot_grid.remove_object(self.plot_widgets.pop(-1))
 
-        # add plots
-        while len(self._curves) < n:
 
-            # create a new plot if necessary
-            if self.button_multi.is_checked() or len(self.plot_widgets)==0:
-
-                # get the row number (the 10 allows adding of other controls)
-                row = len(self._curves)*10
-                self._plot_grid.new_autorow(row)
-
-                # add the plot
-                self.plot_widgets.append(self._plot_grid.place_object(_g.PlotWidget(), alignment=0))
-
-            # create new curves
-            self._curves.append(_g.PlotCurveItem(pen = (len(self._curves), n)))
-            self.plot_widgets[-1].addItem(self._curves[-1])
-
-        # link / unlink the axes
-        self._update_linked_axes()
-
-        # show the plots
-        self._plot_grid.unblock_events()
+        
         
 
 
@@ -1947,10 +2024,12 @@ if __name__ == "__main__":
     
     w = Window(autosettings_path="w.cfg")
     p = w.place_object(DataboxPlot(autosettings_path='p.cfg'), alignment=0)
-    p.databox['t']  = _n.linspace(0,100,1000)
-    p.databox['y1'] = _n.cos(p.databox['t'])
-    p.databox['y2'] = _n.sin(p.databox['t'])
-    p.databox['y3'] = _n.tan(p.databox['t'])
+    p.ROIs = [_g.LinearRegionItem([0,100]), _g.LinearRegionItem([0,50])] 
+    
+    p['t']  = _n.linspace(0,100,1000)
+    p['y1'] = _n.cos(p['t'])
+    p['y2'] = _n.sin(p['t'])
+    p['y3'] = _n.tan(p['t'])
     p.plot()
     
     w.show(False)

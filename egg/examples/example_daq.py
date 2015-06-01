@@ -22,8 +22,8 @@ t1 = tabs.add_tab("Plots")
 t2 = tabs.add_tab("Analysis")
 
 # add a databox plotter object to the tab
-p1 = t1.place_object(egg.gui.DataboxPlot(autosettings_path='example_daq_p1.cfg'), alignment=0)
-p2 = t2.place_object(egg.gui.DataboxPlot(autosettings_path='example_daq_p2.cfg'), alignment=0)
+d1 = t1.place_object(egg.gui.DataboxPlot(autosettings_path='example_daq_p1.cfg'), alignment=0)
+d2 = t2.place_object(egg.gui.DataboxPlot(autosettings_path='example_daq_p2.cfg'), alignment=0)
 
 # move to the second row and add a TreeDictionary for
 # our "settings"
@@ -61,9 +61,6 @@ def get_fake_data():
         # first get all the extra numpy globals
         g = _n.__dict__
 
-        # get a quick handle on the databoxes
-        d1 = p1.databox
-        
         # update these globals with extra stuff needed for evaluation
         g.update(dict(t=d1[0]+s["settings/simulated_input/noise"]*_n.random.rand()))
         y = eval(s["settings/simulated_input/source"], g)+_n.random.random(len(d1['t']))
@@ -97,15 +94,13 @@ def acquire_button_clicked(*a):
     and (i.get_value() < s["settings/simulated_input/iterations"] \
          or s["settings/simulated_input/iterations"] == 0):
 
-        # get a quick handle on the databoxes
-        d1 = p1.databox
-        d2 = p2.databox
-
         # reset the databox
         d1.clear()
         d2.clear()
-        d1.update_headers(s.get_dictionary()[1], s.get_dictionary()[0])
-        d2.update_headers(s.get_dictionary()[1], s.get_dictionary()[0])
+        
+        # all the information to the databox headers
+        s.send_to_databox_header(d1)
+        s.send_to_databox_header(d2)
 
         # create the fake time data
         d1['t'] = _n.linspace(0,s["settings/simulated_input/duration"], s["settings/simulated_input/points"])
@@ -126,10 +121,11 @@ def acquire_button_clicked(*a):
         i.increment()
 
         # update the plot (note updating d1 updates p1.databox by reference)
-        p1.plot()
-        p2.plot()
+        # and autosave (only does anything if this is enabled on the gui)
+        d1.plot(); d1.autosave()
+        d2.plot(); d2.autosave()
         
-        # process other window events so the GUI doesn't freeze!
+        # process other window events so the GUI doesn't freeze
         w.process_events()
 
     # in case the button is still checked
