@@ -7,24 +7,24 @@ import spinmob.egg as egg   # this is our graphical window builder
 
 
 #########################################
-# Main window
+### Main window
 #########################################
 
 # Create a "sleg" window with the title 'Hello World!'
 # This will not automatically show the window (see below)
-window = egg.gui.Window('Hello World!')
+window = egg.gui.Window('Hello World!', autosettings_path='example_other_widgets_window.cfg')
 
 # make the second column the one that grows the most when resizing
 window.set_column_stretch(1,100)
 
 # top row (sub grid of misc controls defined below)
-top_row = window.place_object(egg.gui.GridLayout(), 0,0, column_span=2)
+top_row = window.place_object(egg.gui.GridLayout(False), 0,0, column_span=2)
 
 
 
 
 #########################################
-# Buttons and file dialogs.
+### Buttons and file dialogs.
 #########################################
 
 # define a dummy functions to catch signals from buttons etc
@@ -40,7 +40,7 @@ window.connect(b0.signal_clicked, open_files)
 
 
 #########################################
-# Number box
+### Number box
 #########################################
 
 # make a number box, set its width
@@ -53,13 +53,13 @@ window.connect(n.signal_changed, dummy_function)
 
 
 #########################################
-# Line Edit
+### Line Edit
 #########################################
 top_row.place_object(egg.gui.TextBox("TextBox Object."),8,0)
 
 
 #########################################
-# Toggle button
+### Toggle button
 #########################################
 
 # This button will toggle when pressed.
@@ -71,14 +71,14 @@ bt.signal_clicked.connect(dummy_function)
 
 
 #########################################
-# Label
+### Label
 #########################################
 
 l = top_row.place_object(egg.gui.Label("Some text goes here."), 6,0, alignment=1)
 
 
 #########################################
-# pyqtgraph line plot and data taking
+### pyqtgraph line plot and data taking
 #########################################
 
 # add a line plot in the second row
@@ -129,7 +129,7 @@ window.connect(b1.signal_clicked, acquire_and_plot)
 
 
 #########################################
-# Saving data (can also load)
+### Saving data (can also load)
 #########################################
 
 # function to save the databox we created above
@@ -140,37 +140,37 @@ window.connect(b2.signal_clicked, save_data)
 
 
 
-##########################################
-## pyqtgraph image plot
-##########################################
-#
-## add a color plot to the second row spanning the right-most columns
-#p2 = window.place_object(egg.pyqtgraph.ImageView(), 1,1)
-#
-## function to plot an image
-#def randomize_image(*a): # note that *a will catch any number of arguments
-#                         # and store them all in a "tuple"
-#    # create a 2D random array
-#    z = _n.random.rand(100,100)
-#
-#    # set the image data in the plot (see pyqtgraph documentation)
-#    p2.setImage(z)
-#
-## randomize it
-##randomize_image()
-#
-## add a randomizer button above it
-#b3 = top_row.place_object(egg.gui.Button("Randomize"), 3,0)
-#
-## connect b3's click to re-randomizing the plot
-#window.connect(b3.signal_clicked, randomize_image)
-#
-#
+#########################################
+### pyqtgraph image plot
+#########################################
+
+# add a color plot to the second row spanning the right-most columns
+p2 = window.place_object(egg.pyqtgraph.ImageView(), 1,1)
+
+# function to plot an image
+def randomize_image(*a): # note that *a will catch any number of arguments
+                         # and store them all in a "tuple"
+    # create a 2D random array
+    z = _n.random.rand(100,100)
+
+    # set the image data in the plot (see pyqtgraph documentation)
+    p2.setImage(z)
+
+# randomize it
+#randomize_image()
+
+# add a randomizer button above it
+b3 = top_row.place_object(egg.gui.Button("Randomize"), 3,0)
+
+# connect b3's click to re-randomizing the plot
+window.connect(b3.signal_clicked, randomize_image)
+
+
 
 
 
 #########################################
-# Tab Area
+### Tab Area
 #########################################
 
 # add a tab area to the 2nd row, spanning all columns
@@ -197,7 +197,7 @@ t2.place_object(egg.pyqtgraph.PlotWidget(),1,0)
 
 
 #########################################
-# Table
+### Table
 #########################################
 
 # add the table object to the second tab
@@ -235,7 +235,7 @@ d(more_stuff="'strings need quotes'", comment_on_code='"this must be valid pytho
 
 
 #########################################
-# Modified parameter tree.
+### Modified parameter tree.
 #########################################
 
 # create the parameter tree
@@ -253,9 +253,11 @@ x=tree.add_button('Some Category/test button')
 x.signal_clicked.connect(dummy_function)
 
 #########################################
-# Show the window
+### Show the window
 #########################################
 
-# set the window position on the screen and show it
-window.set_position([0,0])
-window.show(True) # If launching in spyder, it's good to call it without "True"
+# show it
+window.show(True) 
+
+# If launching in spyder, it's good to call it without "True", so that you
+# can interact with the thing on the command line as well as graphically.

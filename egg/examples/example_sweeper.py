@@ -7,63 +7,43 @@ import spinmob.egg as egg
 ##### GUI DESIGN
 
 # create the main window
-w = egg.gui.Window()
-
-# set the position on the screen and which column of the grid
-# should dominate (column 1 will hold the tabbed plot area)
-w.set_position([0,0])
-w.set_column_stretch(1)
+w = egg.gui.Window(autosettings_path="example_sweeper_w.cfg")
 
 # add the "go" button
-b_sweep  = w.place_object(egg.gui.Button("Sweep!",    checkable=True)).set_width(50)
-b_select = w.place_object(egg.gui.Button("Selection", checkable=True)).set_width(70)
+b_sweep  = w.place_object(egg.gui.Button("Sweep!",         checkable=True)).set_width(50)
+b_select = w.place_object(egg.gui.Button("Use Blue Range", checkable=True)).set_width(90)
 l_x      = w.place_object(egg.gui.Label("x:"), alignment=2)
 n_x      = w.place_object(egg.gui.NumberBox(int=False))
 
-# add a tabbed interface for the plotting area,
-# spanning the first and second rows
-tabs = w.place_object(egg.gui.TabArea(), row_span=2)
+# move to the second row and add a TreeDictionary for our "settings"
+w.new_autorow()
+settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4, alignment=1)
+settings.add_parameter('sweep/x_start', -10, type='float')
+settings.add_parameter('sweep/x_stop',   10, type='float')
+settings.add_parameter('sweep/x_steps', 200, type='float')
+
+# load previous settings if they exist
+settings.load()
+
+# add a tabbed interface for the plotting area, spanning the first and second rows
+tabs = w.place_object(egg.gui.TabArea(), 10,0, row_span=2, alignment=0)
+w.set_column_stretch(10)
 
 # add a tab for some plots
 t_raw = tabs.add_tab("Raw Plots")
 
 # add a databox plotter object to the tab
-data_raw = t_raw.place_object(egg.gui.DataboxLoadSave(), alignment=0)
-plot_ms  = t_raw.place_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Magnitude')), 0,1, alignment=0)
-plot_ps  = t_raw.place_object(egg.pyqtgraph.PlotWidget(labels=dict(bottom='x', left='Phase')),     0,2, alignment=0)
+d_sweep = t_raw.place_object(egg.gui.DataboxPlot(autosettings_path="example_sweeper_d_sweep.cfg"), alignment=0)
+d_sweep['x']     = []
+d_sweep['mag']   = []
+d_sweep['phase'] = []
 
-# link the axes
-plot_ps.plotItem.setXLink(plot_ms.plotItem)
+# add a "region of interest" (ROI) for selecting the sweep range
+roi_sweep = egg.pyqtgraph.LinearRegionItem([settings['sweep/x_start'], settings['sweep/x_stop']])
+d_sweep.ROIs = [roi_sweep]
 
-# move to the second row and add a TreeDictionary for
-# our "settings"
-w.new_autorow()
-settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4)
-settings.add_parameter('sweep/x_start', -10, type='float')
-settings.add_parameter('sweep/x_stop',   10, type='float')
-settings.add_parameter('sweep/x_steps', 200, type='float')
-
-
-
-
-##### DATA OBJECTS
-
-# load previous settings if they exist
-settings.load()
-
-# add the selecty region
-selection = egg.pyqtgraph.LinearRegionItem([settings['sweep/x_start'], settings['sweep/x_stop']])
-plot_ms.addItem(selection)
-
-# curves for the datasets
-curve_ms = egg.pyqtgraph.PlotCurveItem(pen=(1,2))
-curve_ps = egg.pyqtgraph.PlotCurveItem(pen=(2,2))
-
-# add curves to the plots
-plot_ms.addItem(curve_ms)
-plot_ps.addItem(curve_ps)
-
-
+# show the blank plots
+d_sweep.plot()
 
 
 ##### MAIN FUNCTIONALITY
@@ -74,13 +54,12 @@ def set_x(x):
     Pretends to set some instrument to a value "x" somehow.
     This is where your code should go.
     """
-
+    
     # for now just update the gui
     n_x.set_value(x)
 
-# define a function to create fake data
-# this is where you might put code for
-# talking to a piece of equipment
+# define a function to create fake data.
+# This is where you might put code for talking to a piece of equipment
 def get_data():
     """
     Currently pretends to talk to an instrument and get back the magnitud
@@ -105,20 +84,25 @@ def acquire_button_clicked(*a):
 
     # disable the settings during the sweep
     settings.disable()
-    data_raw.disable_save()
 
-    # we'll append the data as we roll it in
-    xs = []
-    ms = []
-    ps = []
+
 
     # figure out the sweep range from the graph if we're supposed to
     if b_select.is_checked():
-        settings['sweep/x_start'], settings['sweep/x_stop'] = selection.getRegion()
+        settings['sweep/x_start'], settings['sweep/x_stop'] = roi_sweep.getRegion()
 
-    # otherwise update the selection to match the sweep
-    else:
-        selection.setRegion((settings['sweep/x_start'], settings['sweep/x_stop']))
+    # otherwise update the roi_sweep to match the sweep
+    else: roi_sweep.setRegion((settings['sweep/x_start'], 
+                               settings['sweep/x_stop']))
+
+    # clear the data and create new columns
+    d_sweep.clear()
+    d_sweep['x']     = []
+    d_sweep['mag']   = []
+    d_sweep['phase'] = []
+    
+    # dump the settings to the databox header
+    settings.send_to_databox_header(d_sweep)
 
     # start the loop and keep looping until someone
     # unchecks the acquisition button or we max out the iterations
@@ -137,13 +121,10 @@ def acquire_button_clicked(*a):
         m, p = get_data()
 
         # store the data
-        xs.append(x)
-        ms.append(m)
-        ps.append(p)
+        d_sweep.append_data_point([x,m,p])
 
-        # update the curves
-        curve_ms.setData(xs, ms)
-        curve_ps.setData(xs, ps)
+        # plot the data
+        d_sweep.plot()
 
         # process other window events so the GUI doesn't freeze!
         w.process_events()
@@ -151,21 +132,8 @@ def acquire_button_clicked(*a):
     # in case the button is still checked
     b_sweep.set_checked(False)
 
-    # update the databox header
-    k,d = settings.get_dictionary()
-    data_raw.update_headers(d,k)
-
-    # transfer the final data
-    data_raw['x'] = xs
-    data_raw['m'] = ms
-    data_raw['p'] = ps
-
-    # enable the save button
-    data_raw.enable_save()
-
     # re-enable the settings
     settings.enable()
-
 
 # connect the button
 b_sweep.signal_clicked.connect(acquire_button_clicked)
@@ -185,23 +153,16 @@ settings.connect_any_signal_changed(settings_changed)
 
 
 # overwrite the post_load function so it plots and sets up the settings
-def data_raw_post_load():
+def d_sweep_after_load():
 
     # dump the header into the settings
-    settings.update(data_raw)
+    settings.update(d_sweep)
 
-    # plot what we loaded.
-    curve_ms.setData(data_raw['x'], data_raw['m'])
-    curve_ps.setData(data_raw['x'], data_raw['p'])
-
-    # update the selection region
-    selection.setRegion((settings['sweep/x_start'], settings['sweep/x_stop']))
-
-    # enable the save
-    data_raw.enable_save()
+    # update the roi_sweep region
+    roi_sweep.setRegion((settings['sweep/x_start'], settings['sweep/x_stop']))
 
 # actually overwrite the existing function
-data_raw.post_load = data_raw_post_load
+d_sweep.after_load_file = d_sweep_after_load
 
 
 
