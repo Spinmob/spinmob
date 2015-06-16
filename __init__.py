@@ -16,13 +16,19 @@ if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
 #    print "Creating QApplication"
 #    _qtapp = _qt.QApplication(_os.sys.argv)
 
-print "\nWelcome to spinmob!\n"
+import _settings
+settings = _settings.settings()
+
+if ('silence_welcome' in settings.keys() and
+        settings['silence_welcome'] == 'True'):
+    pass
+else:
+    print "\nWelcome to spinmob!\n"
 
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
 
-import _settings
-settings = _settings.settings()
+
 
 import _plot             as plot        ; plot._settings    = settings
 import _data             as data        ; data._settings    = settings
