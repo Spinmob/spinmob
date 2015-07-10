@@ -19,12 +19,6 @@ if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
 import _settings
 settings = _settings.settings()
 
-if ('silence_welcome' in settings.keys() and
-        settings['silence_welcome'] == 'True'):
-    pass
-else:
-    print "\nWelcome to spinmob!\n"
-
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
 
