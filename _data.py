@@ -827,6 +827,7 @@ class fitter():
 
         # default settings
         self._settings = dict(autoplot      = True,     # whether we always plot when changing stuff
+                              silent        = False,    # whether text information is displayed
                               plot_fit      = True,     # include f in plots?
                               plot_bg       = False,    # include bg in plots?
                               plot_ey       = True,     # include error bars?
@@ -1172,8 +1173,11 @@ class fitter():
 
         # plot if not in silent mode
         if self['autoplot']: self.plot()
-
-        return self
+        
+        if self['silent'][0] == True: return None
+        else: return self
+#        return None  # Silent mode
+##        return self
 
     def set_guess_to_fit(self):
         """
@@ -1263,7 +1267,8 @@ class fitter():
         # plot if necessary
         if self['autoplot']: self.plot()
 
-        return self
+        if self['silent'][0] == True: return None
+        else: return self
 
     def fix(self, pname):
         """
