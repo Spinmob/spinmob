@@ -11,6 +11,7 @@ before_install:
   - python configure.py
   - make --silent
   - sudo make install --silent
+  - cd ..
 
 # install PyQt4
   - wget http://jaist.dl.sourceforge.net/project/pyqt/PyQt4/PyQt-4.10.4/PyQt-x11-gpl-4.10.4.tar.gz
@@ -19,6 +20,7 @@ before_install:
   - echo 'yes' | python configure.py
   - make --silent
   - sudo make install --silent
+  - cd ..
 
 # try importing the newly installed packages
   - python -c 'import sip'
