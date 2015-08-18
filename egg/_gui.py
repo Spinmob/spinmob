@@ -1561,6 +1561,10 @@ class DataboxPlot(_d.databox, GridLayout):
         of buttons / controls / script etc. Setting this to a path will cause
         DataboxPlot to automatically save / load the settings. Note you will
         need to specify a different path for each DataboxPlot instance.
+        
+        Note checking "Auto-Save" does not result in the data being automatically
+        saved until you explicitly call self.autosave() (which does nothing
+        unless auto-saving is enabled).
         """
 
         # Do all the tab-area initialization; this sets _widget and _layout
