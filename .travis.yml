@@ -39,4 +39,4 @@ script:
 
   - cd /home/travis/build/Spinmob/spinmob
   - pwd
-  - nosetests -w ./tests
+  - nosetests -w tests
