@@ -34,5 +34,7 @@ install:
   - pip install matplotlib
 
 script:
+
+  - cd /home/travis/build/Spinmob/spinmob
   - pwd
-  - nosetests -w ./spinmob/tests
+  - nosetests -w ./tests
