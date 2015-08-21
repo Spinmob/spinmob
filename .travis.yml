@@ -33,5 +33,6 @@ install:
   - pip install coverage
   - pip install matplotlib
 
-script: 
+script:
+  - pwd
   - nosetests -w ./spinmob/tests
