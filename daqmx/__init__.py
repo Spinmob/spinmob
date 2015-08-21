@@ -159,22 +159,24 @@ class ai_task(task_base):
         Note, when you set ai_rate and start(), this will automatically
         query the actual rate and update ai_rate internally!        
         
-        "ai_task_name"      : "Default AI Task",
-        "ai_rate"           : 10000,
-        "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
-        "ai_samples"        : 1000,
-        "ai_timeout"        : 1000.0/10000.0 + 3.0,
+         "ai_task_name"      : "Default AI Task",
+         "ai_rate"           : 10000,
+         "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
+         "ai_samples"        : 1000,
+         "ai_timeout"        : 1000.0/10000.0 + 3.0,
+         
+         "ai_clock_source"   : "",
+         "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
+         "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
+         "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+         
+         "ai_channels"          : [0],
+         "ai_input_couplings"   : [None], # can also be None, "AC", "DC", "GND", ["AC","DC","DC","GND"]...
+         "ai_min"               : -10.0,
+         "ai_max"               : 10.0,
+         "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
+         "ai_units"             : _mx.DAQmx_Val_Volts
         
-        "ai_clock_source"   : "",
-        "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-        "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
-        "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
-        
-        "ai_channels"          : [],
-        "ai_min"               : -10.0,
-        "ai_max"               : 10.0,
-        "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
-        "ai_units"             : _mx.DAQmx_Val_Volts
         """
         self.settings = dict(
                         {"ai_task_name"      : "Default AI Task",
@@ -189,11 +191,21 @@ class ai_task(task_base):
                          "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
                          
                          "ai_channels"          : [0],
+                         "ai_input_couplings"   : [None], 
                          "ai_min"               : -10.0,
                          "ai_max"               : 10.0,
                          "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
                          "ai_units"             : _mx.DAQmx_Val_Volts})
 
+
+        # make sure ai_channels is a list
+        x = kwargs["ai_channels"]
+        if not hasattr(x, '__iter__'): kwargs["ai_channels"] = [x]
+
+        
+        # make sure the shape of the input couplings matches that of the channels
+        x = kwargs["ai_input_couplings"]
+        if not hasattr(x, '__iter__'): kwargs['ai_input_couplings'] = [x]*len(kwargs['ai_channels'])
 
         task_base.__init__(self, **kwargs)
 
@@ -221,7 +233,7 @@ class ai_task(task_base):
         _mx.DAQmxClearTask(self._handle)
         _mx.DAQmxCreateTask(self["ai_task_name"], _mx.byref(self._handle))
 
-        # Loop over all the input channels
+        # Loop over all the input channel names and create a channel for each
         debug("input channels")
         for n in range(len(self["ai_channels"])):
 
@@ -250,6 +262,13 @@ class ai_task(task_base):
             debug(name)
             _mx.DAQmxCreateAIVoltageChan(self._handle, name, nickname, ai_terminal_config,
                                          ai_min, ai_max, ai_units, "")
+            
+            # set the input coupling (optional)
+            if not self["ai_input_couplings"] == None:
+                ai_input_coupling = self["ai_input_couplings"][n]
+                if ai_input_coupling == "AC" : _mx.DAQmxSetAICoupling(self._handle, name, _mx.DAQmx_Val_AC)
+                if ai_input_coupling == "DC" : _mx.DAQmxSetAICoupling(self._handle, name, _mx.DAQmx_Val_DC)
+                if ai_input_coupling == "GND": _mx.DAQmxSetAICoupling(self._handle, name, _mx.DAQmx_Val_GND)
 
         # Configure the clock
         debug("input clock")
@@ -390,6 +409,10 @@ class ao_task(task_base):
                 "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
                 "ao_export_terminal" : None})
             
+        # make sure ao_channels is a list
+        x = kwargs["ao_channels"]
+        if not hasattr(x, '__iter__'): kwargs["ao_channels"] = [x]
+
         task_base.__init__(self, **kwargs)
 
 

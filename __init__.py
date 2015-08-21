@@ -16,13 +16,13 @@ if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
 #    print "Creating QApplication"
 #    _qtapp = _qt.QApplication(_os.sys.argv)
 
-print "\nWelcome to spinmob!\n"
+import _settings
+settings = _settings.settings()
 
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
 
-import _settings
-settings = _settings.settings()
+
 
 import _plot             as plot        ; plot._settings    = settings
 import _data             as data        ; data._settings    = settings

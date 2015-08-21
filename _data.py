@@ -53,10 +53,10 @@ class databox:
         set's the n'th column to x (n can be a column name too)
         """
         if type(n) == str:
-            self.insert_column(data_array=x, ckey=n, index='end')
+            self.insert_column(data_array=x, ckey=n, index=None)
 
         elif type(n) in [int, long] and n > len(self.ckeys)-1:
-            self.insert_column(data_array=x, ckey='_column'+str(len(self.ckeys)), index='end')
+            self.insert_column(data_array=x, ckey='_column'+str(len(self.ckeys)), index=None)
 
         else:
             self.columns[self.ckeys[n]] = _n.array(x)
@@ -69,9 +69,6 @@ class databox:
         for n in range(i,min(j, len(self))): output.append(self[n])
         return output
 
-    #
-    # functions that are often overwritten in modified data classes
-    #
     def __init__(self, delimiter=None, debug=False):
         """
         delimiter                   The delimiter the file uses. None means "white space"
@@ -84,9 +81,6 @@ class databox:
 
         self.debug     = debug
         self.delimiter = delimiter
-
-    # create a simple initializer command for the user.
-    initialize = __init__
 
     def __repr__(self):
 
@@ -112,10 +106,6 @@ class databox:
 
         return globbies
 
-
-    #
-    # really useful functions
-    #
     def load_file(self, path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEPANTS.", default_directory=None, header_only=False, quiet=False):
         """
         This will clear the databox, load a file, storing the header info in self.headers, and the data in
@@ -162,12 +152,12 @@ class databox:
 
         ##### read in the header information
         self.header_lines = []
-        
+
         for n in range(len(lines)):
-                        
+
             # split the line by the delimiter
             s = lines[n].strip().split(self.delimiter)
-            
+
             # remove a trailing whitespace entry if it exists.
             if len(s) and s[-1].strip() == '': s.pop(-1)
 
@@ -175,15 +165,15 @@ class databox:
             if first_data_line=="auto" and _s.fun.elements_are_numbers(s):
 
                 # we've reached the first data line
-                first_data_line = n                                
-                
+                first_data_line = n
+
                 # quit the header loop
                 break;
 
             ### now we know it's a header line
 
             # save the lines for the avid user.
-            self.header_lines.append(lines[n].strip())            
+            self.header_lines.append(lines[n].strip())
 
             # first thing to try is simply evaluating the remaining string
             try:
@@ -210,13 +200,13 @@ class databox:
 
         # special case: no header
         if first_data_line == 0: self.ckeys = []
-    
-        # start by assuming it's the previous line    
+
+        # start by assuming it's the previous line
         else: self.ckeys = lines[first_data_line-1].strip().split(self.delimiter)
 
         # count the number of actual data columns for comparison
         column_count = len(lines[first_data_line].strip().split(self.delimiter))
-        
+
         # check to see if ckeys is equal in length to the
         # number of data columns. If it isn't, it's a false ckeys line
         if len(self.ckeys) >= column_count:
@@ -237,16 +227,16 @@ class databox:
 
         # define a quick function to convert i's to j's
         def fix(x): return x.replace('i','j')
-        
+
         # loop over the remaining data lines, converting to numbers
-        z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]), 
+        z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
                           delimiter=self.delimiter,
                           dtype=complex)
 
         # fix for different behavior of genfromtxt on single columns
         if len(z.shape)==2: z = z.transpose()
         else:               z = [z]
-        
+
         # Add all the columns
         for n in range(len(self.ckeys)):
 
@@ -311,38 +301,66 @@ class databox:
 
 
 
-    def pop_data_point(self, n, ckeys=[]):
+    def pop_data_point(self, n):
         """
         This will remove and return the n'th data point (starting at 0)
         in the supplied list of columns.
 
-        n       index of data point to pop
-        ckeys   which columns to do this to, specified by index or key
-                empty list means "every column"
+        n       index of data point to pop.
         """
 
-        # if it's empty, it's everything
-        if ckeys == []: ckeys = self.ckeys
-
-        # loop over the columns of interest and pop the data
+        # loop over the columns and pop the data
         popped = []
-        for k in ckeys:
-            if not k == None:
-                # first convert to a list
-                data = list(self.c(k))
+        for k in self.ckeys:
 
-                # pop the data
-                popped.append(data.pop(n))
+            # first convert to a list
+            data = list(self.c(k))
 
-                # now set this column again
-                self.insert_column(data, k)
+            # pop the data
+            popped.append(data.pop(n))
+
+            # now set this column again
+            self.insert_column(_n.array(data), k)
 
         return popped
 
+    def insert_data_point(self, new_data, index=None):
+        """
+        Inserts a data point at index n.
 
+        new_data    a list or array of new data points, one for each column.
+        index       where to insert the point(s) in each column. None => append.
+        """
 
+        if not len(new_data) == len(self.columns) and not len(self.columns)==0:
+            print "ERROR: new_data must have as many elements as there are columns."
+            return
 
+        # otherwise, we just auto-add this data point as new columns
+        elif len(self.columns)==0:
+            for i in range(len(new_data)): self[i] = [new_data[i]]
 
+        # otherwise it matches length so just insert it.
+        else:
+            for i in range(len(new_data)):
+
+                # get the array and turn it into a list
+                data = list(self[i])
+
+                # append or insert
+                if index == None: data.append(       new_data[i])
+                else:             data.insert(index, new_data[i])
+
+                # reconvert to an array
+                self[i] = _n.array(data)
+
+    def append_data_point(self, new_data):
+        """
+        Appends the supplied data point to the column(s).
+
+        new_data    a list or array of new data points, one for each column.
+        """
+        return self.insert_data_point(new_data)
 
     def execute_script(self, script, g={}):
         """
@@ -514,26 +532,6 @@ class databox:
 
 
 
-    def insert_column(self, data_array, ckey='temp', index='end'):
-        """
-        This will insert/overwrite a new column and fill it with the data from the
-        the supplied array.
-
-        If ckey is an integer, use self.ckeys[ckey]
-        """
-
-        # if it's an integer, use the ckey from the list
-        if type(ckey) in [int, long]: ckey = self.ckeys[ckey]
-
-        # append/overwrite the column value
-        self.columns[ckey] = _n.array(data_array)
-        if not ckey in self.ckeys:
-            if index=='end':
-                self.ckeys.append(ckey)
-            else:
-                self.ckeys.insert(index, ckey)
-
-
     def copy_headers(self, other_databox):
         """
         Loops over the hkeys of the other_databox and sets this databoxes' header.
@@ -553,22 +551,6 @@ class databox:
         self.copy_headers(other_databox)
         self.copy_columns(other_databox)
 
-    def insert_header(self, hkey, value, index='end'):
-        """
-        This will insert/overwrite a value to the header and hkeys.
-
-        If hkey is an integer, use self.hkeys[hkey]
-        """
-
-        # if it's an integer, use the hkey from the list
-        if type(hkey) in [int, long]: hkey = self.hkeys[hkey]
-
-        # set the data
-        self.headers[str(hkey)] = value
-        if not hkey in self.hkeys:
-            if index=='end': self.hkeys.append(str(hkey))
-            else:            self.hkeys.insert(index, str(hkey))
-
     def insert_global(self, thing, name=None):
         """
         Appends or overwrites the supplied object in the self.extra_globals.
@@ -582,7 +564,21 @@ class databox:
         if name==None: name=thing.__name__
         self.extra_globals[name] = thing
 
+    def insert_header(self, hkey, value, index=None):
+        """
+        This will insert/overwrite a value to the header and hkeys.
 
+        If hkey is an integer, use self.hkeys[hkey]
+        """
+
+        # if it's an integer, use the hkey from the list
+        if type(hkey) in [int, long]: hkey = self.hkeys[hkey]
+
+        # set the data
+        self.headers[str(hkey)] = value
+        if not hkey in self.hkeys:
+            if index==None: self.hkeys.append(str(hkey))
+            else:           self.hkeys.insert(index, str(hkey))
 
     def pop_header(self, hkey):
         """
@@ -628,6 +624,42 @@ class databox:
             # pop it!
             return self.columns.pop(self.ckeys.pop(ckey))
 
+    def insert_column(self, data_array, ckey='temp', index=None):
+        """
+        This will insert/overwrite a new column and fill it with the data from the
+        the supplied array.
+
+        data_array  data; can be a list, but will be converted to numpy array
+        ckey        name of the column; if an integer is supplied, uses self.ckeys[ckey]
+        index       where to insert this column. None => append to end.
+        """
+
+        # if it's an integer, use the ckey from the list
+        if type(ckey) in [int, long]: ckey = self.ckeys[ckey]
+
+        # append/overwrite the column value
+        self.columns[ckey] = _n.array(data_array)
+        if not ckey in self.ckeys:
+            if index==None: self.ckeys.append(ckey)
+            else:           self.ckeys.insert(index, ckey)
+
+    def append_column(self, data_array, ckey='temp'):
+        """
+        This will append a new column and fill it with the data from the
+        the supplied array.
+
+        data_array  data; can be a list, but will be converted to numpy array
+        ckey        name of the column.
+        """
+        if not type(ckey) == str:
+            print "ERROR: ckey should be a string!"
+            return
+
+        if ckey in self.ckeys:
+            print "ERROR: ckey '"+ckey+"' already exists!"
+            return
+
+        self.insert_column(data_array, ckey)
 
     def clear_columns(self):
         """
@@ -650,8 +682,6 @@ class databox:
         """
         self.clear_columns()
         self.clear_headers()
-
-
 
     def rename_header(self, old_name, new_name):
         """
@@ -810,7 +840,7 @@ class fitter():
                               xscale        = 'linear', # axis scale type
                               yscale        = 'linear', # axis scale type
                               coarsen       = 1,        # how much to coarsen the data
-                              
+
                               # styles of plots
                               style_data   = dict(marker='+', color='b',   ls=''),
                               style_fit    = dict(marker='',  color='r',    ls='-'),
@@ -1070,16 +1100,16 @@ class fitter():
                             data matching the dimensionality of xdata and ydata
 
         Results will be stored in self.xdata, self.ydata, self.eydata
-        
+
         **kwargs are sent to set()
         """
-        
+
         # warn the user
         if eydata == None:
             print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
             print "  eydata = 0.1"
             print "  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n"
-        
+
         # make sure xdata and ydata are lists of data sets
         if not _s.fun.is_iterable(xdata[0]): xdata = [xdata]
         if not _s.fun.is_iterable(ydata[0]): ydata = [ydata]
@@ -1099,12 +1129,12 @@ class fitter():
         if not _s.fun.is_iterable(eydata): eydata = [eydata]*len(xdata)
 
         # example eydata at this point: [None, None], [3,3], [None,3] or [None, [1,2,1,2,1]]
-        
+
         # catch the potentially ambiguous case [3,3] where this could either be "two constants"
-        # or "the error bars for each data point" (assume the latter if possible)        
+        # or "the error bars for each data point" (assume the latter if possible)
         if _s.fun.elements_are_numbers(eydata) and len(eydata) == len(ydata[0]):
             eydata = [_n.array(eydata)]
-                
+
         # make sure the lengths match
         while len(eydata) < len(ydata): eydata.append(eydata[0])
 
@@ -1119,7 +1149,7 @@ class fitter():
                 eydata[n] = _n.ones(len(xdata[n])) * (max(ydata[n])-min(ydata[n]))/20.
 
             # use constant error bars
-            elif _s.fun.is_a_number(eydata[n]): 
+            elif _s.fun.is_a_number(eydata[n]):
                 eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
 
             eydata[n] = _n.array(eydata[n]) * 1.0
@@ -1147,18 +1177,18 @@ class fitter():
 
     def set_guess_to_fit(self):
         """
-        If you have a fit result, set the guess parameters to the 
+        If you have a fit result, set the guess parameters to the
         fit parameters.
         """
-        if self.results == None: 
+        if self.results == None:
             print "No fit results to use! Run fit() first."
             return
-            
+
         # loop over the results and set the guess values
         for n in range(len(self._pguess)): self._pguess[n] = self.results[0][n]
-        
-        if self['autoplot']: self.plot()        
-        
+
+        if self['autoplot']: self.plot()
+
         return self
 
     def _massage_data(self):
@@ -1333,9 +1363,9 @@ class fitter():
 
     def _residuals(self, p=None):
         """
-        This function returns a list of vectors of the differences between the
-        model and ydata_massaged, scaled by the error. This function relies
-        on a previous call to set_data().
+        Returns a list of studentized residuals, (ydata_massaged - model)/error
+
+        This function relies on a previous call to set_data().
 
         p=None means use the fit results
         """
@@ -1500,8 +1530,8 @@ class fitter():
                                     _n.log10(max(self._xdata_massaged[n])),
                                     self['fpoints'][n], True, 10.0)
 
-                # otherwise do linear spacing                
-                else:                
+                # otherwise do linear spacing
+                else:
                     x = _n.linspace(min(self._xdata_massaged[n]),
                                     max(self._xdata_massaged[n]),
                                     self['fpoints'][n])
@@ -1571,7 +1601,7 @@ class fitter():
             else:                         _p.xlabel(self['xlabel'][n])
             if self['ylabel'][n] == None: _p.ylabel('ydata['+str(n)+']')
             else:                         _p.ylabel(self['ylabel'][n])
-            a1.set_ylabel('residuals')
+            a1.set_ylabel('studentized residuals')
 
             # Assemble the title
             wrap = 80
