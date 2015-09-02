@@ -1229,6 +1229,37 @@ def trim_data(xmin, xmax, xdata, *args):
 
     return output
 
+def trim_data_uber(arrays, conditions):
+    """
+    Non-destructively selects data from the supplied list of arrays based on 
+    the supplied list of conditions. Importantly, if any of the conditions are 
+    not met for the n'th data point, the n'th data point is rejected for
+    all supplied arrays.
+
+    Example:
+      x = numpy.linspace(0,10,20)
+      y = numpy.sin(x)
+      trim_data_uber([x,y], [x>3,x<9,y<0.7])
+      
+    This will keep only the x-y pairs in which 3<x<9 and y<0.7, returning
+    a list of shorter arrays (all having the same length, of course).
+    """    
+    # dumb conditions
+    if len(conditions) == 0: return arrays
+    if len(arrays)     == 0: return []    
+    
+    # find the indices to keep
+    all_conditions = conditions[0]
+    for n in range(1,len(conditions)): all_conditions = all_conditions & conditions[n]
+    ns = _n.argwhere(all_conditions).transpose()[0]
+
+    # assemble and return trimmed data    
+    output = []
+    for n in range(len(arrays)): output.append(arrays[n][ns])
+    return output
+    
+
+
 def ubersplit(s, delimiters=['\t','\r',' ']):
 
     # run through the string, replacing all the delimiters with the first delimiter
