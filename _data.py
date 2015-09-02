@@ -835,10 +835,13 @@ class fitter():
                               plot_bg       = False,    # include bg in plots?
                               plot_ey       = True,     # include error bars?
                               plot_guess    = True,     # include the guess?
+                              plot_guess_zoom = False,  # zoom to include plot?                              
                               subtract_bg   = True,     # subtract bg from plots?
                               fpoints       = 1000,     # number of points to use when plotting f
-                              xmin          = None,     # list of truncation values
-                              xmax          = None,     # list of truncation values
+                              xmin          = None,     # list of limits for trimming x-data
+                              xmax          = None,     # list of limits for trimming x-data
+                              ymin          = None,     # list of limits for trimming y-data
+                              ymax          = None,     # list of limits for trimming y-data
                               xlabel        = None,     # list of x labels
                               ylabel        = None,     # list of y labels
                               xscale        = 'linear', # axis scale type
@@ -1201,6 +1204,8 @@ class fitter():
             coarsen = 0     # can be an integer
             xmin    = None  # can be a number
             xmax    = None  # can be a number
+            ymin    = None  # can be a number
+            ymax    = None  # can be a number
 
         Results are stored in self._xdata_massaged, ...
         """
@@ -1209,20 +1214,37 @@ class fitter():
         self._ydata_massaged  = []
         self._eydata_massaged = []
 
-        N = 0 # total number of data points
+        # get the trim limits (trimits)
+        xmins = self['xmin']
+        xmaxs = self['xmax']
+        ymins = self['ymin']
+        ymaxs = self['ymax']
 
+        # make sure we have one limit for each data set
+        if not type(xmins) == list: xmins = [xmins]*len(self.xdata)
+        if not type(xmaxs) == list: xmaxs = [xmaxs]*len(self.xdata)
+        if not type(ymins) == list: ymins = [ymins]*len(self.xdata)
+        if not type(ymaxs) == list: ymaxs = [ymaxs]*len(self.xdata)
+
+        # this should cover all the data sets (dimensions should match!)
         for n in range(len(self.xdata)):
 
-            # trim the data
-            if (not self['xmin'][n]==None and self['xmin'][n] > max(self.xdata[n])) \
-            or (not self['xmax'][n]==None and self['xmax'][n] < min(self.xdata[n])):
-                self._error("This combination of xmin, xmax, and xdata results in no trimmed data!")
-                x, y, ey = _s.fun.trim_data(None, None,
-                                     self.xdata[n], self.ydata[n], self.eydata[n])
-            else:
-                x, y, ey = _s.fun.trim_data(self['xmin'][n], self['xmax'][n],
-                                     self.xdata[n], self.ydata[n], self.eydata[n])
+            # handle "None" limits
+            if xmins[n] == None: xmins[n] = min(self.xdata[n])
+            if xmaxs[n] == None: xmaxs[n] = max(self.xdata[n])
+            if ymins[n] == None: ymins[n] = min(self.ydata[n])
+            if ymaxs[n] == None: ymaxs[n] = max(self.ydata[n])
 
+            # trim the data
+            [x, y, ey] = _s.fun.trim_data_uber([self.xdata[n], self.ydata[n], self.eydata[n]],
+                                               [self.xdata[n]>=xmins[n], self.xdata[n]<=xmaxs[n],
+                                                self.ydata[n]>=ymins[n], self.ydata[n]<=ymaxs[n]])
+            if(len(x)==0):
+                print "\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring."
+                x  = self.xdata[n]
+                y  = self.ydata[n]
+                ey = self.eydata[n]
+            
             # coarsen the data
             if self['coarsen'][n] == 0: self['coarsen'][n] = 1
             x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
@@ -1233,9 +1255,6 @@ class fitter():
             self. _xdata_massaged.append(x)
             self. _ydata_massaged.append(y)
             self._eydata_massaged.append(ey)
-
-            # keep track of the number of data points
-            N += len(x)
 
 
 
@@ -1442,15 +1461,6 @@ class fitter():
         for r in rs: cs.append(sum(r**2))
         return cs
 
-    def reduced_chi_squared(self,p=None):
-        """
-        returns the reduced chi squared given p.
-
-        p=None means use the fit results.
-        """
-        r = self._residuals_concatenated(p)
-        return sum(r**2) / (len(r)-len(self._pnames))
-
     def reduced_chi_squareds(self, p=None):
         """
         Returns the reduced chi squared for each data set. Degrees of freedom
@@ -1460,9 +1470,13 @@ class fitter():
         """
         if p==None: p = self.results[0]
         r = self._residuals(p)
+        
+        # calculate the number of points
+        N = 0
+        for i in range(len(r)): N += len(r[i])
 
         # degrees of freedom
-        dof_per_point = 1.0*(_n.size(r)-len(self._pnames))/_n.size(r)
+        dof_per_point = 1.0*(N-len(self._pnames))/N
 
         for n in range(len(r)):
             r[n] = sum(r[n]**2)/(len(r[n])*dof_per_point)
@@ -1475,11 +1489,12 @@ class fitter():
 
         Each data set will be scaled independently.
         """
-        if not self.results:
+        if not self.results: 
             self._error("You must complete a fit first.")
+            return
 
         r = self.reduced_chi_squareds()
-
+        
         # loop over the eydata and rescale
         for n in range(len(r)):
             self.eydata[n] = self.eydata[n] * _n.sqrt(r[n])
@@ -1601,6 +1616,7 @@ class fitter():
             a2.set_autoscale_on(False)
 
             # add the _pguess curves
+            y_guess = self._evaluate_f(n,x,self._pguess)-dy_func
             if self['plot_guess'][n]:
 
                 # plot the _pguess background curve
@@ -1608,7 +1624,7 @@ class fitter():
                     a2.plot(x, self._evaluate_bg(n,x,self._pguess)-dy_func, **self['style_guess'][n])
 
                 # plot the _pguess main curve
-                a2.plot(x, self._evaluate_f(n,x,self._pguess)-dy_func, **self['style_guess'][n])
+                a2.plot(x, y_guess, **self['style_guess'][n])
 
             # add the fit curves (if we have a fit)
             if self['plot_fit'] and self.results:
@@ -1624,7 +1640,7 @@ class fitter():
 
             # plot the residuals
             if not r==None:
-                a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])), **self['style_data'][n])
+                a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_fit'][n])
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
@@ -1633,7 +1649,7 @@ class fitter():
             else:                         _p.xlabel(self['xlabel'][n])
             if self['ylabel'][n] == None: _p.ylabel('ydata['+str(n)+']')
             else:                         _p.ylabel(self['ylabel'][n])
-            a1.set_ylabel('studentized residuals')
+            a1.set_ylabel('studentized\nresiduals')
 
             # Assemble the title
             wrap = 80
@@ -1659,6 +1675,12 @@ class fitter():
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
+            
+            # if we're supposed to plot the guess and zoom to include it
+            if self['plot_guess_zoom'][n]: 
+                ymin, ymax = a2.get_ylim()               
+                a2.set_ylim(min(ymin,min(y_guess)), 
+                            max(ymax,max(y_guess)))
 
 
         # turn back to interactive and show the plots.
@@ -1684,7 +1706,7 @@ class fitter():
             return
 
 
-        if   _s.fun.is_a_number(n): n = [n]
+        if _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):   n = range(len(self.xdata))
 
         # loop over the specified plots
@@ -1693,6 +1715,11 @@ class fitter():
                 xmin, xmax = _p.figure(i).axes[1].get_xlim()
                 self['xmin'][i] = xmin
                 self['xmax'][i] = xmax
+                
+                ymin, ymax = _p.figure(i).axes[1].get_ylim()
+                self['ymin'][i] = ymin
+                self['ymax'][i] = ymax
+
             except:
                 self._error("Data "+str(i)+" is not currently plotted.")
 
@@ -1702,9 +1729,11 @@ class fitter():
 
         return self
 
-    def zoom(self, n='all', factor=2.0):
+    def zoom(self, n='all', xfactor=2.0, yfactor=1.0):
         """
-        This will scale the x range of the chosen plot.
+        This will scale the chosen data set's plot range by the 
+        specified xfactor and yfactor, respectively, and set the trim limits
+        xmin, xmax, ymin, ymax accordingly
 
         n='all'     Which figure to zoom out. 'all' means all figures, or
                     you can specify a list.
@@ -1714,7 +1743,7 @@ class fitter():
             return
 
         if   _s.fun.is_a_number(n): n = [n]
-        elif isinstance(n,str):   n = range(len(self.xdata))
+        elif isinstance(n,str):     n = range(len(self.xdata))
 
         # loop over the specified plots
         for i in n:
@@ -1722,8 +1751,14 @@ class fitter():
                 xmin, xmax = _p.figure(i).axes[1].get_xlim()
                 xc = 0.5*(xmin+xmax)
                 xs = 0.5*abs(xmax-xmin)
-                self['xmin'][i] = xc - factor*xs
-                self['xmax'][i] = xc + factor*xs
+                self['xmin'][i] = xc - xfactor*xs
+                self['xmax'][i] = xc + xfactor*xs
+                
+                ymin, ymax = _p.figure(i).axes[1].get_ylim()
+                yc = 0.5*(ymin+ymax)
+                ys = 0.5*abs(ymax-ymin)
+                self['ymin'][i] = yc - yfactor*ys
+                self['ymax'][i] = yc + yfactor*ys
             except:
                 self._error("Data "+str(i)+" is not currently plotted.")
 
@@ -1733,6 +1768,7 @@ class fitter():
 
         return self
 
+    
     def ginput(self, figure_number=0, **kwargs):
         """
         Pops up the n'th figure and lets you click it. Returns value from pylab.ginput().
