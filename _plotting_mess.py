@@ -95,6 +95,8 @@ def complex_databoxes(ds, script='c(1)+1j*c(2)', escript=None, **kwargs):
     _pylab.ion()
     _pylab.draw()
     _pylab.show()
+    
+    return ds
 
 
 
@@ -110,7 +112,7 @@ def complex_files(script='c(1)+1j*c(2)', **kwargs):
 
     if not kwargs.has_key('title'): kwargs['title'] = _os.path.split(ds[0].path)[0]
 
-    complex_databoxes(ds, script=script, **kwargs)
+    return complex_databoxes(ds, script=script, **kwargs)
 
 
 def complex_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
@@ -252,7 +254,7 @@ def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
 
     **kwargs are sent to spinmob.plot.mag_phase.databoxes()
     """
-    files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, **kwargs)
 
 def magphase_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
     """
@@ -377,7 +379,7 @@ def realimag_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
 
     **kwargs are sent to spinmob.plot.real_imag.databoxes()
     """
-    files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, **kwargs)
 
 
 def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
@@ -567,7 +569,7 @@ def xy_files(xscript=0, yscript=1, eyscript=None, exscript=None, **kwargs):
 
     **kwargs are sent to spinmob.plot.xy.databoxes()
     """
-    files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, **kwargs)
 
 def xy_function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
     """
@@ -689,6 +691,8 @@ def files(xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy_databox
 
     # run the databox plotter
     plotter(ds, xscript=xscript, yscript=yscript, eyscript=eyscript, exscript=exscript, **kwargs)
+    
+    return ds
 
 def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, plotter=xy_data, complex_plane=False, **kwargs):
     """
