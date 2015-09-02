@@ -785,7 +785,7 @@ class fitter():
 
     results = None  # full output from the fitter.
 
-    def __init__(self, f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None, **kwargs):
+    def __init__(self, f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None, g=None, **kwargs):
         """
         Creates an object for fitting data to nonlinear curves.
 
@@ -793,6 +793,7 @@ class fitter():
         p  = comma-delimited list of fit parameters
         c  = comma-delimited list of constants
         bg = optional background function or list of functions
+        g  = optional globals dictionary for evaluating functions)
 
         f, p, bg are sent to set_functions()
 
@@ -817,6 +818,9 @@ class fitter():
 
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = _n.__dict__
+        
+        # update the globals dictionary
+        if not g==None: self._globals.update(g)
 
         self._pnames    = []
         self._cnames    = []
@@ -1265,49 +1269,77 @@ class fitter():
 
         return self
 
-    def fix(self, pname):
+    def fix(self, *args, **kwargs):
         """
-        Turns a parameter in to a constant.
+        Turns parameters to constants. As arguments, parameters must be strings.
+        As keyword arguments, they can be set at the same time.
         """
-        if not pname in self._pnames:
-            self._error("Naughty. '"+pname+"' is not a valid fit parameter name.")
-            return
 
-        n = self._pnames.index(pname)
-
-        # use the fit result if it exists
-        if self.results: value = self.results[0][n]
-
-        # otherwise use the guess value
-        else: value = self._pguess[n]
-
-        # make the switcheroo
-        self._pnames.pop(n)
-        self._pguess.pop(n)
-        self._constants.append(value)
-        self._cnames.append(pname)
-
-        # update
-        self._update_functions()
+        # first set all the keyword argument values
+        self.set(**kwargs)
+        
+        # get everything into one big list
+        pnames = list(args) + kwargs.keys()        
+        
+        # move each pname to the constants
+        for pname in pnames:
+            if not pname in self._pnames:
+                self._error("Naughty. '"+pname+"' is not a valid fit parameter name.")
+                
+            else:
+                n = self._pnames.index(pname)
+        
+                # use the fit result if it exists
+                if self.results: value = self.results[0][n]
+        
+                # otherwise use the guess value
+                else: value = self._pguess[n]
+        
+                # make the switcheroo
+                if not type(self._pnames)    == list: self._pnames    = list(self._pnames)
+                if not type(self._pguess)    == list: self._pguess    = list(self._pguess)
+                if not type(self._cnames)    == list: self._cnames    = list(self._cnames)
+                if not type(self._constants) == list: self._constants = list(self._constants)
+                self._pnames.pop(n)
+                self._pguess.pop(n)
+                self._cnames.append(pname)
+                self._constants.append(value)
+            
+                # update
+                self._update_functions()
 
         return self
 
-    def free(self, cname):
+    def free(self, *args, **kwargs):
         """
-        Turns a constant into a parameter.
+        Turns a constant into a parameter. As arguments, parameters must be strings.
+        As keyword arguments, they can be set at the same time.
         """
-        if not cname in self._cnames:
-            self._error("Naughty. '"+cname+"' is not a valid constant name.")
-            return
+        # first set all the keyword argument values
+        self.set(**kwargs)
+        
+        # get everything into one big list
+        cnames = list(args) + kwargs.keys()        
+        
+        # move each pname to the constants
+        for cname in cnames:
+        
+            if not cname in self._cnames:
+                self._error("Naughty. '"+cname+"' is not a valid constant name.")
+                
+            else:
+                n = self._cnames.index(cname)
+        
+                # make the switcheroo
+                if not type(self._pnames)    == list: self._pnames    = list(self._pnames)
+                if not type(self._pguess)    == list: self._pguess    = list(self._pguess)
+                if not type(self._cnames)    == list: self._cnames    = list(self._cnames)
+                if not type(self._constants) == list: self._constants = list(self._constants)
+                self._pnames.append(self._cnames.pop(n))
+                self._pguess.append(self._constants.pop(n))
 
-        n = self._cnames.index(cname)
-
-        # make the switcheroo
-        self._pnames.append(self._cnames.pop(n))
-        self._pguess.append(self._constants.pop(n))
-
-        # update
-        self._update_functions()
+                # update
+                self._update_functions()
 
         return self
 
