@@ -697,6 +697,37 @@ class databox:
         self.ckeys[self.ckeys.index(old_name)] = new_name
         self.columns[new_name] = self.columns.pop(old_name)
 
+    def trim(self, *conditions):
+        """
+        Removes data points not satisfying the supplied conditions. Conditions
+        can be truth arrays (having the same length as the columns!) 
+        or scripted strings. 
+        
+        Example:
+            d1 = spinmob.data.load()
+            d2 = d1.trim( (2<d1[0]) & (d1[0]<10) | (d1[3]==22), 'sin(d[2])*h("gain")<32.2')
+            
+        Note this will not modify the databox, rather it will generate a new
+        one with the same header information and return it.
+        """
+        conditions = list(conditions)
+        
+        # if necessary, evaluate string scripts
+        for n in range(len(conditions)): 
+            if type(conditions[n]) == str: 
+                conditions[n] = self.execute_script(conditions[n])
+
+        # make a new databox with the same options and headers
+        new_databox = databox(delimiter=self.delimiter)
+        new_databox.copy_headers(self)
+        
+        # trim it up, send it out.
+        cs = _s.fun.trim_data_uber(self, conditions)
+        for n in range(len(cs)): new_databox.append_column(cs[n], self.ckeys[n])
+        
+        return new_databox
+
+
     def update_headers(self, dictionary, keys=None):
         """
         Updates the header with the supplied dictionary. If keys=None, it
