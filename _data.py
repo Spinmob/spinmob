@@ -251,9 +251,19 @@ class databox:
 
         return self
 
-    def save_file(self, path="ask", filters="*.dat", force_overwrite=False, header_only=False):
+    def save_file(self, path="ask", filters="*.dat", force_overwrite=False, header_only=False, delimiter='use current'):
         """
-        This will save all the header info and columns to an ascii file.
+        This will save all the header info and columns to an ascii file with
+        the specified path.
+        
+        filters="*.dat"         File filter for the file dialog (for path="ask")
+        force_overwrite=False   Normally, if the file * exists, this will copy that
+                                to *.backup. If the backup already exists, this
+                                function will abort. Setting this to True will
+                                force overwriting the backup file.
+        header_only=False       Only output the header?
+        delimiter="use current" This will set the delimiter of the output file
+                                "use current" means use self.delimiter
         """
 
         if path=="ask": path = _dialogs.save(filters, default_directory=self.directory)
@@ -268,8 +278,11 @@ class databox:
             _os.rename(path,path+".backup")
 
         # get the delimiter
-        if self.delimiter==None: delimiter = "\t"
-        else:                    delimiter = self.delimiter
+        if delimiter=="use current":
+            if self.delimiter==None: delimiter = "\t"
+            else:                    delimiter = self.delimiter
+        
+    
 
         # open the file and write the header
         f = open(path, 'w')
