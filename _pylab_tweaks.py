@@ -420,13 +420,8 @@ def image_set_aspect(aspect=1.0, axes="gca"):
     """
     if axes is "gca": axes = _pylab.gca()
 
-    # make sure it's not in "auto" mode
-    if type(axes.get_aspect()) == str: axes.set_aspect(1.0)
-
-    _pylab.draw() # this makes sure the window_extent is okay
-    axes.set_aspect(aspect*axes.get_aspect()*axes.get_window_extent().width/axes.get_window_extent().height)
-    _pylab.draw()
-
+    e = axes.get_images()[0].get_extent()
+    axes.set_aspect(abs((e[1]-e[0])/(e[3]-e[2]))/aspect)
 
 def image_set_extent(x=None, y=None, axes="gca"):
     """
