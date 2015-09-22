@@ -13,7 +13,7 @@ def coarsen_array(a, level=2, method='mean'):
     level=2 means every two data points will be binned.
     level=0 or 1 just returns a copy of the array
     """
-    if a==None: return None    
+    if a is None: return None    
     
     # make sure it's a numpy array
     a = _n.array(a)
@@ -453,7 +453,7 @@ def find_N_peaks(array, N=4, max_iterations=100, rec_max_iterations=3, recursion
             p2 = find_N_peaks(s[n], 2, rec_max_iterations, rec_max_iterations=rec_max_iterations, recursion=recursion-1)
 
             # if we found a double-peak
-            if not p2==None:
+            if not p2 is None:
                 # push these non-duplicate values into the master array
                 for x in p2:
                     # if this point is not already in p, push it on
@@ -784,8 +784,8 @@ def integrate_data(xdata, ydata, xmin=None, xmax=None, autozero=0):
     xdata = _n.array(xdata)
     ydata = _n.array(ydata)
 
-    if xmin==None: xmin = min(xdata)
-    if xmax==None: xmax = max(xdata)
+    if xmin is None: xmin = min(xdata)
+    if xmax is None: xmax = max(xdata)
 
     # find the index range
     imin = xdata.searchsorted(xmin)
@@ -892,7 +892,7 @@ def is_close(x, array, fraction=0.0001):
 def join(array_of_strings, delimiter=' '):
     if array_of_strings == []: return ""
 
-    if delimiter==None: delimiter=' '
+    if delimiter is None: delimiter=' '
 
     output = str(array_of_strings[0])
     for n in range(1, len(array_of_strings)):
@@ -1171,7 +1171,7 @@ def smooth_data(xdata, ydata, yerror, amount=1):
 
     new_xdata  = smooth_array(_n.array(xdata), amount)
     new_ydata  = smooth_array(_n.array(ydata), amount)
-    if yerror == None:  new_yerror = None
+    if yerror is None:  new_yerror = None
     else:               new_yerror = smooth_array(_n.array(yerror), amount)
 
     return [new_xdata, new_ydata, new_yerror]
@@ -1211,8 +1211,8 @@ def trim_data(xmin, xmax, xdata, *args):
     if not isinstance(xdata, _n.ndarray): xdata = _n.array(xdata)
 
     # make sure xmin and xmax are numbers
-    if xmin == None: xmin = min(xdata)
-    if xmax == None: xmax = max(xdata)
+    if xmin is None: xmin = min(xdata)
+    if xmax is None: xmax = max(xdata)
 
     # get all the indices satisfying the trim condition
     ns = _n.argwhere((xdata >= xmin) & (xdata <= xmax)).transpose()[0]
@@ -1228,6 +1228,37 @@ def trim_data(xmin, xmax, xdata, *args):
         output.append(a[ns])
 
     return output
+
+def trim_data_uber(arrays, conditions):
+    """
+    Non-destructively selects data from the supplied list of arrays based on 
+    the supplied list of conditions. Importantly, if any of the conditions are 
+    not met for the n'th data point, the n'th data point is rejected for
+    all supplied arrays.
+
+    Example:
+      x = numpy.linspace(0,10,20)
+      y = numpy.sin(x)
+      trim_data_uber([x,y], [x>3,x<9,y<0.7])
+      
+    This will keep only the x-y pairs in which 3<x<9 and y<0.7, returning
+    a list of shorter arrays (all having the same length, of course).
+    """    
+    # dumb conditions
+    if len(conditions) == 0: return arrays
+    if len(arrays)     == 0: return []    
+    
+    # find the indices to keep
+    all_conditions = conditions[0]
+    for n in range(1,len(conditions)): all_conditions = all_conditions & conditions[n]
+    ns = _n.argwhere(all_conditions).transpose()[0]
+
+    # assemble and return trimmed data    
+    output = []
+    for n in range(len(arrays)): output.append(arrays[n][ns])
+    return output
+    
+
 
 def ubersplit(s, delimiters=['\t','\r',' ']):
 

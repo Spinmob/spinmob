@@ -29,7 +29,7 @@ def complex_data(data, edata=None, draw=True, **kwargs):
     try:
         rdata = _n.real(data)
         idata = _n.imag(data)
-        if edata==None:
+        if edata is None:
             erdata = None
             eidata = None
         else:
@@ -40,7 +40,7 @@ def complex_data(data, edata=None, draw=True, **kwargs):
     except:
         rdata = []
         idata = []
-        if edata==None:
+        if edata is None:
             erdata = None
             eidata = None
         else:
@@ -51,7 +51,7 @@ def complex_data(data, edata=None, draw=True, **kwargs):
             rdata.append(_n.real(data[n]))
             idata.append(_n.imag(data[n]))
 
-            if not edata == None:
+            if not edata is None:
                 erdata.append(_n.real(edata[n]))
                 eidata.append(_n.imag(edata[n]))
 
@@ -80,13 +80,13 @@ def complex_databoxes(ds, script='c(1)+1j*c(2)', escript=None, **kwargs):
     """
     datas  = []
     labels = []
-    if escript==None: errors = None
+    if escript is None: errors = None
     else:             errors = []
 
     for d in ds:
         datas.append(d(script))
         labels.append(_os.path.split(d.path)[-1])
-        if not escript==None: errors.append(d(escript))
+        if not escript is None: errors.append(d(escript))
 
     complex_data(datas, errors, label=labels, **kwargs)
 
@@ -95,6 +95,8 @@ def complex_databoxes(ds, script='c(1)+1j*c(2)', escript=None, **kwargs):
     _pylab.ion()
     _pylab.draw()
     _pylab.show()
+    
+    return ds
 
 
 
@@ -110,7 +112,7 @@ def complex_files(script='c(1)+1j*c(2)', **kwargs):
 
     if not kwargs.has_key('title'): kwargs['title'] = _os.path.split(ds[0].path)[0]
 
-    complex_databoxes(ds, script=script, **kwargs)
+    return complex_databoxes(ds, script=script, **kwargs)
 
 
 def complex_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
@@ -163,10 +165,10 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     if len(shape(ydata)) < 2: ydata = [ydata]
 
     # the error bar shapes better match or be None!
-    if not (eydata==None or len(eydata)==len(ydata)):
+    if not (eydata is None or len(eydata)==len(ydata)):
         print "Error: magphase_data(): size of eydata must match ydata."
         return
-    if not (exdata==None or len(exdata)==len(xdata)):
+    if not (exdata is None or len(exdata)==len(xdata)):
         print "Error: magphase_data(): size of exdata must match xdata."
         return
 
@@ -178,7 +180,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
             p[n] = p[n]*180.0/_n.pi
 
     # convert errors to real imag
-    if eydata==None:
+    if eydata is None:
         em = None
         ep = None
     else:
@@ -190,7 +192,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
         # loop over all the eydata
         for n in range(len(eydata)):
 
-            if eydata[n] == None:
+            if eydata[n] is None:
                 em.append(None)
                 ep.append(None)
             else:
@@ -200,7 +202,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
                 ep.append(0.5*((er+ei) - (er-ei)*_n.cos(p[n]))/m[n] )
 
             # convert to degrees
-            if phase=='degrees' and not ep[n]==None: ep[n] = ep[n]*180.0/_n.pi
+            if phase=='degrees' and not ep[n] is None: ep[n] = ep[n]*180.0/_n.pi
 
 
     if phase=='degrees':         plabel = plabel + " (degrees)"
@@ -252,7 +254,7 @@ def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
 
     **kwargs are sent to spinmob.plot.mag_phase.databoxes()
     """
-    files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, **kwargs)
 
 def magphase_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
     """
@@ -298,10 +300,10 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     if len(shape(ydata)) < 2: ydata = [ydata]
 
     # the error bar shapes better match or be None!
-    if not (eydata==None or len(eydata)==len(ydata)):
+    if not (eydata is None or len(eydata)==len(ydata)):
         print "Error: realimag_data(): size of eydata must match ydata."
         return
-    if not (exdata==None or len(exdata)==len(xdata)):
+    if not (exdata is None or len(exdata)==len(xdata)):
         print "Error: realimag_data(): size of exdata must match xdata."
         return
 
@@ -316,14 +318,14 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     idata = _n.imag(ydata)
 
     # convert errors to real imag
-    if eydata==None:
+    if eydata is None:
         erdata = None
         eidata = None
     else:
         erdata = []
         eidata = []
         for n in range(len(eydata)):
-            if eydata[n]==None:
+            if eydata[n] is None:
                 erdata.append(None)
                 eidata.append(None)
             else:
@@ -377,7 +379,7 @@ def realimag_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
 
     **kwargs are sent to spinmob.plot.real_imag.databoxes()
     """
-    files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, **kwargs)
 
 
 def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
@@ -458,15 +460,15 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     for n in range(N):
 
         # clean up the [None]'s
-        if _fun.is_iterable(xdata[n]) and xdata[n][0] == None: xdata[n] = None
-        if _fun.is_iterable(ydata[n]) and ydata[n][0] == None: ydata[n] = None
+        if _fun.is_iterable(xdata[n]) and xdata[n][0] is None: xdata[n] = None
+        if _fun.is_iterable(ydata[n]) and ydata[n][0] is None: ydata[n] = None
 
-        if xdata[n] == None and ydata[n] == None:
+        if xdata[n] is None and ydata[n] is None:
             print "ERROR: "+str(n)+"'th data set is (None, None)."
             return
 
-        if xdata[n] == None: xdata[n] = _n.arange(len(ydata[n]))
-        if ydata[n] == None: ydata[n] = _n.arange(len(xdata[n]))
+        if xdata[n] is None: xdata[n] = _n.arange(len(ydata[n]))
+        if ydata[n] is None: ydata[n] = _n.arange(len(xdata[n]))
 
     # check that the labels is a list of strings of the same length
     if not _fun.is_iterable(label): label = [label]*N
@@ -481,7 +483,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     if clear and not axes: _pylab.gcf().clear() # axes cleared later
 
     # setup axes
-    if axes=="gca" or axes==None: axes = _pylab.gca()
+    if axes=="gca" or axes is None: axes = _pylab.gca()
 
     # if we're clearing the axes
     if clear: axes.clear()
@@ -506,7 +508,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         ex = _fun.coarsen_array(exdata[n], coarsen, 'quadrature')
 
         # update the style
-        if not style==None: kwargs.update(style.next())
+        if not style is None: kwargs.update(style.next())
         axes.errorbar(x+dx, y+dy, label=l, yerr=ey, xerr=ex, **kwargs)
 
     _pylab.xscale(xscale)
@@ -567,7 +569,7 @@ def xy_files(xscript=0, yscript=1, eyscript=None, exscript=None, **kwargs):
 
     **kwargs are sent to spinmob.plot.xy.databoxes()
     """
-    files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, **kwargs)
 
 def xy_function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
     """
@@ -634,13 +636,13 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy
 
     # now check for None's (counting scripts)
     for n in range(len(xscript)):
-        if xscript[n] == None and yscript[n] == None:
+        if xscript[n] is None and yscript[n] is None:
             print "Two None scripts? But why?"
             return
-        if xscript[n] == None:
+        if xscript[n] is None:
             if type(yscript[n])==str: xscript[n] = 'range(len('+yscript[n]+'))'
             else:                     xscript[n] = 'range(len(c('+str(yscript[n])+')))'
-        if yscript[n] == None:
+        if yscript[n] is None:
             if type(xscript[n])==str: yscript[n] = 'range(len('+xscript[n]+'))'
             else:                     yscript[n] = 'range(len(c('+str(xscript[n])+')))'
 
@@ -682,13 +684,15 @@ def files(xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy_databox
     else:                         filters = '*.*'
 
     ds = _data.load_multiple(paths=paths, delimiter=delimiter, filters=filters)
-    if ds==None or len(ds) == 0: return
+    if ds is None or len(ds) == 0: return
 
     # generate a default title (the directory)
     if not kwargs.has_key('title'): kwargs['title']=_os.path.split(ds[0].path)[0]
 
     # run the databox plotter
     plotter(ds, xscript=xscript, yscript=yscript, eyscript=eyscript, exscript=exscript, **kwargs)
+    
+    return ds
 
 def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, plotter=xy_data, complex_plane=False, **kwargs):
     """
@@ -897,7 +901,7 @@ def image_file(path="ask", zscript='self[1:]', xscript='[0,1]', yscript='c(0)', 
     else:                           delimiter = None
 
     d = _data.load(paths=path, delimiter = delimiter)
-    if d==None or len(d) == 0: return
+    if d is None or len(d) == 0: return
 
     # allows the user to overwrite the defaults
     default_kwargs = dict(xlabel = str(xscript),
