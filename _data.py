@@ -1168,6 +1168,29 @@ class fitter():
                         data / numbers matching the dimensionality of xdata 
                         and ydata
 
+        xdata, ydata, and eydata can all be scripts or lists of scripts that
+        produce arrays. Any python code will work, and the scripts 
+        automatically know about all numpy functions, the guessed parameters,
+        and the data itself (as x, y, and ey). However, the scripts are 
+        executed in order -- xdata, ydata, and eydata -- so the xdata script 
+        cannot know about ydata or eydata, the ydata script cannot know about
+        eydata, and the eydata script knows about xdata and ydata.
+        
+        Example:
+          xdata  = [1,2,3,4,5]
+          ydata  = [[1,2,1,2,1], 'cos(x[0])']
+          eydata = ['arctan(y[1])*a+b', 5]
+          
+        In this example, there will be two data sets to fit (so there better be
+        two functions!), they will share the same xdata, the second ydata set
+        will be the array cos([1,2,3,4,5]) (note since there are multiple data
+        sets assumed (always), you have to select the data set with an index
+        on x and y), the error on the first data set will be this weird 
+        functional dependence on the second ydata set and fit parameters a and 
+        b (note, if a and b are not fit parameters, then you must 
+        send them as keyword arguments so that they are defined) and the second 
+        data set error bar will be a constant, 5.
+
         Note this function is "somewhat" smart about reshaping the input
         data to ease life a bit, but it can't handle ambiguities. If you 
         want to play it safe, supply lists for all three arguments that
@@ -1175,7 +1198,7 @@ class fitter():
 
         results can be obtained by calling get_data()
 
-        **kwargs are added to the globals for scripts
+        **kwargs are added to the globals for script evaluation
         """
         
         # warn the user
@@ -1280,16 +1303,28 @@ class fitter():
         eydata = list(self._set_eydata)
 
         # make sure they're all lists of numpy arrays
-        for n in range(len(self._set_xdata)):
+        for n in range(len(xdata)):
 
             # For xdata, handle scripts or arrays
             if type(xdata[n]) is str: xdata[n] = self.evaluate_script(xdata[n])
             else:                     xdata[n] = _n.array(xdata[n])*1.0
 
+        # update the globals
+        self._set_data_globals['x'] = xdata
+
+        # make sure they're all lists of numpy arrays
+        for n in range(len(ydata)):
+
             # For ydata, handle scripts or arrays
             if type(ydata[n]) is str: ydata[n] = self.evaluate_script(ydata[n])
             else:                     ydata[n] = _n.array(ydata[n])*1.0
-            
+
+        # update the globals
+        self._set_data_globals['y'] = ydata
+        
+        # make sure they're all lists of numpy arrays
+        for n in range(len(eydata)):        
+        
             # handle scripts
             if type(eydata[n]) is str: 
                 eydata[n] = self.evaluate_script(eydata[n])
