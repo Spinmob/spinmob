@@ -35,5 +35,6 @@ install:
   - pip install coverage
   - pip install matplotlib
 
-script: 
+script:
+  cd /home/travis/build/Spinmob/spinmob
   - nosetests --with-coverage --cover-package=spinmob
