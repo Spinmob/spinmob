@@ -260,8 +260,8 @@ class databox:
         for n in range(len(self.ckeys)):
 
             # if any of the imaginary components are non-zero, use complex
-            if _n.any(_n.imag(z[n])): self[self.ckeys[n]] = z[n]
-            else:                     self[self.ckeys[n]] = _n.real(z[n])
+            if _n.any(_n.imag(z[n])): self[n] = z[n]
+            else:                     self[n] = _n.real(z[n])
 
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
