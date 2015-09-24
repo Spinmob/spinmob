@@ -1,0 +1,42 @@
+language: python
+
+python:
+  - "2.7"
+before_install:
+
+# install SIP
+  - wget http://jaist.dl.sourceforge.net/project/pyqt/sip/sip-4.15.5/sip-4.15.5.tar.gz
+  - tar zxvf sip-4.15.5.tar.gz
+  - cd sip-4.15.5
+  - python configure.py
+  - make --silent
+  - sudo make install --silent
+  - cd ..
+
+# install PyQt4
+  - wget http://jaist.dl.sourceforge.net/project/pyqt/PyQt4/PyQt-4.10.4/PyQt-x11-gpl-4.10.4.tar.gz
+  - tar zxvf PyQt-x11-gpl-4.10.4.tar.gz
+  - cd PyQt-x11-gpl-4.10.4/
+  - echo 'yes' | python configure.py
+  - make --silent
+  - sudo make install --silent
+  - cd ..
+
+# try importing the newly installed packages
+  - python -c 'import sip'
+  - python -c 'import PyQt4'
+  - python -c 'import PyQt4.QtCore'
+
+
+install:
+  - pip install numpy
+  - pip install pyqtgraph
+  - pip install nose
+  - pip install coverage
+  - pip install matplotlib
+
+script:
+
+  - cd /home/travis/build/Spinmob/spinmob
+  - pwd
+#- nosetests -w tests
