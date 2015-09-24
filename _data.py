@@ -125,7 +125,7 @@ class databox:
 
         if default_directory is None: default_directory = self.directory
 
-        if path is "ask":
+        if path == "ask":
             path = _dialogs.open_single(filters=filters,
                                         default_directory=self.directory,
                                         text=text)
@@ -157,12 +157,12 @@ class databox:
 
             # split the line by the delimiter
             s = lines[n].strip().split(self.delimiter)
-
+            
             # remove a trailing whitespace entry if it exists.
-            if len(s) and s[-1].strip() is '': s.pop(-1)
+            if len(s) and s[-1].strip() == '': s.pop(-1)
 
             # first check and see if this is a data line (all elements are numbers)
-            if first_data_line is "auto" and _s.fun.elements_are_numbers(s):
+            if first_data_line == "auto" and _s.fun.elements_are_numbers(s):
 
                 # we've reached the first data line
                 first_data_line = n
@@ -171,23 +171,27 @@ class databox:
                 break;
 
             ### now we know it's a header line
-
+            
             # save the lines for the avid user.
             self.header_lines.append(lines[n].strip())
 
-            # first thing to try is simply evaluating the remaining string
-            try:
+            # store the hkey and the rest of it
+            if len(s):
                 hkey      = s[0]
-                remainder = ' '.join(s[1:])
-                self.insert_header(hkey, eval(remainder, self._globals()))
+                if self.delimiter is None: remainder = ' '.join(s[1:])
+                else:                      remainder = self.delimiter.join(s[1:])
 
-            except: pass
+                # first thing to try is simply evaluating the remaining string                            
+                try: self.insert_header(hkey, eval(remainder, self._globals()))
+     
+                # otherwise store the string               
+                except: self.insert_header(hkey, remainder)
 
         # now we have a valid set of column ckeys one way or another, and we know first_data_line.
         if header_only: return self
 
         # Make sure first_data_line isn't None (which happens if there's no data)
-        if first_data_line is "auto":
+        if first_data_line == "auto":
             if not quiet: print "\nCould not find a line of pure data! Perhaps check the delimiter?"
             if not quiet: print "The default delimiter is whitespace. For csv files, set delimiter=','\n"
             return self
@@ -199,27 +203,42 @@ class databox:
         # look for the ckeys
 
         # special case: no header
-        if first_data_line == 0: self.ckeys = []
+        if first_data_line == 0: ckeys = []
 
         # start by assuming it's the previous line
-        else: self.ckeys = lines[first_data_line-1].strip().split(self.delimiter)
+        else: ckeys = lines[first_data_line-1].strip().split(self.delimiter)
 
         # count the number of actual data columns for comparison
         column_count = len(lines[first_data_line].strip().split(self.delimiter))
 
         # check to see if ckeys is equal in length to the
         # number of data columns. If it isn't, it's a false ckeys line
-        if len(self.ckeys) >= column_count:
+        if len(ckeys) >= column_count:
             # it is close enough
             # if we have too many column keys, mention it
-            while len(self.ckeys) > column_count:
-                extra = self.ckeys.pop(-1)
+            while len(ckeys) > column_count:
+                extra = ckeys.pop(-1)
                 if not quiet: print "Extra ckey: "+extra
 
         else:
             # it is an invalid ckeys line. Generate our own!
-            self.ckeys = []
-            for m in range(0, column_count): self.ckeys.append("c"+str(m))
+            ckeys = []
+            for m in range(0, column_count): ckeys.append("c"+str(m))
+
+        # last step with ckeys: make sure they're all different!
+        self.ckeys = []        
+        while len(ckeys):
+            
+            # remove the key
+            ckey = ckeys.pop(0)
+
+            # if there is a duplicate
+            if (ckey in ckeys) or (ckey in self.ckeys):
+                # increase the label index until it's unique
+                n=0                
+                while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
+                ckey = ckey+"_"+str(n)
+            self.ckeys.append(ckey)
 
         # initialize the columns arrays
         # I did benchmarks and there's not much improvement by using numpy-arrays here.
@@ -266,7 +285,7 @@ class databox:
                                 "use current" means use self.delimiter
         """
 
-        if path is "ask": path = _dialogs.save(filters, default_directory=self.directory)
+        if path == "ask": path = _dialogs.save(filters, default_directory=self.directory)
         if path in ["", None]:
             print "Aborted."
             return False
@@ -278,7 +297,7 @@ class databox:
             _os.rename(path,path+".backup")
 
         # get the delimiter
-        if delimiter is "use current":
+        if delimiter == "use current":
             if self.delimiter is None: delimiter = "\t"
             else:                      delimiter = self.delimiter
         
@@ -583,6 +602,7 @@ class databox:
 
         If hkey is an integer, use self.hkeys[hkey]
         """
+        #if hkey is '': return
 
         # if it's an integer, use the hkey from the list
         if type(hkey) in [int, long]: hkey = self.hkeys[hkey]
@@ -975,7 +995,7 @@ class fitter():
         s = "\nSETTINGS\n"
         for k in keys:
             # for the clunky style settings, loop over the list
-            if k[0:5] is 'style' and _s.fun.is_iterable(self[k]):
+            if k[0:5] == 'style' and _s.fun.is_iterable(self[k]):
                 s = s+"  {:15s} [".format(k)
                 for n in range(len(self[k])):
                     s = s+str(self[k][n])
@@ -1706,7 +1726,7 @@ class fitter():
                 x = self._xdata_massaged[n]
             else:
                 # do exponential ranging if xscale is log
-                if self['xscale'][n] is 'log':
+                if self['xscale'][n] == 'log':
                     x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
                                     _n.log10(max(self._xdata_massaged[n])),
                                     self['fpoints'][n], True, 10.0)
@@ -1956,7 +1976,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
 
     >>> load(delimiter=",")
     """
-    if paths is "ask": paths = _dialogs.open_multiple(filters, text, default_directory)
+    if paths == "ask": paths = _dialogs.open_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []
