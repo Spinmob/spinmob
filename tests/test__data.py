@@ -256,7 +256,7 @@ class Test_fitter(_ut.TestCase):
         self.fixtures_path = None
         self.databox = None
 
-    def test_bevington_reduced_chi_squared(self):
+    def test_bevington_reduced_chi_squareds(self):
         """
         Test against Example 7.1 in Bevington.
         """
@@ -267,9 +267,10 @@ class Test_fitter(_ut.TestCase):
         f.set_data(self.databox[0], self.databox[1], 0.05)
         f.fit()
 
-        value_from_fit = f.reduced_chi_squared()
+        value_from_fit = f.reduced_chi_squareds()
         value_from_bevington = 1.5
         self.assertAlmostEqual(value_from_fit, value_from_bevington, 1)
+
 
 if __name__ == "__main__":
     _ut.main()
