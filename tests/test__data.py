@@ -269,7 +269,7 @@ class Test_fitter(_ut.TestCase):
 
         value_from_fit = f.reduced_chi_squareds()
         value_from_bevington = 1.5
-        self.assertAlmostEqual(value_from_fit, value_from_bevington, 1)
+        self.assertAlmostEqual(value_from_fit[0], value_from_bevington, 1)
 
     def test_reduced_chi_squareds_return_type(self):
         self.databox.load_file(path=self.data_path)
