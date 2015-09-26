@@ -21,8 +21,8 @@ def test():
     Run all tests in this module.
     """
 
-    suite_databox  = _TL().loadTestsFromTestCase(Test_databox)
-    suite_fitter  = _TL().loadTestsFromTestCase(Test_fitter)
+    suite_databox = _TL().loadTestsFromTestCase(Test_databox)
+    suite_fitter = _TL().loadTestsFromTestCase(Test_fitter)
 
     suites = [suite_databox, suite_fitter]
     alltests = _ut.TestSuite(suites)
@@ -41,7 +41,7 @@ class Test_databox(_ut.TestCase):
         Load data
         """
         # Path to the spinmob module
-        self.dt_path    = os.path.dirname(_dt.__file__)
+        self.dt_path = os.path.dirname(_dt.__file__)
         self.module_path = self.dt_path.rpartition('spinmob')
         self.module_path = self.module_path[0]
 
@@ -63,16 +63,14 @@ class Test_databox(_ut.TestCase):
         filename = 'headers_xy.dat'
         self.data_path3 = os.path.join(midPath, filename)
 
-
     def tearDown(self):
         """
         """
-        self.dt_path       = None
-        self.module_path   = None
-        self.data_path     = None
+        self.dt_path = None
+        self.module_path = None
+        self.data_path = None
         self.fixtures_path = None
-        self.databox       = None
-
+        self.databox = None
 
     def test___repr__Default(self):
         """
@@ -115,7 +113,6 @@ class Test_databox(_ut.TestCase):
         exp = 90.0
         self.assertEqual(val, exp)
 
-
     def test_pop_data_point(self):
         self.databox.load_file(path=self.data_path)
 
@@ -125,7 +122,6 @@ class Test_databox(_ut.TestCase):
         # The expected response
         exp = [100.0]
         self.assertEqual(val, exp)
-
 
     def test_execute_script(self):
         self.databox.load_file(path=self.data_path)
@@ -137,7 +133,6 @@ class Test_databox(_ut.TestCase):
 
         exp = [993.9, 713.0, 70.4, -14.7, -51.6]
         self.assertListEqual(val, exp)
-
 
     def test___len__(self):
         self.databox.load_file(path=self.data_path)
@@ -172,7 +167,6 @@ class Test_databox(_ut.TestCase):
     def test___init__kwargs(self):
         # TODO: is this a valid test?  Did anything pass?
         d = sm.data.databox(test_kwarg='test_value')
-
 
     def test_h_str(self):
         self.databox.load_file(path=self.data_path3)
@@ -246,7 +240,6 @@ class Test_databox(_ut.TestCase):
         self.assertListEqual(val, exp)
 
 
-
 class Test_fitter(_ut.TestCase):
     """
     Test class for fitter.
@@ -258,7 +251,7 @@ class Test_fitter(_ut.TestCase):
         Load data
         """
         # Path to the spinmob module
-        self.dt_path    = os.path.dirname(_dt.__file__)
+        self.dt_path = os.path.dirname(_dt.__file__)
         self.module_path = self.dt_path.rpartition('spinmob')
         self.module_path = self.module_path[0]
 
@@ -271,15 +264,14 @@ class Test_fitter(_ut.TestCase):
         # setup a default databox to be used for testing.
         self.databox = _dt.databox()
 
-
     def tearDown(self):
         """
         """
-        self.dt_path       = None
-        self.module_path   = None
-        self.data_path     = None
+        self.dt_path = None
+        self.module_path = None
+        self.data_path = None
         self.fixtures_path = None
-        self.databox       = None
+        self.databox = None
 
     def test_bevington_reduced_chi_squared(self):
         """
