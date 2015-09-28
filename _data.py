@@ -71,8 +71,9 @@ class databox:
 
     def __init__(self, delimiter=None, debug=False):
         """
-        delimiter                   The delimiter the file uses. None means "white space"
-        debug                       Displays some partial debug information while running
+        delimiter    The delimiter the file uses. None (default) means 
+                     "Try to figure it out" (reasonably smart)
+        debug        Displays some partial debug information while running
         """
 
         # this keeps the dictionaries from getting all jumbled with each other
@@ -147,6 +148,25 @@ class databox:
         f = open(path, 'r')
         lines = f.readlines()
         f.close()
+
+        # Determine the delimiter
+        if self.delimiter is None:
+            
+            # loop from the end of the file until we get something other than white space
+            for n in range(len(lines)):
+                
+                # strip away the white space
+                s = lines[-n-1].strip()                
+                
+                # if this line has any content
+                if len(s) > 0:
+                    
+                    # see if it has commas or semicolons. Otherwise, leave it be.
+                    if   s.find(',') >= 0: self.delimiter = ','
+                    elif s.find(';') >= 0: self.delimiter = ';'
+                    
+                    # quit the loop!                    
+                    break
 
 
 
@@ -776,7 +796,7 @@ class databox:
 
     def c(self, n):
         """
-        Returns the n'th column if it's an integer, otherwis the column based
+        Returns the n'th column if it's an integer, otherwise the column based
         on key.
         """
         if len(self.columns) == 0:   return []
