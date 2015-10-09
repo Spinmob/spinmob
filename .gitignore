@@ -3,3 +3,6 @@
 .SyncIgnore
 .SyncArchive/
 /.project
+build/
+dist/
+Spinmob.egg*/
