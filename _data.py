@@ -71,7 +71,7 @@ class databox:
 
     def __init__(self, delimiter=None, debug=False):
         """
-        delimiter    The delimiter the file uses. None (default) means 
+        delimiter    The delimiter the file uses. None (default) means
                      "Try to figure it out" (reasonably smart)
         debug        Displays some partial debug information while running
         """
@@ -151,21 +151,21 @@ class databox:
 
         # Determine the delimiter
         if self.delimiter is None:
-            
+
             # loop from the end of the file until we get something other than white space
             for n in range(len(lines)):
-                
+
                 # strip away the white space
-                s = lines[-n-1].strip()                
-                
+                s = lines[-n-1].strip()
+
                 # if this line has any content
                 if len(s) > 0:
-                    
+
                     # see if it has commas or semicolons. Otherwise, leave it be.
                     if   s.find(',') >= 0: self.delimiter = ','
                     elif s.find(';') >= 0: self.delimiter = ';'
-                    
-                    # quit the loop!                    
+
+                    # quit the loop!
                     break
 
 
@@ -177,7 +177,7 @@ class databox:
 
             # split the line by the delimiter
             s = lines[n].strip().split(self.delimiter)
-            
+
             # remove a trailing whitespace entry if it exists.
             if len(s) and s[-1].strip() == '': s.pop(-1)
 
@@ -191,7 +191,7 @@ class databox:
                 break;
 
             ### now we know it's a header line
-            
+
             # save the lines for the avid user.
             self.header_lines.append(lines[n].strip())
 
@@ -201,10 +201,10 @@ class databox:
                 if self.delimiter is None: remainder = ' '.join(s[1:])
                 else:                      remainder = self.delimiter.join(s[1:])
 
-                # first thing to try is simply evaluating the remaining string                            
+                # first thing to try is simply evaluating the remaining string
                 try: self.insert_header(hkey, eval(remainder, self._globals()))
-     
-                # otherwise store the string               
+
+                # otherwise store the string
                 except: self.insert_header(hkey, remainder)
 
         # now we have a valid set of column ckeys one way or another, and we know first_data_line.
@@ -246,16 +246,16 @@ class databox:
             for m in range(0, column_count): ckeys.append("c"+str(m))
 
         # last step with ckeys: make sure they're all different!
-        self.ckeys = []        
+        self.ckeys = []
         while len(ckeys):
-            
+
             # remove the key
             ckey = ckeys.pop(0)
 
             # if there is a duplicate
             if (ckey in ckeys) or (ckey in self.ckeys):
                 # increase the label index until it's unique
-                n=0                
+                n=0
                 while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
                 ckey = ckey+"_"+str(n)
             self.ckeys.append(ckey)
@@ -294,7 +294,7 @@ class databox:
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
-        
+
         filters="*.dat"         File filter for the file dialog (for path="ask")
         force_overwrite=False   Normally, if the file * exists, this will copy that
                                 to *.backup. If the backup already exists, this
@@ -320,8 +320,8 @@ class databox:
         if delimiter == "use current":
             if self.delimiter is None: delimiter = "\t"
             else:                      delimiter = self.delimiter
-        
-    
+
+
 
         # open the file and write the header
         f = open(path, 'w')
@@ -753,31 +753,31 @@ class databox:
     def trim(self, *conditions):
         """
         Removes data points not satisfying the supplied conditions. Conditions
-        can be truth arrays (having the same length as the columns!) 
-        or scripted strings. 
-        
+        can be truth arrays (having the same length as the columns!)
+        or scripted strings.
+
         Example:
             d1 = spinmob.data.load()
             d2 = d1.trim( (2<d1[0]) & (d1[0]<10) | (d1[3]==22), 'sin(d[2])*h("gain")<32.2')
-            
+
         Note this will not modify the databox, rather it will generate a new
         one with the same header information and return it.
         """
         conditions = list(conditions)
-        
+
         # if necessary, evaluate string scripts
-        for n in range(len(conditions)): 
-            if type(conditions[n]) is str: 
+        for n in range(len(conditions)):
+            if type(conditions[n]) is str:
                 conditions[n] = self.execute_script(conditions[n])
 
         # make a new databox with the same options and headers
         new_databox = databox(delimiter=self.delimiter)
         new_databox.copy_headers(self)
-        
+
         # trim it up, send it out.
         cs = _s.fun.trim_data_uber(self, conditions)
         for n in range(len(cs)): new_databox.append_column(cs[n], self.ckeys[n])
-        
+
         return new_databox
 
 
@@ -861,7 +861,7 @@ class fitter():
     _set_ydata  = None
     _set_eydata = None
     _set_data_globals = dict(_n.__dict__) # defaults to numpy
-    
+
     _xdata_massaged  = None # internal storage of trimmed data sets (used for fitting)
     _ydata_massaged  = None
     _eydata_massaged = None
@@ -902,7 +902,7 @@ class fitter():
 
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = _n.__dict__
-        
+
         # update the globals dictionary
         if not g is None: self._globals.update(g)
 
@@ -919,7 +919,7 @@ class fitter():
                               plot_bg       = False,    # include bg in plots?
                               plot_ey       = True,     # include error bars?
                               plot_guess    = True,     # include the guess?
-                              plot_guess_zoom = False,  # zoom to include plot?                              
+                              plot_guess_zoom = False,  # zoom to include plot?
                               subtract_bg   = True,     # subtract bg from plots?
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of limits for trimming x-data
@@ -930,7 +930,7 @@ class fitter():
                               ylabel        = None,     # list of y labels
                               xscale        = 'linear', # axis scale type
                               yscale        = 'linear', # axis scale type
-                              scale_eydata  = 1.0,      # by how much should we scale the eydata?                              
+                              scale_eydata  = 1.0,      # by how much should we scale the eydata?
                               coarsen       = 1,        # how much to coarsen the data
 
                               # styles of plots
@@ -1064,7 +1064,7 @@ class fitter():
                 s = s + "{:10s} = {:G}\n".format(self._pnames[n], self.results[0][n])
 
         else: s = s + "\n# NO FIT RESULTS\n"
-        
+
         print s
 
     def __getitem__(self, key):
@@ -1202,37 +1202,37 @@ class fitter():
         in a standard format for processing.
 
         xdata, ydata    These can be a single array of data or a list of data
-                        arrays. 
-        
+                        arrays.
+
         eydata          Error bars. These can be None (for guessed error) or
-                        data / numbers matching the dimensionality of xdata 
+                        data / numbers matching the dimensionality of xdata
                         and ydata
 
         xdata, ydata, and eydata can all be scripts or lists of scripts that
-        produce arrays. Any python code will work, and the scripts 
+        produce arrays. Any python code will work, and the scripts
         automatically know about all numpy functions, the guessed parameters,
-        and the data itself (as x, y, and ey). However, the scripts are 
-        executed in order -- xdata, ydata, and eydata -- so the xdata script 
+        and the data itself (as x, y, and ey). However, the scripts are
+        executed in order -- xdata, ydata, and eydata -- so the xdata script
         cannot know about ydata or eydata, the ydata script cannot know about
         eydata, and the eydata script knows about xdata and ydata.
-        
+
         Example:
           xdata  = [1,2,3,4,5]
           ydata  = [[1,2,1,2,1], 'cos(x[0])']
           eydata = ['arctan(y[1])*a+b', 5]
-          
+
         In this example, there will be two data sets to fit (so there better be
         two functions!), they will share the same xdata, the second ydata set
         will be the array cos([1,2,3,4,5]) (note since there are multiple data
         sets assumed (always), you have to select the data set with an index
-        on x and y), the error on the first data set will be this weird 
-        functional dependence on the second ydata set and fit parameters a and 
-        b (note, if a and b are not fit parameters, then you must 
-        send them as keyword arguments so that they are defined) and the second 
+        on x and y), the error on the first data set will be this weird
+        functional dependence on the second ydata set and fit parameters a and
+        b (note, if a and b are not fit parameters, then you must
+        send them as keyword arguments so that they are defined) and the second
         data set error bar will be a constant, 5.
 
         Note this function is "somewhat" smart about reshaping the input
-        data to ease life a bit, but it can't handle ambiguities. If you 
+        data to ease life a bit, but it can't handle ambiguities. If you
         want to play it safe, supply lists for all three arguments that
         match in dimensionality.
 
@@ -1240,38 +1240,38 @@ class fitter():
 
         **kwargs are added to the globals for script evaluation
         """
-        
+
         # warn the user
         if eydata is None:
             print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
             print "  eydata = 0.1"
             print "  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n"
-        
+
         # xdata and ydata   'script', [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            'script', [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], 3, [3,[1,2,3]], None
-        
+
         # if xdata, ydata, or eydata are bare scripts, make them into lists
         if type(xdata)  is str: xdata  = [xdata]
         if type(ydata)  is str: ydata  = [ydata]
-        if type(eydata) is str or _s.fun.is_a_number(eydata) or eydata is None: eydata = [eydata]       
-        
+        if type(eydata) is str or _s.fun.is_a_number(eydata) or eydata is None: eydata = [eydata]
+
         # xdata and ydata   ['script'], [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
-        
+
         # if the first element of data is a number, then this is a normal array
         if _s.fun.is_a_number(xdata[0]): xdata = [xdata]
         if _s.fun.is_a_number(ydata[0]): ydata = [ydata]
-        
+
         # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [1,1,1],   [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
-                
+
         # if the first element of eydata is a number, this could also just be an error bar value
         # Note: there is some ambiguity here, if the number of data sets equals the number of data points!
         if _s.fun.is_a_number(eydata[0]) and len(eydata) == len(ydata[0]): eydata = [eydata]
-        
+
         # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
-        
+
         # make sure these lists are the same length as the number of functions
         while len(ydata)  < len(self.f): ydata.append(ydata[0])
         while len(xdata)  < len(self.f): xdata.append(xdata[0])
@@ -1279,7 +1279,7 @@ class fitter():
 
         # xdata and ydata   ['script','script'], [[1,2,3],[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script','script'], [[1,1,1],[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3,3], [3,[1,2,3]], [None,None]
-        
+
         # poop out if the number of ydata sets doesn't match the number of
         # functions
         if not len(ydata) == len(self.f):
@@ -1290,38 +1290,38 @@ class fitter():
         self._set_ydata  = ydata
         self._set_eydata = eydata
         self._set_data_globals.update(kwargs)
-        
+
         # set the eyscale to 1 for each data set
         self['scale_eydata'] = [1.0]*len(self._set_xdata)
-        
+
         if self['autoplot']: self.plot()
-     
-        
+
+
     def evaluate_script(self, script, **kwargs):
         """
-        Evaluates the supplied script (python-executable string). 
+        Evaluates the supplied script (python-executable string).
         Useful for testing your scripts!
-        
-        globals already include all of numpy objects plus 
 
-        self = self        
+        globals already include all of numpy objects plus
+
+        self = self
         f    = self.f
         bg   = self.bg
-        
+
         and all the current guess parameters and constants
 
-        kwargs are added to globals for script evaluation.        
+        kwargs are added to globals for script evaluation.
         """
         self._set_data_globals.update(kwargs)
         return eval(script, self._set_data_globals)
-       
+
     def get_data(self):
         """
         Returns current xdata, ydata, eydata, after set_data() has been run.
         """
         # make sure we've done a "set data" call
         if self._set_xdata is None or self._set_ydata is None:
-            print "\nERROR: You must call set_data() first!"            
+            print "\nERROR: You must call set_data() first!"
             return
 
         # update the globals with the current fit parameters guess values
@@ -1332,12 +1332,12 @@ class fitter():
         self._set_data_globals['f']    = self.f
         self._set_data_globals['bg']   = self.bg
         self._set_data_globals['self'] = self
-        
-        # possibilities after calling set_data():        
+
+        # possibilities after calling set_data():
         # xdata and ydata   ['script','script'], [[1,2,3],[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script','script'], [[1,1,1],[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3,3], [3,[1,2,3]], [None,None]
-        
-        # make a copy        
+
+        # make a copy
         xdata  = list(self._set_xdata)
         ydata  = list(self._set_ydata)
         eydata = list(self._set_eydata)
@@ -1361,12 +1361,12 @@ class fitter():
 
         # update the globals
         self._set_data_globals['y'] = ydata
-        
+
         # make sure they're all lists of numpy arrays
-        for n in range(len(eydata)):        
-        
+        for n in range(len(eydata)):
+
             # handle scripts
-            if type(eydata[n]) is str: 
+            if type(eydata[n]) is str:
                 eydata[n] = self.evaluate_script(eydata[n])
 
             # handle None (possibly returned by script): take a visually-appealing guess at the error
@@ -1374,13 +1374,13 @@ class fitter():
                 eydata[n] = _n.ones(len(xdata[n])) * (max(ydata[n])-min(ydata[n]))*0.05
 
             # handle constant error bars (possibly returned by script)
-            if _s.fun.is_a_number(eydata[n]): 
+            if _s.fun.is_a_number(eydata[n]):
                 eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
 
             # make it an array
             eydata[n] = _n.array(eydata[n]) * self["scale_eydata"][n]
 
-        # return it        
+        # return it
         return xdata, ydata, eydata
 
     def set_guess_to_fit_result(self):
@@ -1448,7 +1448,7 @@ class fitter():
                 x  = xdata[n]
                 y  = ydata[n]
                 ey = eydata[n]
-            
+
             # coarsen the data
             if self['coarsen'][n] == 0: self['coarsen'][n] = 1
             x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
@@ -1500,24 +1500,24 @@ class fitter():
 
         # first set all the keyword argument values
         self.set(**kwargs)
-        
+
         # get everything into one big list
-        pnames = list(args) + kwargs.keys()        
-        
+        pnames = list(args) + kwargs.keys()
+
         # move each pname to the constants
         for pname in pnames:
             if not pname in self._pnames:
                 self._error("Naughty. '"+pname+"' is not a valid fit parameter name.")
-                
+
             else:
                 n = self._pnames.index(pname)
-        
+
                 # use the fit result if it exists
                 if self.results: value = self.results[0][n]
-        
+
                 # otherwise use the guess value
                 else: value = self._pguess[n]
-        
+
                 # make the switcheroo
                 if type(self._pnames)    is not list: self._pnames    = list(self._pnames)
                 if type(self._pguess)    is not list: self._pguess    = list(self._pguess)
@@ -1527,7 +1527,7 @@ class fitter():
                 self._pguess.pop(n)
                 self._cnames.append(pname)
                 self._constants.append(value)
-            
+
                 # update
                 self._update_functions()
 
@@ -1540,19 +1540,19 @@ class fitter():
         """
         # first set all the keyword argument values
         self.set(**kwargs)
-        
+
         # get everything into one big list
-        cnames = list(args) + kwargs.keys()        
-        
+        cnames = list(args) + kwargs.keys()
+
         # move each pname to the constants
         for cname in cnames:
-        
+
             if not cname in self._cnames:
                 self._error("Naughty. '"+cname+"' is not a valid constant name.")
-                
+
             else:
                 n = self._cnames.index(cname)
-        
+
                 # make the switcheroo
                 if type(self._pnames)    is not list: self._pnames    = list(self._pnames)
                 if type(self._pguess)    is not list: self._pguess    = list(self._pguess)
@@ -1678,7 +1678,7 @@ class fitter():
         """
         if p is None: p = self.results[0]
         r = self.studentized_residuals(p)
-        
+
         # calculate the number of points
         N = 0
         for i in range(len(r)): N += len(r[i])
@@ -1697,12 +1697,12 @@ class fitter():
 
         Each data set will be scaled independently.
         """
-        if not self.results: 
+        if not self.results:
             self._error("You must complete a fit first.")
             return
 
         r = self.reduced_chi_squareds()
-        
+
         # loop over the eydata and rescale
         for n in range(len(r)): self["scale_eydata"][n] *= _n.sqrt(r[n])
 
@@ -1858,7 +1858,7 @@ class fitter():
             else:                         _p.xlabel(self['xlabel'][n])
             if self['ylabel'][n] is None: _p.ylabel('ydata['+str(n)+']')
             else:                         _p.ylabel(self['ylabel'][n])
-            a1.set_ylabel('studentized\nresiduals')
+            a1.set_ylabel('Studentized\nResiduals')
 
             # Assemble the title
             wrap = 80
@@ -1884,11 +1884,11 @@ class fitter():
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
-            
+
             # if we're supposed to plot the guess and zoom to include it
-            if self['plot_guess_zoom'][n]: 
-                ymin, ymax = a2.get_ylim()               
-                a2.set_ylim(min(ymin,min(y_guess)), 
+            if self['plot_guess_zoom'][n]:
+                ymin, ymax = a2.get_ylim()
+                a2.set_ylim(min(ymin,min(y_guess)),
                             max(ymax,max(y_guess)))
 
 
@@ -1926,7 +1926,7 @@ class fitter():
                 xmin, xmax = _p.figure(i).axes[1].get_xlim()
                 self['xmin'][i] = xmin
                 self['xmax'][i] = xmax
-                
+
                 ymin, ymax = _p.figure(i).axes[1].get_ylim()
                 self['ymin'][i] = ymin
                 self['ymax'][i] = ymax
@@ -1942,7 +1942,7 @@ class fitter():
 
     def zoom(self, n='all', xfactor=2.0, yfactor=1.0):
         """
-        This will scale the chosen data set's plot range by the 
+        This will scale the chosen data set's plot range by the
         specified xfactor and yfactor, respectively, and set the trim limits
         xmin, xmax, ymin, ymax accordingly
 
@@ -1954,7 +1954,7 @@ class fitter():
             return
 
         # get the data
-        xdata, ydata, eydata = self.get_data()    
+        xdata, ydata, eydata = self.get_data()
 
         if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):     n = range(len(xdata))
@@ -1967,7 +1967,7 @@ class fitter():
                 xs = 0.5*abs(xmax-xmin)
                 self['xmin'][i] = xc - xfactor*xs
                 self['xmax'][i] = xc + xfactor*xs
-                
+
                 ymin, ymax = _p.figure(i).axes[1].get_ylim()
                 yc = 0.5*(ymin+ymax)
                 ys = 0.5*abs(ymax-ymin)
@@ -1982,7 +1982,7 @@ class fitter():
 
         return self
 
-    
+
     def ginput(self, figure_number=0, **kwargs):
         """
         Pops up the n'th figure and lets you click it. Returns value from pylab.ginput().

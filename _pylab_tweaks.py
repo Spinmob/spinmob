@@ -1431,21 +1431,42 @@ def yscale(scale='log'):
     _pylab.yscale(scale)
     _pylab.draw()
 
-def ubertidy(figure="gcf", zoom=True, width=None, height=None, fontsize=12, fontweight='normal', fontname='Arial',
-             borderwidth=1.2, tickwidth=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.008, window_size=[550,400]):
+def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial', font_size=12, font_weight='normal',
+             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005, window_size=[550,400],
+             keep_axis_labels=False, axis_label_font_size=14, axis_label_font_weight='normal', keep_legend=False):
     """
 
-    This guy performs the ubertidy from the helper on the first window.
-    Currently assumes there is only one set of axes in the window!
+    This guy performs the ubertidy, which some of us use to prep a figure
+    for talks or papers.
+
+    figure="gcf"                    Which figure to tidy.
+    zoom=True                       Whether to auto-zoom on the data
+    width=None                      Width of the axes (relative to window)
+    height=None                     Height of the axes (relative to window)
+    font_name='Arial'               Must be installed on system
+    font_size=12                    Font size for all but axis labels
+    font_weight='normal'            Could be 'bold'
+    border_width=1.2                Thickness of the axes border
+    tick_width=1                    Thickness of ticks
+    ticks_point="in"                Whether ticks point "in" or "out" of axis
+    xtick_label_pad=0.010           Padding on x-tick labels
+    ytick_label_pad=0.008           Padding on y-tick labels
+    window_size=[550,400]           Size of window in pixels
+    keep_axis_labels=False          Whether to keep the axis labels
+    axis_label_font_size=14         Font size for axis labels
+    axis_label_font_weight='normal' Could be 'bold'
+    keep_legend=False               Whether to keep the legend
 
     """
 
     if figure=="gcf": f = _pylab.gcf()
     else:             f = figure
 
+    # set the window to a standard size
     set_figure_window_geometry(fig=f, size=window_size)
 
     for n in range(len(f.axes)):
+
         # get the axes
         a = f.axes[n]
 
@@ -1453,31 +1474,38 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, fontsize=12, font
         _pylab.axes(a)
 
         # we want thick axis lines
-        a.spines['top'].set_linewidth(borderwidth)
-        a.spines['left'].set_linewidth(borderwidth)
-        a.spines['bottom'].set_linewidth(borderwidth)
-        a.spines['right'].set_linewidth(borderwidth)
+        a.spines['top']     .set_linewidth(border_width)
+        a.spines['left']    .set_linewidth(border_width)
+        a.spines['bottom']  .set_linewidth(border_width)
+        a.spines['right']   .set_linewidth(border_width)
 
         # get the tick lines in one big list
         xticklines = a.get_xticklines()
         yticklines = a.get_yticklines()
 
         # set their marker edge width
-        _pylab.setp(xticklines+yticklines, mew=tickwidth)
-
+        _pylab.setp(xticklines+yticklines, mew=tick_width)
 
         # set what kind of tickline they are (outside axes)
         if ticks_point=="out":
-            for l in xticklines: l.set_marker(_mpl.lines.TICKDOWN)
-            for l in yticklines: l.set_marker(_mpl.lines.TICKLEFT)
+            for n in range(len(xticklines)):
+                if not n%2: xticklines[n].set_marker(_mpl.lines.TICKDOWN)
+                else:       xticklines[n].set_marker(_mpl.lines.TICKUP)
+            for n in range(len(yticklines)):
+                if not n%2: yticklines[n].set_marker(_mpl.lines.TICKLEFT)
+                else:       yticklines[n].set_marker(_mpl.lines.TICKRIGHT)
+        else:
+            for n in range(len(xticklines)):
+                if n%2: xticklines[n].set_marker(_mpl.lines.TICKDOWN)
+                else:   xticklines[n].set_marker(_mpl.lines.TICKUP)
+            for n in range(len(yticklines)):
+                if n%2: yticklines[n].set_marker(_mpl.lines.TICKLEFT)
+                else:   yticklines[n].set_marker(_mpl.lines.TICKRIGHT)
 
-        # get rid of the top and right ticks
-        a.xaxis.tick_bottom()
-        a.yaxis.tick_left()
 
         # we want bold fonts
-        _pylab.xticks(fontsize=fontsize, fontweight=fontweight, fontname=fontname)
-        _pylab.yticks(fontsize=fontsize, fontweight=fontweight, fontname=fontname)
+        _pylab.xticks(fontsize=font_size, fontweight=font_weight, fontname=font_name)
+        _pylab.yticks(fontsize=font_size, fontweight=font_weight, fontname=font_name)
 
         # we want to give the labels some breathing room (1% of the data range)
         for label in _pylab.xticks()[1]: label.set_y(-xlabel_pad)
@@ -1494,11 +1522,15 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, fontsize=12, font
 
         # set the axis labels to empty (so we can add them with a drawing program)
         a.set_title('')
-        a.set_xlabel('')
-        a.set_ylabel('')
+        if not keep_axis_labels:
+            a.set_xlabel('')
+            a.set_ylabel('')
+        else:
+            _pylab.xlabel(a.get_xlabel(), fontsize=axis_label_font_size, fontweight=axis_label_font_weight, fontname=font_name)
+            _pylab.ylabel(a.get_ylabel(), fontsize=axis_label_font_size, fontweight=axis_label_font_weight, fontname=font_name)
 
         # kill the legend
-        a.legend_ = None
+        if not keep_legend: a.legend_ = None
 
         # zoom!
         if zoom: auto_zoom(axes=a)
