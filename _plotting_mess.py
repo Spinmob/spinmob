@@ -104,6 +104,9 @@ def complex_files(script='c(1)+1j*c(2)', **kwargs):
     """
     Loads and plots complex data in the real-imaginary plane.
 
+    optional argument: filters="*.*" can be changed to filter the files in the
+                                     file dialog
+
     **kwargs are sent to spinmob.plot.complex.databoxes()
     """
     ds = _data.load_multiple()
@@ -251,6 +254,9 @@ def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
     scripts, and then plot this data.
 
     xscript, yscript, eyscript, exscript    scripts to generate x, y, and errors
+    
+    optional argument: filters="*.*" can be changed to filter the files in the
+                                     file dialog
 
     **kwargs are sent to spinmob.plot.mag_phase.databoxes()
     """
@@ -376,6 +382,9 @@ def realimag_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
     scripts, and then plot this data.
 
     xscript, yscript, eyscript, exscript    scripts to generate x, y, and errors
+
+    optional argument: filters="*.*" can be changed to filter the files in the
+                                     file dialog
 
     **kwargs are sent to spinmob.plot.real_imag.databoxes()
     """
@@ -567,6 +576,9 @@ def xy_files(xscript=0, yscript=1, eyscript=None, exscript=None, **kwargs):
 
     xscript, yscript, eyscript, exscript    scripts to generate x, y, and errors
 
+    optional argument: filters="*.*" can be changed to filter the files in the
+                                     file dialog
+
     **kwargs are sent to spinmob.plot.xy.databoxes()
     """
     return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, **kwargs)
@@ -674,6 +686,8 @@ def files(xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy_databox
     scripts, and then plot this data using the specified databox plotter.
 
     xscript, yscript, eyscript, exscript    scripts to generate x, y, and errors
+
+    optional: filters="*.*" to set the file filters for the dialog.
 
     **kwargs are sent to plotter()
     """
