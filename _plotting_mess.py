@@ -569,7 +569,7 @@ def xy_databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, **kwarg
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=xy_data, **kwargs)
 
 
-def xy_files(xscript=0, yscript=1, eyscript=None, exscript=None, **kwargs):
+def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot this data.
