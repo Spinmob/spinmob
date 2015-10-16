@@ -1,5 +1,7 @@
+del /Q /F dist\*
 python setup.py sdist
-python setup.py bdist_wheel
-twine upload dist/*
+
+pip install twine
+twine upload dist\*
 
 @pause

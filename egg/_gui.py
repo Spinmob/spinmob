@@ -8,7 +8,7 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
-import temporary_fixes as _temporary_fixes
+import _temporary_fixes
 _a = _g.mkQApp()
 
 # set the font if we're in linux
