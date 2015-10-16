@@ -2,12 +2,8 @@ from spinmob import egg
 
 # create the window and two tab areas
 w          = egg.gui.Window('Hey Guy II', autosettings_path='w.cfg')
-t_settings = w.place_object(egg.gui.TabArea()).add_tab("Settings")
-t_raw_data = w.place_object(egg.gui.TabArea()).add_tab("Raw Data")
-
-# make the "data" tab preferentially fill the area
-w.set_column_stretch(1)
-
+t_settings = w.place_object(egg.gui.TabArea())             .add_tab("Settings")
+t_raw_data = w.place_object(egg.gui.TabArea(), alignment=0).add_tab("Raw Data")
 
 # show it!
 w.show()
@@ -15,7 +11,9 @@ w.show()
 
 
 
-# Add tree dictionary
+###########################
+# TREE DICTIONARY
+###########################
 s = t_settings.place_object(egg.gui.TreeDictionary('s.cfg'))
 
 # add some settings
@@ -32,9 +30,10 @@ s.connect_any_signal_changed(s_changed)
 
 
 
-
-# Add the raw databox plotter
-d = t_raw_data.place_object(egg.gui.DataboxPlot(autosettings_path='d.cfg'))
+#############################
+# Databox Plotter
+#############################
+d = t_raw_data.place_object(egg.gui.DataboxPlot(autosettings_path='d.cfg'), alignment=0)
 d.load_gui_settings()
 
 # Add some data / header info
