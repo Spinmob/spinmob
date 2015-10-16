@@ -161,9 +161,11 @@ class databox:
                 # if this line has any content
                 if len(s) > 0:
 
-                    # see if it has commas or semicolons. Otherwise, leave it be.
-                    if   s.find(',') >= 0: self.delimiter = ','
-                    elif s.find(';') >= 0: self.delimiter = ';'
+                    # try the different delimiter schemes until we find one
+                    # that produces a number. Otherwise it's ambiguous.
+                    if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
+                    elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
+                    elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
 
                     # quit the loop!
                     break

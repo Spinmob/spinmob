@@ -33,8 +33,7 @@ s.connect_any_signal_changed(s_changed)
 #############################
 # Databox Plotter
 #############################
-d = t_raw_data.place_object(egg.gui.DataboxPlot(autosettings_path='d.cfg'), alignment=0)
-d.load_gui_settings()
+d = t_raw_data.place_object(egg.gui.DataboxPlot('*.raw', 'd.cfg'), alignment=0)
 
 # Add some data / header info
 d['t']  = [1,2,3,4,5]

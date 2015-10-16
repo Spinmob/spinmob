@@ -108,16 +108,17 @@ class BaseObject():
         """
 
         # only do this if we're supposed to
-        if not None==self._autosettings_path:
+        if self._autosettings_path is not None:
 
             # databox just for loading a cfg file
             d = _d.databox()
 
             # if the load file succeeded
-            if not None == d.load_file(self._autosettings_path, header_only=True, quiet=True):
+            if d.load_file(self._autosettings_path, header_only=True, quiet=True) is not None:
 
                 # loop over the settings we're supposed to change
-                for x in self._autosettings_controls: self._load_gui_setting(d, x)
+                for x in self._autosettings_controls:
+                    self._load_gui_setting(d, x)
 
     def _load_gui_setting(self, databox, name):
         """
@@ -125,6 +126,7 @@ class BaseObject():
         value. hkeys in the file are expected to have the format
         "self.controlname"
         """
+
         # only do this if the key exists
         if name in databox.hkeys:
             try:    eval(name).set_value(databox.h(name))
