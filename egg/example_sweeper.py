@@ -54,7 +54,7 @@ def set_x(x):
     Pretends to set some instrument to a value "x" somehow.
     This is where your code should go.
     """
-    
+
     # for now just update the gui
     n_x.set_value(x)
 
@@ -92,7 +92,7 @@ def acquire_button_clicked(*a):
         settings['sweep/x_start'], settings['sweep/x_stop'] = roi_sweep.getRegion()
 
     # otherwise update the roi_sweep to match the sweep
-    else: roi_sweep.setRegion((settings['sweep/x_start'], 
+    else: roi_sweep.setRegion((settings['sweep/x_start'],
                                settings['sweep/x_stop']))
 
     # clear the data and create new columns
@@ -100,7 +100,7 @@ def acquire_button_clicked(*a):
     d_sweep['x']     = []
     d_sweep['mag']   = []
     d_sweep['phase'] = []
-    
+
     # dump the settings to the databox header
     settings.send_to_databox_header(d_sweep)
 

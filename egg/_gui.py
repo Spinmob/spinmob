@@ -1980,20 +1980,23 @@ class DataboxPlot(_d.databox, GridLayout):
             self.plot_widgets[min(i,len(self.plot_widgets)-1)].addItem(self._curves[i])
 
         # loop over the ROI's and add them
-        for i in range(len(self.ROIs)):
+        if self.ROIs is not None:
 
-            # get the ROIs for this plot
-            ROIs = self.ROIs[i]
-            if not _spinmob.fun.is_iterable(ROIs): ROIs = [ROIs]
+            for i in range(len(self.ROIs)):
 
-            # loop over the ROIs for this plot
-            for ROI in ROIs:
+                # get the ROIs for this plot
+                ROIs = self.ROIs[i]
 
-                # determine which plot to add the ROI to
-                m = min(i, len(self.plot_widgets)-1)
+                if not _spinmob.fun.is_iterable(ROIs): ROIs = [ROIs]
 
-                # add the ROI to the appropriate plot
-                self.plot_widgets[m].addItem(ROI)
+                # loop over the ROIs for this plot
+                for ROI in ROIs:
+
+                    # determine which plot to add the ROI to
+                    m = min(i, len(self.plot_widgets)-1)
+
+                    # add the ROI to the appropriate plot
+                    self.plot_widgets[m].addItem(ROI)
 
         # show the plots
         self._plot_grid.unblock_events()

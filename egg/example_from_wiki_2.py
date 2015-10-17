@@ -44,6 +44,12 @@ settings.connect_any_signal_changed(settings_changed)
 #############################
 d_raw = t_raw.place_object(egg.gui.DataboxPlot('*.raw', 'd_raw.cfg'), alignment=0)
 
+# Add some ROIs
+r1 = egg.pyqtgraph.LinearRegionItem([1.5,3.5])
+r2 = egg.pyqtgraph.InfiniteLine(4.2, movable=True)
+r3 = egg.pyqtgraph.InfiniteLine(4.2, movable=True)
+d_raw.ROIs = [[r1,r2], r3]
+
 # Add some data / header info
 d_raw['t']  = [1,2,3,4,5]
 d_raw['V1'] = [1,2,1,2,1]
@@ -56,6 +62,4 @@ d_raw.plot()
 # Overload the post-data-load function to send header info to s
 def after_load_file(d): settings.update(d.headers, ignore_errors=True)
 d_raw.after_load_file = after_load_file
-
-
 
