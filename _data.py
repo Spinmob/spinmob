@@ -276,6 +276,10 @@ class databox:
                           delimiter=self.delimiter,
                           dtype=complex)
 
+        # genfromtxt returns a 1D array if there is only one data line.
+        # highly confusing behavior, numpy!
+        if len(_n.shape(z)) == 1: z = _n.array([z])
+
         # fix for different behavior of genfromtxt on single columns
         if len(z.shape) == 2: z = z.transpose()
         else:                 z = [z]
