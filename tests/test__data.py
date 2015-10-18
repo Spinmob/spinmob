@@ -100,10 +100,10 @@ class Test_databox(_ut.TestCase):
         self.databox.load_file(path=self.data_path)
 
         # Check a value of the loaded file, first level
-        val = self.databox.pop_data_point(3, ckeys=[0])
+        val = self.databox.pop_data_point(3)
 
         # The expected response
-        exp = [100.0]
+        exp = [100.0, 2.43]
         self.assertEqual(val, exp)
 
     def test_execute_script(self):

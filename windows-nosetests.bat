@@ -1,0 +1,3 @@
+nosetests -w tests
+
+@pause

@@ -69,11 +69,13 @@ class databox:
         for n in range(i,min(j, len(self))): output.append(self[n])
         return output
 
-    def __init__(self, delimiter=None, debug=False):
+    def __init__(self, delimiter=None, debug=False, **kwargs):
         """
         delimiter    The delimiter the file uses. None (default) means
                      "Try to figure it out" (reasonably smart)
         debug        Displays some partial debug information while running
+
+        **kwargs are sent to self.h()
         """
 
         # this keeps the dictionaries from getting all jumbled with each other
