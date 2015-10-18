@@ -918,11 +918,11 @@ class fitter():
         # default settings
         self._settings = dict(autoplot      = True,     # whether we always plot when changing stuff
                               plot_fit      = True,     # include f in plots?
-                              plot_bg       = False,    # include bg in plots?
+                              plot_bg       = True,     # include bg in plots?
                               plot_ey       = True,     # include error bars?
                               plot_guess    = True,     # include the guess?
                               plot_guess_zoom = False,  # zoom to include plot?
-                              subtract_bg   = True,     # subtract bg from plots?
+                              subtract_bg   = False,    # subtract bg from plots?
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of limits for trimming x-data
                               xmax          = None,     # list of limits for trimming x-data
@@ -1615,11 +1615,13 @@ class fitter():
         if   p is None and self.results is not None: p = self.results[0]
         elif p is None and self.results is None:     p = self._pguess
 
-        # evaluate this function.
+        # return None if there is no background function
         if self.bg[n] is None: return None
 
         # assemble the arguments for the function
         args = (xdata,) + tuple(p)
+
+        # evaluate the function
         return self.bg[n](*args)
 
     def studentized_residuals(self, p=None):
@@ -1769,8 +1771,8 @@ class fitter():
             # set up two axes. One for data and one for residuals.
             a1 = _p.subplot(211)
             a2 = _p.subplot(212, sharex=a1)
-            a1.set_position([0.15, 0.75, 0.75, 0.15])
-            a2.set_position([0.15, 0.15, 0.75, 0.55])
+            a1.set_position([0.15, 0.72, 0.75, 0.18])
+            a2.set_position([0.15, 0.10, 0.75, 0.60])
 
             # set the scales
             a1.set_xscale(self['xscale'][n])
@@ -1795,17 +1797,17 @@ class fitter():
                                     self['fpoints'][n])
 
             # get the thing to subtract from ydata
-            if self['subtract_bg'] and not self.bg[n] is None:
+            if self['subtract_bg'][n] and not self.bg[n] is None:
 
                 # if we have a fit, use that.
                 if self.results:
-                    dy_data = self._evaluate_bg(n, self._xdata_massaged, self.results[0])
-                    dy_func = self._evaluate_bg(n, x,                    self.results[0])
+                    dy_data = self._evaluate_bg(n, self._xdata_massaged[n], self.results[0])
+                    dy_func = self._evaluate_bg(n, x,                       self.results[0])
 
                 # otherwise, use the _pguess background
                 else:
-                    dy_data = self._evaluate_bg(n, self._xdata_massaged, self._pguess)
-                    dy_func = self._evaluate_bg(n, x,                    self._pguess)
+                    dy_data = self._evaluate_bg(n, self._xdata_massaged[n], self._pguess)
+                    dy_func = self._evaluate_bg(n, x,                       self._pguess)
             else:
                 dy_data = 0*self._xdata_massaged[n]
                 dy_func = 0*x
@@ -1831,7 +1833,7 @@ class fitter():
             if self['plot_guess'][n]:
 
                 # plot the _pguess background curve
-                if self['plot_bg'][n]:
+                if self['plot_bg'][n] and self.bg[n] is not None:
                     a2.plot(x, self._evaluate_bg(n,x,self._pguess)-dy_func, **self['style_guess'][n])
 
                 # plot the _pguess main curve
@@ -1841,7 +1843,7 @@ class fitter():
             if self['plot_fit'] and self.results:
 
                 # plot the background curve
-                if self['plot_bg'][n]:
+                if self['plot_bg'][n] and self.bg[n] is not None:
                     a2.plot(x, self._evaluate_bg(n,x,self.results[0])-dy_func, **self['style_fit'][n])
 
                 # plot the pfit main curve
@@ -1855,10 +1857,17 @@ class fitter():
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_fit'][n])
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
-            # tidy up
+            # Tidy up
+            a1.xaxis.set_ticklabels([])
+
+            # Add labels to the axes
             if self['xlabel'][n] is None: _p.xlabel('xdata['+str(n)+']')
             else:                         _p.xlabel(self['xlabel'][n])
-            if self['ylabel'][n] is None: _p.ylabel('ydata['+str(n)+']')
+            if self['ylabel'][n] is None:
+                ylabel='ydata['+str(n)+']'
+                if self['subtract_bg'][n] and self.bg[n] is not None:
+                    ylabel=ylabel+' - bg['+str(n)+']'
+                _p.ylabel(ylabel)
             else:                         _p.ylabel(self['ylabel'][n])
             a1.set_ylabel('Studentized\nResiduals')
 
