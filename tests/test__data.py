@@ -30,6 +30,7 @@ class Test_databox(_ut.TestCase):
 
         self.fixtures_path = os.path.join('spinmob', 'tests', 'fixtures', 'data_types')
         midPath = os.path.join(self.module_path, self.fixtures_path)
+        self.data_folder = midPath
 
         filename = 'simple_xy_data.dat'
         self.data_path = os.path.join(midPath, filename)
@@ -54,6 +55,7 @@ class Test_databox(_ut.TestCase):
         self.data_path = None
         self.fixtures_path = None
         self.databox = None
+        self.data_folder = None
 
     def test___repr__Default(self):
         """
@@ -221,6 +223,19 @@ class Test_databox(_ut.TestCase):
         val = val[0:5]   # Just check the first five elements
         exp = [85.0, 90.0, 95.0, 100.0, 105.0]
         self.assertListEqual(val, exp)
+
+    def test_load_single_row_of_data(self):
+        """
+        Test that a file with a single row of data can be loaded.
+        """
+        filename = 'one_row_of_data.dat'
+        single_line_path = os.path.join(self.data_folder, filename)
+        one_row_databox = self.databox.load_file(path=single_line_path)
+
+        # TODO: need a better test that only tests the load.
+        value = one_row_databox[0][0]
+        expected_value = 85.0
+        self.assertEqual(value, expected_value)
 
 
 class Test_fitter(_ut.TestCase):
