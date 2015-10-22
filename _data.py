@@ -1867,9 +1867,7 @@ class fitter():
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
             # Tidy up
-            #a1.xaxis.set_ticklabels([])
-            #for label in a1.xticks()[1]: label.set_y(-xlabel_pad)
-        
+            #a1.xaxis.set_ticklabels([])  # Can't (axes are linked!)
 
             # Add labels to the axes
             if self['xlabel'][n] is None: _p.xlabel('xdata['+str(n)+']')
