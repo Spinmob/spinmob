@@ -1780,7 +1780,7 @@ class fitter():
             # set up two axes. One for data and one for residuals.
             a1 = _p.subplot(211)
             a2 = _p.subplot(212, sharex=a1)
-            a1.set_position([0.15, 0.72, 0.75, 0.18])
+            a1.set_position([0.15, 0.75, 0.75, 0.17])
             a2.set_position([0.15, 0.10, 0.75, 0.60])
 
             # set the scales
@@ -1867,7 +1867,9 @@ class fitter():
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
             # Tidy up
-            a1.xaxis.set_ticklabels([])
+            #a1.xaxis.set_ticklabels([])
+            #for label in a1.xticks()[1]: label.set_y(-xlabel_pad)
+        
 
             # Add labels to the axes
             if self['xlabel'][n] is None: _p.xlabel('xdata['+str(n)+']')
