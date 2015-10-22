@@ -1484,13 +1484,16 @@ class fitter():
         if self._set_xdata is None:
             return self._error("No data. Please use set_data() prior to fitting.")
 
+        if (_n.array(self._eydata_massaged)==0).any():
+            return self._error("One or more of your error bars is zero! Are you trying to make me divide by zero? Answer the question.")
+
         self.set(**kwargs)
 
         # massage the data
         self._massage_data()
 
         # set the initial values if specified
-        if not pguess is None: self._pguess = pguess
+        if pguess is not None: self._pguess = pguess
 
         # do the actual optimization
         self.results = _opt.leastsq(self._studentized_residuals_concatenated, self._pguess, full_output=1)
