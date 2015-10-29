@@ -147,7 +147,7 @@ class databox:
         self.clear()
 
         # open said file for reading, read in all the lines and close
-        f = open(path, 'r')
+        f = open(path, 'rU')
         lines = f.readlines()
         f.close()
 
