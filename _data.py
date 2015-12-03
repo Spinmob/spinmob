@@ -2,11 +2,12 @@ import os as _os
 import _dialogs
 
 # do this so all the scripts will work with all the numpy functions
-import numpy as _n
+import numpy          as _n
 import scipy.optimize as _opt
-import pylab as _p
-import textwrap as _textwrap
-import spinmob as _s
+import pylab          as _p
+import textwrap       as _textwrap
+import spinmob        as _s
+import time           as _time
 
 
 
@@ -313,6 +314,9 @@ class databox:
                                 "use current" means use self.delimiter
         """
 
+        # This is the final path. We now write to a temporary file in the user
+        # directory, then move it to the destination. This (hopefully) fixes
+        # problems with sync programs.
         if path == "ask": path = _dialogs.save(filters, default_directory=self.directory)
         if path in ["", None]:
             print "Aborted."
@@ -329,10 +333,12 @@ class databox:
             if self.delimiter is None: delimiter = "\t"
             else:                      delimiter = self.delimiter
 
-
+        # figure out the temporary path
+        temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
+        
 
         # open the file and write the header
-        f = open(path, 'w')
+        f = open(temporary_path, 'w')
         for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
         f.write('\n')
 
@@ -358,6 +364,9 @@ class databox:
 
 
         f.close()
+        
+        # now move it
+        _os.rename(temporary_path, path)
 
 
 
