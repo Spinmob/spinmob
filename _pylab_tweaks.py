@@ -163,7 +163,7 @@ def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
 
     manipulate_shown_data(D, fxname=None, fyname=fyname, **kwargs)
 
-def fit_shown_data(axes="gca", f="a*x+b", p="a=1, b=2", **kwargs):
+def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
     """
     Fast-and-loos quick fit:
     
