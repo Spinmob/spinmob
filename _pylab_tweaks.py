@@ -179,10 +179,11 @@ def fit_shown_data(axes="gca", f="a*x+b", p="a=1, b=2", **kwargs):
     # get the axes
     if axes=="gca": axes = _pylab.gca()
 
-    # trim the data to include only what's shown
+    # get the range for trimming
     _pylab.sca(axes)
-    _s.tweaks.trim()
-    
+    xmin,xmax = axes.get_xlim()
+    ymin,ymax = axes.get_ylim()
+
     # update the kwargs
     if not kwargs.has_key('first_figure'): kwargs['first_figure'] = axes.figure.number+1    
     
@@ -190,7 +191,9 @@ def fit_shown_data(axes="gca", f="a*x+b", p="a=1, b=2", **kwargs):
     fitters = []
     for l in axes.lines:
       
-        x,y = l.get_data()        
+        # get the trimmed data
+        x,y = l.get_data()
+        x,y = _s.fun.trim_data_uber([x,y],[xmin<x,x<xmax,ymin<y,y<ymax])
         
         # create a fitter
         fitters.append(_s.data.fitter(f=f, p=p, **kwargs))        
