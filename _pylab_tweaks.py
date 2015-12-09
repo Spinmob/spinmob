@@ -163,7 +163,45 @@ def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
 
     manipulate_shown_data(D, fxname=None, fyname=fyname, **kwargs)
 
+def fit_shown_data(axes="gca", f="a*x+b", p="a=1, b=2", **kwargs):
+    """
+    Fast-and-loos quick fit:
+    
+    Loops over each line of the supplied axes and fits with the supplied
+    function (f) and parameters (p). Assumes uniform error and scales this
+    such that the reduced chi^2 is 1.
+    
+    Returns a list of fitter objects
+    
+    **kwargs are sent to _s.data.fitter()
+    """
 
+    # get the axes
+    if axes=="gca": axes = _pylab.gca()
+
+    # trim the data to include only what's shown
+    _pylab.sca(axes)
+    _s.tweaks.trim()
+    
+    # update the kwargs
+    if not kwargs.has_key('first_figure'): kwargs['first_figure'] = axes.figure.number+1    
+    
+    # loop over the lines
+    fitters = []
+    for l in axes.lines:
+      
+        x,y = l.get_data()        
+        
+        # create a fitter
+        fitters.append(_s.data.fitter(f=f, p=p, **kwargs))        
+        fitters[-1].set_data(x,y)
+        fitters[-1].fit()
+        fitters[-1].autoscale_eydata_and_fit()
+        print fitters[-1]
+        print "<click the graph to continue>"
+        fitters[-1].ginput(timeout=0)
+    
+    return fitters
 
 def format_figure(figure=None, tall=False, draw=True):
     """

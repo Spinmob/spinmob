@@ -18,9 +18,6 @@ import time           as _time
 
 
 
-
-
-
 #############################################################
 # Class for storing / manipulating / saving / loading data
 #############################################################
@@ -938,6 +935,7 @@ class fitter():
                               plot_guess    = True,     # include the guess?
                               plot_guess_zoom = False,  # zoom to include plot?
                               subtract_bg   = False,    # subtract bg from plots?
+                              first_figure  = 0,        # first figure number to use                              
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of limits for trimming x-data
                               xmax          = None,     # list of limits for trimming x-data
@@ -964,7 +962,7 @@ class fitter():
                                    'xlabel', 'ylabel'])
 
         # settings that should not be lists in general (i.e. not one per data set)
-        self._single_settings = list(['autoplot'])
+        self._single_settings = list(['autoplot', 'first_figure'])
 
         # set the functions
         self.set_functions(f, p, c, bg)
@@ -1783,7 +1781,7 @@ class fitter():
         for n in range(len(xdata)):
 
             # get the next figure
-            fig = _p.figure(n)
+            fig = _p.figure(self['first_figure']+n)
             fig.clear()
 
             # set up two axes. One for data and one for residuals.
@@ -1927,7 +1925,7 @@ class fitter():
         _p.show()
 
         # for some reason, it's necessary to touch every figure, too
-        for n in range(len(xdata)-1,-1,-1): _p.figure(n)
+        for n in range(len(xdata)-1,-1,-1): _p.figure(self['first_figure']+n)
 
         return self
 
@@ -1952,11 +1950,11 @@ class fitter():
         # loop over the specified plots
         for i in n:
             try:
-                xmin, xmax = _p.figure(i).axes[1].get_xlim()
+                xmin, xmax = _p.figure(self['first_figure']+i).axes[1].get_xlim()
                 self['xmin'][i] = xmin
                 self['xmax'][i] = xmax
 
-                ymin, ymax = _p.figure(i).axes[1].get_ylim()
+                ymin, ymax = _p.figure(self['first_figure']+i).axes[1].get_ylim()
                 self['ymin'][i] = ymin
                 self['ymax'][i] = ymax
 
@@ -1991,13 +1989,13 @@ class fitter():
         # loop over the specified plots
         for i in n:
             try:
-                xmin, xmax = _p.figure(i).axes[1].get_xlim()
+                xmin, xmax = _p.figure(self['first_figure]']+i).axes[1].get_xlim()
                 xc = 0.5*(xmin+xmax)
                 xs = 0.5*abs(xmax-xmin)
                 self['xmin'][i] = xc - xfactor*xs
                 self['xmax'][i] = xc + xfactor*xs
 
-                ymin, ymax = _p.figure(i).axes[1].get_ylim()
+                ymin, ymax = _p.figure(self['first_figure]']+i).axes[1].get_ylim()
                 yc = 0.5*(ymin+ymax)
                 ys = 0.5*abs(ymax-ymin)
                 self['ymin'][i] = yc - yfactor*ys
@@ -2012,13 +2010,20 @@ class fitter():
         return self
 
 
-    def ginput(self, figure_number=0, **kwargs):
+    def ginput(self, data_set=0, **kwargs):
         """
-        Pops up the n'th figure and lets you click it. Returns value from pylab.ginput().
+        Pops up the figure for the specified data set. 
+        
+        Returns value from pylab.ginput().
 
-        args and kwargs are sent to pylab.ginput()
+        kwargs are sent to pylab.ginput()
         """
-        _s.tweaks.raise_figure_window(figure_number)
+        # this will temporarily fix the deprecation warning
+        import warnings
+        import matplotlib.cbook
+        warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
+        
+        _s.tweaks.raise_figure_window(data_set+self['first_figure'])
         return _p.ginput(**kwargs)
 
 
