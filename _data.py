@@ -1,4 +1,5 @@
-import os as _os
+import os     as _os
+import shutil as _shutil
 import _dialogs
 
 # do this so all the scripts will work with all the numpy functions
@@ -8,6 +9,7 @@ import pylab          as _p
 import textwrap       as _textwrap
 import spinmob        as _s
 import time           as _time
+
 
 
 
@@ -361,9 +363,9 @@ class databox:
 
 
         f.close()
-        
+                
         # now move it
-        _os.rename(temporary_path, path)
+        _shutil.move(temporary_path, path)
 
 
 
