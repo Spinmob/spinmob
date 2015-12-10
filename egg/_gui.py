@@ -1766,10 +1766,10 @@ class DataboxPlot(_d.databox, GridLayout):
         # plot the data if this isn't just a settings load
         if not just_settings:
             self.plot()
-            self.after_load_file()
+            self.after_load_file(self)
 
 
-    def after_load_file(self):
+    def after_load_file(self,*args):
         """
         Called after a file is loaded. Does nothing. Feel free to overwrite!
 
