@@ -770,7 +770,7 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
 
 
 
-def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, title='', clabel='z', autoformat=True, colormap="Last Used", shell_history=1, **kwargs):
+def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, clabel='z', autoformat=True, colormap="Last Used", shell_history=1, **kwargs):
     """
     Generates an image or 3d plot
 
