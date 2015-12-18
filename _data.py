@@ -97,9 +97,9 @@ class databox:
         print "\nDatabox Instance", self.path
         print "\nHeader"        
         for h in self.hkeys: print "  "+h+":", self.h(h)
-        print "\nColumns"
-        for c in self.ckeys: print "  "+c
-        print ""
+        s = "\nColumns ("+str(len(self.ckeys))+"): "
+        for c in self.ckeys: s = s+c+", "
+        print s[:-2]
         
 
     def _globals(self):
