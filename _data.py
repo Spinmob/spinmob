@@ -87,11 +87,20 @@ class databox:
 
     def __repr__(self):
 
-        s = "\nDatabox Instance"
-        s = s+"\n  header elements: "+str(len(self.hkeys))
-        s = s+"\n  columns of data: "+str(len(self.ckeys))
-        s = s+"\n"
+        s = "<databox instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
         return s
+
+    def more_info(self):
+        """
+        Prints out more information about the databox.
+        """
+        print "\nDatabox Instance", self.path
+        print "\nHeader"        
+        for h in self.hkeys: print "  "+h+":", self.h(h)
+        print "\nColumns"
+        for c in self.ckeys: print "  "+c
+        print ""
+        
 
     def _globals(self):
         """
