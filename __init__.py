@@ -2,6 +2,10 @@ import os           as _os
 import matplotlib   as _mpl
 import pylab
 
+# ignore warnings by default
+import warnings
+warnings.simplefilter("ignore")
+
 # Start the QApplication. Not sure why it has to be done this way.
 import PyQt4.QtCore as _qtc
 import PyQt4.Qt     as _qt
