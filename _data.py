@@ -1803,7 +1803,7 @@ class fitter():
 
             # set the scales
             a1.set_xscale(self['xscale'][n])
-            a1.set_yscale(self['yscale'][n])
+            #a1.set_yscale(self['yscale'][n])
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
