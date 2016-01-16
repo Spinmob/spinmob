@@ -1798,12 +1798,11 @@ class fitter():
             # set up two axes. One for data and one for residuals.
             a1 = _p.subplot(211)
             a2 = _p.subplot(212, sharex=a1)
-            a1.set_position([0.15, 0.75, 0.75, 0.17])
+            a1.set_position([0.15, 0.75, 0.75, 0.15])
             a2.set_position([0.15, 0.10, 0.75, 0.60])
 
             # set the scales
             a1.set_xscale(self['xscale'][n])
-            #a1.set_yscale(self['yscale'][n])
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
