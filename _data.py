@@ -1806,7 +1806,7 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            x = self._get_xdata_for_potting(n=n)
+            x = self._get_xdata_for_plotting(n=n)
 
             # get the thing to subtract from ydata
             if self['subtract_bg'][n] and not self.bg[n] is None:
@@ -1925,7 +1925,7 @@ class fitter():
 
         return self
 
-    def _get_xdata_for_potting(self, n):
+    def _get_xdata_for_plotting(self, n):
         """
         Parameters
         ----------
