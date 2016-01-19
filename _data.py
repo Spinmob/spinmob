@@ -1806,21 +1806,7 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            # get the xdata for the curves
-            if self['fpoints'][n] is None:
-                x = self._xdata_massaged[n]
-            else:
-                # do exponential ranging if xscale is log
-                if self['xscale'][n] == 'log':
-                    x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
-                                    _n.log10(max(self._xdata_massaged[n])),
-                                    self['fpoints'][n], True, 10.0)
-
-                # otherwise do linear spacing
-                else:
-                    x = _n.linspace(min(self._xdata_massaged[n]),
-                                    max(self._xdata_massaged[n]),
-                                    self['fpoints'][n])
+            x = self._get_xdata_for_potting(n=n)
 
             # get the thing to subtract from ydata
             if self['subtract_bg'][n] and not self.bg[n] is None:
@@ -1938,6 +1924,33 @@ class fitter():
         for n in range(len(xdata)-1,-1,-1): _p.figure(self['first_figure']+n)
 
         return self
+
+    def _get_xdata_for_potting(self, n):
+        """
+        Parameters
+        ----------
+        n: int
+
+        Returns
+        -------
+        float?
+        """
+        # get the xdata for the curves
+        if self['fpoints'][n] is None:
+            x = self._xdata_massaged[n]
+        else:
+            # do exponential ranging if xscale is log
+            if self['xscale'][n] == 'log':
+                x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
+                                _n.log10(max(self._xdata_massaged[n])),
+                                self['fpoints'][n], True, 10.0)
+
+            # otherwise do linear spacing
+            else:
+                x = _n.linspace(min(self._xdata_massaged[n]),
+                                max(self._xdata_massaged[n]),
+                                self['fpoints'][n])
+        return x
 
     def trim(self, n='all'):
         """
