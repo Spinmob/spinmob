@@ -1933,7 +1933,7 @@ class fitter():
 
         Returns
         -------
-        float?
+        float
         """
         # get the xdata for the curves
         if self['fpoints'][n] is None:
