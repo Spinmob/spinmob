@@ -95,12 +95,12 @@ class databox:
         Prints out more information about the databox.
         """
         print "\nDatabox Instance", self.path
-        print "\nHeader"        
+        print "\nHeader"
         for h in self.hkeys: print "  "+h+":", self.h(h)
         s = "\nColumns ("+str(len(self.ckeys))+"): "
         for c in self.ckeys: s = s+c+", "
         print s[:-2]
-        
+
 
     def _globals(self):
         """
@@ -343,7 +343,7 @@ class databox:
 
         # figure out the temporary path
         temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
-        
+
 
         # open the file and write the header
         f = open(temporary_path, 'w')
@@ -372,7 +372,7 @@ class databox:
 
 
         f.close()
-                
+
         # now move it
         _shutil.move(temporary_path, path)
 
@@ -946,7 +946,7 @@ class fitter():
                               plot_guess    = True,     # include the guess?
                               plot_guess_zoom = False,  # zoom to include plot?
                               subtract_bg   = False,    # subtract bg from plots?
-                              first_figure  = 0,        # first figure number to use                              
+                              first_figure  = 0,        # first figure number to use
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of limits for trimming x-data
                               xmax          = None,     # list of limits for trimming x-data
@@ -2022,8 +2022,8 @@ class fitter():
 
     def ginput(self, data_set=0, **kwargs):
         """
-        Pops up the figure for the specified data set. 
-        
+        Pops up the figure for the specified data set.
+
         Returns value from pylab.ginput().
 
         kwargs are sent to pylab.ginput()
@@ -2032,7 +2032,7 @@ class fitter():
         import warnings
         import matplotlib.cbook
         warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
-        
+
         _s.tweaks.raise_figure_window(data_set+self['first_figure'])
         return _p.ginput(**kwargs)
 
