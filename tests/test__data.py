@@ -62,7 +62,7 @@ class Test_databox(_ut.TestCase):
         Test default output of __repr__ for a new databox.
         """
         val = self.databox.__repr__()
-        exp = "\nDatabox Instance\n  header elements: 0\n  columns of data: 0\n"
+        exp = "<databox instance: 0 headers, 0 columns>"
         self.assertEqual(val, exp)
 
     def test_load_file(self):
