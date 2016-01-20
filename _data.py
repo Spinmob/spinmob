@@ -1669,10 +1669,12 @@ class fitter():
         f = self._evaluate_all_functions(self._xdata_massaged, p)
 
         # get the full residuals list
-        r = []
+        residuals = []
         for n in range(len(f)):
-            r.append((self._ydata_massaged[n]-f[n]) / _n.absolute(self._eydata_massaged[n]))
-        return r
+            numerator = self._ydata_massaged[n]-f[n]
+            denominator = _n.absolute(self._eydata_massaged[n])
+            residuals.append(numerator/denominator)
+        return residuals
 
     def _studentized_residuals_concatenated(self, p=None):
         """
