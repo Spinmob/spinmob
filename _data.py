@@ -95,12 +95,12 @@ class databox:
         Prints out more information about the databox.
         """
         print "\nDatabox Instance", self.path
-        print "\nHeader"        
+        print "\nHeader"
         for h in self.hkeys: print "  "+h+":", self.h(h)
         s = "\nColumns ("+str(len(self.ckeys))+"): "
         for c in self.ckeys: s = s+c+", "
         print s[:-2]
-        
+
 
     def _globals(self):
         """
@@ -343,7 +343,7 @@ class databox:
 
         # figure out the temporary path
         temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
-        
+
 
         # open the file and write the header
         f = open(temporary_path, 'w')
@@ -372,7 +372,7 @@ class databox:
 
 
         f.close()
-                
+
         # now move it
         _shutil.move(temporary_path, path)
 
@@ -946,7 +946,7 @@ class fitter():
                               plot_guess    = True,     # include the guess?
                               plot_guess_zoom = False,  # zoom to include plot?
                               subtract_bg   = False,    # subtract bg from plots?
-                              first_figure  = 0,        # first figure number to use                              
+                              first_figure  = 0,        # first figure number to use
                               fpoints       = 1000,     # number of points to use when plotting f
                               xmin          = None,     # list of limits for trimming x-data
                               xmax          = None,     # list of limits for trimming x-data
@@ -1669,10 +1669,12 @@ class fitter():
         f = self._evaluate_all_functions(self._xdata_massaged, p)
 
         # get the full residuals list
-        r = []
+        residuals = []
         for n in range(len(f)):
-            r.append((self._ydata_massaged[n]-f[n]) / _n.absolute(self._eydata_massaged[n]))
-        return r
+            numerator = self._ydata_massaged[n]-f[n]
+            denominator = _n.absolute(self._eydata_massaged[n])
+            residuals.append(numerator/denominator)
+        return residuals
 
     def _studentized_residuals_concatenated(self, p=None):
         """
@@ -1806,21 +1808,7 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            # get the xdata for the curves
-            if self['fpoints'][n] is None:
-                x = self._xdata_massaged[n]
-            else:
-                # do exponential ranging if xscale is log
-                if self['xscale'][n] == 'log':
-                    x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
-                                    _n.log10(max(self._xdata_massaged[n])),
-                                    self['fpoints'][n], True, 10.0)
-
-                # otherwise do linear spacing
-                else:
-                    x = _n.linspace(min(self._xdata_massaged[n]),
-                                    max(self._xdata_massaged[n]),
-                                    self['fpoints'][n])
+            x = self._get_xdata_for_plotting(n=n)
 
             # get the thing to subtract from ydata
             if self['subtract_bg'][n] and not self.bg[n] is None:
@@ -1939,6 +1927,33 @@ class fitter():
 
         return self
 
+    def _get_xdata_for_plotting(self, n):
+        """
+        Parameters
+        ----------
+        n: int
+
+        Returns
+        -------
+        float
+        """
+        # get the xdata for the curves
+        if self['fpoints'][n] is None:
+            x = self._xdata_massaged[n]
+        else:
+            # do exponential ranging if xscale is log
+            if self['xscale'][n] == 'log':
+                x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
+                                _n.log10(max(self._xdata_massaged[n])),
+                                self['fpoints'][n], True, 10.0)
+
+            # otherwise do linear spacing
+            else:
+                x = _n.linspace(min(self._xdata_massaged[n]),
+                                max(self._xdata_massaged[n]),
+                                self['fpoints'][n])
+        return x
+
     def trim(self, n='all'):
         """
         This will set xmin and xmax based on the current zoom-level of the
@@ -2022,8 +2037,8 @@ class fitter():
 
     def ginput(self, data_set=0, **kwargs):
         """
-        Pops up the figure for the specified data set. 
-        
+        Pops up the figure for the specified data set.
+
         Returns value from pylab.ginput().
 
         kwargs are sent to pylab.ginput()
@@ -2032,7 +2047,7 @@ class fitter():
         import warnings
         import matplotlib.cbook
         warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
-        
+
         _s.tweaks.raise_figure_window(data_set+self['first_figure'])
         return _p.ginput(**kwargs)
 
