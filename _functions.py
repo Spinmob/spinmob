@@ -679,7 +679,7 @@ def get_shell_history():
 
     elif _os.environ.has_key('SPYDER_SHELL_ID'):
         try:
-            p = _os.path.join(_settings.path_user, ".spyder2", ".history.py")
+            p = _os.path.join(_settings.path_user, ".spyder2", "history.py")
             a = read_lines(p)
             a.reverse()
             return a
