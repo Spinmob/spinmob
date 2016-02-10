@@ -1266,12 +1266,7 @@ class fitter():
 
         **kwargs are added to the globals for script evaluation
         """
-
-        # warn the user
-        if eydata is None:
-            print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
-            print "  eydata = 0.1"
-            print "  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n"
+        self._eydata_warning(eydata)
 
         # xdata and ydata   'script', [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            'script', [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], 3, [3,[1,2,3]], None
@@ -1322,6 +1317,18 @@ class fitter():
 
         if self['autoplot']: self.plot()
 
+    def _eydata_warning(self, eydata):
+        """
+        Warning if eydata is None.
+
+        This warning is suppressed if self._safe_settings['silent'] is True.
+        """
+        if self._safe_settings['silent'] is True:
+            pass
+        elif eydata is None:
+            print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
+            print "  eydata = 0.1"
+            print "  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n"
 
     def evaluate_script(self, script, **kwargs):
         """
