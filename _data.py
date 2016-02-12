@@ -965,6 +965,9 @@ class fitter():
                               style_guess  = dict(marker='',  color='0.25', ls='-'),
                               style_bg     = dict(marker='',  color='k',    ls='-'))
 
+        # Silence warnings
+        self._settings['silent'] = False
+
         # settings that don't require a re-fit
         self._safe_settings =list(['bg_names', 'fpoints', 'f_names',
                                    'plot_bg', 'plot_ey', 'plot_guess', 'plot_fit',
@@ -1323,7 +1326,7 @@ class fitter():
 
         This warning is suppressed if self._safe_settings['silent'] is True.
         """
-        if self._safe_settings['silent'] is True:
+        if self['silent'] is True:
             pass
         elif eydata is None:
             print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
