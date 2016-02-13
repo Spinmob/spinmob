@@ -1326,7 +1326,7 @@ class fitter():
 
         This warning is suppressed if self._safe_settings['silent'] is True.
         """
-        if self['silent'] is True:
+        if self._settings['silent'][0] is True:
             pass
         elif eydata is None:
             print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
