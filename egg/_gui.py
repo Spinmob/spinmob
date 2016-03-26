@@ -1569,7 +1569,7 @@ class DataboxPlot(_d.databox, GridLayout):
         unless auto-saving is enabled).
         """
 
-        # Do all the tab-area initialization; this sets _widget and _layout
+        # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
         _d.databox.__init__(self, **kwargs)
 
