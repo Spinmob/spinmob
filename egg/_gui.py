@@ -63,7 +63,9 @@ class BaseObject():
         Returns the object's parent window. Returns None if no window found.
         """
         x = self
-        while not x._parent == None and not isinstance(x._parent, Window): x = x._parent
+        while not x._parent == None and not isinstance(x._parent, Window): 
+                       
+            x = x._parent
         return x._parent
 
 
@@ -171,6 +173,8 @@ class GridLayout(BaseObject):
         This creates a grid layout that can contain other Elements
         (including other grid layouts)
         """
+
+        BaseObject.__init__(self)
 
         # Qt widget to house the layout
         self._widget = _g.Qt.QtGui.QWidget()
@@ -327,10 +331,11 @@ class Window(GridLayout):
         Users are expected to use all properties not starting with an underscore,
         and all the underlying Qt objects have names starting with an underscore.
         """
+        self._parent = self
 
         # initialize the grid layout
         GridLayout.__init__(self, margins=True)
-
+        
         # create the QtMainWindow,
         self._window = _g.Qt.QtGui.QMainWindow()
         self.set_size(size)
