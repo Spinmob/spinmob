@@ -25,10 +25,14 @@ class BaseObject():
         deriving objects from this, call BaseObject.__init__(self) as the
         LAST step of the new __init__ function.
         """
+        # Parent object (to be set)
+        self._parent = None
+
         # for remembering settings; for child objects, overwrite both, and
         # add a load_gui_settings() to the init!
         self._autosettings_path     = None
         self._autosettings_controls = []
+        
         # common signals
         return
 
@@ -47,6 +51,21 @@ class BaseObject():
         """
         self._widget.setFixedHeight(height)
         return self
+
+    def get_parent(self): 
+        """
+        Gets the parent object into which this object was placed.
+        """        
+        return self._parent
+    
+    def get_window(self): 
+        """
+        Returns the object's parent window. Returns None if no window found.
+        """
+        x = self
+        while not x._parent == None and not isinstance(x._parent, Window): x = x._parent
+        return x._parent
+
 
     def block_events(self):
         """
@@ -227,6 +246,10 @@ class GridLayout(BaseObject):
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
                                _g.Qt.QtCore.Qt.Alignment(alignment))
+
+        # try to store the parent object (self) in the placed object
+        try:    object._parent = self
+        except: None
 
         return object
 
@@ -441,6 +464,20 @@ class Window(GridLayout):
         while _t.time() - t0 < t:
             # sleep and then process GUI events
             _t.sleep(dt)
+            self.process_events()
+
+    def sleep(self, seconds=0.05):
+        """
+        A "smooth" version of time.sleep(): waits for the time to pass but
+        processes events as well.
+        """
+        t0 = _t.time()
+        while _t.time()-t0 < seconds:
+            
+            # Pause a bit to avoid heavy CPU
+            _t.sleep(0.01)
+            
+            # process events
             self.process_events()
 
     def process_events(self):

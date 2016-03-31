@@ -377,11 +377,22 @@ class databox:
         _shutil.move(temporary_path, path)
 
 
+    def get_data_point(self, n):
+        """
+        Returns the n'th data point (starting at 0) from all columns.
+        
+        n       index of data point to return.
+        """
+        # loop over the columns and pop the data
+        point = []
+        for k in self.ckeys: point.append(self[k][n])
+        return point
+        
 
     def pop_data_point(self, n):
         """
-        This will remove and return the n'th data point (starting at 0)
-        in the supplied list of columns.
+        This will remove and return the n'th data point (starting at 0) from
+        all columns.
 
         n       index of data point to pop.
         """
