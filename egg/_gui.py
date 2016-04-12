@@ -1419,7 +1419,14 @@ class TreeDictionary(BaseObject):
         # quit if it pooped.
         if x == None: return None
 
-        return x.value()
+        # get the value and test the bounds
+        value  = x.value()
+        bounds = x.opts['bounds']
+        if value > max(bounds): value = max(bounds)
+        if value < min(bounds): value = min(bounds)
+        
+        # return it        
+        return value
 
     __getitem__ = get_value
 
