@@ -52,6 +52,13 @@ class BaseObject():
         self._widget.setFixedHeight(height)
         return self
 
+    def set_parent(self, parent):
+        """
+        Sets the parent object manually (usually this is done automatically
+        when placing the object).
+        """
+        self._parent = parent
+
     def get_parent(self): 
         """
         Gets the parent object into which this object was placed.
@@ -69,6 +76,14 @@ class BaseObject():
         return x._parent
 
 
+    def process_events(self):
+        """
+        Processes pending GUI events. This just calls 
+            self.get_window().process_events()
+        """
+        self.get_window().process_events()        
+        
+        
     def block_events(self):
         """
         Prevents the widget from sending signals.
@@ -252,7 +267,7 @@ class GridLayout(BaseObject):
                                _g.Qt.QtCore.Qt.Alignment(alignment))
 
         # try to store the parent object (self) in the placed object
-        try:    object._parent = self
+        try:    object.set_parent(self)
         except: None
 
         return object
@@ -372,8 +387,7 @@ class Window(GridLayout):
         self._window.deleteLater() appropriately. Otherwise it will just
         close the window.
         """
-        print "\n\nShutting down...\n  arguments:", args
-        self._window.deleteLater()
+        print "Window closed but not destroyed."
 
     def _event_close(self, event):
         """
@@ -757,6 +771,7 @@ class TabArea(BaseObject):
         # create a widget to go in the tab
         tab = GridLayout()
         self.tabs.append(tab)
+        tab.set_parent(self)
 
         # create and append the tab to the list
         self._widget.addTab(tab._widget, title)
