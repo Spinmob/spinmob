@@ -79,11 +79,31 @@ class BaseObject():
     def process_events(self):
         """
         Processes pending GUI events. This just calls 
-            self.get_window().process_events()
+          
+           self.get_window().process_events()
+        
+        so it requires the object to have been placed somewhere within a window.
         """
         self.get_window().process_events()        
         
+    def sleep(self, seconds=0.05, dt=0.01):
+        """
+        A "smooth" version of time.sleep(): waits for the time to pass but
+        processes events every dt as well.
         
+        Note this requires that the object is either a window or embedded 
+        somewhere within a window.
+        """
+        t0 = _t.time()
+        while _t.time()-t0 < seconds:
+            
+            # Pause a bit to avoid heavy CPU
+            _t.sleep(dt)
+            
+            # process events
+            self.process_events()
+    
+    
     def block_events(self):
         """
         Prevents the widget from sending signals.
@@ -473,32 +493,7 @@ class Window(GridLayout):
         signal.connect(function)
         return self
 
-    def pause(self, t=0.5, dt=0.05):
-        """
-        Calling this will sleep for t seconds while processing GUI events,
-        waiting dt seconds in between event handling. This is useful if
-        you want to have a function wait without freezing up the GUI.
-        """
-        t0 = _t.time()
-        while _t.time() - t0 < t:
-            # sleep and then process GUI events
-            _t.sleep(dt)
-            self.process_events()
-
-    def sleep(self, seconds=0.05):
-        """
-        A "smooth" version of time.sleep(): waits for the time to pass but
-        processes events as well.
-        """
-        t0 = _t.time()
-        while _t.time()-t0 < seconds:
-            
-            # Pause a bit to avoid heavy CPU
-            _t.sleep(0.01)
-            
-            # process events
-            self.process_events()
-
+    
     def process_events(self):
         """
         Allows the GUI to update.
