@@ -1431,9 +1431,15 @@ class TreeDictionary(BaseObject):
 
         # get the value and test the bounds
         value  = x.value()
-        bounds = x.opts['bounds']
-        if value > max(bounds): value = max(bounds)
-        if value < min(bounds): value = min(bounds)
+        
+        # handles the two versions of pyqtgraph
+        bounds = None
+        if   x.opts.has_key('limits'): bounds = x.opts['limits']
+        elif x.opts.has_key('bounds'): bounds = x.opts['bounds']
+    
+        if not bounds == None:
+            if not bounds[1]==None and value > bounds[1]: value = bounds[1]
+            if not bounds[0]==None and value < bounds[0]: value = bounds[0]
         
         # return it        
         return value
