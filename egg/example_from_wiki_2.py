@@ -14,8 +14,6 @@ t_processed = tabs2.add_tab("Processed")
 tabs1.load_gui_settings()
 tabs2.load_gui_settings()
 
-# show it!
-w.show()
 
 
 
@@ -63,3 +61,8 @@ d_raw.plot()
 def after_load_file(d): settings.update(d.headers, ignore_errors=True)
 d_raw.after_load_file = after_load_file
 
+
+
+
+# show it!
+w.show(True)
