@@ -1434,13 +1434,32 @@ class TreeDictionary(BaseObject):
         
         # handles the two versions of pyqtgraph
         bounds = None
-        if   x.opts.has_key('limits'): bounds = x.opts['limits']
-        elif x.opts.has_key('bounds'): bounds = x.opts['bounds']
     
-        if not bounds == None:
-            if not bounds[1]==None and value > bounds[1]: value = bounds[1]
-            if not bounds[0]==None and value < bounds[0]: value = bounds[0]
-        
+        # For lists, just make sure it's a valid value
+        if x.opts['type'] == 'list':
+
+            # If it's not one from the master list, choose
+            # and return the default value.            
+            if not value in x.opts['values']:
+                
+                # Only choose a default if there exists one                
+                if len(x.opts('values')):                              
+                    self.set_value(name, x.opts['values'][0])                
+                    return x.opts['values'][0]
+                
+                # Otherwise, just return None and do nothing                
+                else: return None
+
+                
+        # Otherwise assume it is a value with bounds or limits (depending on 
+        # the version of pyqtgraph)    
+        else:        
+            if   x.opts.has_key('limits'): bounds = x.opts['limits']
+            elif x.opts.has_key('bounds'): bounds = x.opts['bounds']
+            if not bounds == None:
+                if not bounds[1]==None and value > bounds[1]: value = bounds[1]
+                if not bounds[0]==None and value < bounds[0]: value = bounds[0]
+            
         # return it        
         return value
 
