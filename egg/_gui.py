@@ -1167,6 +1167,33 @@ class TreeDictionary(BaseObject):
 
         return s
 
+    def block_events(self):
+        """
+        Special version of block_events that loops over all tree elements.
+        """
+        # block events in the usual way
+        BaseObject.block_events(self)
+        
+        # loop over all top level parameters
+        for i in range(self._widget.topLevelItemCount()):
+            self._widget.topLevelItem(i).param.blockSignals(True)
+        
+        return self
+
+    def unblock_events(self):
+        """
+        Special version of unblock_events that loops over all tree elements as well.
+        """
+        # unblock events in the usual way
+        BaseObject.unblock_events(self)
+        
+        # loop over all top level parameters
+        for i in range(self._widget.topLevelItemCount()):
+            self._widget.topLevelItem(i).param.blockSignals(False)
+        
+        return self
+
+
     def connect_any_signal_changed(self, function):
         """
         Connects the "anything changed" signal for all of the tree to the
@@ -1176,7 +1203,8 @@ class TreeDictionary(BaseObject):
         for i in range(self._widget.topLevelItemCount()):
 
             # make sure there is only one connection!
-            self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(function, type=_g.QtCore.Qt.UniqueConnection)
+            self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(
+                              function, type=_g.QtCore.Qt.UniqueConnection)
 
         return self
 
