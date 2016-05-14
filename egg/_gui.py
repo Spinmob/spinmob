@@ -144,7 +144,7 @@ class BaseObject():
         """
         Saves just the current configuration of the controls (if we're supposed to).
         """
-
+        print self._autosettings_path
         # only if we're supposed to!
         if self._autosettings_path:
 
@@ -444,6 +444,12 @@ class Window(GridLayout):
         """
         if self._autosettings_path == None: return
 
+        # make a path with a sub-directory
+        path = _os.path.join("gui_settings", self._autosettings_path)
+        
+        # make sure the directory exists
+        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+
         # make the databox object
         d = _d.databox()
 
@@ -456,7 +462,7 @@ class Window(GridLayout):
         d.insert_header('h', s.height())
 
         # save it
-        d.save_file(self._autosettings_path, force_overwrite=True)
+        d.save_file(path, force_overwrite=True)
 
     def _load_settings(self):
         """
@@ -464,13 +470,19 @@ class Window(GridLayout):
         loads from self.default_save_path.
         """
         if self._autosettings_path == None: return
+        
+        # make a path with a sub-directory
+        path = _os.path.join("gui_settings", self._autosettings_path)
+        
+        # make sure the directory exists
+        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
 
         # make the databox object
         d = _d.databox()
 
         # only load if it exists
-        if _os.path.exists(self._autosettings_path):
-            d.load_file(self._autosettings_path, header_only=True)
+        if _os.path.exists(path):
+            d.load_file(path, header_only=True)
         else: return None
 
         # update the window settings
@@ -1571,7 +1583,10 @@ class TreeDictionary(BaseObject):
 
         If the file doesn't exist, it will use hard-coded defaults.
         """
-        if path==None: path = self.default_save_path
+        if path==None: path = _os.path.join("gui_settings", self.default_save_path)
+      
+        # make sure the directory exists
+        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
 
         # make the databox object
         d = _d.databox()
@@ -1590,7 +1605,10 @@ class TreeDictionary(BaseObject):
         Loads all the parameters from a databox text file. If path=None,
         loads from self.default_save_path.
         """
-        if path==None: path = self.default_save_path
+        if path==None: path = _os.path.join("gui_settings", self.default_save_path)
+      
+        # make sure the directory exists
+        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
 
         # make the databox object
         d = _d.databox()
