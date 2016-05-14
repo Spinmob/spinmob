@@ -148,6 +148,12 @@ class BaseObject():
         # only if we're supposed to!
         if self._autosettings_path:
 
+            # make a path with a sub-directory
+            path = _os.path.join("gui_settings", self._autosettings_path)
+            
+            # make sure the directory exists
+            if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+
             # for saving header info
             d = _d.databox()
 
@@ -155,7 +161,7 @@ class BaseObject():
             for x in self._autosettings_controls: self._store_gui_setting(d, x)
 
             # save the file
-            d.save_file(self._autosettings_path, force_overwrite=True)
+            d.save_file(path, force_overwrite=True)
 
 
     def load_gui_settings(self):
@@ -166,15 +172,17 @@ class BaseObject():
         # only do this if we're supposed to
         if self._autosettings_path is not None:
 
+            # make a path with a sub-directory
+            path = _os.path.join("gui_settings", self._autosettings_path)
+            
             # databox just for loading a cfg file
             d = _d.databox()
 
             # if the load file succeeded
-            if d.load_file(self._autosettings_path, header_only=True, quiet=True) is not None:
+            if d.load_file(path, header_only=True, quiet=True) is not None:
 
                 # loop over the settings we're supposed to change
-                for x in self._autosettings_controls:
-                    self._load_gui_setting(d, x)
+                for x in self._autosettings_controls: self._load_gui_setting(d, x)
 
     def _load_gui_setting(self, databox, name):
         """
@@ -648,7 +656,30 @@ class Label(BaseObject):
         self._widget.setText(str(text))
         return self
 
+    
 
+    def set_style(self, *args, **kwargs):
+        """
+        Provides access to any number of style sheet settings via 
+        self._widget.SetStyleSheet()
+        
+        *args can be any element between semicolons, e.g.
+            self.set_stylesheet('text-align: right; padding-left: 5px')
+
+        **kwargs can be any key-value pair, replacing '-' with '_' in the key, e.g.
+            self.set_stylesheet(text_align='right', padding_left='5px')
+            
+        See QLabel.SetStyleSheet() documentation.
+        """
+        # assemble the string
+        s = "QLabel {"
+        for a in args:          s = s+a+"; "
+        for k in kwargs.keys(): s = s+k.replace("_","-")+": "+kwargs[k]+"; "
+        s = s+"}"
+        
+        # set it!
+        self._widget.setStyleSheet(s)
+        return self
 
 
 class NumberBox(BaseObject):
