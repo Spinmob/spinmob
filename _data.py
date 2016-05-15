@@ -330,6 +330,7 @@ class databox:
             print "Aborted."
             return False
 
+        # Save the path for future reference
         self.path=path
 
         # if the path exists, make a backup
@@ -343,8 +344,7 @@ class databox:
 
         # figure out the temporary path
         temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
-
-
+        
         # open the file and write the header
         f = open(temporary_path, 'w')
         for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
@@ -369,8 +369,7 @@ class databox:
                 else:
                     elements.append('_')
             f.write(delimiter.join(elements) + "\n")
-
-
+            
         f.close()
 
         # now move it
@@ -779,12 +778,14 @@ class databox:
         self.hkeys[self.hkeys.index(old_name)] = new_name
         self.headers[new_name] = self.headers.pop(old_name)
 
-    def rename_column(self, old_name, new_name):
+    def rename_column(self, column, new_name):
         """
-        This will rename the column. The supplied names need to be strings.
+        This will rename the column. 
+        The supplied column can be an integer or the old column name.
         """
-        self.ckeys[self.ckeys.index(old_name)] = new_name
-        self.columns[new_name] = self.columns.pop(old_name)
+        if type(column) is not str: column = self.ckeys[column]
+        self.ckeys[self.ckeys.index(column)] = new_name
+        self.columns[new_name] = self.columns.pop(column)
 
     def trim(self, *conditions):
         """
