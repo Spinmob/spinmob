@@ -144,7 +144,7 @@ class BaseObject():
         """
         Saves just the current configuration of the controls (if we're supposed to).
         """
-        print self._autosettings_path
+        
         # only if we're supposed to!
         if self._autosettings_path:
 
