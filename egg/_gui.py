@@ -584,14 +584,16 @@ class Window(GridLayout):
 
 class Button(BaseObject):
 
-    def __init__(self, text="My Button! No!", checkable=False, checked=False):
+    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None):
         """
-        This is a simplified button object.
+        This is a simplified button object. If you supply a QPushButton instance
+        it will use that instead.
         """
 
-        # Qt button
-        self._widget = _g.Qt.QtGui.QPushButton(text)
-
+        # Qt button instance
+        if QPushButton is None: self._widget = _g.Qt.QtGui.QPushButton(text)
+        else:                   self._widget = QPushButton
+    
         # signals
         self.signal_clicked = self._widget.clicked
         self.signal_toggled = self._widget.toggled
@@ -1335,11 +1337,9 @@ class TreeDictionary(BaseObject):
         return x
 
 
-    def add_button(self, name, **kwargs):
+    def add_button(self, name, checkable=False, checked=False):
         """
-        Adds (and returns) a limited-functionality button of the
-        specified location. The clicked signal still lives in
-        button.signal_clicked, though.
+        Adds (and returns) a button at the specified location. 
         """
 
         # first clean up the name
@@ -1363,16 +1363,16 @@ class TreeDictionary(BaseObject):
         if b == None: return None
 
         # create the leaf object
-        button = _g.parametertree.Parameter.create(name=p, type='action', **kwargs)
+        ap = _g.parametertree.Parameter.create(name=p, type='action')
 
         # add it to the tree (different methods for root)
-        if b == self._widget: b.addParameters(button)
-        else:                 b.addChild(button)
+        if b == self._widget: b.addParameters(ap)
+        else:                 b.addChild(ap)
 
         # modify the existing class to fit our conventions
-        button.signal_clicked = button.sigActivated
+        ap.signal_clicked = ap.sigActivated
 
-        return button
+        return Button(name, checkable, checked, ap.items.keys()[0].button)
 
     def _clean_up_name(self, name):
         """
