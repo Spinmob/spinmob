@@ -14,6 +14,8 @@ _a = _g.mkQApp()
 # set the font if we're in linux
 if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
 
+_defaults = dict(margins=(10,10,10,10))
+
 
 class BaseObject():
 
@@ -70,9 +72,9 @@ class BaseObject():
         Returns the object's parent window. Returns None if no window found.
         """
         x = self
-        while not x._parent == None and not isinstance(x._parent, Window): 
-                       
-            x = x._parent
+        while not x._parent == None and \
+              not isinstance(x._parent, Window): 
+                  x = x._parent
         return x._parent
 
 
@@ -84,7 +86,8 @@ class BaseObject():
         
         so it requires the object to have been placed somewhere within a window.
         """
-        self.get_window().process_events()        
+        self.get_window().process_events() 
+        return self
         
     def sleep(self, seconds=0.05, dt=0.01):
         """
@@ -211,10 +214,10 @@ class GridLayout(BaseObject):
 
     log = None
 
-    def __init__(self, margins=True):
+    def __init__(self, margins=_defaults['margins']):
         """
         This creates a grid layout that can contain other Elements
-        (including other grid layouts)
+        (including other grid and docked layouts)
         """
 
         BaseObject.__init__(self)
@@ -240,8 +243,8 @@ class GridLayout(BaseObject):
         self.get_column_count = self._layout.columnCount
 
         # remove margins if necessary
-        if not margins: self._layout.setContentsMargins(0,0,0,0)
-
+        if margins==False: self._layout.setContentsMargins(0,0,0,0)
+        else:              self._layout.setContentsMargins(*margins)
 
 
 
@@ -326,6 +329,7 @@ class GridLayout(BaseObject):
         Removes all objects.
         """
         while len(self.objects): self.remove_object(0)
+        return self
 
 
     def set_column_stretch(self, column=0, stretch=10):
@@ -365,9 +369,10 @@ class GridLayout(BaseObject):
 
 
 
+
 class Window(GridLayout):
 
-    def __init__(self, title='Window', size=[700,500], autosettings_path=None):
+    def __init__(self, title='Window', size=[700,500], autosettings_path=None, margins=_defaults['margins']):
         """
         This class is a simplified Qt window builder. Hopefully.
 
@@ -377,28 +382,61 @@ class Window(GridLayout):
         self._parent = self
 
         # initialize the grid layout
-        GridLayout.__init__(self, margins=True)
+        GridLayout.__init__(self, margins=margins)
         
         # create the QtMainWindow,
         self._window = _g.Qt.QtGui.QMainWindow()
         self.set_size(size)
         self.set_title(title)
+        
+        #Set some docking options
+        self._window.setDockOptions(_g.Qt.QtGui.QMainWindow.AnimatedDocks    | 
+                                    _g.Qt.QtGui.QMainWindow.AllowNestedDocks | 
+                                    _g.Qt.QtGui.QMainWindow.AllowTabbedDocks )
 
-        # set the layout
+        # set the central widget to that created by GridLayout.__init__
         self._window.setCentralWidget(self._widget)
 
         # events
         self._window.closeEvent  = self._event_close
         self._window.resizeEvent = self._event_resize
         self._window.moveEvent   = self._event_move
-
+        
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
 
         # reload the last settings if they exist
         self._load_settings()
 
+    
 
+    def place_docker(self, docker, area='top'):
+        """
+        IN DEVELOPMENT        
+        Places a DockWindow instance at the specified area ('top', 'bottom', 
+        'left', 'right', or None)
+        """
+        # map of options
+        m = dict(top    = _g.QtCore.Qt.TopDockWidgetArea,
+                 bottom = _g.QtCore.Qt.BottomDockWidgetArea,
+                 left   = _g.QtCore.Qt.LeftDockWidgetArea,
+                 right  = _g.QtCore.Qt.RightDockWidgetArea)
+        
+        
+        # set the parent
+        docker.set_parent(self)
+
+        # events
+        docker._window.resizeEvent = self._event_resize
+        docker._window.moveEvent   = self._event_move  
+
+        # Keep it in the window        
+        docker._window.setFeatures(docker._window.DockWidgetMovable)        
+        
+        # set it
+        self._window.addDockWidget(m[area], docker._window)
+        
+        return docker
 
     def close(self):
         """
@@ -415,7 +453,7 @@ class Window(GridLayout):
         self._window.deleteLater() appropriately. Otherwise it will just
         close the window.
         """
-        print "Window closed but not destroyed."
+        self.print_message("Window closed but not destroyed. Use self.show() to bring it back.")
 
     def _event_close(self, event):
         """
@@ -437,7 +475,7 @@ class Window(GridLayout):
         """
         self._save_settings()
         return
-
+        
     def _save_settings(self):
         """
         Saves all the parameters to a text file.
@@ -450,20 +488,14 @@ class Window(GridLayout):
         # make sure the directory exists
         if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
 
-        # make the databox object
-        d = _d.databox()
-
-        # add the settings
-        p = self._window.pos()
-        s = self._window.size()
-        d.insert_header('x', p.x())
-        d.insert_header('y', p.y())
-        d.insert_header('w', s.width())
-        d.insert_header('h', s.height())
-
-        # save it
-        d.save_file(path, force_overwrite=True)
-
+        # Create a Qt settings object
+        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
+        settings.clear()
+        
+        # Save values
+        settings.setValue('State',    self._window.saveState())
+        settings.setValue('Geometry', self._window.saveGeometry())
+        
     def _load_settings(self):
         """
         Loads all the parameters from a databox text file. If path=None,
@@ -475,20 +507,21 @@ class Window(GridLayout):
         path = _os.path.join("gui_settings", self._autosettings_path)
         
         # make sure the directory exists
-        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
-
-        # make the databox object
-        d = _d.databox()
-
-        # only load if it exists
-        if _os.path.exists(path):
-            d.load_file(path, header_only=True)
-        else: return None
-
-        # update the window settings
-        self._window.move(  d.h('x'), d.h('y'))
-        self._window.resize(d.h('w'), d.h('h'))
-
+        if not _os.path.exists(path): return
+        
+        # Create a Qt settings object
+        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
+        
+        # Load it up! (Extra steps required for windows command line execution)
+        if settings.contains('State'):    
+            x = settings.value('State')
+            if hasattr(x, "toByteArray"): x = x.toByteArray()            
+            self._window.restoreState(x)
+        
+        if settings.contains('Geometry'): 
+            x = settings.value('Geometry')
+            if hasattr(x, "toByteArray"): x = x.toByteArray()
+            self._window.restoreGeometry(x)        
 
     def connect(self, signal, function):
         """
@@ -520,6 +553,7 @@ class Window(GridLayout):
         """
         self._widget.update()
         _a.processEvents()
+        return self
 
     def set_position(self, position=[0,0]):
         """
@@ -573,13 +607,138 @@ class Window(GridLayout):
 
         return self
 
+    def hide(self):
+        """
+        Hides the window.
+        """
+        self._window.hide()
+
+class Docker(GridLayout):
+
+    log = None
+    
+    def __init__(self, name='Docker', size=[300,200], autosettings_path=None, margins=_defaults['margins']):
+        """
+        UNDER HEAVY DEVELOPMENT!        
+        
+        This creates a docked layout that can contain other object.
+        
+        name must be unique!
+        """
+        # This sets _widget and _layout
+        GridLayout.__init__(self, margins=margins)
+        
+        # create the docker widget        
+        self._window = _g.Qt.QtGui.QDockWidget(name, None)
+        self._window.setFeatures(self._window.DockWidgetFloatable |
+                                 self._window.DockWidgetMovable   |
+                                 self._window.DockWidgetClosable)
+        
+        # set unique name of dock
+        self._window.setObjectName(name)
+                      
+        # Qt widget to house the layout
+        self._widget = _g.Qt.QtGui.QWidget()
+
+        # Qt layout object
+        self._layout = _g.Qt.QtGui.QGridLayout()
+
+        # stick the layout into the widget
+        self._widget.setLayout(self._layout)
+
+        # put all that widget junk in the docker
+        self._window.setWidget(self._widget)
+        
+        # set margins if necessary
+        if margins==False: self._layout.setContentsMargins(0,0,0,0)
+        else:              self._layout.setContentsMargins(*margins)
+        
+        # Set the initial geometry
+        self.set_size(size)
+    
+        # events
+        self._window.moveEvent   = self._event_move
+        self._window.resizeEvent = self._event_resize
+        self._window.closeEvent  = self._event_close
+
+        # autosettings path, to remember the window's position and size
+        self._autosettings_path = autosettings_path
+        
+        # Load the previous settings
+        self._load_settings()
+
+        
+    def _event_move  (self, event): self._save_settings()
+    def _event_resize(self, event): self._save_settings()
+    def _event_close (self, event): self._save_settings()
+    
+    def _save_settings(self):
+        """
+        Saves all the parameters to a text file.
+        """
+        if self._autosettings_path == None: return
+
+        # make a path with a sub-directory
+        path = _os.path.join("gui_settings", self._autosettings_path)
+        
+        # make sure the directory exists
+        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+
+        # Create a Qt settings object
+        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
+        settings.clear()
+        
+        # Save values
+        settings.setValue('Geometry', self._window.saveGeometry())
+        
+    def _load_settings(self):
+        """
+        Loads all the parameters from a databox text file. If path=None,
+        loads from self.default_save_path.
+        """
+        if self._autosettings_path == None: return
+        
+        # make a path with a sub-directory
+        path = _os.path.join("gui_settings", self._autosettings_path)
+        
+        # make sure the directory exists
+        if not _os.path.exists(path): return
+        
+        # Create a Qt settings object
+        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
+        
+        # Load it up!
+        if settings.contains('Geometry'): self._window.restoreGeometry(settings.value('Geometry'))        
+
+    def set_size(self, size=[1000,650]):
+        """
+        Sets the window size in pixels.
+        """
+        self._window.resize(size[0],size[1])
+        return self
 
 
+    def set_title(self, title='Window'):
+        """
+        Sets the title of the window.
+        """
+        self._window.setWindowTitle(title)
+        return self
 
+    def show(self):
+        """
+        Shows the window and raises it.
+        """
 
+        self._window.show()
+        self._window.raise_()
+        return self
 
-
-
+    def hide(self):
+        """
+        Hides the window.
+        """
+        self._window.hide()
 
 
 class Button(BaseObject):
@@ -2192,15 +2351,28 @@ class DataboxPlot(_d.databox, GridLayout):
 
 if __name__ == "__main__":
 
-    w = Window(autosettings_path="w.cfg")
-    p = w.place_object(DataboxPlot(autosettings_path='p.cfg'), alignment=0)
-    p.ROIs = [_g.LinearRegionItem([0,100]), _g.LinearRegionItem([0,50])]
+    w = Window(margins=False, autosettings_path='w.cfg')
+    
+    d1 = Docker('docker 1', margins=(20,10,10,10))
+    d2 = Docker('docker 2')
+    d3 = Docker()
 
-    p['t']  = _n.linspace(0,100,1000)
-    p['y1'] = _n.cos(p['t'])
-    p['y2'] = _n.sin(p['t'])
-    p['y3'] = _n.tan(p['t'])
-    p.plot()
+    d = Docker("Floaty", autosettings_path='floaty.cfg')    
+    
+    w.place_object(Button())
+    
+    w.place_docker(d1, 'bottom')
+    w.place_docker(d2, 'left')
+    w.place_docker(d3, 'top')
+    
+    d1.place_object(Button())
+    d1.new_autorow()
+    d1.place_object(Label())
+    
+    
+   
+    
+    w.show()
+    d.show()
 
-    w.show(False)
-
+   

@@ -1,13 +1,13 @@
 
 
-version = '2.1.1'
+version = '2.1.3'
 
 
 
 from distutils.core import setup
 setup(name           = 'Spinmob',
       version        = version,
-      description    = 'Data Handling, Plotting, Analysis, and GUI Building',
+      description    = 'Data Handling, Plotting, Analysis, and GUI Building for Laboratories',
       author         = 'Jack Sankey & Andrew Jayich',
       author_email   = 'jack.sankey@gmail.com',
       url            = 'https://github.com/Spinmob/spinmob/wiki',
