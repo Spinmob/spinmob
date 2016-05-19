@@ -481,7 +481,7 @@ class Window(GridLayout):
         Saves all the parameters to a text file.
         """
         if self._autosettings_path == None: return
-
+        
         # make a path with a sub-directory
         path = _os.path.join("gui_settings", self._autosettings_path)
         
@@ -493,8 +493,8 @@ class Window(GridLayout):
         settings.clear()
         
         # Save values
-        if type(self)==Window: 
-            settings.setValue('State',    self._window.saveState())
+        if hasattr(self._window, "saveState"):
+            settings.setValue('State',self._window.saveState())
         settings.setValue('Geometry', self._window.saveGeometry())
         
     def _load_settings(self):
@@ -514,7 +514,7 @@ class Window(GridLayout):
         settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
         
         # Load it up! (Extra steps required for windows command line execution)
-        if settings.contains('State'):    
+        if settings.contains('State') and hasattr(self._window, "restoreState"):    
             x = settings.value('State')
             if hasattr(x, "toByteArray"): x = x.toByteArray()            
             self._window.restoreState(x)
@@ -621,11 +621,9 @@ class Docker(Window):
     
     def __init__(self, name='Docker', size=[300,200], autosettings_path=None, margins=_defaults['margins']):
         """
-        UNDER HEAVY DEVELOPMENT!        
-        
         This creates a docked layout that can contain other object.
         
-        name must be unique!
+        All names must be unique within one project!
         """
         # This sets _widget and _layout
         Window.__init__(self)
