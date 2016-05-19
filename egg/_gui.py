@@ -17,7 +17,7 @@ if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
 _defaults = dict(margins=(10,10,10,10))
 
 
-class BaseObject():
+class BaseObject(object):
 
     log = None
 
@@ -493,7 +493,8 @@ class Window(GridLayout):
         settings.clear()
         
         # Save values
-        settings.setValue('State',    self._window.saveState())
+        if type(self)==Window: 
+            settings.setValue('State',    self._window.saveState())
         settings.setValue('Geometry', self._window.saveGeometry())
         
     def _load_settings(self):
@@ -612,8 +613,9 @@ class Window(GridLayout):
         Hides the window.
         """
         self._window.hide()
+        return self
 
-class Docker(GridLayout):
+class Docker(Window):
 
     log = None
     
@@ -626,7 +628,7 @@ class Docker(GridLayout):
         name must be unique!
         """
         # This sets _widget and _layout
-        GridLayout.__init__(self, margins=margins)
+        Window.__init__(self)
         
         # create the docker widget        
         self._window = _g.Qt.QtGui.QDockWidget(name, None)
@@ -666,68 +668,21 @@ class Docker(GridLayout):
         
         # Load the previous settings
         self._load_settings()
-
         
-    def _event_move  (self, event): self._save_settings()
-    def _event_resize(self, event): self._save_settings()
-    def _event_close (self, event): self._save_settings()
-    
-    def _save_settings(self):
-        """
-        Saves all the parameters to a text file.
-        """
-        if self._autosettings_path == None: return
-
-        # make a path with a sub-directory
-        path = _os.path.join("gui_settings", self._autosettings_path)
+        # other useful functions to wrap
+        self.get_row_count    = self._layout.rowCount
+        self.get_column_count = self._layout.columnCount        
         
-        # make sure the directory exists
-        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
-
-        # Create a Qt settings object
-        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
-        settings.clear()
-        
-        # Save values
-        settings.setValue('Geometry', self._window.saveGeometry())
-        
-    def _load_settings(self):
+        # Remove non-functional window stuff
+        self.place_docker = self._disabled
+         
+    def _disabled(self):
         """
-        Loads all the parameters from a databox text file. If path=None,
-        loads from self.default_save_path.
+        Function disabled for Docker object.
         """
-        if self._autosettings_path == None: return
+        self.print_message("Function disabled for Docker object.")
+        return
         
-        # make a path with a sub-directory
-        path = _os.path.join("gui_settings", self._autosettings_path)
-        
-        # make sure the directory exists
-        if not _os.path.exists(path): return
-        
-        # Create a Qt settings object
-        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
-        
-        # Load it up!
-        if settings.contains('Geometry'): 
-            x = settings.value('Geometry')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()
-            self._window.restoreGeometry(x)        
-
-    def set_size(self, size=[1000,650]):
-        """
-        Sets the window size in pixels.
-        """
-        self._window.resize(size[0],size[1])
-        return self
-
-
-    def set_title(self, title='Window'):
-        """
-        Sets the title of the window.
-        """
-        self._window.setWindowTitle(title)
-        return self
-
     def show(self):
         """
         Shows the window and raises it.
@@ -737,12 +692,7 @@ class Docker(GridLayout):
         self._window.raise_()
         return self
 
-    def hide(self):
-        """
-        Hides the window.
-        """
-        self._window.hide()
-
+    
 
 class Button(BaseObject):
 
@@ -2372,7 +2322,7 @@ if __name__ == "__main__":
     d1.new_autorow()
     d1.place_object(Label())
     
-    
+    #b = d.plac
    
     
     w.show()
