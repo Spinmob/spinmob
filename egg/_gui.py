@@ -708,7 +708,10 @@ class Docker(GridLayout):
         settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
         
         # Load it up!
-        if settings.contains('Geometry'): self._window.restoreGeometry(settings.value('Geometry'))        
+        if settings.contains('Geometry'): 
+            x = settings.value('Geometry')
+            if hasattr(x, "toByteArray"): x = x.toByteArray()
+            self._window.restoreGeometry(x)        
 
     def set_size(self, size=[1000,650]):
         """
