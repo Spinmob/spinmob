@@ -14,7 +14,10 @@ _a = _g.mkQApp()
 # set the font if we're in linux
 if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
 
-_defaults = dict(margins=(10,10,10,10))
+_defaults     = dict(margins=(10,10,10,10))
+_dock_options = _g.Qt.QtGui.QMainWindow.AnimatedDocks    | \
+                _g.Qt.QtGui.QMainWindow.AllowNestedDocks | \
+                _g.Qt.QtGui.QMainWindow.AllowTabbedDocks 
 
 
 class BaseObject(object):
@@ -169,6 +172,8 @@ class BaseObject(object):
 
     def load_gui_settings(self):
         """
+        BaseObject:
+        
         Loads the settings (if we're supposed to).
         """
 
@@ -389,10 +394,8 @@ class Window(GridLayout):
         self.set_size(size)
         self.set_title(title)
         
-        #Set some docking options
-        self._window.setDockOptions(_g.Qt.QtGui.QMainWindow.AnimatedDocks    | 
-                                    _g.Qt.QtGui.QMainWindow.AllowNestedDocks | 
-                                    _g.Qt.QtGui.QMainWindow.AllowTabbedDocks )
+        # Set some docking options
+        self._window.setDockOptions(_dock_options)
 
         # set the central widget to that created by GridLayout.__init__
         self._window.setCentralWidget(self._widget)
@@ -404,9 +407,6 @@ class Window(GridLayout):
         
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
-
-        # reload the last settings if they exist
-        self._load_settings()
 
     
 
@@ -431,10 +431,10 @@ class Window(GridLayout):
         docker._window.moveEvent   = self._event_move  
 
         # Keep it in the window        
-        docker._window.setFeatures(docker._window.DockWidgetMovable)        
+        #docker._window.setFeatures(docker._window.DockWidgetMovable)        
         
         # set it
-        self._window.addDockWidget(m[area], docker._window)
+        self._window.addDockWidget(m[area], docker._docker)
         
         return docker
 
@@ -523,6 +523,16 @@ class Window(GridLayout):
             x = settings.value('Geometry')
             if hasattr(x, "toByteArray"): x = x.toByteArray()
             self._window.restoreGeometry(x)        
+
+    def load_gui_settings(self):
+        """
+        Window:     
+        
+        If the autosettings_path is defined, load the previous state of the 
+        window. Recommend doing this after adding objects to it, in case
+        these have been moved around.
+        """
+        self._load_settings()
 
     def connect(self, signal, function):
         """
@@ -628,34 +638,38 @@ class Docker(Window):
         # This sets _widget and _layout
         Window.__init__(self)
         
-        # create the docker widget        
-        self._window = _g.Qt.QtGui.QDockWidget(name, None)
-        self._window.setFeatures(self._window.DockWidgetFloatable |
-                                 self._window.DockWidgetMovable   |
-                                 self._window.DockWidgetClosable)
+        # Overwrite with docker widget    
+        self._docker = _g.Qt.QtGui.QDockWidget(name)
+        self._window = _g.Qt.QtGui.QMainWindow()
+        self.set_size(size)
         
-        # set unique name of dock
-        self._window.setObjectName(name)
-                      
-        # Qt widget to house the layout
-        self._widget = _g.Qt.QtGui.QWidget()
+        #Set some docking options
+        self._window.setDockOptions(_dock_options)
+        self._docker.setFeatures(self._docker.DockWidgetMovable)
 
+        # set unique name of dock
+        self._docker.setObjectName(name)
+                      
+        # The main widget
+        self._widget = _g.Qt.QtGui.QWidget()                      
+                      
         # Qt layout object
         self._layout = _g.Qt.QtGui.QGridLayout()
 
         # stick the layout into the widget
         self._widget.setLayout(self._layout)
+        
+        # set the central widget to that created by GridLayout.__init__
+        self._window.setCentralWidget(self._widget)
 
         # put all that widget junk in the docker
-        self._window.setWidget(self._widget)
+        self._docker.setWidget(self._window)
         
+       
         # set margins if necessary
         if margins==False: self._layout.setContentsMargins(0,0,0,0)
         else:              self._layout.setContentsMargins(*margins)
         
-        # Set the initial geometry
-        self.set_size(size)
-    
         # events
         self._window.moveEvent   = self._event_move
         self._window.resizeEvent = self._event_resize
@@ -664,23 +678,11 @@ class Docker(Window):
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
         
-        # Load the previous settings
-        self._load_settings()
-        
         # other useful functions to wrap
         self.get_row_count    = self._layout.rowCount
         self.get_column_count = self._layout.columnCount        
         
-        # Remove non-functional window stuff
-        self.place_docker = self._disabled
          
-    def _disabled(self):
-        """
-        Function disabled for Docker object.
-        """
-        self.print_message("Function disabled for Docker object.")
-        return
-        
     def show(self):
         """
         Shows the window and raises it.
@@ -2302,28 +2304,18 @@ class DataboxPlot(_d.databox, GridLayout):
 
 if __name__ == "__main__":
 
-    w = Window(margins=False, autosettings_path='w.cfg')
+    w = Window('Main Window', margins=False, autosettings_path='w.cfg')
+    d = Docker("Main Docker")
     
-    d1 = Docker('docker 1', margins=(20,10,10,10))
+    d1 = Docker('docker 1', margins=(10,10,10,10))
     d2 = Docker('docker 2')
     d3 = Docker()
 
-    d = Docker("Floaty", autosettings_path='floaty.cfg')    
+    w.place_docker(d)
+    d.place_docker(d1)
+    d1.place_docker(d2)
+    d1.place_docker(d3)
     
-    w.place_object(Button())
-    
-    w.place_docker(d1, 'bottom')
-    w.place_docker(d2, 'left')
-    w.place_docker(d3, 'top')
-    
-    d1.place_object(Button())
-    d1.new_autorow()
-    d1.place_object(Label())
-    
-    #b = d.plac
-   
-    
-    w.show()
     d.show()
-
+    w.show()
    
