@@ -17,6 +17,10 @@ if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
 _defaults = dict(margins=(10,10,10,10))
 
 
+# Get the current working directory and keep it! Dialogs change this on the fly
+_cwd = _os.getcwd()
+
+
 class BaseObject(object):
 
     log = None
@@ -151,12 +155,15 @@ class BaseObject(object):
         # only if we're supposed to!
         if self._autosettings_path:
 
-            # make a path with a sub-directory
-            path = _os.path.join("gui_settings", self._autosettings_path)
-            
-            # make sure the directory exists
-            if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+            # Get the gui settings directory
+            gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
+            # make sure the directory exists
+            if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
+
+            # make a path with a sub-directory
+            path = _os.path.join(gui_settings_dir, self._autosettings_path)
+            
             # for saving header info
             d = _d.databox()
 
@@ -175,8 +182,14 @@ class BaseObject(object):
         # only do this if we're supposed to
         if self._autosettings_path is not None:
 
+            # Get the gui settings directory
+            gui_settings_dir = _os.path.join(_cwd, "gui_settings")
+
+            # make sure the directory exists
+            if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
+
             # make a path with a sub-directory
-            path = _os.path.join("gui_settings", self._autosettings_path)
+            path = _os.path.join(gui_settings_dir, self._autosettings_path)
             
             # databox just for loading a cfg file
             d = _d.databox()
@@ -482,12 +495,15 @@ class Window(GridLayout):
         """
         if self._autosettings_path == None: return
         
-        # make a path with a sub-directory
-        path = _os.path.join("gui_settings", self._autosettings_path)
-        
-        # make sure the directory exists
-        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+        # Get the gui settings directory
+        gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
+        # make sure the directory exists
+        if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
+
+        # make a path with a sub-directory
+        path = _os.path.join(gui_settings_dir, self._autosettings_path)
+        
         # Create a Qt settings object
         settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
         settings.clear()
@@ -504,8 +520,11 @@ class Window(GridLayout):
         """
         if self._autosettings_path == None: return
         
+        # Get the gui settings directory
+        gui_settings_dir = _os.path.join(_cwd, "gui_settings")
+
         # make a path with a sub-directory
-        path = _os.path.join("gui_settings", self._autosettings_path)
+        path = _os.path.join(gui_settings_dir, self._autosettings_path)
         
         # make sure the directory exists
         if not _os.path.exists(path): return
@@ -1693,11 +1712,15 @@ class TreeDictionary(BaseObject):
 
         If the file doesn't exist, it will use hard-coded defaults.
         """
-        if path==None: path = _os.path.join("gui_settings", self.default_save_path)
-      
-        # make sure the directory exists
-        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+        if path==None: 
+            # Get the gui settings directory
+            gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
+            # make sure the directory exists
+            if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)            
+            
+            path = _os.path.join(gui_settings_dir, self.default_save_path)
+      
         # make the databox object
         d = _d.databox()
 
@@ -1715,11 +1738,13 @@ class TreeDictionary(BaseObject):
         Loads all the parameters from a databox text file. If path=None,
         loads from self.default_save_path.
         """
-        if path==None: path = _os.path.join("gui_settings", self.default_save_path)
-      
-        # make sure the directory exists
-        if not _os.path.exists("gui_settings"): _os.mkdir("gui_settings")
+        if path==None: 
+            # Get the gui settings directory
+            gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
+            # Get the final path
+            path = _os.path.join(gui_settings_dir, self.default_save_path)
+      
         # make the databox object
         d = _d.databox()
 
