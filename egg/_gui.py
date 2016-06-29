@@ -185,9 +185,6 @@ class BaseObject(object):
             # Get the gui settings directory
             gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
-            # make sure the directory exists
-            if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
-
             # make a path with a sub-directory
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
             
