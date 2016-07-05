@@ -740,7 +740,13 @@ class Button(BaseObject):
         Whether the button is pressed.
         """
         return self._widget.isChecked()
-
+    
+    def is_checkable(self):
+        """
+        Whether it's possible to check this button.
+        """
+        return self._widget.isCheckable()
+        
     def set_checkable(self, checkable=True):
         """
         Set's the action of the button. If checkable=True, the button
@@ -767,6 +773,32 @@ class Button(BaseObject):
         Sets the text of the button.
         """
         self._widget.setText(str(text))
+        return self
+
+    def sleep_until_unchecked(self, dt=0.1):
+        """
+        Waits while updating the gui until the button is unchecked.
+        """
+        while self.is_checked(): self.sleep(dt)
+        return self
+    
+    def sleep_until_checked(self, dt=0.1):
+        """
+        Waits while updating the gui until the button is unchecked.
+        """
+        while not self.is_checked(): self.sleep(dt)
+        return self
+
+    def click(self):
+        """
+        Pretends to user clicked it, sending the signal and everything.
+        """
+        if self.is_checkable():        
+            if self.is_checked(): self.set_checked(False)
+            else:                 self.set_checked(True)
+            self.signal_clicked.emit(self.is_checked())
+        else:
+            self.signal_clicked.emit(True)
         return self
 
 
