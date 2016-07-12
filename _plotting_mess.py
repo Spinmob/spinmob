@@ -243,7 +243,7 @@ def magphase_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exs
     eyscript  script for y error
     exscript  script for x error
 
-    **kwargs are sent to spinmob.plot.mag_phase.data()
+    **kwargs are sent to spinmob.plot.magphase.data()
     """
     print ds
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, **kwargs)
@@ -258,7 +258,7 @@ def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=No
     optional argument: filters="*.*" can be changed to filter the files in the
                                      file dialog
 
-    **kwargs are sent to spinmob.plot.mag_phase.databoxes()
+    **kwargs are sent to spinmob.plot.magphase.databoxes()
     """
     return files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, **kwargs)
 
@@ -273,7 +273,7 @@ def magphase_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
     g                   optional dictionary of extra globals. Try g=globals()!
     erange              Use exponential spacing of the x data?
 
-    **kwargs are sent to plot.mag_phase.data()
+    **kwargs are sent to plot.magphase.data()
     """
     function(f, xmin, xmax, steps, p, g, erange, plotter=magphase_data, **kwargs)
 
