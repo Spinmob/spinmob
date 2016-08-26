@@ -344,7 +344,7 @@ class databox:
 
         # figure out the temporary path
         temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
-        
+
         # open the file and write the header
         f = open(temporary_path, 'w')
         for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
@@ -369,7 +369,7 @@ class databox:
                 else:
                     elements.append('_')
             f.write(delimiter.join(elements) + "\n")
-            
+
         f.close()
 
         # now move it
@@ -379,14 +379,14 @@ class databox:
     def get_data_point(self, n):
         """
         Returns the n'th data point (starting at 0) from all columns.
-        
+
         n       index of data point to return.
         """
         # loop over the columns and pop the data
         point = []
         for k in self.ckeys: point.append(self[k][n])
         return point
-        
+
 
     def pop_data_point(self, n):
         """
@@ -780,7 +780,7 @@ class databox:
 
     def rename_column(self, column, new_name):
         """
-        This will rename the column. 
+        This will rename the column.
         The supplied column can be an integer or the old column name.
         """
         if type(column) is not str: column = self.ckeys[column]
