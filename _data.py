@@ -1524,7 +1524,9 @@ class fitter():
         if self._set_xdata is None:
             return self._error("No data. Please use set_data() prior to fitting.")
 
-        if (_n.concatenate(self._eydata_massaged)==0).any():
+        # Error handling is currently buggy.
+        if (_n.array(self._eydata_massaged)==0).any():
+        #if (_n.concatenate(self._eydata_massaged)==0).any():
             return self._error("One or more of your error bars is zero! Are you trying to make me divide by zero? Answer the question.")
 
         self.set(**kwargs)
