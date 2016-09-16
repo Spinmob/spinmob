@@ -1978,13 +1978,15 @@ class fitter():
                                 self['fpoints'][n])
         return x
 
-    def trim(self, n='all'):
+    def trim(self, n='all', x=True, y=True):
         """
         This will set xmin and xmax based on the current zoom-level of the
         figures.
 
         n='all'     Which figure to use for setting xmin and xmax.
                     'all' means all figures. You may also specify a list.
+        x=True      Trim the x-range
+        y=True      Trim the y-range
         """
         if self._set_xdata is None or self._set_ydata is None:
             self._error("No data. Please use set_data() and plot() prior to trimming.")
@@ -1999,13 +2001,15 @@ class fitter():
         # loop over the specified plots
         for i in n:
             try:
-                xmin, xmax = _p.figure(self['first_figure']+i).axes[1].get_xlim()
-                self['xmin'][i] = xmin
-                self['xmax'][i] = xmax
-
-                ymin, ymax = _p.figure(self['first_figure']+i).axes[1].get_ylim()
-                self['ymin'][i] = ymin
-                self['ymax'][i] = ymax
+                if x:
+                    xmin, xmax = _p.figure(self['first_figure']+i).axes[1].get_xlim()
+                    self['xmin'][i] = xmin
+                    self['xmax'][i] = xmax
+                
+                if y:
+                    ymin, ymax = _p.figure(self['first_figure']+i).axes[1].get_ylim()
+                    self['ymin'][i] = ymin
+                    self['ymax'][i] = ymax
 
             except:
                 self._error("Data "+str(i)+" is not currently plotted.")
