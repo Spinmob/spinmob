@@ -1069,7 +1069,7 @@ class fitter():
         s = s + "\nCONSTANTS\n"
         for c in self._cnames: s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
 
-        s = s + "\nGUESS\n"
+        s = s + "\nGUESS (reduced chi squared = {:s})\n".format(str(self.reduced_chi_squareds(self._pguess)))
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
         if self._set_xdata is None or self._set_ydata is None: s = s + "\nNO DATA\n"
@@ -1807,18 +1807,23 @@ class fitter():
         # update the massaged data
         self._massage_data()
 
-        # turn off interactive mode
-        _p.ioff()
-
+        
         # get the residuals
         r = None
         if not self.results is None: r = self.studentized_residuals(self.results[0])
+        
+        # otherwise get the guess residuals
+        else:                        r = self.studentized_residuals(self._pguess)
 
         # make a new plot for each data set
         for n in range(len(xdata)):
 
             # get the next figure
             fig = _p.figure(self['first_figure']+n)
+            
+            # turn off interactive mode
+            _p.ioff()
+           
             fig.clear()
 
             # set up two axes. One for data and one for residuals.
@@ -1890,11 +1895,17 @@ class fitter():
             a2.set_autoscale_on(True)
 
             # plot the residuals
-            if r is not None:
+            if self.results is not None:
                 a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_fit'][n])
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
-
+            
+            # otherwise plot the guess residuals
+            elif self['plot_guess'][n]:
+                a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
+                a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_guess'][n])
+                _s.tweaks.auto_zoom(axes=a1, draw=False)
+             
             # Tidy up
             #a1.xaxis.set_ticklabels([])  # Can't (axes are linked!)
 
@@ -1941,10 +1952,10 @@ class fitter():
                             max(ymax,max(y_guess)))
 
 
-        # turn back to interactive and show the plots.
-        _p.ion()
-        _p.draw()
-        _p.show()
+            # turn back to interactive and show the plots.
+            _p.ion()
+            _p.draw()
+            _p.show()
 
         # for some reason, it's necessary to touch every figure, too
         for n in range(len(xdata)-1,-1,-1): _p.figure(self['first_figure']+n)
