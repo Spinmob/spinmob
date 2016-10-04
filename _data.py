@@ -1,6 +1,6 @@
 import os     as _os
 import shutil as _shutil
-import _dialogs
+from . import _dialogs
 
 # do this so all the scripts will work with all the numpy functions
 import numpy          as _n
@@ -55,7 +55,7 @@ class databox:
         if type(n) is str:
             self.insert_column(data_array=x, ckey=n, index=None)
 
-        elif type(n) in [int, long] and n > len(self.ckeys)-1:
+        elif type(n) in [int, int] and n > len(self.ckeys)-1:
             self.insert_column(data_array=x, ckey='_column'+str(len(self.ckeys)), index=None)
 
         else:
@@ -94,12 +94,12 @@ class databox:
         """
         Prints out more information about the databox.
         """
-        print "\nDatabox Instance", self.path
-        print "\nHeader"
-        for h in self.hkeys: print "  "+h+":", self.h(h)
+        print("\nDatabox Instance", self.path)
+        print("\nHeader")
+        for h in self.hkeys: print("  "+h+":", self.h(h))
         s = "\nColumns ("+str(len(self.ckeys))+"): "
         for c in self.ckeys: s = s+c+", "
-        print s[:-2]
+        print(s[:-2])
 
 
     def _globals(self):
@@ -144,12 +144,12 @@ class databox:
         self.path = path
 
         if path is None:
-            if not quiet: print "Aborted."
+            if not quiet: print("Aborted.")
             return None
 
         # make sure the file exists!
         if not _os.path.exists(path):
-            if not quiet: print "ERROR: "+repr(path)+" does not exist."
+            if not quiet: print("ERROR: "+repr(path)+" does not exist.")
             return None
 
         # clear all the existing data
@@ -225,8 +225,8 @@ class databox:
 
         # Make sure first_data_line isn't None (which happens if there's no data)
         if first_data_line == "auto":
-            if not quiet: print "\nCould not find a line of pure data! Perhaps check the delimiter?"
-            if not quiet: print "The default delimiter is whitespace. For csv files, set delimiter=','\n"
+            if not quiet: print("\nCould not find a line of pure data! Perhaps check the delimiter?")
+            if not quiet: print("The default delimiter is whitespace. For csv files, set delimiter=','\n")
             return self
 
 
@@ -251,7 +251,7 @@ class databox:
             # if we have too many column keys, mention it
             while len(ckeys) > column_count:
                 extra = ckeys.pop(-1)
-                if not quiet: print "Extra ckey: "+extra
+                if not quiet: print("Extra ckey: "+extra)
 
         else:
             # it is an invalid ckeys line. Generate our own!
@@ -302,7 +302,7 @@ class databox:
 
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
-            if self.columns.has_key(k):
+            if k in self.columns:
                 self.columns[self.obnoxious_ckeys[k]] = self.columns[k]
 
         return self
@@ -327,7 +327,7 @@ class databox:
         # problems with sync programs.
         if path == "ask": path = _dialogs.save(filters, default_directory=self.directory)
         if path in ["", None]:
-            print "Aborted."
+            print("Aborted.")
             return False
 
         # Save the path for future reference
@@ -420,7 +420,7 @@ class databox:
         """
 
         if not len(new_data) == len(self.columns) and not len(self.columns)==0:
-            print "ERROR: new_data must have as many elements as there are columns."
+            print("ERROR: new_data must have as many elements as there are columns.")
             return
 
         # otherwise, we just auto-add this data point as new columns
@@ -497,7 +497,7 @@ class databox:
 
             # if there was a problem parsing the script
             if v is None:
-                print "ERROR: Could not parse '"+script+"'"
+                print("ERROR: Could not parse '"+script+"'")
                 return None
 
             # get all the numpy stuff too
@@ -528,15 +528,15 @@ class databox:
         """
 
         if n > 1000:
-            print "This script ran recursively 1000 times!"
-            a = raw_input("<enter> or (q)uit: ")
+            print("This script ran recursively 1000 times!")
+            a = input("<enter> or (q)uit: ")
             if a.strip().lower() in ['q', 'quit']:
                 script = None
 
         if script is None: return [None, None]
 
         # check if the script is simply an integer
-        if type(script) in [int,long]:
+        if type(script) in [int,int]:
             if script<0: script = script+len(self.ckeys)
             return ["___"+str(script), {"___"+str(script):self[script]}]
 
@@ -553,7 +553,7 @@ class databox:
 
         # if it's a simple script, like "column0" or "c(3)/2.0"
         if len(split_script) is 1:
-            if self.debug: print "script of length 1"
+            if self.debug: print("script of length 1")
 
             # try to evaluate the script
 
@@ -570,8 +570,8 @@ class databox:
                 b = eval(script, self._globals())
                 return ['___', {'___':b}]
             except:
-                print
-                print "ERROR: Could not evaluate '"+str(script)+"'"
+                print()
+                print("ERROR: Could not evaluate '"+str(script)+"'")
                 return [None, None]
 
 
@@ -595,7 +595,7 @@ class databox:
             # split each entry by the "=" sign
             s = var.split("=")
             if len(s) == 1:
-                print s, "has no '=' in it"
+                print(s, "has no '=' in it")
                 return [None, None]
 
             # tidy up into "variable" and "column label"
@@ -660,7 +660,7 @@ class databox:
         #if hkey is '': return
 
         # if it's an integer, use the hkey from the list
-        if type(hkey) in [int, long]: hkey = self.hkeys[hkey]
+        if type(hkey) in [int, int]: hkey = self.hkeys[hkey]
 
         # set the data
         self.headers[str(hkey)] = value
@@ -684,7 +684,7 @@ class databox:
 
             # if we didn't find the column, quit
             if hkey < 0:
-                print "Column does not exist (yes, we looked)."
+                print("Column does not exist (yes, we looked).")
                 return
 
             # pop it!
@@ -706,7 +706,7 @@ class databox:
 
             # if we didn't find the column, quit
             if ckey < 0:
-                print "Column does not exist (yes, we looked)."
+                print("Column does not exist (yes, we looked).")
                 return
 
             # pop it!
@@ -723,7 +723,7 @@ class databox:
         """
 
         # if it's an integer, use the ckey from the list
-        if type(ckey) in [int, long]: ckey = self.ckeys[ckey]
+        if type(ckey) in [int, int]: ckey = self.ckeys[ckey]
 
         # append/overwrite the column value
         self.columns[ckey] = _n.array(data_array)
@@ -740,11 +740,11 @@ class databox:
         ckey        name of the column.
         """
         if not type(ckey) is str:
-            print "ERROR: ckey should be a string!"
+            print("ERROR: ckey should be a string!")
             return
 
         if ckey in self.ckeys:
-            print "ERROR: ckey '"+ckey+"' already exists!"
+            print("ERROR: ckey '"+ckey+"' already exists!")
             return
 
         self.insert_column(data_array, ckey)
@@ -824,7 +824,7 @@ class databox:
         will be unsorted. Otherwise it will loop over the supplied keys
         (a list) in order.
         """
-        if keys is None: keys = dictionary.keys()
+        if keys is None: keys = list(dictionary.keys())
         for k in keys: self.insert_header(k, dictionary[k])
 
 
@@ -853,7 +853,7 @@ class databox:
         """
 
         # first loop over kwargs if there are any to set header elements
-        for k in kwargs.keys():
+        for k in list(kwargs.keys()):
             self.insert_header(k, kwargs[k])
 
         # Meow search for a key if specified
@@ -862,7 +862,7 @@ class databox:
             hkey = args[0]
 
             # if this is an index
-            if type(hkey) in [int, long]: return self.headers[self.hkeys[hkey]]
+            if type(hkey) in [int, int]: return self.headers[self.hkeys[hkey]]
 
             # if this is an exact match
             elif hkey in self.hkeys:      return self.headers[hkey]
@@ -872,11 +872,11 @@ class databox:
                 for k in self.hkeys:
                     if k.find(hkey) >= 0:
                         return self.headers[k]
-                print
-                print "ERROR: Couldn't find '"+str(hkey) + "' in header."
-                print "Possible values:"
-                for k in self.hkeys: print k
-                print
+                print()
+                print("ERROR: Couldn't find '"+str(hkey) + "' in header.")
+                print("Possible values:")
+                for k in self.hkeys: print(k)
+                print()
                 return None
 
 
@@ -994,7 +994,7 @@ class fitter():
         self.set_functions(f, p, c, bg)
 
         # update the default settings
-        for k in kwargs.keys(): self[k] = kwargs[k]
+        for k in list(kwargs.keys()): self[k] = kwargs[k]
 
 
     def set(self, **kwargs):
@@ -1002,7 +1002,7 @@ class fitter():
         Changes a setting or multiple settings. Can also call self() or
         change individual parameters with self['parameter'] = value
         """
-        for k in kwargs.keys(): self[k] = kwargs[k]
+        for k in list(kwargs.keys()): self[k] = kwargs[k]
 
         if self['autoplot']: self.plot()
 
@@ -1026,7 +1026,7 @@ class fitter():
             self._settings[key] = value
 
         # everything else should have a value for each data set or plot
-        elif self._settings.has_key(key):
+        elif key in self._settings:
 
             # make sure it's a list.
             if not _s.fun.is_iterable(value) or isinstance(value, dict):
@@ -1050,7 +1050,7 @@ class fitter():
         """
         prints out the current settings.
         """
-        keys = self._settings.keys()
+        keys = list(self._settings.keys())
         keys.sort()
 
         s = "\nSETTINGS\n"
@@ -1106,14 +1106,14 @@ class fitter():
 
         else: s = s + "\n# NO FIT RESULTS\n"
 
-        print s
+        print(s)
 
     def __getitem__(self, key):
         if key in self._pnames: return self._pguess   [self._pnames.index(key)]
         if key in self._cnames: return self._constants[self._cnames.index(key)]
         return self._settings[key]
 
-    def _error(self, message): print "ERROR: "+str(message)
+    def _error(self, message): print("ERROR: "+str(message))
 
     def set_functions(self,  f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None):
         """
@@ -1231,7 +1231,7 @@ class fitter():
                 else:             self._bgnames.append(bg[n].__name__)
 
         # update the format of all the settings
-        for k in self._settings.keys(): self[k] = self[k]
+        for k in list(self._settings.keys()): self[k] = self[k]
 
         # make sure we don't think our fit results are valid!
         self.clear_results()
@@ -1341,9 +1341,9 @@ class fitter():
         if self._settings['silent'][0] is True:
             pass
         elif eydata is None:
-            print "\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n"
-            print "  eydata = 0.1"
-            print "  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n"
+            print("\nWARNING: Setting eydata=None (i.e. the default) results in a random guess for the error bars associated with ydata. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n")
+            print("  eydata = 0.1")
+            print("  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n")
 
     def evaluate_script(self, script, **kwargs):
         """
@@ -1369,7 +1369,7 @@ class fitter():
         """
         # make sure we've done a "set data" call
         if self._set_xdata is None or self._set_ydata is None:
-            print "\nERROR: You must call set_data() first!"
+            print("\nERROR: You must call set_data() first!")
             return
 
         # update the globals with the current fit parameters guess values
@@ -1437,7 +1437,7 @@ class fitter():
         fit parameters.
         """
         if self.results is None:
-            print "No fit results to use! Run fit() first."
+            print("No fit results to use! Run fit() first.")
             return
 
         # loop over the results and set the guess values
@@ -1492,7 +1492,7 @@ class fitter():
                                                [xdata[n]>=xmins[n], xdata[n]<=xmaxs[n],
                                                 ydata[n]>=ymins[n], ydata[n]<=ymaxs[n]])
             if(len(x)==0):
-                print "\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring."
+                print("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
                 x  = xdata[n]
                 y  = ydata[n]
                 ey = eydata[n]
@@ -1555,7 +1555,7 @@ class fitter():
         self.set(**kwargs)
 
         # get everything into one big list
-        pnames = list(args) + kwargs.keys()
+        pnames = list(args) + list(kwargs.keys())
 
         # move each pname to the constants
         for pname in pnames:
@@ -1595,7 +1595,7 @@ class fitter():
         self.set(**kwargs)
 
         # get everything into one big list
-        cnames = list(args) + kwargs.keys()
+        cnames = list(args) + list(kwargs.keys())
 
         # move each pname to the constants
         for cname in cnames:
@@ -2007,7 +2007,7 @@ class fitter():
         xdata, ydata, eydata = self.get_data()
 
         if _s.fun.is_a_number(n): n = [n]
-        elif isinstance(n,str):   n = range(len(xdata))
+        elif isinstance(n,str):   n = list(range(len(xdata)))
 
         # loop over the specified plots
         for i in n:
@@ -2048,7 +2048,7 @@ class fitter():
         xdata, ydata, eydata = self.get_data()
 
         if   _s.fun.is_a_number(n): n = [n]
-        elif isinstance(n,str):     n = range(len(xdata))
+        elif isinstance(n,str):     n = list(range(len(xdata)))
 
         # loop over the specified plots
         for i in n:
@@ -2113,7 +2113,7 @@ def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file,
                 filters=filters, text=text, default_directory=default_directory,
                 header_only=header_only)
 
-    if not quiet: print "\nloaded", d.path, "\n"
+    if not quiet: print("\nloaded", d.path, "\n")
 
     return d
 

@@ -1,11 +1,11 @@
 import os                as _os
 import pylab             as _pylab
 import time              as _time
-import thread            as _thread
+import _thread            as _thread
 import matplotlib        as _mpl
 import numpy             as _n
-import _functions        as _fun
-import _pylab_colormap
+from . import _functions        as _fun
+from . import _pylab_colormap
 import spinmob           as _s
 
 image_colormap = _pylab_colormap.colormap_interface
@@ -13,7 +13,7 @@ image_colormap = _pylab_colormap.colormap_interface
 from matplotlib.font_manager import FontProperties as _FontProperties
 
 if __name__ == '__main__':
-    import _settings
+    from . import _settings
     _settings = _settings.settings()
 
 
@@ -185,7 +185,7 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
     ymin,ymax = axes.get_ylim()
 
     # update the kwargs
-    if not kwargs.has_key('first_figure'): kwargs['first_figure'] = axes.figure.number+1    
+    if 'first_figure' not in kwargs: kwargs['first_figure'] = axes.figure.number+1    
     
     # loop over the lines
     fitters = []
@@ -200,8 +200,8 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
         fitters[-1].set_data(x,y)
         fitters[-1].fit()
         fitters[-1].autoscale_eydata_and_fit()
-        print fitters[-1]
-        print "<click the graph to continue>"
+        print(fitters[-1])
+        print("<click the graph to continue>")
         fitters[-1].ginput(timeout=0)
     
     return fitters
@@ -318,7 +318,7 @@ def get_figure_window_geometry(fig='gcf'):
         return [[pos.x(),pos.y()], [size.width(),size.height()]]
 
     else:
-        print "get_figure_window_geometry() only implemented for QtAgg backend."
+        print("get_figure_window_geometry() only implemented for QtAgg backend.")
         return None
 
 
@@ -447,7 +447,7 @@ def image_undo():
     Undoes the last coarsen or smooth command.
     """
     if len(image_undo_list) <= 0:
-        print "no undos in memory"
+        print("no undos in memory")
         return
 
     [image, Z] = image_undo_list.pop(-1)
@@ -560,7 +560,7 @@ def image_click_xshift(axes = "gca"):
 
         _pylab.draw()
     except:
-        print "whoops"
+        print("whoops")
 
 def image_click_yshift(axes = "gca"):
     """
@@ -583,7 +583,7 @@ def image_click_yshift(axes = "gca"):
 
         _pylab.draw()
     except:
-        print "whoops"
+        print("whoops")
 
 def image_shift(xshift=0, yshift=0, axes="gca"):
     """
@@ -709,7 +709,7 @@ def integrate_shown_data(scale=1, fyname=1, autozero=0, **kwargs):
 
     def I(x,y):
         xout, iout = _fun.integrate_data(x, y, autozero=autozero)
-        print "Total =", scale*iout[-1]
+        print("Total =", scale*iout[-1])
         return xout, scale*iout
 
     if fyname==1: fyname = "$"+str(scale)+"\\times \\int dx$"
@@ -785,7 +785,7 @@ def manipulate_shown_data(f, input_axes="gca", output_axes=None, fxname=1, fynam
             # pause after each curve if we're supposed to
             if pause:
                 _pylab.draw()
-                raw_input("<enter> ")
+                input("<enter> ")
 
     # set the labels and title.
     if fxname in [0,None]:  a2.set_xlabel(a1.get_xlabel())
@@ -868,7 +868,7 @@ def _print_figures(figures, arguments='', file_format='pdf', target_width=8.5, t
         else:
             c = _settings['instaprint'] + ' "' + path + '"'
 
-        print c
+        print(c)
         _os.system(c)
 
 
@@ -883,15 +883,15 @@ def instaprint(figure='gcf', arguments='', threaded=False, file_format='pdf'):
 
     global _settings
 
-    if not _settings.has_key('instaprint'):
-        print "No print command setup. Set the user variable settings['instaprint']."
+    if 'instaprint' not in _settings:
+        print("No print command setup. Set the user variable settings['instaprint'].")
         return
 
     if   figure=='gcf': figure=[_pylab.gcf().number]
     elif figure=='all': figure=_pylab.get_fignums()
     if not getattr(figure,'__iter__',False): figure = [figure]
 
-    print "figure numbers in queue:", figure
+    print("figure numbers in queue:", figure)
 
     figures=[]
     for n in figure: figures.append(_pylab.figure(n))
@@ -912,7 +912,7 @@ def instaprint(figure='gcf', arguments='', threaded=False, file_format='pdf'):
         while not canvas_type == type(figures[-1].canvas) and _time.time()-t0 < 5.0:
             _time.sleep(0.1)
         if _time.time()-t0 >= 5.0:
-            print "WARNING: Timed out waiting for canvas to return to original state!"
+            print("WARNING: Timed out waiting for canvas to return to original state!")
 
         # bring back the figure and command line
         _pylab.draw()
@@ -1272,7 +1272,7 @@ def smooth_line(line, smoothing=1, trim=True, draw=True):
 
     # don't do anything if we don't have any data left
     if len(ydata) == 0:
-        print "There's nothing left in "+str(line)+"!"
+        print("There's nothing left in "+str(line)+"!")
     else:
         # otherwise set the data with the new arrays
         line.set_data(xdata, ydata)
@@ -1296,7 +1296,7 @@ def coarsen_line(line, coarsen=1, draw=True):
     ydata = _fun.coarsen_array(ydata, coarsen)
 
     # don't do anything if we don't have any data left
-    if len(ydata) == 0: print "There's nothing left in "+str(line)+"!"
+    if len(ydata) == 0: print("There's nothing left in "+str(line)+"!")
 
     # otherwise set the data with the new arrays
     else: line.set_data(xdata, ydata)
@@ -1326,13 +1326,13 @@ def smooth_selected_trace(trim=True, axes="gca"):
             # get the smoothing factor
             ready = 0
             while not ready:
-                response = raw_input("Smoothing Factor (<enter> to skip): ")
+                response = input("Smoothing Factor (<enter> to skip): ")
                 try:
                     int(response)
                     ready=1
                 except:
                     if response=="\n": ready = 1
-                    else:              print "No!"
+                    else:              print("No!")
 
             if not response == "\n":
                 smooth_line(line, int(response), trim)
@@ -1439,7 +1439,7 @@ def trim(xmin="auto", xmax="auto", ymin="auto", ymax="auto", axes="current"):
 
         # don't do anything if we don't have any data left
         if len(new_xdata) == 0:
-            print "There's nothing left in "+str(line)+"!"
+            print("There's nothing left in "+str(line)+"!")
         else:
             # otherwise set the data with the new arrays
             line.set_data(new_xdata, new_ydata)
@@ -1644,7 +1644,7 @@ def export_figure(dpi=200, figure="gcf", path="ask"):
     if path=="ask": path = _s.dialogs.Save("*.*", default_directory="save_plot_default_directory")
 
     if path=="":
-        print "aborted."
+        print("aborted.")
         return
 
     figure.savefig(path, dpi=dpi)
@@ -1660,7 +1660,7 @@ def save_plot(axes="gca", path="ask"):
     if path=="ask": path = _s.dialogs.Save("*.plot", default_directory="save_plot_default_directory")
 
     if path=="":
-        print "aborted."
+        print("aborted.")
         return
 
     if not path.split(".")[-1] == "plot": path = path+".plot"
@@ -1716,7 +1716,7 @@ def save_figure_raw_data(figure="gcf", **kwargs):
 
             p = _os.path.split(path)
             p = _os.path.join(p[0], "axes" + str(n) + " line" + str(m) + " " + p[1])
-            print p
+            print(p)
 
             # loop over the data
             f = open(p, 'w')
@@ -1794,7 +1794,7 @@ def load_plot(clear=1, offset=0, axes="gca"):
                 xdata[-1].append(float(s[0]))
                 ydata[-1].append(float(s[1])+offset)
             except:
-                print "error s=" + str(s)
+                print("error s=" + str(s))
 
     for n in range(0, len(xdata)):
         axes.plot(xdata[n], ydata[n])
@@ -1829,9 +1829,9 @@ def modify_legend(axes="gca"):
             # get the label (from the legend)
             label = line.get_label()
 
-            print label
+            print(label)
 
-            new_label = raw_input("New Label: ")
+            new_label = input("New Label: ")
             if new_label == "q" or new_label == "quit":
                 unfatten_line(line)
                 return

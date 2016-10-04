@@ -8,7 +8,7 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
-import _temporary_fixes
+from . import _temporary_fixes
 _a = _g.mkQApp()
 
 # set the font if we're in linux
@@ -144,7 +144,7 @@ class BaseObject(object):
         If self.log is defined to be an instance of TextLog, it print the
         message there. Otherwise use the usual "print" to command line.
         """
-        if self.log == None: print message
+        if self.log == None: print(message)
         else:                self.log.append_text(message)
 
     def save_gui_settings(self):
@@ -207,7 +207,7 @@ class BaseObject(object):
         # only do this if the key exists
         if name in databox.hkeys:
             try:    eval(name).set_value(databox.h(name))
-            except: print "ERROR: Could not load gui setting "+repr(name)
+            except: print("ERROR: Could not load gui setting "+repr(name))
 
     def _store_gui_setting(self, databox, name):
         """
@@ -216,7 +216,7 @@ class BaseObject(object):
         "self.controlname"
         """
         try:    databox.insert_header(name, eval(name + ".get_value()"))
-        except: print "ERROR: Could not store gui setting "+repr(name)
+        except: print("ERROR: Could not store gui setting "+repr(name))
 
 
 
@@ -318,7 +318,7 @@ class GridLayout(BaseObject):
         Removes the supplied object from the grid. If object is an integer,
         it removes the n'th object.
         """
-        if type(object) in [int, long]: n = object
+        if type(object) in [int, int]: n = object
         else:                           n = self.objects.index(object)
 
         # pop it from the list
@@ -374,7 +374,7 @@ class GridLayout(BaseObject):
         If self.log is defined to be an instance of TextLog, it print the
         message there. Otherwise use the usual "print" to command line.
         """
-        if self.log == None: print message
+        if self.log == None: print(message)
         else:                self.log.append_text(message)
 
 
@@ -846,7 +846,7 @@ class Label(BaseObject):
         # assemble the string
         s = "QLabel {"
         for a in args:          s = s+a+"; "
-        for k in kwargs.keys(): s = s+k.replace("_","-")+": "+kwargs[k]+"; "
+        for k in list(kwargs.keys()): s = s+k.replace("_","-")+": "+kwargs[k]+"; "
         s = s+"}"
         
         # set it!
@@ -1196,7 +1196,7 @@ class TableDictionary(Table):
         """
         Returns the value associated with the key.
         """
-        keys = self.keys()
+        keys = list(self.keys())
 
         # make sure it exists
         if not key in keys:
@@ -1230,7 +1230,7 @@ class TableDictionary(Table):
         """
         Sets the item by key, and refills the table sorted.
         """
-        keys = self.keys()
+        keys = list(self.keys())
 
         # if it exists, update
         if key in keys:
@@ -1249,7 +1249,7 @@ class TableDictionary(Table):
         Adds/overwrites all the keys and values from the dictionary.
         """
         if not dictionary == None: kwargs.update(dictionary)
-        for k in kwargs.keys(): self[k] = kwargs[k]
+        for k in list(kwargs.keys()): self[k] = kwargs[k]
 
     __call__ = update
 
@@ -1530,7 +1530,7 @@ class TreeDictionary(BaseObject):
         # modify the existing class to fit our conventions
         ap.signal_clicked = ap.sigActivated
 
-        return Button(name, checkable, checked, ap.items.keys()[0].button)
+        return Button(name, checkable, checked, list(ap.items.keys())[0].button)
 
     def _clean_up_name(self, name):
         """
@@ -1683,8 +1683,8 @@ class TreeDictionary(BaseObject):
         # Otherwise assume it is a value with bounds or limits (depending on 
         # the version of pyqtgraph)    
         else:        
-            if   x.opts.has_key('limits'): bounds = x.opts['limits']
-            elif x.opts.has_key('bounds'): bounds = x.opts['bounds']
+            if   'limits' in x.opts: bounds = x.opts['limits']
+            elif 'bounds' in x.opts: bounds = x.opts['bounds']
             if not bounds == None:
                 if not bounds[1]==None and value > bounds[1]: value = bounds[1]
                 if not bounds[0]==None and value < bounds[0]: value = bounds[0]
@@ -1714,8 +1714,8 @@ class TreeDictionary(BaseObject):
 
         # for lists, make sure the value exists!!
         if x.type() in ['list']:
-            if value in x.forward.keys(): x.setValue(value)
-            else:                         x.setValue(x.forward.keys()[0])
+            if value in list(x.forward.keys()): x.setValue(value)
+            else:                         x.setValue(list(x.forward.keys())[0])
 
         # otherwise just set the value
         else: x.setValue(value)
@@ -1793,7 +1793,7 @@ class TreeDictionary(BaseObject):
         if not type(d) == dict: d = d.headers
 
         # loop over the dictionary and update
-        for k in d.keys():
+        for k in list(d.keys()):
 
             # for safety: by default assume it's a repr() with python code
             try:    self.set_value(k, eval(str(d[k])), ignore_error=ignore_errors)
@@ -2189,8 +2189,8 @@ class DataboxPlot(_d.databox, GridLayout):
             for n in range(max(len(x),len(y))-1,-1,-1):
 
                 # Create data for "None" cases.
-                if x[n] is None: x[n] = range(len(y[n]))
-                if y[n] is None: y[n] = range(len(x[n]))
+                if x[n] is None: x[n] = list(range(len(y[n])))
+                if y[n] is None: y[n] = list(range(len(x[n])))
                 self._curves[n].setData(x[n],y[n])
 
                 # get the labels for the curves

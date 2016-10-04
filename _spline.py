@@ -42,9 +42,9 @@ class spline_single:
             # if we're supposed to, presmooth the data
             if presmoothing: _fun.smooth_array(self.ydata_smoothed, presmoothing)
 
-            print "presmoothing = ", str(presmoothing)
-            print "smoothing = ",    str(smoothing)
-            print "degree    = ",    str(degree)
+            print("presmoothing = ", str(presmoothing))
+            print("smoothing = ",    str(smoothing))
+            print("degree    = ",    str(degree))
         
             # do the fit
             self.pfit = _interpolate.splrep(xdata, self.ydata_smoothed, s=smoothing, k=degree)
@@ -104,7 +104,7 @@ class spline_single:
 
                     # if we're at the max, extrapolate
                     if i2 >= len(self.xdata):
-                        print x[n], "is out of range. extrapolating"
+                        print(x[n], "is out of range. extrapolating")
                         i2 = i1-1
 
                     x1 = self.xdata[i1]
@@ -226,13 +226,13 @@ class spline_array:
         if y_parameter < self.ymin: self.ymin = y_parameter
 
         # add in order to the master list of y_values
-        self.y_values = self.x_splines.keys()
+        self.y_values = list(self.x_splines.keys())
         self.y_values.sort()
         
     def remove_x_spline(self, y_parameter):
         # this function removes a spline from the dictionary
         try: self.x_splines.pop(y_parameter)
-        except: print "Spline with parameter "+str(y_parameter)+" doesn't exist! Stop being a damn FOOL."
+        except: print("Spline with parameter "+str(y_parameter)+" doesn't exist! Stop being a damn FOOL.")
 
     def __call__(self,       x, y, x_derivative=0, smooth=0, simple='auto'):
         return self.evaluate(x, y, x_derivative,   smooth,   simple)
@@ -253,7 +253,7 @@ class spline_array:
                 z2 = self.x_splines[y2].evaluate(x, x_derivative, smooth, simple)
                 return z1 + (y-y1)*(z2-z1)/(y2-y1)
 
-        print "YARG! The y value "+str(y)+" is out of interpolation range!"            
+        print("YARG! The y value "+str(y)+" is out of interpolation range!")            
         if y >= self.y_values[-1]: return self.x_splines[self.y_values[-1]].evaluate(x, x_derivative, smooth, simple)
         else                     : return self.x_splines[self.y_values[0]].evaluate(x, x_derivative, smooth, simple)
 
@@ -336,7 +336,7 @@ class spline_array:
         _s.format_figure()
 
     def generate_y_values(self):
-        self.y_values = self.x_splines.keys()
+        self.y_values = list(self.x_splines.keys())
         self.y_values.sort()
 
 
@@ -393,18 +393,18 @@ def generate_spline_array(data, y_parameter="field", smoothing=5000, degree=5, p
 
     # loop over each data file, fit it, plot it, ask if it's okay, and move on
     for n in range(0,len(paths)):
-        print "spline "+str(n+1)+"/"+str(len(paths)+1)
+        print("spline "+str(n+1)+"/"+str(len(paths)+1))
 
         # fill up the xdata, ydata, and key            
         data.get_data(paths[n])
 
-        print "y_parameter = "+str(data.constants[y_parameter])
+        print("y_parameter = "+str(data.constants[y_parameter]))
 
         # if this is just a simple interpolator, make a simple one
         if simple:
             x_spline = spline_single(data.xdata, data.ydata, plot=True, xlabel=data.xlabel, ylabel=data.ylabel, xmin="same", xmax="same", simple=1)
 
-            a = raw_input("ya: ")
+            a = input("ya: ")
             if a in ["quit", "q"]: return s
             if a in ["y", "yes", "\n"]: s.add_x_spline(data.constants[y_parameter], x_spline)
 
@@ -424,7 +424,7 @@ def generate_spline_array(data, y_parameter="field", smoothing=5000, degree=5, p
         smoothing    = x_spline.smoothing
         degree       = x_spline.degree
 
-    print "Complete! "+str(len(paths))+" file and "+str(len(s.x_splines))+" successful splines."
+    print("Complete! "+str(len(paths))+" file and "+str(len(s.x_splines))+" successful splines.")
 
     s.simple = simple
     if autosave: _s.save_object(s)
@@ -445,14 +445,14 @@ def splinteractive(xdata, ydata, smoothing=5000, degree=5, presmoothing=0, splin
         x_spline = spline_class(xdata, ydata, smoothing, degree, presmoothing, True, xlabel, ylabel, show_derivative, xmin=xmin, xmax=xmax)
         
         # ask if it's okay
-        if x_spline.message == "": command = raw_input("What now? ")
+        if x_spline.message == "": command = input("What now? ")
         else:                      command = x_spline.message
         
         try:
             float(command)
             command = "s="+command
         except:
-            print "parsing..."
+            print("parsing...")
 
         # deal with simple commands
         if   command in ["y", "Y", "yes"]:
@@ -471,17 +471,17 @@ def splinteractive(xdata, ydata, smoothing=5000, degree=5, presmoothing=0, splin
             x_spline.message = "line"
             smoothing = x_spline.smoothing
             x_spline.plot()
-            raw_input("(press <enter> when done looking)")
+            input("(press <enter> when done looking)")
         elif command in ["d", "D", "derivative", "\n"]:
             x_spline.message = "derivative"
             smoothing = x_spline.smoothing
             x_spline.plot(derivative=1)
-            raw_input("(press <enter> when done looking)")
+            input("(press <enter> when done looking)")
         elif command in ["dd", "DD"]:
             x_spline.message = "derivative 2"
             x_spline.plot(derivative=2)
             smoothing = x_spline.smoothing
-            raw_input("(press <enter> when done looking)")
+            input("(press <enter> when done looking)")
         elif command in ["p", "P", "print", "printer"]:
             x_spline.message = "print"
             smoothing = x_spline.smoothing
@@ -496,35 +496,35 @@ def splinteractive(xdata, ydata, smoothing=5000, degree=5, presmoothing=0, splin
         # deal with parameter changes
         elif command.split("=")[0].strip() in ["s", "smoothing"]:
             try: smoothing = eval(command.split("=")[1].strip())
-            except: print "Surely you can give me a better number than THAT piece of shit."
+            except: print("Surely you can give me a better number than THAT piece of shit.")
 
         elif command.split("=")[0].strip() in ["d", "degree"]:
             try: degree = int(eval(command.split("=")[1].strip()))
-            except: print "Nice try, ass.  Learn how to enter data."
+            except: print("Nice try, ass.  Learn how to enter data.")
 
         elif command.split("=")[0].strip() in ["p", "pre", "presmoothing"]:
             try: presmoothing = int(eval(command.split("=")[1].strip()))
-            except: print "Nice work.  Yeah, not really."
+            except: print("Nice work.  Yeah, not really.")
 
         elif command.split("=")[0].strip() in ["b", "boost"]:
             try: boost_factor = float(eval(command.split("=")[1].strip()))
-            except: print "Nice try smelly fart."
+            except: print("Nice try smelly fart.")
 
         # idiot at the controls
         else:
-            print "You need help.\n"
-            print "------- COMMAND EXAMPLES -------\n"
-            print "y        Yes, it looks good, move on."
-            print "n        No, and there's no hope.  Ignore and move on."
-            print "q        Quit."
-            print "s=1000   Set the smoothing to 10"
-            print "d=3      Set the degree to 3"
-            print "p=5      Set the presmoothing to 5"
-            print "l        Show me the spline without data"
-            print "d        Show me the derivative"
-            print "]        Boost the smoothing"
-            print "[        Reduce the smoothing"
-            print "b=1.2    Set the boost factor to 1.2"
+            print("You need help.\n")
+            print("------- COMMAND EXAMPLES -------\n")
+            print("y        Yes, it looks good, move on.")
+            print("n        No, and there's no hope.  Ignore and move on.")
+            print("q        Quit.")
+            print("s=1000   Set the smoothing to 10")
+            print("d=3      Set the degree to 3")
+            print("p=5      Set the presmoothing to 5")
+            print("l        Show me the spline without data")
+            print("d        Show me the derivative")
+            print("]        Boost the smoothing")
+            print("[        Reduce the smoothing")
+            print("b=1.2    Set the boost factor to 1.2")
 
             smoothing = x_spline.smoothing
 

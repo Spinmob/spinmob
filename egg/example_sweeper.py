@@ -172,7 +172,7 @@ d_sweep.after_load_file = d_sweep_after_load
 
 # overwrite the existing shutdown / destroy sequence
 def shutdown():
-    print "Closing but not destroying..."
+    print("Closing but not destroying...")
     b_sweep.set_checked(False)
     return
 w.event_close = shutdown

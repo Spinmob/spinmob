@@ -14,7 +14,7 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     
     
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
+    if default_directory in _settings: default = _settings[default_directory]
     else:                                    default = ""
     
     # pop up the dialog
@@ -34,7 +34,7 @@ def open_single(filters="*.*", text='Select a file, FACEFACE!', default_director
     if filters.find('*.*') < 0: filters = filters + ";;All files (*.*)"
     
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
+    if default_directory in _settings: default = _settings[default_directory]
     else:                                    default = ""
     
     # pop up the dialog
@@ -54,7 +54,7 @@ def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
     if filters.find('*.*') < 0: filters = filters + ";;All files (*.*)"
     
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
+    if default_directory in _settings: default = _settings[default_directory]
     else:                                    default = ""
     
     # pop up the dialog
@@ -70,7 +70,7 @@ def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
 def select_directory(text='Select a directory, POCKETPANTS!', default_directory='default_directory'):
 
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
+    if default_directory in _settings: default = _settings[default_directory]
     else:                                    default = ""
     
     # pop up the dialog

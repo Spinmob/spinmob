@@ -15,7 +15,7 @@ w.place_object(b)
 b.set_width(70).set_text("Fire Once!")
 
 # Define a basic function
-def f(*a): print "Oooooh, received", a
+def f(*a): print("Oooooh, received", a)
 
 # Connect the button to f
 w.connect(b.signal_clicked, f)

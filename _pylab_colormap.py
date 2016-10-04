@@ -4,7 +4,7 @@ import pylab        as _pylab
 import PyQt4.QtGui  as _qt
 import PyQt4.QtCore as _qtcore
 from functools import partial as _partial
-import _pylab_tweaks
+from . import _pylab_tweaks
 
 
 # make sure we have an application
@@ -12,10 +12,10 @@ if __name__ == '__main__':
     _qtapp = _qtcore.QCoreApplication.instance()
 
     if not _qtapp:
-        print "_pylab_colormap.py: Creating QApplication"
+        print("_pylab_colormap.py: Creating QApplication")
         _qtapp = _qt.QApplication(_os.sys.argv)
 
-    import _settings
+    from . import _settings
     _settings = _settings.settings()
 
 
@@ -68,7 +68,7 @@ class colormap():
 
         # make sure the file exists
         if not _os.path.exists(path):
-            print "load_colormap(): Colormap '"+name+"' does not exist. Creating."
+            print("load_colormap(): Colormap '"+name+"' does not exist. Creating.")
             self.save_colormap(name)
             return
 
@@ -80,7 +80,7 @@ class colormap():
         try:
             self._colorpoint_list = eval(x)
         except:
-            print "Invalid colormap. Overwriting."
+            print("Invalid colormap. Overwriting.")
             self.save_colormap()
 
         # update the image
@@ -133,7 +133,7 @@ class colormap():
         Make sure the name is something your OS could name a file.
         """
         if not type(name)==str:
-            print "set_name(): Name must be a string."
+            print("set_name(): Name must be a string.")
             return
         self._name = name
         return self
