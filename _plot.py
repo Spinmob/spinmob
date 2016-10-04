@@ -9,3 +9,4 @@ from . import _plot_magphase   as magphase
 from . import _pylab_tweaks    as tweaks
 
 style = _plotting_mess.plot_style_cycle
+_settings = None

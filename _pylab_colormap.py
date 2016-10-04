@@ -1,8 +1,8 @@
 import os   as _os
-import matplotlib   as _mpl
-import pylab        as _pylab
-import PyQt4.QtGui  as _qt
-import PyQt4.QtCore as _qtcore
+import matplotlib       as _mpl
+import pylab            as _pylab
+import PyQt5.QtWidgets  as _qtw
+import PyQt5.QtCore     as _qtcore
 from functools import partial as _partial
 from . import _pylab_tweaks
 
@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     if not _qtapp:
         print("_pylab_colormap.py: Creating QApplication")
-        _qtapp = _qt.QApplication(_os.sys.argv)
+        _qtapp = _qtw.QApplication(_os.sys.argv)
 
     from . import _settings
     _settings = _settings.settings()
@@ -259,11 +259,11 @@ class colormap_interface(colormap):
         colormap.__init__(self,name,image)
 
         # create the main window
-        self._window = _qt.QMainWindow()
+        self._window = _qtw.QMainWindow()
         self._window.setWindowTitle("Colormap")
 
         # main widget inside window
-        self._central_widget = _qt.QWidget()
+        self._central_widget = _qtw.QWidget()
         self._window.setCentralWidget(self._central_widget)
 
         # add all the controls
@@ -298,21 +298,21 @@ class colormap_interface(colormap):
         self._color_dialogs_bottom  = []
 
         # create the new central widget
-        self._central_widget = _qt.QWidget()
+        self._central_widget = _qtw.QWidget()
         self._window.setCentralWidget(self._central_widget)
 
         # layout for main widget
-        self._layout = _qt.QGridLayout(self._central_widget)
+        self._layout = _qtw.QGridLayout(self._central_widget)
         self._central_widget.setLayout(self._layout)
 
         # add the list of cmaps
-        self._combobox_cmaps = _qt.QComboBox(self._central_widget)
+        self._combobox_cmaps = _qtw.QComboBox(self._central_widget)
         self._combobox_cmaps.setEditable(True)
         self._load_cmap_list()
 
         # add the save and delete buttons
-        self._button_save   = _qt.QPushButton("Save",   self._central_widget)
-        self._button_delete = _qt.QPushButton("Delete", self._central_widget)
+        self._button_save   = _qtw.QPushButton("Save",   self._central_widget)
+        self._button_delete = _qtw.QPushButton("Delete", self._central_widget)
         self._button_save.setFixedWidth(70)
         self._button_delete.setFixedWidth(70)
 
@@ -336,37 +336,37 @@ class colormap_interface(colormap):
             c2 = self._colorpoint_list[n][2]
 
             # create a top-color button
-            self._buttons_top_color.append(_qt.QPushButton(self._central_widget))
+            self._buttons_top_color.append(_qtw.QPushButton(self._central_widget))
             self._buttons_top_color[-1].setStyleSheet("background-color: rgb("+str(int(c2[0]*255))+","+str(int(c2[1]*255))+","+str(int(c2[2]*255))+"); border-radius: 3px;")
 
             # create a bottom-color button
-            self._buttons_bottom_color.append(_qt.QPushButton(self._central_widget))
+            self._buttons_bottom_color.append(_qtw.QPushButton(self._central_widget))
             self._buttons_bottom_color[-1].setStyleSheet("background-color: rgb("+str(int(c1[0]*255))+","+str(int(c1[1]*255))+","+str(int(c1[2]*255))+"); border-radius: 3px;")
 
             # create color dialogs
-            self._color_dialogs_top.append(_qt.QColorDialog(self._central_widget))
+            self._color_dialogs_top.append(_qtw.QColorDialog(self._central_widget))
             self._color_dialogs_top[-1].setCurrentColor(self._buttons_top_color[-1].palette().color(1))
 
-            self._color_dialogs_bottom.append(_qt.QColorDialog(self._central_widget))
+            self._color_dialogs_bottom.append(_qtw.QColorDialog(self._central_widget))
             self._color_dialogs_bottom[-1].setCurrentColor(self._buttons_top_color[-1].palette().color(1))
 
             # create link checkboxes
-            self._checkboxes.append(_qt.QCheckBox(self._central_widget))
+            self._checkboxes.append(_qtw.QCheckBox(self._central_widget))
             self._checkboxes[-1].setChecked(c1==c2)
 
             # create a slider
-            self._sliders.append(_qt.QSlider(self._central_widget))
+            self._sliders.append(_qtw.QSlider(self._central_widget))
             self._sliders[-1].setOrientation(_qtcore.Qt.Horizontal)
             self._sliders[-1].setMaximum(1000)
             self._sliders[-1].setValue(int(self._colorpoint_list[n][0]*1000))
             self._sliders[-1].setFixedWidth(250)
 
             # create + and - buttons
-            self._buttons_plus.append(_qt.QPushButton(self._central_widget))
+            self._buttons_plus.append(_qtw.QPushButton(self._central_widget))
             self._buttons_plus[-1].setText("+")
             self._buttons_plus[-1].setFixedWidth(25)
 
-            self._buttons_minus.append(_qt.QPushButton(self._central_widget))
+            self._buttons_minus.append(_qtw.QPushButton(self._central_widget))
             self._buttons_minus[-1].setText("-")
             self._buttons_minus[-1].setFixedWidth(25)
 
@@ -524,14 +524,14 @@ class colormap_interface(colormap):
         Closes the window.
         """
         self._window.close()
-        _qt.qApp.processEvents()
+        _qtw.qApp.processEvents()
 
     def show(self):
         """
         Shows the window.
         """
         self._window.show()
-        _qt.qApp.processEvents()
+        _qtw.qApp.processEvents()
 
 
 ######################
