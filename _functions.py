@@ -426,7 +426,17 @@ def elements_are_strings(array, start_index=0, end_index=-1):
         if not type(array[n]) == str: return 0
     return 1
 
-
+def equalize_list_lengths(a,b):
+    """
+    Modifies the length of list a to match b. Returns a. 
+    a can also not be a list (will convert it to one).
+    a will not be modified.
+    """
+    if not _s.fun.is_iterable(a): a = [a]
+    a = list(a)
+    while len(a)>len(b): a.pop(-1)
+    while len(a)<len(b): a.append(a[-1])
+    return a
 
 def find_N_peaks(array, N=4, max_iterations=100, rec_max_iterations=3, recursion=1):
     """
@@ -470,6 +480,7 @@ def find_N_peaks(array, N=4, max_iterations=100, rec_max_iterations=3, recursion
         else:          ymax = y1
 
     return None
+
 
 def find_peaks(array, baseline=0.1, return_subarrays=False):
     """

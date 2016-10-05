@@ -197,16 +197,18 @@ class ai_task(task_base):
                          "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
                          "ai_units"             : _mx.DAQmx_Val_Volts})
 
-
+        # make sure this key exists in kwargs
+        if not kwargs.has_key("ai_channels"):        kwargs["ai_channels"]        = self["ai_channels"]    
+        if not kwargs.has_key("ai_input_couplings"): kwargs["ai_input_couplings"] = self["ai_input_couplings"]
+        
         # make sure ai_channels is a list
         x = kwargs["ai_channels"]
         if not hasattr(x, '__iter__'): kwargs["ai_channels"] = [x]
 
+        # make sure it's iterable
+        kwargs["ai_input_couplings"] = _s.fun.equalize_list_lengths(kwargs["ai_input_couplings"], kwargs["ai_channels"])    
         
-        # make sure the shape of the input couplings matches that of the channels
-        x = kwargs["ai_input_couplings"]
-        if not hasattr(x, '__iter__'): kwargs['ai_input_couplings'] = [x]*len(kwargs['ai_channels'])
-
+        # Note this overwrites the entries in self.settings
         task_base.__init__(self, **kwargs)
 
 
