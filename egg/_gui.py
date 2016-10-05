@@ -1379,7 +1379,7 @@ class TextBox(BaseObject):
 
         # pyqt objects
         if multiline:   self._widget = _g.QtGui.QTextEdit()
-        else:           self._widget = _g.QtGui.QLineEdit()
+        else:           self._widget = _g.QtGui.QLineEdit(); self.signal_return_pressed = self._widget.returnPressed
         self.set_text(str(text))
 
         # signals
