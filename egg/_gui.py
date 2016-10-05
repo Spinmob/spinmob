@@ -936,6 +936,77 @@ class NumberBox(BaseObject):
         self._widget.setStyleSheet("SpinBox {background-color: "+background+"; color: "+text+"}")
 
 
+class CheckBox(BaseObject):
+    
+    def __init__(self):
+        """
+        Simplified QCheckBox.
+        """      
+        # pyqt objects
+        self._widget = _g.QtGui.QCheckBox()
+        
+        
+    def is_checked(self):
+        """
+        Check if checked.
+        """
+        self._widget.checkState()
+        return self
+        
+    def set_checked(self, value=True):
+        """
+        Set checkbox state.
+        """
+        self._widget.setCheckState(value)
+        return self
+
+
+class ComboBox(BaseObject):
+    
+    def __init__(self):
+        """
+        Simplified QComboBox.
+        """
+        
+        # pyqt objects
+        self._widget = _g.QtGui.QComboBox()
+        
+        # signals
+        self.activated       = self._widget.activated       
+        self.changed = self._widget.currentIndexChanged
+        
+        
+    def add_item(self, text="ploop"):
+        """
+        Adds an item to the combobox.
+        """
+        self._widget.addItem(text)
+        
+    def insert_separator(self,index=1):
+        """
+        Adds a separator to the combobox.
+        """
+        self._widget.insertSeparator(index)
+        
+    def get_current_index(self):
+        """
+        Gets current index.
+        """
+        return self._widget.currentIndex()
+        
+    def set_current_index(self,index=0):
+        """
+        Sets current index.
+        """
+        self._widget.setCurrentIndex(index)
+        
+    def get_text(self,index=1):
+        """
+        Gets current selected text.
+        """
+        return str(self._widget.currentText())
+
+
 
 
 class TabArea(BaseObject):
