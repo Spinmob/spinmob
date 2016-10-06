@@ -1733,6 +1733,8 @@ class fitter():
 
         p=None means use the fit results.
         """
+        if self._set_xdata == None or self._set_ydata == None: return None
+        
         if p is None: p = self.results[0]
         r = self.studentized_residuals(p)
 
