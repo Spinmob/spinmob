@@ -5,7 +5,7 @@ Module for testing _data.py
 import os  # For loading fixtures
 import numpy as _n
 import spinmob as sm
-_dt = sm._data
+_f = sm._functions
 
 import unittest as _ut
 
@@ -14,7 +14,7 @@ import unittest as _ut
 # this nicely.
 
 
-class Test_dialogs(_ut.TestCase):
+class Test_functions(_ut.TestCase):
     """
     Test class for databox.
     """
@@ -28,6 +28,12 @@ class Test_dialogs(_ut.TestCase):
         """
         """
         return
+    
+    def test_is_a_number(self):
+        
+        self.assertTrue(_f.is_a_number(7))
+        self.assertTrue(_f.is_a_number('100'))
+        self.assertFalse(_f.is_a_number([]))
 
 
 if __name__ == "__main__":

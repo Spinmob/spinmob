@@ -60,7 +60,7 @@ def is_a_number(s):
     This takes an object and determines whether it's a number or a string
     representing a number.
     """
-    if _s.fun.is_iterable(s): return False
+    if _s.fun.is_iterable(s) and not type(s) == str: return False
 
     try:
         float(s)
@@ -78,9 +78,9 @@ def is_a_number(s):
 
 def is_iterable(a):
     """
-    Determine whether the object is iterable.
+    Determine whether the object is iterable, but not a string.
     """
-    return hasattr(a, '__iter__')
+    return hasattr(a, '__iter__') and not type(a) == str
 
 
 

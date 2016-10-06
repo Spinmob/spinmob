@@ -1,6 +1,5 @@
-import os     as _os
-import shutil as _shutil
-from . import _dialogs
+import os      as _os
+import shutil  as _shutil
 
 # do this so all the scripts will work with all the numpy functions
 import numpy          as _n
@@ -138,7 +137,7 @@ class databox:
         if default_directory is None: default_directory = self.directory
 
         if path == "ask":
-            path = _dialogs.open_single(filters=filters,
+            path = _s.dialogs.open_single(filters=filters,
                                         default_directory=self.directory,
                                         text=text)
         self.path = path
@@ -156,7 +155,7 @@ class databox:
         self.clear()
 
         # open said file for reading, read in all the lines and close
-        f = open(path, 'rU')
+        f = open(path, 'r')
         lines = f.readlines()
         f.close()
 
@@ -278,7 +277,7 @@ class databox:
         for label in self.ckeys: self.columns[label] = []
 
         # define a quick function to convert i's to j's
-        def fix(x): return x.replace('i','j')
+        def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')
 
         # loop over the remaining data lines, converting to numbers
         z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
@@ -325,7 +324,7 @@ class databox:
         # This is the final path. We now write to a temporary file in the user
         # directory, then move it to the destination. This (hopefully) fixes
         # problems with sync programs.
-        if path == "ask": path = _dialogs.save(filters, default_directory=self.directory)
+        if path == "ask": path = _s.dialogs.save(filters, default_directory=self.directory)
         if path in ["", None]:
             print("Aborted.")
             return False
@@ -1683,6 +1682,8 @@ class fitter():
 
         p=None means use the fit results
         """
+        if self._xdata_massaged is None or self._ydata_massaged is None: return
+        
         if p is None:
             if not self.results:
                 self._error("Can't call studentized_residuals(None) without a fit result.")
@@ -1735,6 +1736,9 @@ class fitter():
         """
         if p is None: p = self.results[0]
         r = self.studentized_residuals(p)
+        
+        # In case it's not possible to calculate
+        if r is None: return
 
         # calculate the number of points
         N = 0
@@ -2096,7 +2100,7 @@ class fitter():
 # Dialogs for loading data
 ############################
 
-def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEHEAD.", default_directory="default_directory", quiet=False, header_only=False, **kwargs):
+def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, **kwargs):
     """
     Loads a data file into the databox data class. Returns the data object.
 
@@ -2129,7 +2133,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
 
     >>> load(delimiter=",")
     """
-    if paths == "ask": paths = _dialogs.open_multiple(filters, text, default_directory)
+    if paths == "ask": paths = _s.dialogs.open_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []
@@ -2137,3 +2141,14 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
         if _os.path.isfile(path): datas.append(load(path, first_data_line, **kwargs))
 
     return datas
+    
+
+    
+    
+    
+if __name__ == "__main__":
+    
+    f = _s.data.fitter()
+    f.set_data()
+    f.fit()
+    
