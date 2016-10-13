@@ -1,10 +1,13 @@
 import os   as _os
 import matplotlib       as _mpl
 import pylab            as _pylab
-import PyQt5.QtWidgets  as _qtw
-import PyQt5.QtCore     as _qtcore
 from functools import partial as _partial
 from . import _pylab_tweaks
+
+import spinmob as _s
+_qtw    = _s._qtw
+_qtcore = _s._qtc
+
 
 
 # make sure we have an application

@@ -9,10 +9,6 @@ _d = _s.data
 
 import unittest as _ut
 
-# Not sure how to handle ~line 125 where if a path is not specified, the user
-# manually enters one.  This is annoying to test.  Has to be a way to handle
-# this nicely.
-
 
 class Test_databox(_ut.TestCase):
     """
@@ -25,25 +21,9 @@ class Test_databox(_ut.TestCase):
         """
         # Path to the spinmob module
         self.dt_path        = _os.path.dirname(_d.__file__)
-        self.module_path    = self.dt_path.rpartition('spinmob')
-        self.module_path    = self.module_path[0]
+        self.module_path    = self.dt_path.rpartition('spinmob')[0]
         self.fixtures_path  = _os.path.join('spinmob', 'tests', 'fixtures', 'data')
         self.data_path      = _os.path.join(self.module_path, self.fixtures_path)
-
-#        filename = 'simple_xy_data.dat'
-#        self.data_path = _os.path.join(midPath, filename)
-#
-#        # setup a default databox to be used for testing.
-#        d = _dt.databox()
-#
-#        # Path to a different data set fixture, with headers
-#        filename = 'CSV_xy.dat'
-#        self.data_path2 = _os.path.join(midPath, filename)
-#
-#        dCSV = _dt.databox(delimiter=', ')
-#
-#        filename = 'headers_xy.dat'
-#        self.data_path3 = _os.path.join(midPath, filename)
 
     def tearDown(self):
         """

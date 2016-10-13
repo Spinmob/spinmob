@@ -1,5 +1,9 @@
-import PyQt5.QtWidgets as _qt
 import os              as _os
+
+import spinmob as _s
+_qtw    = _s._qtw
+_qtcore = _s._qtc
+
 
 
 def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_directory'):
@@ -14,7 +18,7 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qt.QFileDialog.getSaveFileName(None,text,default,filters)[0]
+    result = _qtw.QFileDialog.getSaveFileName(None,text,default,filters)
     
     if result == '': return None
     else:
@@ -34,7 +38,7 @@ def open_single(filters="*.*", text='Select a file, FACEFACE!', default_director
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qt.QFileDialog.getOpenFileName(None,text,default,filters)[0]
+    result = _qtw.QFileDialog.getOpenFileName(None,text,default,filters)
     
     if result == '': return None
     else:
@@ -54,7 +58,7 @@ def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qt.QFileDialog.getOpenFileNames(None,text,default,filters)[0]
+    result = _qtw.QFileDialog.getOpenFileNames(None,text,default,filters)
     
     if len(result)==0: return
     else:
@@ -69,7 +73,7 @@ def select_directory(text='Select a directory, POCKETPANTS!', default_directory=
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qt.QFileDialog.getExistingDirectory(None,text,default)
+    result = _qtw.QFileDialog.getExistingDirectory(None,text,default)
     
     if result == '': return None
     else:
