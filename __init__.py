@@ -6,13 +6,6 @@ import pylab
 import warnings
 warnings.simplefilter("ignore")
 
-# Start the QApplication. Not sure why it has to be done this way.
-import PyQt5.QtCore as _qtc
-import PyQt5.Qt     as _qt
-
-# make sure we have a valid qt application for dialogs etc...
-_qtapp = _qtc.QCoreApplication.instance()
-if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
 
 
 #_qtapp = _qt.qApp
@@ -37,3 +30,24 @@ from . import _functions        as fun         ; fun._settings     = settings
 plot.tweaks._pylab_colormap._settings = settings
 
 instaprint = tweaks.instaprint
+
+try: 
+    import PyQt4.QtCore as _qtc
+    import PyQt4.Qt     as _qt
+    
+except:
+    print("""
+    Warning: PyQt4 not found. Using PyQt5, which limits
+    the functionality of spinmob (in particular Easy GUI Generator, 
+    which relies on pyqtgraph). We are trying to solve this 
+    upgrade issue from several angles, but for now an easy solution 
+    is to use Anaconda3-4.1.1 or manually install.
+    """)
+    import PyQt5.QtCore  as _qtc
+    import PyQt5.Qt      as _qt
+    import PyQt5.Widgets as _qtw
+
+# make sure we have a valid qt application for dialogs etc...
+_qtapp = _qtc.QCoreApplication.instance()
+if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
+
