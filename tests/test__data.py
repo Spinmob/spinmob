@@ -237,6 +237,18 @@ class Test_databox(_ut.TestCase):
         expected_value = 85.0
         self.assertEqual(value, expected_value)
 
+    def test_load_single_column_of_data(self):
+        """
+        Test that a file with a single column of data can be loaded.
+        """
+        filename = 'one_column_of_data.dat'
+        single_column_path = os.path.join(self.data_folder, filename)
+        one_column_databox = self.databox.load_file(path=single_column_path)
+
+        value = one_column_databox[0].tolist()
+        expected_value = [85., 42.]
+        self.assertListEqual(value, expected_value)
+
 
 class Test_fitter(_ut.TestCase):
     """
