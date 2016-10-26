@@ -291,7 +291,7 @@ class databox:
             # check to make sure the data file contains only 1 column of data
             total_data_line_number = len(lines) - first_data_line
             if total_data_line_number == 1: z = _n.array([z])
-        else: z = _n.array(z)
+            else: z = _n.array(z)
 
         # fix for different behavior of genfromtxt on single columns
         if len(z.shape) == 2: z = z.transpose()
