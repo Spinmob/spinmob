@@ -289,8 +289,8 @@ class databox:
         # highly confusing behavior, numpy!
         if len(_n.shape(z)) == 1:
             # check to make sure the data file contains only 1 column of data
-            total_data_line_number = len(lines) - first_data_line
-            if total_data_line_number == 1: z = _n.array([z])
+            rows_of_data = len(lines) - first_data_line
+            if rows_of_data == 1: z = _n.array([z])
             else: z = _n.array(z)
 
         # fix for different behavior of genfromtxt on single columns
