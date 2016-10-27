@@ -287,7 +287,11 @@ class databox:
 
         # genfromtxt returns a 1D array if there is only one data line.
         # highly confusing behavior, numpy!
-        if len(_n.shape(z)) == 1: z = _n.array([z])
+        if len(_n.shape(z)) == 1:
+            # check to make sure the data file contains only 1 column of data
+            rows_of_data = len(lines) - first_data_line
+            if rows_of_data == 1: z = _n.array([z])
+            else: z = _n.array(z)
 
         # fix for different behavior of genfromtxt on single columns
         if len(z.shape) == 2: z = z.transpose()
@@ -1734,7 +1738,7 @@ class fitter():
         p=None means use the fit results.
         """
         if self._set_xdata == None or self._set_ydata == None: return None
-        
+
         if p is None: p = self.results[0]
         r = self.studentized_residuals(p)
 
@@ -1809,11 +1813,11 @@ class fitter():
         # update the massaged data
         self._massage_data()
 
-        
+
         # get the residuals
         r = None
         if not self.results is None: r = self.studentized_residuals(self.results[0])
-        
+
         # otherwise get the guess residuals
         else:                        r = self.studentized_residuals(self._pguess)
 
@@ -1822,10 +1826,10 @@ class fitter():
 
             # get the next figure
             fig = _p.figure(self['first_figure']+n)
-            
+
             # turn off interactive mode
             _p.ioff()
-           
+
             fig.clear()
 
             # set up two axes. One for data and one for residuals.
@@ -1901,13 +1905,13 @@ class fitter():
                 a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_fit'][n])
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
-            
+
             # otherwise plot the guess residuals
             elif self['plot_guess'][n]:
                 a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_guess'][n])
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
-             
+
             # Tidy up
             #a1.xaxis.set_ticklabels([])  # Can't (axes are linked!)
 
@@ -2018,7 +2022,7 @@ class fitter():
                     xmin, xmax = _p.figure(self['first_figure']+i).axes[1].get_xlim()
                     self['xmin'][i] = xmin
                     self['xmax'][i] = xmax
-                
+
                 if y:
                     ymin, ymax = _p.figure(self['first_figure']+i).axes[1].get_ylim()
                     self['ymin'][i] = ymin
