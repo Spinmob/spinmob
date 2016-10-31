@@ -249,6 +249,31 @@ class Test_databox(_ut.TestCase):
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
 
+    def test_load_comma_separated_file(self):
+        """
+        Test that a file with delimiter == "," can be loaded
+        """
+        filename = 'comma_separated.csv'
+        file_path = os.path.join(self.data_folder, filename)
+        databox = self.databox.load_file(path=file_path)
+
+        value = databox[0].tolist()
+        expected_value = [1.1, 4.4]
+        self.assertListEqual(value, expected_value)
+
+    def test_load_semicolumn_separated_file(self):
+        """
+        Test that a file with delimiter == ";" can be loaded
+        """
+        filename = 'semicolumn_separated.csv'
+        file_path = os.path.join(self.data_folder, filename)
+        databox = self.databox.load_file(path=file_path)
+
+        value = databox[0].tolist()
+        expected_value = [1.1, 4.4]
+        self.assertListEqual(value, expected_value)
+
+
 
 class Test_fitter(_ut.TestCase):
     """
