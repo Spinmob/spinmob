@@ -44,6 +44,9 @@ class Test_databox(_ut.TestCase):
 
         self.databoxCSV = _dt.databox(delimiter=', ')
 
+        filename = 'semicolumn.dat'
+        self.data_path_semicolumn = os.path.join(midPath, filename)
+
         filename = 'headers_xy.dat'
         self.data_path3 = os.path.join(midPath, filename)
 
@@ -93,6 +96,25 @@ class Test_databox(_ut.TestCase):
 
         # Check a value of the loaded file, first level
         val = self.databoxCSV[0][1]
+
+        # The expected response
+        exp = 90.0
+        self.assertEqual(val, exp)
+
+    def test_semicolumn_Delimiter(self):
+        databox = self.databox.load_file(path=self.data_path_semicolumn)
+        val = databox.delimiter
+        exp = ';'
+        self.assertEqual(val, exp)
+
+    def test_load_file_semicolumn(self):
+        """
+        Test loading a file with ";" as delimiter
+        """
+        self.databox.load_file(path=self.data_path_semicolumn)
+
+        # Check a value of the loaded file, first level
+        val = self.databox[0][1]
 
         # The expected response
         exp = 90.0
@@ -248,31 +270,6 @@ class Test_databox(_ut.TestCase):
         value = one_column_databox[0].tolist()
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
-
-    def test_load_comma_separated_file(self):
-        """
-        Test that a file with delimiter == "," can be loaded
-        """
-        filename = 'comma_separated.csv'
-        file_path = os.path.join(self.data_folder, filename)
-        databox = self.databox.load_file(path=file_path)
-
-        value = databox[0].tolist()
-        expected_value = [1.1, 4.4]
-        self.assertListEqual(value, expected_value)
-
-    def test_load_semicolumn_separated_file(self):
-        """
-        Test that a file with delimiter == ";" can be loaded
-        """
-        filename = 'semicolumn_separated.csv'
-        file_path = os.path.join(self.data_folder, filename)
-        databox = self.databox.load_file(path=file_path)
-
-        value = databox[0].tolist()
-        expected_value = [1.1, 4.4]
-        self.assertListEqual(value, expected_value)
-
 
 
 class Test_fitter(_ut.TestCase):
