@@ -44,8 +44,8 @@ class Test_databox(_ut.TestCase):
 
         self.databoxCSV = _dt.databox(delimiter=', ')
 
-        filename = 'semicolumn.dat'
-        self.data_path_semicolumn = os.path.join(midPath, filename)
+        filename = 'semicolon.dat'
+        self.data_path_semicolon = os.path.join(midPath, filename)
 
         filename = 'headers_xy.dat'
         self.data_path3 = os.path.join(midPath, filename)
@@ -101,17 +101,17 @@ class Test_databox(_ut.TestCase):
         exp = 90.0
         self.assertEqual(val, exp)
 
-    def test_semicolumn_Delimiter(self):
-        databox = self.databox.load_file(path=self.data_path_semicolumn)
+    def test_semicolon_Delimiter(self):
+        databox = self.databox.load_file(path=self.data_path_semicolon)
         val = databox.delimiter
         exp = ';'
         self.assertEqual(val, exp)
 
-    def test_load_file_semicolumn(self):
+    def test_load_file_semicolon(self):
         """
         Test loading a file with ";" as delimiter
         """
-        self.databox.load_file(path=self.data_path_semicolumn)
+        self.databox.load_file(path=self.data_path_semicolon)
 
         # Check a value of the loaded file, first level
         val = self.databox[0][1]
