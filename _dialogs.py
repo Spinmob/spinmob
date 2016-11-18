@@ -20,10 +20,10 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     # pop up the dialog
     result = _qtw.QFileDialog.getSaveFileName(None,text,default,filters)
     
-    if result == '': return None
+    if result[0] == '': return None
     else:
-        _settings[default_directory] = _os.path.split(result)[0]
-        return result 
+        _settings[default_directory] = _os.path.split(result[0])[0]
+        return result[0]
 
 
 def open_single(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
@@ -40,10 +40,10 @@ def open_single(filters="*.*", text='Select a file, FACEFACE!', default_director
     # pop up the dialog
     result = _qtw.QFileDialog.getOpenFileName(None,text,default,filters)
     
-    if result == '': return None
+    if result[0] == '': return None
     else:
-        _settings[default_directory] = _os.path.split(result)[0]
-        return result 
+        _settings[default_directory] = _os.path.split(result[0])[0]
+        return result[0]
 
 
 def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
@@ -60,10 +60,10 @@ def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
     # pop up the dialog
     result = _qtw.QFileDialog.getOpenFileNames(None,text,default,filters)
     
-    if len(result)==0: return
+    if len(result[0])==0: return
     else:
-        _settings[default_directory] = _os.path.split(result[0])[0]
-        return result 
+        _settings[default_directory] = _os.path.split(result[0][0])[0]
+        return result[0]
 
 
 def select_directory(text='Select a directory, POCKETPANTS!', default_directory='default_directory'):
