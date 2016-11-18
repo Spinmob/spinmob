@@ -6,6 +6,7 @@ from . import _pylab_tweaks
 
 import spinmob as _s
 _qtw    = _s._qtw
+_qt     = _s._qt
 _qtcore = _s._qtc
 
 
@@ -527,14 +528,14 @@ class colormap_interface(colormap):
         Closes the window.
         """
         self._window.close()
-        _qtw.qApp.processEvents()
+        _qt.QtWidgets.qApp.processEvents()
 
     def show(self):
         """
         Shows the window.
         """
         self._window.show()
-        _qtw.qApp.processEvents()
+        _qt.QtWidgets.qApp.processEvents()
 
 
 ######################

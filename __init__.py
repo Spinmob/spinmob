@@ -17,12 +17,7 @@ try:
     if not _qtapp: _qtapp = _qtw.QApplication(_os.sys.argv)
     
 except:
-    print("""
-    Warning: PyQt4 not found, and this is needed for pyqtgraph and dialogs. 
-    We are trying to solve this upgrade issue from several angles, 
-    but for now an easy solution is to use Anaconda3-4.1.1 or manually 
-    install everything.
-    """)
+    print("Warning: pyqtgraph version 0.10 or higher is required (use a pip install).")
     
     _qtc = None
     _qt  = None
