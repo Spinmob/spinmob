@@ -21,6 +21,17 @@ _defaults = dict(margins=(10,10,10,10))
 _cwd = _os.getcwd()
 
 
+
+# HACK FOR WEIRD BEHAVIOR WITH hasattr AND PYQTGRAPH OBJECTS. NO IDEA.
+def hasattr_safe(x,a):
+    try:
+        x.a
+        return True
+    except:
+        return False
+
+
+
 class BaseObject(object):
 
     log = None
@@ -298,10 +309,12 @@ class GridLayout(BaseObject):
         self.objects.append(object)
 
         # add the widget to the layout
-        if hasattr(object, '_widget'): widget = object._widget
+        try:
+            object._widget
+            widget = object._widget
 
         # allows the user to specify a standard widget
-        else:                          widget = object
+        except: widget = object
 
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
@@ -325,7 +338,7 @@ class GridLayout(BaseObject):
         object = self.objects.pop(n)
 
         # remove it from the GUI and delete it
-        if hasattr(object, '_widget'):
+        if hasattr_safe(object, '_widget'):
             self._layout.removeWidget(object._widget)
             object._widget.hide()
             if delete: object._widget.deleteLater()
@@ -506,7 +519,7 @@ class Window(GridLayout):
         settings.clear()
         
         # Save values
-        if hasattr(self._window, "saveState"):
+        if hasattr_safe(self._window, "saveState"):
             settings.setValue('State',self._window.saveState())
         settings.setValue('Geometry', self._window.saveGeometry())
         
@@ -530,14 +543,14 @@ class Window(GridLayout):
         settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
         
         # Load it up! (Extra steps required for windows command line execution)
-        if settings.contains('State') and hasattr(self._window, "restoreState"):    
+        if settings.contains('State') and hasattr_safe(self._window, "restoreState"):    
             x = settings.value('State')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()            
+            if hasattr_safe(x, "toByteArray"): x = x.toByteArray()            
             self._window.restoreState(x)
         
         if settings.contains('Geometry'): 
             x = settings.value('Geometry')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()
+            if hasattr_safe(x, "toByteArray"): x = x.toByteArray()
             self._window.restoreGeometry(x)        
 
     def connect(self, signal, function):

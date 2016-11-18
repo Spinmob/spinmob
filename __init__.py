@@ -7,13 +7,14 @@ import warnings
 warnings.simplefilter("ignore")
 
 try: 
-    import PyQt4.QtCore as _qtc
-    import PyQt4.Qt     as _qt
-    import PyQt4.QtGui  as _qtw
+    import pyqtgraph    as _pyqtgraph
+    _qtc = _pyqtgraph.Qt.QtCore
+    _qt  = _pyqtgraph.Qt
+    _qtw = _pyqtgraph.Qt.QtGui
 
     # make sure we have a valid qt application for dialogs etc...
     _qtapp = _qtc.QCoreApplication.instance()
-    if not _qtapp: _qtapp = _qt.QApplication(_os.sys.argv)
+    if not _qtapp: _qtapp = _qtw.QApplication(_os.sys.argv)
     
 except:
     print("""
