@@ -2,7 +2,7 @@ import os   as _os
 import matplotlib       as _mpl
 import pylab            as _pylab
 from functools import partial as _partial
-from . import _pylab_tweaks
+import _pylab_tweaks
 
 import spinmob as _s
 _qtw    = _s._qtw

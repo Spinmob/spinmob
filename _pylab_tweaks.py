@@ -1,7 +1,7 @@
 import os                as _os
 import pylab             as _pylab
 import time              as _time
-import _thread            as _thread
+import threading         as _thread
 import matplotlib        as _mpl
 import numpy             as _n
 from . import _functions        as _fun
@@ -166,13 +166,13 @@ def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
 def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
     """
     Fast-and-loos quick fit:
-    
+
     Loops over each line of the supplied axes and fits with the supplied
     function (f) and parameters (p). Assumes uniform error and scales this
     such that the reduced chi^2 is 1.
-    
+
     Returns a list of fitter objects
-    
+
     **kwargs are sent to _s.data.fitter()
     """
 
@@ -185,25 +185,25 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
     ymin,ymax = axes.get_ylim()
 
     # update the kwargs
-    if 'first_figure' not in kwargs: kwargs['first_figure'] = axes.figure.number+1    
-    
+    if 'first_figure' not in kwargs: kwargs['first_figure'] = axes.figure.number+1
+
     # loop over the lines
     fitters = []
     for l in axes.lines:
-      
+
         # get the trimmed data
         x,y = l.get_data()
         x,y = _s.fun.trim_data_uber([x,y],[xmin<x,x<xmax,ymin<y,y<ymax])
-        
+
         # create a fitter
-        fitters.append(_s.data.fitter(f=f, p=p, **kwargs))        
+        fitters.append(_s.data.fitter(f=f, p=p, **kwargs))
         fitters[-1].set_data(x,y)
         fitters[-1].fit()
         fitters[-1].autoscale_eydata_and_fit()
         print(fitters[-1])
         print("<click the graph to continue>")
         fitters[-1].ginput(timeout=0)
-    
+
     return fitters
 
 def format_figure(figure=None, tall=False, draw=True):
