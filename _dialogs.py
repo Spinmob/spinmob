@@ -20,10 +20,16 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     # pop up the dialog
     result = _qtw.QFileDialog.getSaveFileName(None,text,default,filters)
     
-    if result[0] == '': return None
+    # If Qt5, take the zeroth element
+    if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]    
+    
+    # Make sure it's a string
+    result = str(result)    
+    
+    if result == '': return None
     else:
-        _settings[default_directory] = _os.path.split(result[0])[0]
-        return result[0]
+        _settings[default_directory] = _os.path.split(result)[0]
+        return result
 
 
 def open_single(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
@@ -40,10 +46,16 @@ def open_single(filters="*.*", text='Select a file, FACEFACE!', default_director
     # pop up the dialog
     result = _qtw.QFileDialog.getOpenFileName(None,text,default,filters)
     
-    if result[0] == '': return None
+    # If Qt5, take the zeroth element
+    if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]
+    
+    # Make sure it's a string
+    result = str(result)    
+    
+    if result == '': return None
     else:
-        _settings[default_directory] = _os.path.split(result[0])[0]
-        return result[0]
+        _settings[default_directory] = _os.path.split(result)[0]
+        return result
 
 
 def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
@@ -58,12 +70,19 @@ def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qtw.QFileDialog.getOpenFileNames(None,text,default,filters)
+    results = _qtw.QFileDialog.getOpenFileNames(None,text,default,filters)
     
-    if len(result[0])==0: return
+    # If Qt5, take the zeroth element
+    if _s._qt.VERSION_INFO[0:5] == "PyQt5": results = results[0]
+    
+    # Make sure it's a string
+    result = []
+    for r in results: result.append(str(r))       
+    
+    if len(result)==0: return
     else:
-        _settings[default_directory] = _os.path.split(result[0][0])[0]
-        return result[0]
+        _settings[default_directory] = _os.path.split(result[0])[0]
+        return result
 
 
 def select_directory(text='Select a directory, POCKETPANTS!', default_directory='default_directory'):
@@ -74,6 +93,9 @@ def select_directory(text='Select a directory, POCKETPANTS!', default_directory=
     
     # pop up the dialog
     result = _qtw.QFileDialog.getExistingDirectory(None,text,default)
+    
+    # Make sure it's a string
+    result = str(result)        
     
     if result == '': return None
     else:

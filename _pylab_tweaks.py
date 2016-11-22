@@ -1,12 +1,17 @@
 import os                as _os
 import pylab             as _pylab
 import time              as _time
-import _thread            as _thread
 import matplotlib        as _mpl
 import numpy             as _n
 from . import _functions        as _fun
 from . import _pylab_colormap
 import spinmob           as _s
+
+# Python 3
+try:    import _thread as _thread
+
+# Python 2
+except: import thread  as _thread 
 
 image_colormap = _pylab_colormap.colormap_interface
 

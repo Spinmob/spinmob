@@ -1,3 +1,3 @@
-nosetests -w tests
+..\..\..\Scripts\nosetests -w tests
 
 @pause

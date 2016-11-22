@@ -24,8 +24,6 @@ except:
     _qtw = None
     
 
-
-
 from . import _settings
 settings = _settings.settings()
 

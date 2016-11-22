@@ -2,7 +2,11 @@ import os   as _os
 import matplotlib       as _mpl
 import pylab            as _pylab
 from functools import partial as _partial
-from . import _pylab_tweaks
+
+
+try:    from . import _pylab_tweaks
+except: import        _pylab_tweaks 
+
 
 import spinmob as _s
 _qtw    = _s._qtw
@@ -535,7 +539,7 @@ class colormap_interface(colormap):
         Shows the window.
         """
         self._window.show()
-        _qt.QtWidgets.qApp.processEvents()
+        #_qt.QtWidgets.qApp.processEvents()
 
 
 ######################
