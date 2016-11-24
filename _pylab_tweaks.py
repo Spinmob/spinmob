@@ -1,3 +1,4 @@
+import sys               as _sys
 import os                as _os
 import pylab             as _pylab
 import time              as _time
@@ -7,11 +8,9 @@ from . import _functions        as _fun
 from . import _pylab_colormap
 import spinmob           as _s
 
-# Python 3
-try:    import _thread as _thread
-
-# Python 2
-except: import thread  as _thread 
+# Python 3 or 2?
+if _sys.version_info[0] >= 3: import _thread as _thread
+else:                         import  thread as _thread 
 
 image_colormap = _pylab_colormap.colormap_interface
 
@@ -888,7 +887,7 @@ def instaprint(figure='gcf', arguments='', threaded=False, file_format='pdf'):
 
     global _settings
 
-    if 'instaprint' not in _settings:
+    if 'instaprint' not in _settings.keys():
         print("No print command setup. Set the user variable settings['instaprint'].")
         return
 
