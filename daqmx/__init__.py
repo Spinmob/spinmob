@@ -14,11 +14,11 @@ debug_enabled = False
 def debug(*args):
     if debug_enabled:
         for arg in args:
-            print "  ", arg
+            print("  ", arg)
 
 
 def error(message):
-    print "\nERROR: "+message+"\n"
+    print("\nERROR: "+message+"\n")
 
 
 
@@ -111,7 +111,7 @@ class task_base:
         """
         Sets a setting, but only if it's valid.
         """
-        if key in self.settings.keys():
+        if key in list(self.settings.keys()):
             self.settings[key] = value
             self._post_setitem(key,value)
 
@@ -119,7 +119,7 @@ class task_base:
         """
         Modifies settings based on kwargs.
         """
-        for key in kwargs.keys(): self[key] = kwargs[key]
+        for key in list(kwargs.keys()): self[key] = kwargs[key]
 
     def _post_setitem(self,key,value):
         """
@@ -131,11 +131,11 @@ class task_base:
         """
         Lists all settings.
         """
-        keys = self.settings.keys()
+        keys = list(self.settings.keys())
         keys.sort()
 
-        print "Settings:"
-        for k in keys: print '  ', k, '=', self.settings[k]
+        print("Settings:")
+        for k in keys: print('  ', k, '=', self.settings[k])
 
     has_key = settings.has_key
 
@@ -279,7 +279,7 @@ class ai_task(task_base):
         ai_max_rate = _mx.float64()
         _mx.DAQmxGetSampClkMaxRate(self._handle, _mx.byref(ai_max_rate))
         if self['ai_rate'] > ai_max_rate.value:
-            print "ERROR: ai_rate is too high! Current max = "+str(ai_max_rate.value)
+            print("ERROR: ai_rate is too high! Current max = "+str(ai_max_rate.value))
             self.clean()            
             return False
 
@@ -576,14 +576,14 @@ class daqmx_system:
         self.databox = _s.data.databox()
 
         # print the info
-        print self.__repr__()
+        print(self.__repr__())
 
 
     def __getitem__(self, device):
         """
         Accepts either integer or device name. Returns device name.
         """
-        if isinstance(device, (int, long)): return self.device_names[device]
+        if isinstance(device, int): return self.device_names[device]
         else:                               return device
 
     def __repr__(self):
@@ -609,7 +609,7 @@ class daqmx_system:
         # check that there are systems present!
         if self.device_names == ['']:
             self.device_names = []
-            print "WARNING: No DAQmx devices detected."
+            print("WARNING: No DAQmx devices detected.")
 
         # now strip and split this thing to return a names.
         return self.device_names
@@ -750,8 +750,8 @@ class daqmx_system:
                      **kwargs)
 
         # update with only the kwargs that already exist
-        for key in kwargs.keys():
-            if ao.has_key(key): ao[key] = kwargs.pop(key)
+        for key in list(kwargs.keys()):
+            if key in ao: ao[key] = kwargs.pop(key)
         debug("remaining kwargs", kwargs)
 
         # loop over the waveforms and convert functions to

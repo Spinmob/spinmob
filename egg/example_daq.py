@@ -67,7 +67,7 @@ def get_fake_data():
 
     # default to zeros
     except:
-        print "ERROR: Invalid source script."
+        print("ERROR: Invalid source script.")
         y = d1[0]*0.0
 
     # pretend this acquisition actually took time (avoids black holes)
@@ -85,7 +85,7 @@ def acquire_button_clicked(*a):
     # reset the counter
     i.set_value(0)
 
-    print "Sarting fake acquisition loop..."
+    print("Sarting fake acquisition loop...")
 
     # start the loop and keep looping until someone
     # unchecks the acquisition button or we max out the iterations
@@ -131,7 +131,7 @@ def acquire_button_clicked(*a):
     # in case the button is still checked
     b.set_checked(False)
 
-    print "Fake acquisition stopped."
+    print("Fake acquisition stopped.")
 
 # connect the button
 b.signal_clicked.connect(acquire_button_clicked)
@@ -147,7 +147,7 @@ s.connect_any_signal_changed(settings_changed)
 
 # overwrite the existing shutdown / destroy sequence
 def shutdown():
-    print "Closing but not destroying..."
+    print("Closing but not destroying...")
     b.set_checked(False)
     return
 w.event_close = shutdown

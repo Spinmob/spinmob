@@ -28,8 +28,8 @@ top_row = window.place_object(egg.gui.GridLayout(False), 0,0, column_span=2)
 #########################################
 
 # define a dummy functions to catch signals from buttons etc
-def dummy_function(a): print "dummy function received argument:", a
-def open_files(a):     print egg.dialogs.open_multiple(filters="*.txt")
+def dummy_function(a): print("dummy function received argument:", a)
+def open_files(a):     print(egg.dialogs.open_multiple(filters="*.txt"))
 
 # add a buttons to the layout at grid position 0,0 (upper-left corner)
 b0 = top_row.place_object(egg.gui.Button("File Dialog"), 0,0)
@@ -208,7 +208,7 @@ window.connect(table.signal_cell_changed, dummy_function)
 def do_something(a):
     table.set_value(2,11, 'test')
     table.set_value(1,1,  2.3)
-    print table.get_value(1,1)
+    print(table.get_value(1,1))
 
 # make a button
 bt = t3.place_object(egg.gui.Button("Do something."),1,0)

@@ -1,9 +1,10 @@
-import PyQt4.QtGui as _qt
-import os          as _os
+import os              as _os
 
-if __name__=='__main__': 
-    import spinmob as _s
-    _settings = _s.settings
+import spinmob as _s
+_qtw    = _s._qtw
+_qtcore = _s._qtc
+
+
 
 def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_directory'):
     """
@@ -12,18 +13,23 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     # make sure the filters contains "*.*" as an option!
     if filters.find('*.*') < 0: filters = filters + ";;All files (*.*)"
     
-    
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
-    else:                                    default = ""
+    if default_directory in _settings.keys(): default = _settings[default_directory]
+    else:                                     default = ""
     
     # pop up the dialog
-    result = str(_qt.QFileDialog.getSaveFileName(None,text,default,filters))
+    result = _qtw.QFileDialog.getSaveFileName(None,text,default,filters)
+    
+    # If Qt5, take the zeroth element
+    if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]    
+    
+    # Make sure it's a string
+    result = str(result)    
     
     if result == '': return None
     else:
         _settings[default_directory] = _os.path.split(result)[0]
-        return result 
+        return result
 
 
 def open_single(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
@@ -34,16 +40,22 @@ def open_single(filters="*.*", text='Select a file, FACEFACE!', default_director
     if filters.find('*.*') < 0: filters = filters + ";;All files (*.*)"
     
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
-    else:                                    default = ""
+    if default_directory in _settings.keys(): default = _settings[default_directory]
+    else:                                     default = ""
     
     # pop up the dialog
-    result = str(_qt.QFileDialog.getOpenFileName(None,text,default,filters))
+    result = _qtw.QFileDialog.getOpenFileName(None,text,default,filters)
+    
+    # If Qt5, take the zeroth element
+    if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]
+    
+    # Make sure it's a string
+    result = str(result)    
     
     if result == '': return None
     else:
         _settings[default_directory] = _os.path.split(result)[0]
-        return result 
+        return result
 
 
 def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
@@ -54,27 +66,36 @@ def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
     if filters.find('*.*') < 0: filters = filters + ";;All files (*.*)"
     
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
-    else:                                    default = ""
+    if default_directory in _settings.keys(): default = _settings[default_directory]
+    else:                                     default = ""
     
     # pop up the dialog
-    result = list(_qt.QFileDialog.getOpenFileNames(None,text,default,filters))
-    for n in range(len(result)): result[n] = str(result[n])    
+    results = _qtw.QFileDialog.getOpenFileNames(None,text,default,filters)
+    
+    # If Qt5, take the zeroth element
+    if _s._qt.VERSION_INFO[0:5] == "PyQt5": results = results[0]
+    
+    # Make sure it's a string
+    result = []
+    for r in results: result.append(str(r))       
     
     if len(result)==0: return
     else:
         _settings[default_directory] = _os.path.split(result[0])[0]
-        return result 
+        return result
 
 
 def select_directory(text='Select a directory, POCKETPANTS!', default_directory='default_directory'):
 
     # if this type of pref doesn't exist, we need to make a new one
-    if _settings.has_key(default_directory): default = _settings[default_directory]
-    else:                                    default = ""
+    if default_directory in _settings.keys(): default = _settings[default_directory]
+    else:                                     default = ""
     
     # pop up the dialog
-    result = str(_qt.QFileDialog.getExistingDirectory(None,text,default))
+    result = _qtw.QFileDialog.getExistingDirectory(None,text,default)
+    
+    # Make sure it's a string
+    result = str(result)        
     
     if result == '': return None
     else:
@@ -84,6 +105,8 @@ def select_directory(text='Select a directory, POCKETPANTS!', default_directory=
 
 
 
-
+if __name__=='__main__': 
+    import spinmob as _s
+    _settings = _s.settings
 
 
