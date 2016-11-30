@@ -1832,8 +1832,8 @@ class DataboxLoadSave(_d.databox, GridLayout):
         _d.databox.__init__(self, **kwargs)
 
         # create the controls
-        self.button_load     = self.place_object(Button("Load").set_width(50), alignment=1)
-        self.button_save     = self.place_object(Button("Save").set_width(50), alignment=1)
+        self.button_load     = self.place_object(Button("Load"), alignment=1)
+        self.button_save     = self.place_object(Button("Save"), alignment=1)
         self.label_path      = self.place_object(Label(""), alignment=0)
         self.set_column_stretch(2,100)
 
@@ -1913,18 +1913,18 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # top row is main controls
         self.place_object(Label("Raw Data:"), alignment=1)
-        self.button_load     = self.place_object(Button("Load")                .set_width(50), alignment=1)
-        self.button_save     = self.place_object(Button("Save")                .set_width(50), alignment=1)
-        self.button_autosave = self.place_object(Button("Auto", checkable=True).set_width(50), alignment=1)
-        self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None))).set_width(50)
+        self.button_load     = self.place_object(Button("Load")                , alignment=1)
+        self.button_save     = self.place_object(Button("Save")                , alignment=1)
+        self.button_autosave = self.place_object(Button("Auto", checkable=True), alignment=1)
+        self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None)))
         self._label_path     = self.place_object(Label(""))
 
         self.place_object(Label("")) # spacer
-        self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False).set_width(70)
-        self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) .set_width(50)
-        self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) .set_width(50)
-        self.button_link_x     = self.place_object(Button("Link X",      checkable=True)).set_checked(True) .set_width(50)
-        self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True) .set_width(50)
+        self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False)
+        self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) 
+        self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) 
+        self.button_link_x     = self.place_object(Button("Link X",      checkable=True)).set_checked(True)
+        self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True)
 
         # keep the buttons shaclackied together
         self.set_column_stretch(5)
@@ -1936,7 +1936,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self._script_grid = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
 
         # script grid
-        self.button_plot  = self._script_grid.place_object(Button("Try it!"), 2,3).set_width(50)
+        self.button_plot  = self._script_grid.place_object(Button("Try it!"), 2,3)
         self.script       = self._script_grid.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(81)
 

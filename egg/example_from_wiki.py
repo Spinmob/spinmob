@@ -12,7 +12,7 @@ b = egg.gui.Button("Fire!")
 w.place_object(b)
 
 # Modify the button using the "daisy chain"
-b.set_width(70).set_text("Fire Once!")
+b.set_text("Fire Once!")
 
 # Define a basic function
 def f(*a): print("Oooooh, received", a)

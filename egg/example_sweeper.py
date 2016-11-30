@@ -10,14 +10,14 @@ import spinmob.egg as egg
 w = egg.gui.Window(autosettings_path="example_sweeper_w.cfg")
 
 # add the "go" button
-b_sweep  = w.place_object(egg.gui.Button("Sweep!",         checkable=True)).set_width(50)
-b_select = w.place_object(egg.gui.Button("Use Blue Range", checkable=True)).set_width(90)
+b_sweep  = w.place_object(egg.gui.Button("Sweep!",         checkable=True))
+b_select = w.place_object(egg.gui.Button("Use Blue Range", checkable=True))
 l_x      = w.place_object(egg.gui.Label("x:"), alignment=2)
 n_x      = w.place_object(egg.gui.NumberBox(int=False))
 
 # move to the second row and add a TreeDictionary for our "settings"
 w.new_autorow()
-settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4, alignment=1)
+settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4, alignment=0)
 settings.add_parameter('sweep/x_start', -10, type='float')
 settings.add_parameter('sweep/x_stop',   10, type='float')
 settings.add_parameter('sweep/x_steps', 200, type='float')
