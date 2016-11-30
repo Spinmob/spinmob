@@ -25,27 +25,27 @@ class Test_databox(_ut.TestCase):
         self.fixtures_path  = _os.path.join('spinmob', 'tests', 'fixtures', 'data')
         self.data_path      = _os.path.join(self.module_path, self.fixtures_path)
 
-        self.fixtures_path = os.path.join('spinmob', 'tests', 'fixtures', 'data_types')
-        midPath = os.path.join(self.module_path, self.fixtures_path)
+        self.fixtures_path = _os.path.join('spinmob', 'tests', 'fixtures', 'data_types')
+        midPath = _os.path.join(self.module_path, self.fixtures_path)
         self.data_folder = midPath
 
         filename = 'simple_xy_data.dat'
-        self.data_path = os.path.join(midPath, filename)
+        self.data_path = _os.path.join(midPath, filename)
 
         # setup a default databox to be used for testing.
-        self.databox = _dt.databox()
+        self.databox = _d.databox()
 
         # Path to a different data set fixture, with headers
         filename = 'CSV_xy.dat'
-        self.data_path2 = os.path.join(midPath, filename)
+        self.data_path2 = _os.path.join(midPath, filename)
 
-        self.databoxCSV = _dt.databox(delimiter=', ')
+        self.databoxCSV = _d.databox(delimiter=', ')
 
         filename = 'semicolon.dat'
-        self.data_path_semicolon = os.path.join(midPath, filename)
+        self.data_path_semicolon = _os.path.join(midPath, filename)
 
         filename = 'headers_xy.dat'
-        self.data_path3 = os.path.join(midPath, filename)
+        self.data_path3 = _os.path.join(midPath, filename)
 
     def tearDown(self):
         """
@@ -250,7 +250,7 @@ class Test_databox(_ut.TestCase):
         Test that a file with a single column of data can be loaded.
         """
         filename = 'one_column_of_data.dat'
-        single_column_path = os.path.join(self.data_folder, filename)
+        single_column_path = _os.path.join(self.data_folder, filename)
         one_column_databox = self.databox.load_file(path=single_column_path)
 
         value = one_column_databox[0].tolist()
