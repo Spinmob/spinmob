@@ -411,7 +411,7 @@ def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 
 
 def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabel='',               \
-            title='', shell_history=1, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
+            title='', shell_history=0, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
             coarsen=0, style=None,  clear=True, axes=None, xscale='linear', yscale='linear', grid=False,       \
             legend='best', legend_max=20, autoformat=True, tall=False, draw=True, **kwargs):
     """
@@ -423,7 +423,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     xlabel=''           label for the x-axis
     ylabel=''           label for the y-axis
     title=''            title for the axes; set to None to have nothing.
-    shell_history=1     how many commands from the pyshell history to include
+    shell_history=0     how many commands from the pyshell history to include
                         with the title
     xshift=0, yshift=0  progressive shifts on the data, to make waterfall plots
     xshift_every=1      perform the progressive shift every 1 or n'th line.
@@ -770,7 +770,7 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
 
 
 
-def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, clabel='z', autoformat=True, colormap="Last Used", shell_history=1, **kwargs):
+def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, clabel='z', autoformat=True, colormap="Last Used", shell_history=0, **kwargs):
     """
     Generates an image or 3d plot
 
