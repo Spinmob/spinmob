@@ -1,5 +1,5 @@
-import _pylab_tweaks as tweaks; reload(tweaks)
-import _plotting_mess;          reload(_plotting_mess)
+from . import _pylab_tweaks as tweaks; reload(tweaks)
+from . import _plotting_mess;          reload(_plotting_mess)
 
 
 

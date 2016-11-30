@@ -8,7 +8,7 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
-import _temporary_fixes
+from . import _temporary_fixes
 _a = _g.mkQApp()
 
 # set the font if we're in linux
@@ -19,6 +19,17 @@ _defaults = dict(margins=(10,10,10,10))
 
 # Get the current working directory and keep it! Dialogs change this on the fly
 _cwd = _os.getcwd()
+
+
+
+# HACK FOR WEIRD BEHAVIOR WITH hasattr AND PYQTGRAPH OBJECTS. NO IDEA.
+def hasattr_safe(x,a):
+    try:
+        x.a
+        return True
+    except:
+        return False
+
 
 
 class BaseObject(object):
@@ -144,7 +155,7 @@ class BaseObject(object):
         If self.log is defined to be an instance of TextLog, it print the
         message there. Otherwise use the usual "print" to command line.
         """
-        if self.log == None: print message
+        if self.log == None: print(message)
         else:                self.log.append_text(message)
 
     def save_gui_settings(self):
@@ -207,7 +218,7 @@ class BaseObject(object):
         # only do this if the key exists
         if name in databox.hkeys:
             try:    eval(name).set_value(databox.h(name))
-            except: print "ERROR: Could not load gui setting "+repr(name)
+            except: print("ERROR: Could not load gui setting "+repr(name))
 
     def _store_gui_setting(self, databox, name):
         """
@@ -216,7 +227,7 @@ class BaseObject(object):
         "self.controlname"
         """
         try:    databox.insert_header(name, eval(name + ".get_value()"))
-        except: print "ERROR: Could not store gui setting "+repr(name)
+        except: print("ERROR: Could not store gui setting "+repr(name))
 
 
 
@@ -298,10 +309,12 @@ class GridLayout(BaseObject):
         self.objects.append(object)
 
         # add the widget to the layout
-        if hasattr(object, '_widget'): widget = object._widget
+        try:
+            object._widget
+            widget = object._widget
 
         # allows the user to specify a standard widget
-        else:                          widget = object
+        except: widget = object
 
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
@@ -318,14 +331,14 @@ class GridLayout(BaseObject):
         Removes the supplied object from the grid. If object is an integer,
         it removes the n'th object.
         """
-        if type(object) in [int, long]: n = object
+        if type(object) in [int, int]: n = object
         else:                           n = self.objects.index(object)
 
         # pop it from the list
         object = self.objects.pop(n)
 
         # remove it from the GUI and delete it
-        if hasattr(object, '_widget'):
+        if hasattr_safe(object, '_widget'):
             self._layout.removeWidget(object._widget)
             object._widget.hide()
             if delete: object._widget.deleteLater()
@@ -374,7 +387,7 @@ class GridLayout(BaseObject):
         If self.log is defined to be an instance of TextLog, it print the
         message there. Otherwise use the usual "print" to command line.
         """
-        if self.log == None: print message
+        if self.log == None: print(message)
         else:                self.log.append_text(message)
 
 
@@ -506,7 +519,7 @@ class Window(GridLayout):
         settings.clear()
         
         # Save values
-        if hasattr(self._window, "saveState"):
+        if hasattr_safe(self._window, "saveState"):
             settings.setValue('State',self._window.saveState())
         settings.setValue('Geometry', self._window.saveGeometry())
         
@@ -530,14 +543,14 @@ class Window(GridLayout):
         settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
         
         # Load it up! (Extra steps required for windows command line execution)
-        if settings.contains('State') and hasattr(self._window, "restoreState"):    
+        if settings.contains('State') and hasattr_safe(self._window, "restoreState"):    
             x = settings.value('State')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()            
+            if hasattr_safe(x, "toByteArray"): x = x.toByteArray()            
             self._window.restoreState(x)
         
         if settings.contains('Geometry'): 
             x = settings.value('Geometry')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()
+            if hasattr_safe(x, "toByteArray"): x = x.toByteArray()
             self._window.restoreGeometry(x)        
 
     def connect(self, signal, function):
@@ -846,7 +859,7 @@ class Label(BaseObject):
         # assemble the string
         s = "QLabel {"
         for a in args:          s = s+a+"; "
-        for k in kwargs.keys(): s = s+k.replace("_","-")+": "+kwargs[k]+"; "
+        for k in list(kwargs.keys()): s = s+k.replace("_","-")+": "+kwargs[k]+"; "
         s = s+"}"
         
         # set it!
@@ -1196,7 +1209,7 @@ class TableDictionary(Table):
         """
         Returns the value associated with the key.
         """
-        keys = self.keys()
+        keys = list(self.keys())
 
         # make sure it exists
         if not key in keys:
@@ -1230,7 +1243,7 @@ class TableDictionary(Table):
         """
         Sets the item by key, and refills the table sorted.
         """
-        keys = self.keys()
+        keys = list(self.keys())
 
         # if it exists, update
         if key in keys:
@@ -1249,7 +1262,7 @@ class TableDictionary(Table):
         Adds/overwrites all the keys and values from the dictionary.
         """
         if not dictionary == None: kwargs.update(dictionary)
-        for k in kwargs.keys(): self[k] = kwargs[k]
+        for k in list(kwargs.keys()): self[k] = kwargs[k]
 
     __call__ = update
 
@@ -1530,7 +1543,7 @@ class TreeDictionary(BaseObject):
         # modify the existing class to fit our conventions
         ap.signal_clicked = ap.sigActivated
 
-        return Button(name, checkable, checked, ap.items.keys()[0].button)
+        return Button(name, checkable, checked, list(ap.items.keys())[0].button)
 
     def _clean_up_name(self, name):
         """
@@ -1683,8 +1696,8 @@ class TreeDictionary(BaseObject):
         # Otherwise assume it is a value with bounds or limits (depending on 
         # the version of pyqtgraph)    
         else:        
-            if   x.opts.has_key('limits'): bounds = x.opts['limits']
-            elif x.opts.has_key('bounds'): bounds = x.opts['bounds']
+            if   'limits' in x.opts: bounds = x.opts['limits']
+            elif 'bounds' in x.opts: bounds = x.opts['bounds']
             if not bounds == None:
                 if not bounds[1]==None and value > bounds[1]: value = bounds[1]
                 if not bounds[0]==None and value < bounds[0]: value = bounds[0]
@@ -1714,8 +1727,8 @@ class TreeDictionary(BaseObject):
 
         # for lists, make sure the value exists!!
         if x.type() in ['list']:
-            if value in x.forward.keys(): x.setValue(value)
-            else:                         x.setValue(x.forward.keys()[0])
+            if value in list(x.forward.keys()): x.setValue(value)
+            else:                         x.setValue(list(x.forward.keys())[0])
 
         # otherwise just set the value
         else: x.setValue(value)
@@ -1793,7 +1806,7 @@ class TreeDictionary(BaseObject):
         if not type(d) == dict: d = d.headers
 
         # loop over the dictionary and update
-        for k in d.keys():
+        for k in list(d.keys()):
 
             # for safety: by default assume it's a repr() with python code
             try:    self.set_value(k, eval(str(d[k])), ignore_error=ignore_errors)
@@ -1819,8 +1832,8 @@ class DataboxLoadSave(_d.databox, GridLayout):
         _d.databox.__init__(self, **kwargs)
 
         # create the controls
-        self.button_load     = self.place_object(Button("Load").set_width(50), alignment=1)
-        self.button_save     = self.place_object(Button("Save").set_width(50), alignment=1)
+        self.button_load     = self.place_object(Button("Load"), alignment=1)
+        self.button_save     = self.place_object(Button("Save"), alignment=1)
         self.label_path      = self.place_object(Label(""), alignment=0)
         self.set_column_stretch(2,100)
 
@@ -1900,18 +1913,18 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # top row is main controls
         self.place_object(Label("Raw Data:"), alignment=1)
-        self.button_load     = self.place_object(Button("Load")                .set_width(50), alignment=1)
-        self.button_save     = self.place_object(Button("Save")                .set_width(50), alignment=1)
-        self.button_autosave = self.place_object(Button("Auto", checkable=True).set_width(50), alignment=1)
-        self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None))).set_width(50)
+        self.button_load     = self.place_object(Button("Load")                , alignment=1)
+        self.button_save     = self.place_object(Button("Save")                , alignment=1)
+        self.button_autosave = self.place_object(Button("Auto", checkable=True), alignment=1)
+        self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None)))
         self._label_path     = self.place_object(Label(""))
 
         self.place_object(Label("")) # spacer
-        self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False).set_width(70)
-        self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) .set_width(50)
-        self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) .set_width(50)
-        self.button_link_x     = self.place_object(Button("Link X",      checkable=True)).set_checked(True) .set_width(50)
-        self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True) .set_width(50)
+        self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False)
+        self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) 
+        self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) 
+        self.button_link_x     = self.place_object(Button("Link X",      checkable=True)).set_checked(True)
+        self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True)
 
         # keep the buttons shaclackied together
         self.set_column_stretch(5)
@@ -1923,7 +1936,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self._script_grid = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
 
         # script grid
-        self.button_plot  = self._script_grid.place_object(Button("Try it!"), 2,3).set_width(50)
+        self.button_plot  = self._script_grid.place_object(Button("Try it!"), 2,3)
         self.script       = self._script_grid.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(81)
 
@@ -2189,8 +2202,8 @@ class DataboxPlot(_d.databox, GridLayout):
             for n in range(max(len(x),len(y))-1,-1,-1):
 
                 # Create data for "None" cases.
-                if x[n] is None: x[n] = range(len(y[n]))
-                if y[n] is None: y[n] = range(len(x[n]))
+                if x[n] is None: x[n] = list(range(len(y[n])))
+                if y[n] is None: y[n] = list(range(len(x[n])))
                 self._curves[n].setData(x[n],y[n])
 
                 # get the labels for the curves

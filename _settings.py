@@ -29,11 +29,11 @@ class settings():
 
         # see if this is the first time running (no home directory)
         if not _os.path.exists(self.path_home):
-            print "\nFirst run: creating "+self.path_home
+            print("\nFirst run: creating "+self.path_home)
             _os.mkdir(self.path_home)
 
         if not _os.path.exists(self.path_settings):
-            print " Creating "+self.path_settings + "\n"
+            print(" Creating "+self.path_settings + "\n")
             open(self.path_settings, 'w').close()
 
 
@@ -51,33 +51,33 @@ class settings():
     def __setitem__(self,key,value): self.Set(key, value)
     def __str__(self):
         s = ''
-        for key in self.prefs.keys():
+        for key in list(self.prefs.keys()):
             s = s + key + " = " + str(self.prefs[key]) + '\n'
         return s
 
     def __repr__(self):
         s = '\nSPINMOB SETTINGS\n'
-        for key in self.prefs.keys():
+        for key in list(self.prefs.keys()):
             s = s + "\n" + key + " = " + str(self.prefs[key]) + '\n'
         return s
 
-    def keys(self):         return self.prefs.keys()
-    def has_key(self, key): return self.prefs.has_key(key)
+    def keys(self):         return list(self.prefs.keys())
+    def has_key(self, key): return key in self.prefs
 
     def List(self):
         """
         Lists the keys and values.
         """
-        print
-        for key in self.keys():
-            print key,'=',self[key]
-        print
+        print()
+        for key in list(self.keys()):
+            print(key,'=',self[key])
+        print()
 
     def Get(self, key):
         """
         Checks if the key exists and returns it. Returns None if it doesn't
         """
-        if self.prefs.has_key(key):
+        if key in self.prefs:
             return self.prefs[key]
         else:
             return None
@@ -101,7 +101,7 @@ class settings():
         """
         Removes all settings.
         """
-        for key in self.keys(): self.Remove(key)
+        for key in list(self.keys()): self.Remove(key)
 
     def MakeDir(self, path="temp"):
         """
@@ -131,9 +131,9 @@ class settings():
         """
         prefs_file = open(self.path_settings, 'w')
         for n in range(0,len(self.prefs)):
-            if len(self.prefs.items()[n]) > 1:
-                prefs_file.write(str(self.prefs.items()[n][0]) + ' = ' +
-                                 str(self.prefs.items()[n][1]) + '\n')
+            if len(list(self.prefs.items())[n]) > 1:
+                prefs_file.write(str(list(self.prefs.items())[n][0]) + ' = ' +
+                                 str(list(self.prefs.items())[n][1]) + '\n')
         prefs_file.close()
 
 

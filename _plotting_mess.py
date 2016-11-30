@@ -4,9 +4,9 @@ import numpy        as _n
 import itertools    as _itertools
 import time         as _time
 
-import _functions as _fun
-import _pylab_tweaks     as _pt
-import _data             as _data
+from . import _functions as _fun
+from . import _pylab_tweaks     as _pt
+from . import _data             as _data
 
 # expose all the eval statements to all the functions in numpy
 from numpy import *
@@ -55,8 +55,8 @@ def complex_data(data, edata=None, draw=True, **kwargs):
                 erdata.append(_n.real(edata[n]))
                 eidata.append(_n.imag(edata[n]))
 
-    if not kwargs.has_key('xlabel'):    kwargs['xlabel'] = 'Real'
-    if not kwargs.has_key('ylabel'):    kwargs['ylabel'] = 'Imaginary'
+    if 'xlabel' not in kwargs:    kwargs['xlabel'] = 'Real'
+    if 'ylabel' not in kwargs:    kwargs['ylabel'] = 'Imaginary'
 
     xy_data(rdata, idata, eidata, erdata, draw=False, **kwargs)
 
@@ -90,7 +90,7 @@ def complex_databoxes(ds, script='c(1)+1j*c(2)', escript=None, **kwargs):
 
     complex_data(datas, errors, label=labels, **kwargs)
 
-    if kwargs.has_key("draw") and not kwargs["draw"]: return
+    if "draw" in kwargs and not kwargs["draw"]: return
 
     _pylab.ion()
     _pylab.draw()
@@ -113,7 +113,7 @@ def complex_files(script='c(1)+1j*c(2)', **kwargs):
 
     if len(ds) == 0: return
 
-    if not kwargs.has_key('title'): kwargs['title'] = _os.path.split(ds[0].path)[0]
+    if 'title' not in kwargs: kwargs['title'] = _os.path.split(ds[0].path)[0]
 
     return complex_databoxes(ds, script=script, **kwargs)
 
@@ -169,10 +169,10 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
 
     # the error bar shapes better match or be None!
     if not (eydata is None or len(eydata)==len(ydata)):
-        print "Error: magphase_data(): size of eydata must match ydata."
+        print("Error: magphase_data(): size of eydata must match ydata.")
         return
     if not (exdata is None or len(exdata)==len(xdata)):
-        print "Error: magphase_data(): size of exdata must match xdata."
+        print("Error: magphase_data(): size of exdata must match xdata.")
         return
 
     # convert to real imag
@@ -210,11 +210,11 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
 
     if phase=='degrees':         plabel = plabel + " (degrees)"
     else:                        plabel = plabel + " (radians)"
-    if kwargs.has_key('xlabel'): xlabel=kwargs.pop('xlabel')
+    if 'xlabel' in kwargs: xlabel=kwargs.pop('xlabel')
     else:                        xlabel=''
-    if kwargs.has_key('ylabel'): kwargs.pop('ylabel')
+    if 'ylabel' in kwargs: kwargs.pop('ylabel')
 
-    if not kwargs.has_key('autoformat'): kwargs['autoformat'] = True
+    if 'autoformat' not in kwargs: kwargs['autoformat'] = True
 
     autoformat = kwargs['autoformat']
     kwargs['autoformat'] = False
@@ -245,7 +245,7 @@ def magphase_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exs
 
     **kwargs are sent to spinmob.plot.magphase.data()
     """
-    print ds
+    print(ds)
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, **kwargs)
 
 def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=None, **kwargs):
@@ -307,10 +307,10 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
 
     # the error bar shapes better match or be None!
     if not (eydata is None or len(eydata)==len(ydata)):
-        print "Error: realimag_data(): size of eydata must match ydata."
+        print("Error: realimag_data(): size of eydata must match ydata.")
         return
     if not (exdata is None or len(exdata)==len(xdata)):
-        print "Error: realimag_data(): size of exdata must match xdata."
+        print("Error: realimag_data(): size of exdata must match xdata.")
         return
 
     # set up the figure and axes
@@ -338,12 +338,12 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
                 erdata.append(_n.real(eydata[n]))
                 eidata.append(_n.imag(eydata[n]))
 
-    if kwargs.has_key('xlabel')  : xlabel=kwargs.pop('xlabel')
+    if 'xlabel' in kwargs  : xlabel=kwargs.pop('xlabel')
     else:                          xlabel=''
-    if kwargs.has_key('ylabel')  : kwargs.pop('ylabel')
+    if 'ylabel' in kwargs  : kwargs.pop('ylabel')
 
-    if not kwargs.has_key('tall'):         kwargs['tall'] = False
-    if not kwargs.has_key('autoformat'):   kwargs['autoformat'] = True
+    if 'tall' not in kwargs:         kwargs['tall'] = False
+    if 'autoformat' not in kwargs:   kwargs['autoformat'] = True
 
     autoformat = kwargs['autoformat']
     kwargs['autoformat'] = False
@@ -411,7 +411,7 @@ def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 
 
 def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabel='',               \
-            title='', shell_history=1, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
+            title='', shell_history=0, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
             coarsen=0, style=None,  clear=True, axes=None, xscale='linear', yscale='linear', grid=False,       \
             legend='best', legend_max=20, autoformat=True, tall=False, draw=True, **kwargs):
     """
@@ -423,7 +423,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     xlabel=''           label for the x-axis
     ylabel=''           label for the y-axis
     title=''            title for the axes; set to None to have nothing.
-    shell_history=1     how many commands from the pyshell history to include
+    shell_history=0     how many commands from the pyshell history to include
                         with the title
     xshift=0, yshift=0  progressive shifts on the data, to make waterfall plots
     xshift_every=1      perform the progressive shift every 1 or n'th line.
@@ -473,7 +473,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         if _fun.is_iterable(ydata[n]) and ydata[n][0] is None: ydata[n] = None
 
         if xdata[n] is None and ydata[n] is None:
-            print "ERROR: "+str(n)+"'th data set is (None, None)."
+            print("ERROR: "+str(n)+"'th data set is (None, None).")
             return
 
         if xdata[n] is None: xdata[n] = _n.arange(len(ydata[n]))
@@ -517,7 +517,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         ex = _fun.coarsen_array(exdata[n], coarsen, 'quadrature')
 
         # update the style
-        if not style is None: kwargs.update(style.next())
+        if not style is None: kwargs.update(next(style))
         axes.errorbar(x+dx, y+dy, label=l, yerr=ey, xerr=ex, **kwargs)
 
     _pylab.xscale(xscale)
@@ -619,8 +619,8 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy
     """
     if not _fun.is_iterable(ds): ds = [ds]
 
-    if not kwargs.has_key('xlabel'): kwargs['xlabel'] = str(xscript)
-    if not kwargs.has_key('ylabel'): kwargs['ylabel'] = str(yscript)
+    if 'xlabel' not in kwargs: kwargs['xlabel'] = str(xscript)
+    if 'ylabel' not in kwargs: kwargs['ylabel'] = str(yscript)
 
     # First make sure everything is a list of scripts (or None's)
     if not _fun.is_iterable(xscript): xscript = [xscript]
@@ -649,7 +649,7 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy
     # now check for None's (counting scripts)
     for n in range(len(xscript)):
         if xscript[n] is None and yscript[n] is None:
-            print "Two None scripts? But why?"
+            print("Two None scripts? But why?")
             return
         if xscript[n] is None:
             if type(yscript[n])==str: xscript[n] = 'range(len('+yscript[n]+'))'
@@ -676,7 +676,7 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy
         for x in d(exscript): exdatas.append(x)
         for y in d(eyscript): eydatas.append(y)
 
-    if kwargs.has_key("label"): labels = kwargs.pop("label")
+    if "label" in kwargs: labels = kwargs.pop("label")
 
     plotter(xdatas, ydatas, eydatas, exdatas, label=labels, **kwargs)
 
@@ -691,17 +691,17 @@ def files(xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy_databox
 
     **kwargs are sent to plotter()
     """
-    if kwargs.has_key('delimiter'): delimiter = kwargs.pop('delimiter')
+    if 'delimiter' in kwargs: delimiter = kwargs.pop('delimiter')
     else:                           delimiter = None
 
-    if kwargs.has_key('filters'): filters = kwargs.pop('filters')
+    if 'filters' in kwargs: filters = kwargs.pop('filters')
     else:                         filters = '*.*'
 
     ds = _data.load_multiple(paths=paths, delimiter=delimiter, filters=filters)
     if ds is None or len(ds) == 0: return
 
     # generate a default title (the directory)
-    if not kwargs.has_key('title'): kwargs['title']=_os.path.split(ds[0].path)[0]
+    if 'title' not in kwargs: kwargs['title']=_os.path.split(ds[0].path)[0]
 
     # run the databox plotter
     plotter(ds, xscript=xscript, yscript=yscript, eyscript=eyscript, exscript=exscript, **kwargs)
@@ -727,8 +727,8 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
 
     if not g: g = {}
     # do the opposite kind of update()
-    for k in globals().keys():
-        if not g.has_key(k): g[k] = globals()[k]
+    for k in list(globals().keys()):
+        if k not in g: g[k] = globals()[k]
 
     # if the x-axis is a log scale, use erange
     if erange: x = _fun.erange(xmin, xmax, steps)
@@ -760,8 +760,8 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
         ydatas.append(y)
         labels.append(a.__name__)
 
-    if not kwargs.has_key('xlabel'): kwargs['xlabel'] = p
-    if not kwargs.has_key('label'):  kwargs['label']  = labels
+    if 'xlabel' not in kwargs: kwargs['xlabel'] = p
+    if 'label' not in kwargs:  kwargs['label']  = labels
 
     # plot!
     if complex_plane: plotter(real(ydatas),imag(ydatas), **kwargs)
@@ -770,7 +770,7 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
 
 
 
-def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, clabel='z', autoformat=True, colormap="Last Used", shell_history=1, **kwargs):
+def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, clabel='z', autoformat=True, colormap="Last Used", shell_history=0, **kwargs):
     """
     Generates an image or 3d plot
 
@@ -807,9 +807,9 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     xlabel=''
     ylabel=''
     title =''
-    if kwargs.has_key('xlabel'): xlabel = kwargs.pop('xlabel')
-    if kwargs.has_key('ylabel'): ylabel = kwargs.pop('ylabel')
-    if kwargs.has_key('title'):  title  = kwargs.pop('title')
+    if 'xlabel' in kwargs: xlabel = kwargs.pop('xlabel')
+    if 'ylabel' in kwargs: ylabel = kwargs.pop('ylabel')
+    if 'title' in kwargs:  title  = kwargs.pop('title')
 
     _pylab.imshow(Z, extent=[X[0]-x_width/2.0, X[-1]+x_width/2.0,
                              Y[0]-y_width/2.0, Y[-1]+y_width/2.0], **kwargs)
@@ -866,8 +866,8 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
 
     # aggregate globals
     if not g: g = {}
-    for k in globals().keys():
-        if not g.has_key(k): g[k] = globals()[k]
+    for k in list(globals().keys()):
+        if k not in g: g[k] = globals()[k]
 
     if type(f) == str:
         f = eval('lambda ' + p + ': ' + f, g)
@@ -887,7 +887,7 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
         # try it the fast numpy way. Add 0 to assure dimensions
         zgrid = f(xgrid, ygrid) + xgrid*0.0
     except:
-        print "Notice: function is not rocking hardcore. Generating grid the slow way..."
+        print("Notice: function is not rocking hardcore. Generating grid the slow way...")
         # manually loop over the data to generate the z-grid
         zgrid = []
         for ny in range(0, len(y)):
@@ -911,7 +911,7 @@ def image_file(path="ask", zscript='self[1:]', xscript='[0,1]', yscript='c(0)', 
 
     **kwargs are sent to image_data()
     """
-    if kwargs.has_key('delimiter'): delimiter = kwargs.pop('delimiter')
+    if 'delimiter' in kwargs: delimiter = kwargs.pop('delimiter')
     else:                           delimiter = None
 
     d = _data.load(paths=path, delimiter = delimiter)
@@ -954,8 +954,8 @@ def parametric_function(fx='sin(t)', fy='cos(t)', tmin=-1, tmax=1, steps=200, p=
     """
 
     if not g: g = {}
-    for k in globals().keys():
-        if not g.has_key(k): g[k] = globals()[k]
+    for k in list(globals().keys()):
+        if k not in g: g[k] = globals()[k]
 
     # if the x-axis is a log scale, use erange
     if erange: r = _fun.erange(tmin, tmax, steps)
@@ -1028,7 +1028,7 @@ class plot_style_cycle(dict):
 
     def __repr__(self): return '{style}'
 
-    def next(self):
+    def __next__(self):
         """
         Returns the next dictionary of styles to send to plot as kwargs.
         For example:
@@ -1036,13 +1036,13 @@ class plot_style_cycle(dict):
         pylab.plot([1,2,3],[1,2,1], **style.next())
         """
         s = {}
-        for key in self.iterators.keys(): s[key] = self.iterators[key].next()
+        for key in list(self.iterators.keys()): s[key] = next(self.iterators[key])
         return s
 
     def reset(self):
         """
         Resets the style cycle.
         """
-        for key in self.keys(): self.iterators[key] = _itertools.cycle(self[key])
+        for key in list(self.keys()): self.iterators[key] = _itertools.cycle(self[key])
         return self
 

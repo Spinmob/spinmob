@@ -3,7 +3,7 @@ import numpy   as _n
 import os      as _os
 import shutil  as _shutil
 import spinmob as _s
-import cPickle as _cPickle
+import pickle as _cPickle
 
 def coarsen_array(a, level=2, method='mean'):
     """
@@ -27,7 +27,7 @@ def coarsen_array(a, level=2, method='mean'):
     # execute, making sure the array can be reshaped!
     try: return eval(code, dict(a=a[0:int(len(a)/level)*level], level=level))
     except:
-        print "ERROR: Could not coarsen array with method "+repr(method)
+        print("ERROR: Could not coarsen array with method "+repr(method))
         return a
 
 def erange(start, end, steps):
@@ -37,17 +37,17 @@ def erange(start, end, steps):
     See also numpy.logspace()
     """
     if start == 0:
-        print "Nothing you multiply zero by gives you anything but zero. Try picking something small."
+        print("Nothing you multiply zero by gives you anything but zero. Try picking something small.")
         return None
     if end == 0:
-        print "It takes an infinite number of steps to get to zero. Try a small number?"
+        print("It takes an infinite number of steps to get to zero. Try a small number?")
         return None
 
     # figure out our multiplication scale
     x = (1.0*end/start)**(1.0/(steps-1))
 
     # now generate the array
-    ns = _n.array(range(0,steps))
+    ns = _n.array(list(range(0,steps)))
     a =  start*_n.power(x,ns)
 
     # tidy up the last element (there's often roundoff error)
@@ -60,7 +60,7 @@ def is_a_number(s):
     This takes an object and determines whether it's a number or a string
     representing a number.
     """
-    if _s.fun.is_iterable(s): return False
+    if _s.fun.is_iterable(s) and not type(s) == str: return False
 
     try:
         float(s)
@@ -78,9 +78,9 @@ def is_a_number(s):
 
 def is_iterable(a):
     """
-    Determine whether the object is iterable.
+    Determine whether the object is iterable, but not a string.
     """
-    return hasattr(a, '__iter__')
+    return hasattr(a, '__iter__') and not type(a) == str
 
 
 
@@ -196,8 +196,8 @@ def combine_dictionaries(a, b):
     """
 
     c = {}
-    for key in b.keys(): c[key]=b[key]
-    for key in a.keys(): c[key]=a[key]
+    for key in list(b.keys()): c[key]=b[key]
+    for key in list(a.keys()): c[key]=a[key]
     return c
 
 def data_from_file(path, delimiter=" "):
@@ -538,7 +538,7 @@ def find_two_peaks(data, remove_background=True):
     """
 
     y  = _n.array( data            )
-    x  = _n.array( range(0,len(y)) )
+    x  = _n.array( list(range(0,len(y))) )
 
     # if we're supposed to, remove the linear background
     if remove_background:
@@ -597,7 +597,7 @@ def find_zero_bisect(f, xmin, xmax, xprecision):
     This will bisect the range and zero in on zero.
     """
     if f(xmax)*f(xmin) > 0:
-        print "find_zero_bisect(): no zero on the range",xmin,"to",xmax
+        print("find_zero_bisect(): no zero on the range",xmin,"to",xmax)
         return None
 
     temp = min(xmin,xmax)
@@ -673,7 +673,7 @@ def frange(start, end, inc=1.0):
         inc = -inc
 
     # get the integer steps
-    ns = _n.array(range(0, int(1.0*(end-start)/inc)+1))
+    ns = _n.array(list(range(0, int(1.0*(end-start)/inc)+1)))
 
     return start + ns*inc
 
@@ -688,7 +688,7 @@ def get_shell_history():
         a.reverse()
         return a
 
-    elif _os.environ.has_key('SPYDER_SHELL_ID'):
+    elif 'SPYDER_SHELL_ID' in _os.environ:
         try:
             p = _os.path.join(_settings.path_user, ".spyder2", "history.py")
             a = read_lines(p)
@@ -831,11 +831,11 @@ def interpolate(xarray, yarray, x, rigid_limits=True):
 
     """
     if not len(xarray) == len(yarray):
-        print "lengths don't match.", len(xarray), len(yarray)
+        print("lengths don't match.", len(xarray), len(yarray))
         return None
     if x < xarray[0] or x > xarray[-1]:
         if rigid_limits:
-            print "x=" + str(x) + " is not in " + str(min(xarray)) + " to " + str(max(xarray))
+            print("x=" + str(x) + " is not in " + str(min(xarray)) + " to " + str(max(xarray)))
             return None
         else:
             if x < xarray[0]: return yarray[0]
@@ -846,7 +846,7 @@ def interpolate(xarray, yarray, x, rigid_limits=True):
         if x >= min(xarray[n2], xarray[n2-1]) and x <= max(xarray[n2], xarray[n2-1]):
             break
         if n2 == len(xarray):
-            print "couldn't find x anywhere."
+            print("couldn't find x anywhere.")
             return None
     n1 = n2-1
 
@@ -874,7 +874,7 @@ def invert_increasing_function(f, f0, xmin, xmax, tolerance, max_iterations=100)
         if df > 0: xmin=x
         else:      xmax=x
 
-    print "Couldn't find value!"
+    print("Couldn't find value!")
     return 0.5*(xmin+xmax)
 
 
@@ -956,7 +956,7 @@ def psd(t, y, pow2=False, window=None):
         try:
             w = eval("_n."+window, globals())
         except:
-            print "ERROR: Bad window!"
+            print("ERROR: Bad window!")
             return
 
     # apply the window
@@ -1008,7 +1008,7 @@ def fft(t, y, pow2=False, window=None):
         try:
             w = eval("_n."+window, globals())
         except:
-            print "ERROR: Bad window!"
+            print("ERROR: Bad window!")
             return
 
     # apply the window
@@ -1065,7 +1065,7 @@ def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
         for n in range(0,N):
             if lines[n].find(search) >= 0:
                 lines[n] = lines[n].replace(search,replace)
-                print path.split(_os.path.pathsep)[-1]+ ': "'+lines[n]+'"'
+                print(path.split(_os.path.pathsep)[-1]+ ': "'+lines[n]+'"')
 
         # only write if we're not confirming
         if not confirm:
@@ -1073,7 +1073,7 @@ def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
             write_to_file(path, join(lines, ''))
 
     if confirm:
-        if raw_input("yes? ")=="yes":
+        if input("yes? ")=="yes":
             replace_in_files(search,replace,depth,paths,False)
 
     return
@@ -1094,7 +1094,7 @@ def replace_lines_in_files(search_string, replacement_line):
         lines = read_lines(path)
         for n in range(0,len(lines)):
             if lines[n].find(search_string) >= 0:
-                print lines[n]
+                print(lines[n])
                 lines[n] = replacement_line.strip() + "\n"
         write_to_file(path, join(lines, ''))
 

@@ -37,19 +37,19 @@ class Prefs():
 
         # see if this is the first time running (no home directory)
         if not _os.path.exists(self.home_dir):
-            print "Creating "+self.home_dir
+            print("Creating "+self.home_dir)
             _os.mkdir(self.home_dir)
 
         if not _os.path.exists(self.temp_dir):
-            print "Creating "+self.temp_dir
+            print("Creating "+self.temp_dir)
             _os.mkdir(self.temp_dir)
 
         if not _os.path.exists(self.prefs_path):
-            print "Creating "+self.prefs_path
+            print("Creating "+self.prefs_path)
             open(self.prefs_path, 'w').close()
 
         if not _os.path.exists(self.colormaps_dir):
-            print "Creating "+self.colormaps_dir
+            print("Creating "+self.colormaps_dir)
             _os.mkdir(self.colormaps_dir)
 
         # now read in the prefs file
@@ -67,27 +67,27 @@ class Prefs():
     def __setitem__(self,key,value): self.Set(key, value)
     def __str__(self):
         s = ''
-        for key in self.prefs.keys():
+        for key in list(self.prefs.keys()):
             s = s + key + " = " + self.prefs[key] + '\n'
         return s
 
-    def keys(self): return self.prefs.keys()
-    def has_key(self, key): return self.prefs.has_key(key)
+    def keys(self): return list(self.prefs.keys())
+    def has_key(self, key): return key in self.prefs
 
     def List(self):
         """
         Lists the keys and values.
         """
-        print
-        for key in self.keys():
-            print key,'=',self[key]
-        print
+        print()
+        for key in list(self.keys()):
+            print(key,'=',self[key])
+        print()
 
     def Get(self, key):
         """
         Checks if the key exists and returns it. Returns None if it doesn't
         """
-        if self.prefs.has_key(key):
+        if key in self.prefs:
             return self.prefs[key]
         else:
             return None
@@ -113,9 +113,9 @@ class Prefs():
         """
         prefs_file = open(self.prefs_path, 'w')
         for n in range(0,len(self.prefs)):
-            if len(self.prefs.items()[n]) > 1:
-                prefs_file.write(str(self.prefs.items()[n][0]) + ' = ' +
-                                 str(self.prefs.items()[n][1]) + '\n')
+            if len(list(self.prefs.items())[n]) > 1:
+                prefs_file.write(str(list(self.prefs.items())[n][0]) + ' = ' +
+                                 str(list(self.prefs.items())[n][1]) + '\n')
         prefs_file.close()
 
 
