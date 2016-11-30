@@ -277,13 +277,24 @@ class databox:
         for label in self.ckeys: self.columns[label] = []
 
         # define a quick function to convert i's to j's
-        def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')
+        def fix(x): return str(x.replace('i','j'))
 
+        
+        
+        
+        
+        
         # loop over the remaining data lines, converting to numbers
+        #return lines[first_data_line:]
         z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
                           delimiter=self.delimiter,
-                          dtype=complex)
-
+                          dtype=_n.complex)
+        
+        
+        
+        
+        
+        
         # genfromtxt returns a 1D array if there is only one data line.
         # highly confusing behavior, numpy!
         if len(_n.shape(z)) == 1: z = _n.array([z])
@@ -2148,7 +2159,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
     
 if __name__ == "__main__":
     
-    f = _s.data.fitter()
-    f.set_data()
-    f.fit()
+    import spinmob as sm
+    d=sm.data.databox()
+    x = d.load_file("C:\\Users\\jaxankey\\Miniconda3\\envs\\Python27-PyQt4\\Lib\\site-packages\\spinmob\\tests\\fixtures\\data\\mixed_complex_data.dat")
     
