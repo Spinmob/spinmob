@@ -1,4 +1,5 @@
 import os      as _os
+import sys     as _sys
 import shutil  as _shutil
 
 # do this so all the scripts will work with all the numpy functions
@@ -276,13 +277,18 @@ class databox:
         # I did benchmarks and there's not much improvement by using numpy-arrays here.
         for label in self.ckeys: self.columns[label] = []
 
+        
+        
+        
+        
+        
+        
+        
         # define a quick function to convert i's to j's
-        def fix(x): return str(x.replace('i','j'))
-
-        
-        
-        
-        
+        if _sys.version_info[0] >= 3:
+            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8') 
+        else:
+            def fix(x): return str(x.replace('i','j'))
         
         # loop over the remaining data lines, converting to numbers
         #return lines[first_data_line:]
