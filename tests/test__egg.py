@@ -24,6 +24,7 @@ class Test_egg(_ut.TestCase):
         Just opens a full-featured example and lets the user play with it
         """
         import spinmob.egg.example_sweeper
+        
 
                 
     

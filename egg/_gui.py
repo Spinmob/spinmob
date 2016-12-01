@@ -545,12 +545,12 @@ class Window(GridLayout):
         # Load it up! (Extra steps required for windows command line execution)
         if settings.contains('State') and hasattr_safe(self._window, "restoreState"):    
             x = settings.value('State')
-            if hasattr_safe(x, "toByteArray"): x = x.toByteArray()            
+            if hasattr(x, "toByteArray"): x = x.toByteArray()            
             self._window.restoreState(x)
         
         if settings.contains('Geometry'): 
             x = settings.value('Geometry')
-            if hasattr_safe(x, "toByteArray"): x = x.toByteArray()
+            if hasattr(x, "toByteArray"): x = x.toByteArray()
             self._window.restoreGeometry(x)        
 
     def connect(self, signal, function):
