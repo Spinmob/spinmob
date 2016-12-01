@@ -23,10 +23,12 @@ class Test_dialogs(_ut.TestCase):
         """
         return
     
-    def test_open_multiple(self):
+    def test_all(self):
         """
+        Written this way so it's easy to cancel early.
         """
-        r = _s.dialogs.open_multiple(text="SELECT 1 FILE")
+        r = _s.dialogs.open_multiple(text="SELECT 1 FILE (OR CANCEL TO END DIALOG TESTS)")
+        if r == None: return
         self.assertEqual(type(r), list)
 
         r = _s.dialogs.open_multiple(text="SELECT MULTIPLE FILES")
@@ -35,27 +37,18 @@ class Test_dialogs(_ut.TestCase):
         r = _s.dialogs.open_multiple(text="CANCEL ME")
         self.assertEqual(r, None)
         
-    def test_open_single(self):
-        """
-        """
         r = _s.dialogs.open_single(text="SELECT 1 FILE")
         self.assertEqual(type(r), str)
 
         r = _s.dialogs.open_single(text="CANCEL ME")
         self.assertEqual(r, None)
     
-    def test_save(self):
-        """
-        """
         r = _s.dialogs.save(text="SELECT A FILE (WILL NOT OVERWRITE)")
         self.assertEqual(type(r), str)
 
         r = _s.dialogs.save(text="CANCEL ME")
         self.assertEqual(r, None)
 
-    def test_select_directory(self):
-        """
-        """
         r = _s.dialogs.select_directory(text="SELECT A DIRECTORY")
         self.assertEqual(type(r), str)
 

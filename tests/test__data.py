@@ -5,7 +5,6 @@ Module for testing _data.py
 import os      as _os # For loading fixtures
 import numpy   as _n
 import spinmob as _s
-_d = _s.data
 
 import unittest as _ut
 
@@ -20,100 +19,43 @@ class Test_databox(_ut.TestCase):
         Load data
         """
         # Path to the spinmob module
-        self.dt_path        = _os.path.dirname(_d.__file__)
-        self.module_path    = self.dt_path.rpartition('spinmob')[0]
-        self.fixtures_path  = _os.path.join('spinmob', 'tests', 'fixtures', 'data')
-        self.data_path      = _os.path.join(self.module_path, self.fixtures_path)
-
-        self.fixtures_path = _os.path.join('spinmob', 'tests', 'fixtures', 'data_types')
-        midPath = _os.path.join(self.module_path, self.fixtures_path)
-        self.data_folder = midPath
-
-        filename = 'simple_xy_data.dat'
-        self.data_path = _os.path.join(midPath, filename)
-
-        # setup a default databox to be used for testing.
-        self.databox = _d.databox()
-
-        # Path to a different data set fixture, with headers
-        filename = 'CSV_xy.dat'
-        self.data_path2 = _os.path.join(midPath, filename)
-
-        self.databoxCSV = _d.databox(delimiter=', ')
-
-        filename = 'semicolon.dat'
-        self.data_path_semicolon = _os.path.join(midPath, filename)
-
-        filename = 'headers_xy.dat'
-        self.data_path3 = _os.path.join(midPath, filename)
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
 
     def tearDown(self):
         """
         """
         return
 
-    def test___repr__Default(self):
-        """
-        Test default output of __repr__ for a new databox.
-        """
-        d = _d.databox()
-        v = d.__repr__()
-        self.assertEqual(v, "<databox instance: 0 headers, 0 columns>")
-
     def test_load_file(self):
-        self.databox.load_file(path=self.data_path)
+        d = _s.data.databox()
+        d.load_file(path=_os.path.join(self.data_path, 'basic.dat'))
+        self.assertEqual(d[0][0], 85.0)
 
-        # Check a value of the loaded file, first level
-        val = self.databox[0][0]
+    def test_default_delimiter(self):
+        d = _s.data.databox()
+        self.assertEqual(d.delimiter, None)
 
-        # The expected response
-        exp = 85.0
-        self.assertEqual(val, exp)
+    def test_set_delimiter(self):
+        d = _s.data.databox(delimiter=',')
+        self.assertEqual(d.delimiter, ',')
 
-    def test_defaultDelimiter(self):
-        val = self.databox.delimiter
-        exp = None
-        self.assertEqual(val, exp)
-
-    def test_CSVDelimiter(self):
-        val = self.databoxCSV.delimiter
-        exp = ', '
-        self.assertEqual(val, exp)
-
-    def test_load_fileCSV(self):
+    def test_autoload_csv(self):
         """
         Test loading a CSV file
         """
-        self.databoxCSV.load_file(path=self.data_path2)
+        d = _s.data.load(path=_os.path.join(self.data_path, "comma.dat"))
+        self.assertEqual(d[0][1], 90.0)
+        self.assertEqual(d.delimiter, ',')
 
-        # Check a value of the loaded file, first level
-        val = self.databoxCSV[0][1]
-
-        # The expected response
-        exp = 90.0
-        self.assertEqual(val, exp)
-
-    def test_semicolon_Delimiter(self):
-        databox = self.databox.load_file(path=self.data_path_semicolon)
-        val = databox.delimiter
-        exp = ';'
-        self.assertEqual(val, exp)
-
-    def test_load_file_semicolon(self):
-        """
-        Test loading a file with ";" as delimiter
-        """
-        self.databox.load_file(path=self.data_path_semicolon)
-
-        # Check a value of the loaded file, first level
-        val = self.databox[0][1]
-
-        # The expected response
-        exp = 90.0
-        self.assertEqual(val, exp)
+    def test_autoload_semicolon(self):
+        d = _s.data.load(path=_os.path.join(self.data_path, "semicolon.dat"))
+        self.assertEqual(d[0][1], 90.0)
+        self.assertEqual(d.delimiter, ';')
 
     def test_pop_data_point(self):
-        d = _d.load(path=_os.path.join(self.data_path, "simple_xy_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
+        
+        # length
         l = len(d[0])
         
         # Check a value of the loaded file, first level
@@ -125,7 +67,7 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(len(d[0]), l-1)
 
     def test_execute_script(self):
-        d = _d.load(path=_os.path.join(self.data_path, "simple_xy_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
         
         val = d.execute_script('3.0 + x/y - self[0] where x=2.0*c(0); y=c(1)')
         val = _n.around(val, 1)  # Round to 1 decimal place
@@ -136,20 +78,20 @@ class Test_databox(_ut.TestCase):
         self.assertListEqual(val, exp)
 
     def test___len__(self):
-        d = _d.load(path=_os.path.join(self.data_path, "simple_xy_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
         val = d.__len__()
         exp = 2
         self.assertEqual(val, exp)
 
     def test___setitem___str(self):
-        d = _d.load(path=_os.path.join(self.data_path, "simple_xy_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
         d.__setitem__(0, 'test_item')
         val = d[0]
         exp = 'test_item'
         self.assertEqual(val, exp)
 
     def test___setitem___int(self):
-        d = _d.load(path=_os.path.join(self.data_path, "simple_xy_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
         d.__setitem__(2, [78, 87])
         val = d[2]
         val = val.tolist()
@@ -157,7 +99,7 @@ class Test_databox(_ut.TestCase):
         self.assertListEqual(val, exp)
 
     def test___getslice__(self):
-        d = _d.load(path=_os.path.join(self.data_path, "simple_xy_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
         val = d.__getslice__(0, 1)
         val = val[0]
         val = val.tolist()
@@ -166,7 +108,7 @@ class Test_databox(_ut.TestCase):
         self.assertListEqual(val, exp)
 
     def test_h_str(self):
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.h('header1')
         exp = 'value1'
         self.assertEqual(val, exp)
@@ -175,7 +117,7 @@ class Test_databox(_ut.TestCase):
         """
         This should have spinmob print out an error message.
         """
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.h()
         exp = None
         self.assertEqual(val, exp)
@@ -187,7 +129,7 @@ class Test_databox(_ut.TestCase):
         TODO: possible better way of handling/collecting this error message
         while testing.
         """
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.h('fragment')
         exp = None
         self.assertEqual(val, exp)
@@ -199,13 +141,13 @@ class Test_databox(_ut.TestCase):
         TODO: possible better way of handling/collecting this error message
         while testing.
         """
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.h('header')
         exp = 'value1'
         self.assertEqual(val, exp)
 
     def test_pop_column_ckey(self):
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.pop_column('x_data')
         val = val.tolist()
         val = val[0:5]   # Just check the first five elements
@@ -213,7 +155,7 @@ class Test_databox(_ut.TestCase):
         self.assertListEqual(val, exp)
 
     def test_pop_column_int(self):
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.pop_column(0)
         val = val.tolist()
         val = val[0:5]   # Just check the first five elements
@@ -226,19 +168,18 @@ class Test_databox(_ut.TestCase):
 
         TODO: better way to collect these error messsages.
         """
-        d = _d.load(path=_os.path.join(self.data_path, "headers_xy.dat"))
-        
+        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
         val = d.pop_column(-2)
         val = val.tolist()
         val = val[0:5]   # Just check the first five elements
         exp = [85.0, 90.0, 95.0, 100.0, 105.0]
         self.assertListEqual(val, exp)
 
-    def test_load_single_row_of_data(self):
+    def test_load_single_row(self):
         """
         Test that a file with a single row of data can be loaded.
         """
-        d = _d.load(path=_os.path.join(self.data_path, "one_row_of_data.dat"))
+        d = _s.data.load(path=_os.path.join(self.data_path, "one_row.dat"))
         
         # TODO: need a better test that only tests the load.
         value = d[0][0]
@@ -249,11 +190,9 @@ class Test_databox(_ut.TestCase):
         """
         Test that a file with a single column of data can be loaded.
         """
-        filename = 'one_column_of_data.dat'
-        single_column_path = _os.path.join(self.data_folder, filename)
-        one_column_databox = self.databox.load_file(path=single_column_path)
+        d = _s.data.load(path=_os.path.join(self.data_path, 'one_column.dat'))
 
-        value = one_column_databox[0].tolist()
+        value = d[0].tolist()
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
 
