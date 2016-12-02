@@ -531,7 +531,7 @@ class colormap_interface(colormap):
         Closes the window.
         """
         self._window.close()
-        _qt.QtWidgets.qApp.processEvents()
+        #_qt.QtWidgets.qApp.processEvents()
 
     def show(self):
         """
