@@ -1098,7 +1098,7 @@ class fitter():
             if self.results and not self.results[1] is None:
                 s = s + "\nFIT RESULTS (reduced chi squared = {:s})\n".format(str(self.reduced_chi_squareds()))
                 for n in range(len(self._pnames)):
-                    s = s + "  {:10s} = {:G} +/- {:G}\n".format(self._pnames[n], self.results[0][n], _n.sqrt(self.results[1][n][n]))
+                    s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
 
             elif self.results and self.results[1] is None:
                 s = s + "\nFIT DID NOT CONVERGE\n"
