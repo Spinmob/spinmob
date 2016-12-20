@@ -1694,7 +1694,14 @@ class fitter():
 
         # evaluate the function
         return self.bg[n](*args)
-
+    
+    def _format_value_error(self, v, e, pm=" +/- "):
+        """
+        Returns a string v +/- e with the right number of sig figs.
+        """
+        sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
+        return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
+        
     def studentized_residuals(self, p=None):
         """
         Returns a list of studentized residuals, (ydata - model)/error
@@ -1854,9 +1861,9 @@ class fitter():
             fig.clear()
 
             # set up two axes. One for data and one for residuals.
-            a1 = _p.subplot(211)
-            a2 = _p.subplot(212, sharex=a1)
-            a1.set_position([0.15, 0.75, 0.75, 0.15])
+            a1 = _p.subplot(211)            # Residuals
+            a2 = _p.subplot(212, sharex=a1) # Data
+            a1.set_position([0.15, 0.72, 0.75, 0.15])
             a2.set_position([0.15, 0.10, 0.75, 0.60])
 
             # set the scales
@@ -1933,9 +1940,12 @@ class fitter():
                 a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_guess'][n])
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
+                
             # Tidy up
-            #a1.xaxis.set_ticklabels([])  # Can't (axes are linked!)
-
+            yticklabels = a1.get_yticklabels()
+            for m in range(2,len(yticklabels)-2): yticklabels[m].set_visible(False)
+            for m in a1.get_xticklabels(): m.set_visible(False)
+            
             # Add labels to the axes
             if self['xlabel'][n] is None: _p.xlabel('xdata['+str(n)+']')
             else:                         _p.xlabel(self['xlabel'][n])
@@ -1961,7 +1971,7 @@ class fitter():
             if self.results and not self.results[1] is None:
                 t1 = "Fit: "
                 for i in range(len(self._pnames)):
-                    t1 = t1 + self._pnames[i] + "={:G}$\pm${:G}, ".format(self.results[0][i], _n.sqrt(self.results[1][i][i]))
+                    t1 = t1 + self._pnames[i] + "={:s}, ".format(self._format_value_error(self.results[0][i], _n.sqrt(self.results[1][i][i]), '$\pm$'))
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
             elif self.results:
