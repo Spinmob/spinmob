@@ -4,6 +4,7 @@ import os      as _os
 import shutil  as _shutil
 import spinmob as _s
 import pickle as _cPickle
+import copy   as _copy
 
 def coarsen_array(a, level=2, method='mean'):
     """
@@ -1108,6 +1109,27 @@ def reverse(array):
     l.reverse()
     return _n.array(l)
 
+def round_sigfigs(x, n=2):
+    """
+    Rounds the number to the specified significant figures. x can also be 
+    a list or array of numbers (in these cases, a numpy array is returned).
+    """
+    iterable = True
+    if not is_iterable(x):
+        iterable = False
+        x = [x]
+    
+    # make a copy to be safe
+    x = _n.array(x)
+    
+    # loop over the elements
+    for i in range(len(x)):
+        sig_figs = -int(_n.floor(_n.log10(abs(x[i]))))+n-1
+        x[i] = _n.round(x[i], sig_figs)
+        
+    if iterable: return x
+    else:        return x[0]
+    
 def _save_object(object, path="ask", text="Save this object where?"):
     if path=="ask": path = _s.dialogs.Save("*.pickle", text=text)
     if path == "": return

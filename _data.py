@@ -1089,14 +1089,14 @@ class fitter():
         s = s + "\nCONSTANTS\n"
         for c in self._cnames: s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
 
-        s = s + "\nGUESS (reduced chi squared = {:s})\n".format(str(self.reduced_chi_squareds(self._pguess)))
+        s = s + "\nGUESS (reduced chi squared = {:s})\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squareds(self._pguess),3)))
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
         if self._set_xdata is None or self._set_ydata is None: s = s + "\nNO DATA\n"
 
         else:
             if self.results and not self.results[1] is None:
-                s = s + "\nFIT RESULTS (reduced chi squared = {:s})\n".format(str(self.reduced_chi_squareds()))
+                s = s + "\nFIT RESULTS (reduced chi squared = {:s})\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squareds(),3)))
                 for n in range(len(self._pnames)):
                     s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
 
