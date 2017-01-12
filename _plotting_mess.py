@@ -553,12 +553,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     
     # At this point it is assumed xdata and ydata are lists of arrays
     # and eydata and exdata are lists of either None or arrays.
-    N = len(xdata)
-    
+         
     # check that the labels is a list of strings of the same length
-    if not _fun.is_iterable(label): label = [label]*N
+    if not _fun.is_iterable(label): label = [label]*len(xdata)
     while len(label) < len(ydata):  label.append(label[0])
-
+    
     # concatenate if necessary
     if len(label) > legend_max:
         label[legend_max-2] = '...'
@@ -579,8 +578,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     # now loop over the list of data in xdata and ydata
     for n in range(0,len(xdata)):
         # get the label
-        if label: l = str(label[n])
-        else:     l = str(n)
+        l = str(n)+": "+str(label[n])
 
         # calculate the x an y progressive shifts
         dx = xshift*(n/xshift_every)
