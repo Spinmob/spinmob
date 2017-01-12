@@ -209,7 +209,7 @@ class Test_fitter(_ut.TestCase):
         """
         # Load a test file and fit it, making sure "f" is defined at each step.
         d = _s.data.load(path=_os.path.join(self.data_path,"Bevington Ex 7p1.csv"))
-        f = _d.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006', autoplot=False)
+        f = _s.data.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006', autoplot=False)
         f.__repr__()
         f.set_data(d[0], d[1], 0.05)
         f.__repr__()

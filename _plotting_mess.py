@@ -25,8 +25,8 @@ def _match_data_sets(x,y):
             # make an array of arrays to match
             x = []
             for n in range(len(y)):
-                x.append(range(len(y[n])))
-        else: x = range(len(y))
+                x.append(list(range(len(y[n]))))
+        else: x = list(range(len(y)))
     
     if y==None: 
         # If x is none, y can be either [1,2] or [[1,2],[1,2]]
@@ -34,8 +34,8 @@ def _match_data_sets(x,y):
             # make an array of arrays to match
             y = []
             for n in range(len(x)):
-                y.append(range(len(x[n])))
-        else: y = range(len(x))
+                y.append(list(range(len(x[n]))))
+        else: y = list(range(len(x)))
     
     # At this point they should be matched, but may still be 1D
     # Default behavior: if all elements are numbers in both, assume they match
@@ -49,8 +49,8 @@ def _match_data_sets(x,y):
 
     # Clean up any remaining Nones
     for n in range(len(x)):
-        if x[n] == None: x[n] = range(len(y[n]))
-        if y[n] == None: y[n] = range(len(x[n]))
+        if x[n] == None: x[n] = list(range(len(y[n])))
+        if y[n] == None: y[n] = list(range(len(x[n])))
     
     return x, y
 
@@ -88,27 +88,7 @@ def _match_error_to_data_set(x, ex):
         
     return ex    
     
-def _test_inflate():
-    # Nones
-    print(_match_data_sets(None, [1,2,3]))
-    print(_match_data_sets(None, [[1,2,3],[1,2,1]]))
-    print(_match_data_sets([1,2,3],None))
-    print(_match_data_sets([[1,2,3],[1,2,1]], None))
-    print(_match_data_sets([None, [2,3,4]], [[1,2,1],None]))
-    
-    # Normals
-    print(_match_data_sets([1,2,3], [1,2,1]))
-    
-    # Shared arrays
-    print(_match_data_sets([1,2,3], [[1,2,1],[1,3,1]]))
-    print(_match_data_sets([[1,2,1],[1,3,1]], [1,2,3]))
-    
-    # ex matching
-    print("ex matching")
-    print(_match_error_to_data_set([[1,2,3],[1,2]], None) )
-    print(_match_error_to_data_set([[1,2,3],[1,2]], 32) )
-    print(_match_error_to_data_set([[1,2,3],[1,2,3]], [3,4,3]))
-    print(_match_error_to_data_set([[1,2,3],[1,2]], [None, 22]))
+
     
         
 def complex_data(data, edata=None, draw=True, **kwargs):
