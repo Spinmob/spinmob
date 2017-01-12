@@ -14,6 +14,103 @@ from numpy import *
 # handle for the colormap so it doesn't immediately close
 _colormap = None
 
+def _match_data_sets(x,y):
+    """
+    Makes sure everything is the same shape. "Intelligently"
+    """
+    # Handle the None for x or y
+    if x==None: 
+        # If x is none, y can be either [1,2] or [[1,2],[1,2]]
+        if _fun.is_iterable(y[0]):
+            # make an array of arrays to match
+            x = []
+            for n in range(len(y)):
+                x.append(range(len(y[n])))
+        else: x = range(len(y))
+    
+    if y==None: 
+        # If x is none, y can be either [1,2] or [[1,2],[1,2]]
+        if _fun.is_iterable(x[0]):
+            # make an array of arrays to match
+            y = []
+            for n in range(len(x)):
+                y.append(range(len(x[n])))
+        else: y = range(len(x))
+    
+    # At this point they should be matched, but may still be 1D
+    # Default behavior: if all elements are numbers in both, assume they match
+    if _fun.elements_are_numbers(x) and _fun.elements_are_numbers(y):
+        x = [x]
+        y = [y]
+           
+    # Second default behavior: shared array [1,2,3], [[1,2,1],[1,2,1]] or vis versa
+    if _fun.elements_are_numbers(x) and not _fun.elements_are_numbers(y): x = [x]*len(y)
+    if _fun.elements_are_numbers(y) and not _fun.elements_are_numbers(x): y = [y]*len(x)
+
+    # Clean up any remaining Nones
+    for n in range(len(x)):
+        if x[n] == None: x[n] = range(len(y[n]))
+        if y[n] == None: y[n] = range(len(x[n]))
+    
+    return x, y
+
+def _match_error_to_data_set(x, ex):
+    """
+    Inflates ex to match the dimensionality of x, "intelligently". 
+    x is assumed to be a 2D array.
+    """
+    # Simplest case, ex is None or a number
+    if not _fun.is_iterable(ex):
+        
+        # Just make a matched list of Nones
+        if ex == None: ex = [ex]*len(x)
+        
+        # Make arrays of numbers
+        if _fun.is_a_number(ex): 
+            value = ex # temporary storage
+            ex    = []
+            for n in range(len(x)): 
+                ex.append([value]*len(x[n]))
+    
+    # Otherwise, ex is iterable
+    
+    # Default behavior: If the elements are all numbers and the length matches
+    # that of the first x-array, assume this is meant to match all the x
+    # data sets
+    if _fun.elements_are_numbers(ex) and len(ex) == len(x[0]): ex = [ex]*len(x)
+
+    # The user may specify a list of some iterable and some not. Assume
+    # in this case that at least the lists are the same length    
+    for n in range(len(x)):
+        # do nothing to the None's
+        # Inflate single numbers to match
+        if _fun.is_a_number(ex[n]): ex[n] = [ex[n]]*len(x[n])
+        
+    return ex    
+    
+def _test_inflate():
+    # Nones
+    print(_match_data_sets(None, [1,2,3]))
+    print(_match_data_sets(None, [[1,2,3],[1,2,1]]))
+    print(_match_data_sets([1,2,3],None))
+    print(_match_data_sets([[1,2,3],[1,2,1]], None))
+    print(_match_data_sets([None, [2,3,4]], [[1,2,1],None]))
+    
+    # Normals
+    print(_match_data_sets([1,2,3], [1,2,1]))
+    
+    # Shared arrays
+    print(_match_data_sets([1,2,3], [[1,2,1],[1,3,1]]))
+    print(_match_data_sets([[1,2,1],[1,3,1]], [1,2,3]))
+    
+    # ex matching
+    print("ex matching")
+    print(_match_error_to_data_set([[1,2,3],[1,2]], None) )
+    print(_match_error_to_data_set([[1,2,3],[1,2]], 32) )
+    print(_match_error_to_data_set([[1,2,3],[1,2,3]], [3,4,3]))
+    print(_match_error_to_data_set([[1,2,3],[1,2]], [None, 22]))
+    
+        
 def complex_data(data, edata=None, draw=True, **kwargs):
     """
     Plots the X and Y of complex data.
@@ -446,39 +543,18 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     """
 
     _pylab.ioff()
-
-    # make sure everything is at least iterable.
-    if not _fun.is_iterable(xdata):  xdata  = [xdata]
-    if not _fun.is_iterable(exdata): exdata = [exdata]
-    if not _fun.is_iterable(ydata):  ydata  = [ydata]
-    if not _fun.is_iterable(eydata): eydata = [eydata]
-
-    # make sure at least xdata and ydata are 2-D
-    if _fun.is_a_number(xdata[0]): xdata = [xdata]
-    if _fun.is_a_number(ydata[0]): ydata = [ydata]
-
-    # make sure the number of data sets agrees
-    N = max(len(xdata),len(ydata))
-    for n in range(N-len( xdata)):  xdata.append( xdata[0])
-    for n in range(N-len( ydata)):  ydata.append( ydata[0])
-    for n in range(N-len(exdata)): exdata.append(exdata[0])
-    for n in range(N-len(eydata)): eydata.append(eydata[0])
-
-    # loop over each x and y data set, making sure None's are all converted
-    # to counting arrays
-    for n in range(N):
-
-        # clean up the [None]'s
-        if _fun.is_iterable(xdata[n]) and xdata[n][0] is None: xdata[n] = None
-        if _fun.is_iterable(ydata[n]) and ydata[n][0] is None: ydata[n] = None
-
-        if xdata[n] is None and ydata[n] is None:
-            print("ERROR: "+str(n)+"'th data set is (None, None).")
-            return
-
-        if xdata[n] is None: xdata[n] = _n.arange(len(ydata[n]))
-        if ydata[n] is None: ydata[n] = _n.arange(len(xdata[n]))
-
+    
+    # Make sure the dimensionality of the data sets matches
+    xdata, ydata = _match_data_sets(xdata, ydata)
+    
+    # Make sure the error match too
+    exdata = _match_error_to_data_set(xdata, exdata)
+    eydata = _match_error_to_data_set(ydata, eydata)
+    
+    # At this point it is assumed xdata and ydata are lists of arrays
+    # and eydata and exdata are lists of either None or arrays.
+    N = len(xdata)
+    
     # check that the labels is a list of strings of the same length
     if not _fun.is_iterable(label): label = [label]*N
     while len(label) < len(ydata):  label.append(label[0])

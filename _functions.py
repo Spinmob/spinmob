@@ -80,9 +80,9 @@ def is_a_number(s):
 def is_iterable(a):
     """
     Determine whether the object is iterable, but not a string.
+    This function is left over from a time when Python was 2, not 3.
     """
     return hasattr(a, '__iter__') and not type(a) == str
-
 
 
 def append_to_file(path, string):
@@ -427,6 +427,15 @@ def elements_are_strings(array, start_index=0, end_index=-1):
         if not type(array[n]) == str: return 0
     return 1
 
+def elements_are_iterable(array):
+    """
+    Returns True if every element is a list/array-like object (not a string).
+    """
+    for a in array: 
+        if not is_iterable(a): 
+            return False
+    return True
+        
 def equalize_list_lengths(a,b):
     """
     Modifies the length of list a to match b. Returns a. 
