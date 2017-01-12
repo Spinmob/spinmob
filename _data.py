@@ -1757,11 +1757,11 @@ class fitter():
 
     def reduced_chi_squareds(self, p=None):
         """
-        Returns the reduced chi squared for each data set. Degrees of freedom
-        of each data point are reduced.
+        Returns the reduced chi squared for each data set. 
 
         p=None means use the fit results.
         """
+        
         if self._set_xdata == None or self._set_ydata == None: return None
 
         if p is None: p = self.results[0]

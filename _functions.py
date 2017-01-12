@@ -1123,6 +1123,9 @@ def round_sigfigs(x, n=2):
     Rounds the number to the specified significant figures. x can also be 
     a list or array of numbers (in these cases, a numpy array is returned).
     """
+    # Handle None case
+    if x==None: return None
+    
     iterable = True
     if not is_iterable(x):
         iterable = False
