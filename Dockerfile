@@ -1,3 +1,4 @@
+#This defines the docker container for spinmob
 #Base image is anaconda for python 3
 FROM continuumio/anaconda3
 
