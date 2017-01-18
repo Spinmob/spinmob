@@ -23,7 +23,6 @@ xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 
 docker run \
     -it \
-    --rm \
     --workdir="/workspace" \
     -p 8888:8888 \
     -v "/Users/$USER/Documents/notebooks:/workspace" \
