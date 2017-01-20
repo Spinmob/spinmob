@@ -309,7 +309,7 @@ def magphase_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exs
     print(ds)
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, **kwargs)
 
-def magphase_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=None, **kwargs):
+def magphase_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot this data.
@@ -367,30 +367,27 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     exdata = _match_error_to_data_set(xdata, exdata)
     eydata = _match_error_to_data_set(ydata, eydata)
     
+    # convert to real imag, and get error bars
+    rdata = []
+    idata = []
+    erdata = []
+    eidata = []    
+    for l in range(len(ydata)):
+        rdata.append(_n.real(ydata[l]))
+        idata.append(_n.imag(ydata[l]))
+
+        if eydata[l] is None:
+            erdata.append(None)
+            eidata.append(None)
+        else:
+            erdata.append(_n.real(eydata[l]))
+            eidata.append(_n.imag(eydata[l]))
+
     # set up the figure and axes
     if figure == 'gcf': f = _pylab.gcf()
     if clear: f.clear()
     axes1 = _pylab.subplot(211)
     axes2 = _pylab.subplot(212,sharex=axes1)
-
-    # convert to real imag
-    rdata = _n.real(ydata)
-    idata = _n.imag(ydata)
-
-    # convert errors to real imag
-    if eydata is None:
-        erdata = None
-        eidata = None
-    else:
-        erdata = []
-        eidata = []
-        for n in range(len(eydata)):
-            if eydata[n] is None:
-                erdata.append(None)
-                eidata.append(None)
-            else:
-                erdata.append(_n.real(eydata[n]))
-                eidata.append(_n.imag(eydata[n]))
 
     if 'xlabel' in kwargs  : xlabel=kwargs.pop('xlabel')
     else:                          xlabel=''
@@ -416,7 +413,7 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
         _pylab.show()
 
 
-def realimag_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=None, **kwargs):
+def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, **kwargs):
     """
     Use script to generate data and plot it.
 
@@ -430,7 +427,7 @@ def realimag_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exs
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=realimag_data, **kwargs)
 
-def realimag_files(xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exscript=None, **kwargs):
+def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot this data.
