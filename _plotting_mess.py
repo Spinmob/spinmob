@@ -245,37 +245,28 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     exdata = _match_error_to_data_set(xdata, exdata)
     eydata = _match_error_to_data_set(ydata, eydata)
 
-    # convert to real imag
-    m = _n.abs(ydata)
-    p = _n.angle(ydata)
-    if phase=='degrees':
-        for n in range(len(ydata)):
-            p[n] = p[n]*180.0/_n.pi
+    # convert to magnitude and phase
+    m  = []
+    p  = []
+    em = []
+    ep = []
+    for l in range(len(ydata)):
+        m.append(_n.abs(ydata[l]))
+        p.append(_n.angle(ydata[l]))
+        if phase=='degrees': m[-1] = m[-1]*180.0/_n.pi
+                              
+        # get the mag - phase errors
+        if eydata[l] is None:
+            em.append(None)
+            ep.append(None)
+        else:
+            er = _n.real(eydata[l])
+            ei = _n.imag(eydata[l])
+            em.append(0.5*((er+ei) + (er-ei)*_n.cos(p[l]))      )
+            ep.append(0.5*((er+ei) - (er-ei)*_n.cos(p[l]))/m[l] )
 
-    # convert errors to real imag
-    if eydata is None:
-        em = None
-        ep = None
-    else:
-
-        # do the elliptical error transformation
-        em = []
-        ep = []
-
-        # loop over all the eydata
-        for n in range(len(eydata)):
-
-            if eydata[n] is None:
-                em.append(None)
-                ep.append(None)
-            else:
-                er = _n.real(eydata[n])
-                ei = _n.imag(eydata[n])
-                em.append(0.5*((er+ei) + (er-ei)*_n.cos(p[n]))   )
-                ep.append(0.5*((er+ei) - (er-ei)*_n.cos(p[n]))/m[n] )
-
-            # convert to degrees
-            if phase=='degrees' and not ep[n] is None: ep[n] = ep[n]*180.0/_n.pi
+        # convert to degrees
+        if phase=='degrees' and not ep[l] is None: ep[l] = ep[l]*180.0/_n.pi
 
 
     if phase=='degrees':         plabel = plabel + " (degrees)"
