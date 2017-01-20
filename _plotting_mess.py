@@ -240,17 +240,10 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     axes1 = _pylab.subplot(211)
     axes2 = _pylab.subplot(212,sharex=axes1)
 
-    # make sure the supplied data is the right shape
-    if len(shape(xdata)) < 2: xdata = [xdata]
-    if len(shape(ydata)) < 2: ydata = [ydata]
-
-    # the error bar shapes better match or be None!
-    if not (eydata is None or len(eydata)==len(ydata)):
-        print("Error: magphase_data(): size of eydata must match ydata.")
-        return
-    if not (exdata is None or len(exdata)==len(xdata)):
-        print("Error: magphase_data(): size of exdata must match xdata.")
-        return
+    # Make sure the dimensionality of the data sets matches
+    xdata, ydata = _match_data_sets(xdata, ydata)
+    exdata = _match_error_to_data_set(xdata, exdata)
+    eydata = _match_error_to_data_set(ydata, eydata)
 
     # convert to real imag
     m = _n.abs(ydata)
@@ -378,18 +371,11 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     """
     _pylab.ioff()
 
-    # make sure the supplied data is the right shape
-    if len(shape(xdata)) < 2: xdata = [xdata]
-    if len(shape(ydata)) < 2: ydata = [ydata]
-
-    # the error bar shapes better match or be None!
-    if not (eydata is None or len(eydata)==len(ydata)):
-        print("Error: realimag_data(): size of eydata must match ydata.")
-        return
-    if not (exdata is None or len(exdata)==len(xdata)):
-        print("Error: realimag_data(): size of exdata must match xdata.")
-        return
-
+    # Make sure the dimensionality of the data sets matches
+    xdata, ydata = _match_data_sets(xdata, ydata)
+    exdata = _match_error_to_data_set(xdata, exdata)
+    eydata = _match_error_to_data_set(ydata, eydata)
+    
     # set up the figure and axes
     if figure == 'gcf': f = _pylab.gcf()
     if clear: f.clear()
@@ -526,14 +512,9 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     
     # Make sure the dimensionality of the data sets matches
     xdata, ydata = _match_data_sets(xdata, ydata)
-    
-    # Make sure the error match too
     exdata = _match_error_to_data_set(xdata, exdata)
     eydata = _match_error_to_data_set(ydata, eydata)
     
-    # At this point it is assumed xdata and ydata are lists of arrays
-    # and eydata and exdata are lists of either None or arrays.
-         
     # check that the labels is a list of strings of the same length
     if not _fun.is_iterable(label): label = [label]*len(xdata)
     while len(label) < len(ydata):  label.append(label[0])
