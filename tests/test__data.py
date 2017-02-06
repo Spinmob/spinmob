@@ -220,6 +220,20 @@ class Test_fitter(_ut.TestCase):
         r = f.reduced_chi_squareds()
         self.assertIs(type(r), list)
         self.assertAlmostEqual(r[0], 1.5, 1)
+
+        # Try supplying a callable function
+        def tf(x, a1, a2, a3):
+            return a1 + a2*x + a3*x**2
+
+        f = _s.data.fitter(tf, 'a1=-1., a2=0.04, a3=0.00006', autoplot=False)
+        f.set_data(d[0], d[1], 0.05)
+        f.fit()
+        f.__repr__()
+
+        # See whether constants work as expected
+        f.fix(a1=-1.0)
+        f.fit()
+        f.__repr__()
         
 
         

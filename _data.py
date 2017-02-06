@@ -1238,8 +1238,13 @@ class fitter():
                 self.f.append( eval('lambda ' + pstring + ': ' + f[n],  self._globals))
                 self._fnames.append(f[n])
             else:
-                self.f.append(f[n])
-                self._fnames.append(f[n].__name__)
+                if f[n].__name__ == (lambda: None).__name__:
+                    self._error('Providing a lambda as a fitting function is discouraged. Simple functions can be provided directly as strings.')
+                else:
+                    self._globals[f[n].__name__] = f[n]
+                    fn_argnames = 'x, ' + ', '.join(_inspect.getargspec(f[n])[0][1:])
+                    self.f.append(eval('lambda {}: {}({})'.format(pstring, f[n].__name__, fn_argnames), self._globals))
+                    self._fnames.append(f[n].__name__)
 
             # if bg[n] is a string, define a function on the fly.
             if isinstance(bg[n], str):
@@ -2184,4 +2189,4 @@ if __name__ == "__main__":
     import spinmob as sm
     d=sm.data.databox()
     x = d.load_file("C:\\Users\\jaxankey\\Miniconda3\\envs\\Python27-PyQt4\\Lib\\site-packages\\spinmob\\tests\\fixtures\\data\\mixed_complex_data.dat")
-    
+
