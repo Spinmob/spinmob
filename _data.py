@@ -64,11 +64,7 @@ class databox:
     def __len__(self):
         return len(self.ckeys)
 
-    def __getslice__(self,i,j):
-        output = []
-        for n in range(i,min(j, len(self))): output.append(self[n])
-        return output
-
+ 
     def __init__(self, delimiter=None, debug=False, **kwargs):
         """
         delimiter    The delimiter the file uses. None (default) means
@@ -120,21 +116,31 @@ class databox:
 
     def load_file(self, path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEPANTS.", default_directory=None, header_only=False, quiet=False):
         """
-        This will clear the databox, load a file, storing the header info in self.headers, and the data in
-        self.columns
+        This will clear the databox, load a file, storing the header info in 
+        self.headers, and the data in self.columns
 
-        If first_data_line="auto", then the first data line is assumed to be the first line
-        where all the elements are numbers.
+        If first_data_line="auto", then the first data line is assumed to be 
+        the first line where all the elements are numbers.
 
-        If you specify a first_data_line (index, starting at 0), the columns need not be
-        numbers. Everything above will be considered header information and below will be
-        data columns.
+        If you specify a first_data_line (index, starting at 0), the columns 
+        need not be numbers. Everything above will be considered header 
+        information and below will be data columns.
 
-        In both cases, the line used to label the columns will always be the last
-        header line with the same (or more) number of elements as the first data line.
+        In both cases, the line used to label the columns will always be the 
+        last header line with the same (or more) number of elements as the 
+        first data line.
+        
+        filters            Filter for the file dialog (if path isn't specified)
+        text               Prompt on file dialog
+        default_directory  Which spinmob.settings key to use for the dialog's
+                           default directory. Will create one...
+        header_only        Only load the header
+        quiet              Don't print anything while loading.
+        transpose          Take a transpose, converting columns into rows
+        
 
         """
-
+        
         if default_directory is None: default_directory = self.directory
 
         if path == "ask":
@@ -837,6 +843,24 @@ class databox:
 
         return new_databox
 
+    def transpose(self):
+        """
+        Returns a copy of this databox with the columns as rows.
+        
+        Currently requires that the databox has equal-length columns.
+        """
+        # Create an empty databox with the same headers and delimiter.
+        d = databox(delimter=self.delimiter)
+        self.copy_headers(d)
+        
+        # Get the transpose
+        z = _n.array(self[:]).transpose()
+        
+        # Build the columns of the new databox
+        for n in range(len(z)): d['c'+str(n)] = z[n]
+        
+        return d
+        
 
     def update_headers(self, dictionary, keys=None):
         """
@@ -856,9 +880,34 @@ class databox:
         Returns the n'th column if it's an integer, otherwise the column based
         on key.
         """
-        if len(self.columns) == 0:   return []
-        if type(n)           is str: return self.columns[n]
-        else:                        return self.columns[self.ckeys[n]]
+        # Nothing to do here.
+        if len(self.columns) == 0:   return None
+        
+        # if it's a string, use it as a key for the dictionary
+        if type(n)   is str: return self.columns[n]
+
+        # if it's a list, return the specified columns
+        if type(n) in [list, tuple, range]:
+            output = []
+            for i in n: output.append(self[i])
+            return output
+
+        # If it's a slice, do the slice thing
+        if type(n) is slice:
+            start = n.start
+            stop  = n.stop
+            step  = n.step
+            
+            # Fix up the unspecifieds
+            if start == None: start = 0
+            if stop  == None: stop  = len(self)
+            if step  == None: step  = 1
+            
+            # Return what was asked for
+            return self[range(start, stop, step)]
+            
+        # Otherwise assume it's an integer
+        return self.columns[self.ckeys[n]]
 
     __getitem__ = c
 
@@ -2133,17 +2182,16 @@ class fitter():
 # Dialogs for loading data
 ############################
 
-def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, **kwargs):
+def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
     """
     Loads a data file into the databox data class. Returns the data object.
 
-    **kwargs are sent to databox(), so check there for more information (i.e.
-    about delimiters)
+    Most keyword arguments are sent to databox.load() so check there
+    for documentation.(if their function isn't obvious).
 
-    The most common modification to the default behavior is to change the
-    delimiter for csv files:
+    transpose=False    Return databox.transpose().
 
-    >>> load(delimiter=",")
+    **kwargs are sent to databox(), so check there for more information.
     """
     d = databox(**kwargs)
     d.load_file(path=path, first_data_line=first_data_line,
@@ -2152,26 +2200,27 @@ def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file,
 
     if not quiet: print("\nloaded", d.path, "\n")
 
+    if transpose: return d.transpose()
     return d
 
-def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Select some files, FACEHEAD.", default_directory="default_directory", **kwargs):
+def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Select some files, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
     """
     Loads a list of data files into a list of databox data objects.
     Returns said list.
 
-    **kwargs are sent to databox()
+    Explicit keyword arguments are sent to databox.load() so check there
+    for documentation.(if their function isn't obvious).
 
-    The most common modification to the default behavior is to change the
-    delimiter for csv files:
-
-    >>> load(delimiter=",")
+    **kwargs are sent to databox(), so check there for more information.
     """
     if paths == "ask": paths = _s.dialogs.open_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []
     for path in paths:
-        if _os.path.isfile(path): datas.append(load(path, first_data_line, **kwargs))
+        if _os.path.isfile(path): datas.append(load(path=path, first_data_line=first_data_line,
+                filters=filters, text=text, default_directory=default_directory,
+                header_only=header_only, transpose=transpose, **kwargs))
 
     return datas
     

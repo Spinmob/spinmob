@@ -154,6 +154,7 @@ def complex_databoxes(ds, script='c(1)+1j*c(2)', escript=None, **kwargs):
     escript       complex script for error bars
 
     **kwargs are sent to spinmob.plot.complex.data()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     datas  = []
     labels = []
@@ -185,6 +186,7 @@ def complex_files(script='c(1)+1j*c(2)', **kwargs):
                                      file dialog
 
     **kwargs are sent to spinmob.plot.complex.databoxes()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     ds = _data.load_multiple()
 
@@ -305,6 +307,7 @@ def magphase_databoxes(ds, xscript=0, yscript='c(1)+1j*c(2)', eyscript=None, exs
     exscript  script for x error
 
     **kwargs are sent to spinmob.plot.magphase.data()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     print(ds)
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, **kwargs)
@@ -320,6 +323,7 @@ def magphase_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
                                      file dialog
 
     **kwargs are sent to spinmob.plot.magphase.databoxes()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     return files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, **kwargs)
 
@@ -424,6 +428,7 @@ def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exs
     exscript  script for x error
 
     **kwargs are sent to spinmob.plot.real_imag.data()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=realimag_data, **kwargs)
 
@@ -438,6 +443,7 @@ def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
                                      file dialog
 
     **kwargs are sent to spinmob.plot.real_imag.databoxes()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     return files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, **kwargs)
 
@@ -586,8 +592,10 @@ def xy_databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, **kwarg
     yscript   script for y data (yscript = None for counting script)
     eyscript  script for y error
     exscript  script for x error
+    transpose takes a transpose of each databox prior to plotting
 
     **kwargs are sent to spinmob.plot.xy.data()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=xy_data, **kwargs)
 
@@ -601,8 +609,9 @@ def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, **kwargs):
 
     optional argument: filters="*.*" can be changed to filter the files in the
                                      file dialog
-
+                                     
     **kwargs are sent to spinmob.plot.xy.databoxes()
+    transpose=True applies databox.transpose() prior to plotting.
     """
     return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, **kwargs)
 
@@ -627,7 +636,7 @@ def xy_function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=Fa
 
 
 
-def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy_data, **kwargs):
+def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy_data, transpose=False, **kwargs):
     """
     Plots the listed databox objects with the specified scripts.
 
@@ -637,6 +646,7 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy
     eyscript  script for y error
     exscript  script for x error
     plotter   function used to do the plotting
+    transpose applies databox.transpose() prior to plotting
 
     **kwargs are sent to plotter()
     """
@@ -688,7 +698,9 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, plotter=xy
     labels  = []
 
     for d in ds:
-
+        # Take the transpose if necessary
+        if transpose: d = d.transpose()
+        
         xdata = d(xscript)
         for n in range(len(xdata)):
             xdatas.append(xdata[n])
