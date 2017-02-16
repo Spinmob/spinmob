@@ -1478,7 +1478,7 @@ def yscale(scale='log'):
 
 def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial', font_size=12, font_weight='normal',
              border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005, window_size=[550,400],
-             keep_axis_labels=False, axis_label_font_size=14, axis_label_font_weight='normal', keep_legend=False):
+             keep_axis_labels=False, axis_label_font_size=14, axis_label_font_weight='normal', keep_legend=True):
     """
 
     This guy performs the ubertidy, which some of us use to prep a figure
