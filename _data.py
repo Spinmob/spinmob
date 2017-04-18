@@ -347,6 +347,9 @@ class databox:
         delimiter="use current" This will set the delimiter of the output file
                                 "use current" means use self.delimiter
         """
+        
+        # Make sure there isn't a problem later with no-column databoxes
+        if len(self)==0: header_only=True
 
         # This is the final path. We now write to a temporary file in the user
         # directory, then move it to the destination. This (hopefully) fixes
