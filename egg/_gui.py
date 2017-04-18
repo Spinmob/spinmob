@@ -1844,7 +1844,7 @@ class TreeDictionary(BaseObject):
         for k in keys: d.insert_header(k, repr(dictionary[k]))
 
         # save it
-        d.save_file(path, force_overwrite=True)
+        d.save_file(path, force_overwrite=True, header_only=True)
 
     def load(self, path=None):
         """
