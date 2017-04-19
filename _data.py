@@ -380,24 +380,24 @@ class databox:
         f.write('\n')
 
         # if we're only supposed to write the header
-        if header_only: return
-
-        # now write the ckeys
-        elements = []
-        for ckey in self.ckeys: elements.append(str(ckey))
-        f.write(delimiter.join(elements) + "\n")
-
-        # now loop over the data
-        for n in range(0, len(self[0])):
-            # loop over each column
+        if not header_only: 
+            
+            # now write the ckeys
             elements = []
-            for m in range(0, len(self.ckeys)):
-                # write the data if there is any, otherwise, placeholder ("x")
-                if n < len(self[m]):
-                    elements.append(str(self[m][n]))
-                else:
-                    elements.append('_')
+            for ckey in self.ckeys: elements.append(str(ckey))
             f.write(delimiter.join(elements) + "\n")
+    
+            # now loop over the data
+            for n in range(0, len(self[0])):
+                # loop over each column
+                elements = []
+                for m in range(0, len(self.ckeys)):
+                    # write the data if there is any, otherwise, placeholder ("x")
+                    if n < len(self[m]):
+                        elements.append(str(self[m][n]))
+                    else:
+                        elements.append('_')
+                f.write(delimiter.join(elements) + "\n")
 
         f.close()
 
