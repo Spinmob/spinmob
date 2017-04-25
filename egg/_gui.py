@@ -945,13 +945,14 @@ class CheckBox(BaseObject):
         # pyqt objects
         self._widget = _g.QtGui.QCheckBox()
         
+        # signals
+        self.signal_changed = self._widget.stateChanged
         
     def is_checked(self):
         """
         Check if checked.
         """
-        self._widget.checkState()
-        return self
+        return self._widget.checkState()
         
     def set_checked(self, value=True):
         """
@@ -972,8 +973,8 @@ class ComboBox(BaseObject):
         self._widget = _g.QtGui.QComboBox()
         
         # signals
-        self.activated       = self._widget.activated       
-        self.changed = self._widget.currentIndexChanged
+        self.signal_activated       = self._widget.activated       
+        self.signal_changed = self._widget.currentIndexChanged
         
         
     def add_item(self, text="ploop"):
@@ -981,6 +982,12 @@ class ComboBox(BaseObject):
         Adds an item to the combobox.
         """
         self._widget.addItem(text)
+        
+    def remove_item(self, index=0):
+        """
+        Removes an item from the combobox.
+        """        
+        self._widget.removeItem(index)        
         
     def insert_separator(self,index=1):
         """
@@ -1002,9 +1009,15 @@ class ComboBox(BaseObject):
         
     def get_text(self,index=1):
         """
-        Gets current selected text.
+        Gets text from a given index.
         """
-        return str(self._widget.currentText())
+        return str(self._widget.itemText(index))
+        
+    def get_all_items(self):
+        """
+        Returns all items in the combobox dictionary.
+        """
+        return [self._widget.itemText(k) for k in range(self._widget.count())]
 
 
 
