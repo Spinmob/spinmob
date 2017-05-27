@@ -1452,6 +1452,7 @@ class TreeDictionary(BaseObject):
         self._widget            = _g.parametertree.ParameterTree(showHeader=show_header)
         self.naughty            = [' ', '\t', '\n', '\r', ',', ';']
         self.default_save_path  = default_save_path
+        self._connection_lists  = dict()
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -1520,7 +1521,49 @@ class TreeDictionary(BaseObject):
 
         # connect it
         x.sigValueChanged.connect(function)
+        
+        # Keep track of the functions
+        if self._connection_lists.has_key(name): self._connection_lists[name].append(function)
+        else:                                    self._connection_lists[name] = [function]
 
+        return self
+
+    def block_user_signals(self, name):
+        """
+        Temporarily disconnects the user-defined signals for the specified 
+        parameter name. 
+        
+        Note this only affects those connections made with 
+        connect_signal_changed(), and I do not recommend adding new connections
+        while they're blocked!
+        """
+        x = self._find_parameter(name.split("/"))
+
+        # if it pooped.
+        if x==None: return None
+            
+        # disconnect it from all its functions
+        for f in self._connection_lists[name]: x.sigValueChanged.disconnect(f)
+        
+        return self
+
+    def unblock_user_signals(self, name):
+        """
+        Reconnects the user-defined signals for the specified 
+        parameter name (blocked with "block_user_signal_changed")
+        
+        Note this only affects those connections made with 
+        connect_signal_changed(), and I do not recommend adding new connections
+        while they're blocked!
+        """
+        x = self._find_parameter(name.split("/"))
+
+        # if it pooped.
+        if x==None: return None
+            
+        # disconnect it from all its functions
+        for f in self._connection_lists[name]: x.sigValueChanged.connect(f)
+        
         return self
 
     def _find_parameter(self, name_list, create_missing=False, quiet=False):
@@ -1791,17 +1834,18 @@ class TreeDictionary(BaseObject):
 
     __getitem__ = get_value
 
-    def set_value(self, name, value, block_events=False, ignore_error=False):
+    def set_value(self, name, value, block_user_signals=False, ignore_error=False):
         """
         Sets the variable of the supplied name to the supplied value.
 
         Setting block_events=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        if block_events: self.block_events()
-
         # first clean up the name
         name = self._clean_up_name(name)
+
+        # If we're supposed to, block the user signals for this parameter
+        if block_user_signals: self.block_user_signals(name)        
 
         # now get the parameter object
         x = self._find_parameter(name.split('/'), quiet=ignore_error)
@@ -1812,12 +1856,13 @@ class TreeDictionary(BaseObject):
         # for lists, make sure the value exists!!
         if x.type() in ['list']:
             if value in list(x.forward.keys()): x.setValue(value)
-            else:                         x.setValue(list(x.forward.keys())[0])
+            else:                               x.setValue(list(x.forward.keys())[0])
 
         # otherwise just set the value
         else: x.setValue(value)
 
-        if block_events: self.unblock_events()
+        # If we're supposed to unblock the user signals for this parameter
+        if block_user_signals: self.unblock_user_signals(name)
 
         return self
 
