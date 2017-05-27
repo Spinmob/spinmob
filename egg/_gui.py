@@ -2463,7 +2463,7 @@ class DataboxPlot(_d.databox, GridLayout):
                     m = min(i, len(self.plot_widgets)-1)
 
                     # add the ROI to the appropriate plot
-                    self.plot_widgets[m].addItem(ROI)
+                    if m>=0: self.plot_widgets[m].addItem(ROI)
 
         # show the plots
         self._plot_grid.unblock_events()

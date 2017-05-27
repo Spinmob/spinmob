@@ -951,6 +951,7 @@ def psd(t, y, pow2=False, window=None):
     """
     # make sure they're numpy arrays
     y = _n.array(y)
+    t = _n.array(t)
 
     # if we're doing the power of 2, do it
     if pow2:
