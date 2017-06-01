@@ -1002,8 +1002,9 @@ def fft(t, y, pow2=False, window=None):
     window          can be set to any of the windowing functions in numpy,
                     e.g. window="hanning"
     """
-    # make sure they're numpy arrays
+    # make sure they're numpy arrays, and make copies to avoid the referencing error
     y = _n.array(y)
+    t = _n.array(t)
 
     # if we're doing the power of 2, do it
     if pow2:
@@ -1015,7 +1016,7 @@ def fft(t, y, pow2=False, window=None):
 
     # try to get the windowing function
     w = None
-    if window:
+    if not window in [None, "None", "none", False, "False", "false", 0]:
         try:
             w = eval("_n."+window, globals())
         except:

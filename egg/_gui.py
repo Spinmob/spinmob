@@ -2062,18 +2062,18 @@ class DataboxPlot(_d.databox, GridLayout):
         self.new_autorow()
 
         # grid for the script
-        self._script_grid = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
+        self.grid_script = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
 
         # script grid
-        self.button_plot  = self._script_grid.place_object(Button("Try it!"), 2,3)
-        self.script       = self._script_grid.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
+        self.button_plot  = self.grid_script.place_object(Button("Try it!"), 2,3)
+        self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(81)
 
         # make sure the plot fills up the most space
         self.set_row_stretch(2)
 
         # plot area
-        self._plot_grid = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count(), alignment=0)
+        self.grid_plot = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count(), alignment=0)
 
         ##### set up the internal variables
 
@@ -2393,7 +2393,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
 
         # whether the script is visible
-        self._script_grid._widget.setVisible(self.button_script.get_value())
+        self.grid_script._widget.setVisible(self.button_script.get_value())
 
         # whether we should be able to edit it.
         if self.button_autoscript.get_value(): self.script.disable()
@@ -2418,7 +2418,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # time to rebuild!
 
         # don't show the plots as they are built
-        self._plot_grid.block_events()
+        self.grid_plot.block_events()
 
         # make sure the number of curves is on target
         while len(self._curves) > n: self._curves.pop(-1)
@@ -2436,11 +2436,11 @@ class DataboxPlot(_d.databox, GridLayout):
             p.clear()
 
             # remove it from the grid
-            self._plot_grid.remove_object(p)
+            self.grid_plot.remove_object(p)
 
         # add new plots
         for i in range(n_plots):
-            self.plot_widgets.append(self._plot_grid.place_object(_g.PlotWidget(), 0, i, alignment=0))
+            self.plot_widgets.append(self.grid_plot.place_object(_g.PlotWidget(), 0, i, alignment=0))
 
         # loop over the curves and add them to the plots
         for i in range(n):
@@ -2466,7 +2466,7 @@ class DataboxPlot(_d.databox, GridLayout):
                     if m>=0: self.plot_widgets[m].addItem(ROI)
 
         # show the plots
-        self._plot_grid.unblock_events()
+        self.grid_plot.unblock_events()
 
 
     def _update_linked_axes(self):
@@ -2496,30 +2496,3 @@ class DataboxPlot(_d.databox, GridLayout):
 
 
 
-if __name__ == "__main__":
-
-    w = Window(margins=False, autosettings_path='w.cfg')
-    
-    d1 = Docker('docker 1', margins=(20,10,10,10))
-    d2 = Docker('docker 2')
-    d3 = Docker()
-
-    d = Docker("Floaty", autosettings_path='floaty.cfg')    
-    
-    w.place_object(Button())
-    
-    w.place_docker(d1, 'bottom')
-    w.place_docker(d2, 'left')
-    w.place_docker(d3, 'top')
-    
-    d1.place_object(Button())
-    d1.new_autorow()
-    d1.place_object(Label())
-    
-    #b = d.plac
-   
-    
-    w.show()
-    d.show()
-
-   
