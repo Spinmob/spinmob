@@ -1571,14 +1571,13 @@ class TreeDictionary(BaseObject):
         Tries to find and return the parameter of the specified name. The name
         should be of the form
 
-        "branch1/branch2/parametername"
+        ['branch1','branch2', 'parametername']
 
         Setting create_missing=True means if it doesn't find a branch it
         will create one.
 
         Setting quiet=True will suppress error messages (for checking)
         """
-
         # make a copy so this isn't destructive to the supplied list
         s = list(name_list)
 
@@ -1611,11 +1610,6 @@ class TreeDictionary(BaseObject):
 
             # first clean up
             n = self._clean_up_name(n)
-
-            # only allow the parameter search if x is a branch
-            if not x.isType('group'):
-                if not quiet: self.print_message("ERROR: '"+x.name()+"' is not a branch and can't be searched.")
-                return None
 
             # try to search for the name
             try: x = x.param(n)
@@ -1784,6 +1778,25 @@ class TreeDictionary(BaseObject):
             self._get_parameter_dictionary('', d, k, x)
 
         return k, d
+
+    def hide_parameter(self, name):
+        """
+        Hides the specified parameter.
+        """
+        self._find_parameter(name.split('/')).hide()
+
+    def show_parameter(self, name):
+        """
+        Hides the specified parameter.
+        """
+        self._find_parameter(name.split('/')).show()        
+        
+
+    def _get_parameter_widget(self, name):
+        """
+        Returns the Qt widget associated with the parameter.
+        """
+        return self._find_parameter(name.split('/'))
 
     def get_value(self, name):
         """
