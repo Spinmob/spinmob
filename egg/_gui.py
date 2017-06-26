@@ -1428,6 +1428,43 @@ class TextBox(BaseObject):
         else:               self._widget.setStyleSheet("QLineEdit {background-color: "+str(background)+"; color: "+str(text)+"}")
 
 
+class Timer():
+
+    def __init__(self, interval_ms=500, single_shot=False):
+        """
+        Simplified QTimer. 
+          
+          interval_ms   in milliseconds
+          single_shot   whether the timer fires only once
+        """
+
+        # pyqt objects
+        self._widget     = _g.QtCore.QTimer(); 
+        self.signal_tick = self._widget.timeout
+        
+        # aliases
+        self.start        = self._widget.start
+        self.stop         = self._widget.stop
+        
+        # Set the interval
+        self.set_interval(interval_ms)
+        self.set_single_shot(single_shot)
+
+    def set_interval(self, interval_ms=500):
+        """
+        Set the interval for the ticks in milliseconds.
+        """
+        self._widget.setInterval(interval_ms)
+        
+        return self
+        
+    def set_single_shot(self, single_shot=True):
+        """
+        Sets whether the timer is single shot (one tick).
+        """
+        self._widget.setSingleShot(single_shot)
+
+
 class TreeDictionary(BaseObject):
 
     def __init__(self, default_save_path="settings.txt", show_header=False):
