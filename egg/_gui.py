@@ -964,7 +964,7 @@ class CheckBox(BaseObject):
 
 class ComboBox(BaseObject):
     
-    def __init__(self):
+    def __init__(self, items=['test','me']):
         """
         Simplified QComboBox.
         """
@@ -972,9 +972,12 @@ class ComboBox(BaseObject):
         # pyqt objects
         self._widget = _g.QtGui.QComboBox()
         
+        # Populate it.
+        for item in items: self.add_item(item)        
+        
         # signals
-        self.signal_activated       = self._widget.activated       
-        self.signal_changed = self._widget.currentIndexChanged
+        self.signal_activated = self._widget.activated       
+        self.signal_changed   = self._widget.currentIndexChanged
         
         
     def add_item(self, text="ploop"):
@@ -982,37 +985,44 @@ class ComboBox(BaseObject):
         Adds an item to the combobox.
         """
         self._widget.addItem(text)
+        return self
         
     def remove_item(self, index=0):
         """
         Removes an item from the combobox.
         """        
         self._widget.removeItem(index)        
+        return self
         
     def insert_separator(self,index=1):
         """
         Adds a separator to the combobox.
         """
         self._widget.insertSeparator(index)
+        return self
         
-    def get_current_index(self):
+    def get_index(self):
         """
         Gets current index.
         """
         return self._widget.currentIndex()
         
-    def set_current_index(self,index=0):
+    def set_index(self,index=0):
         """
         Sets current index.
         """
         self._widget.setCurrentIndex(index)
+        return self
         
-    def get_text(self,index=1):
+    def get_text(self, index=1):
         """
         Gets text from a given index.
         """
         return str(self._widget.itemText(index))
-        
+    
+    get_value = get_index
+    set_value = set_index
+    
     def get_all_items(self):
         """
         Returns all items in the combobox dictionary.
@@ -1565,7 +1575,7 @@ class TreeDictionary(BaseObject):
 
         return self
 
-    def block_user_signals(self, name):
+    def block_user_signals(self, name, ignore_error=False):
         """
         Temporarily disconnects the user-defined signals for the specified 
         parameter name. 
@@ -1574,17 +1584,18 @@ class TreeDictionary(BaseObject):
         connect_signal_changed(), and I do not recommend adding new connections
         while they're blocked!
         """
-        x = self._find_parameter(name.split("/"))
+        x = self._find_parameter(name.split("/"), quiet=ignore_error)
 
         # if it pooped.
         if x==None: return None
             
         # disconnect it from all its functions
-        for f in self._connection_lists[name]: x.sigValueChanged.disconnect(f)
+        if self._connection_lists.has_key(name):
+            for f in self._connection_lists[name]: x.sigValueChanged.disconnect(f)
         
         return self
 
-    def unblock_user_signals(self, name):
+    def unblock_user_signals(self, name, ignore_error=False):
         """
         Reconnects the user-defined signals for the specified 
         parameter name (blocked with "block_user_signal_changed")
@@ -1593,13 +1604,14 @@ class TreeDictionary(BaseObject):
         connect_signal_changed(), and I do not recommend adding new connections
         while they're blocked!
         """
-        x = self._find_parameter(name.split("/"))
+        x = self._find_parameter(name.split("/"), quiet=ignore_error)
 
         # if it pooped.
         if x==None: return None
             
-        # disconnect it from all its functions
-        for f in self._connection_lists[name]: x.sigValueChanged.connect(f)
+        # reconnect it to all its functions
+        if self._connection_lists.has_key(name):
+            for f in self._connection_lists[name]: x.sigValueChanged.connect(f)
         
         return self
 
@@ -1884,7 +1896,7 @@ class TreeDictionary(BaseObject):
 
     __getitem__ = get_value
 
-    def set_value(self, name, value, block_user_signals=False, ignore_error=False):
+    def set_value(self, name, value, ignore_error=False, block_user_signals=False):
         """
         Sets the variable of the supplied name to the supplied value.
 
@@ -1895,14 +1907,14 @@ class TreeDictionary(BaseObject):
         name = self._clean_up_name(name)
 
         # If we're supposed to, block the user signals for this parameter
-        if block_user_signals: self.block_user_signals(name)        
+        if block_user_signals: self.block_user_signals(name, ignore_error)        
 
         # now get the parameter object
         x = self._find_parameter(name.split('/'), quiet=ignore_error)
 
         # quit if it pooped.
         if x == None: return None
-
+        
         # for lists, make sure the value exists!!
         if x.type() in ['list']:
             if value in list(x.forward.keys()): x.setValue(value)
@@ -1912,7 +1924,7 @@ class TreeDictionary(BaseObject):
         else: x.setValue(value)
 
         # If we're supposed to unblock the user signals for this parameter
-        if block_user_signals: self.unblock_user_signals(name)
+        if block_user_signals: self.unblock_user_signals(name, ignore_error)
 
         return self
 
@@ -1954,7 +1966,7 @@ class TreeDictionary(BaseObject):
         # save it
         d.save_file(path, force_overwrite=True, header_only=True)
 
-    def load(self, path=None):
+    def load(self, path=None, ignore_errors=False, block_user_signals=False):
         """
         Loads all the parameters from a databox text file. If path=None,
         loads from self.default_save_path.
@@ -1974,10 +1986,10 @@ class TreeDictionary(BaseObject):
         else:                     return None
 
         # update the settings
-        self.update(d)
+        self.update(d, ignore_errors=ignore_errors, block_user_signals=block_user_signals)
         return self
 
-    def update(self, d, ignore_errors=False):
+    def update(self, d, ignore_errors=False, block_user_signals=False):
         """
         Supply a dictionary or databox with a header of the same format
         and see what happens! (Hint: it updates the existing values.)
@@ -1988,10 +2000,14 @@ class TreeDictionary(BaseObject):
         for k in list(d.keys()):
 
             # for safety: by default assume it's a repr() with python code
-            try:    self.set_value(k, eval(str(d[k])), ignore_error=ignore_errors)
+            try:    self.set_value(k, eval(str(d[k])), 
+                                   ignore_error       = ignore_errors, 
+                                   block_user_signals = block_user_signals)
 
             # if that fails try setting the value directly
-            except: self.set_value(k, d[k], ignore_error=ignore_errors)
+            except: self.set_value(k, d[k], 
+                                   ignore_error       = ignore_errors, 
+                                   block_user_signals = block_user_signals)
 
         return self
 
@@ -2066,7 +2082,7 @@ class DataboxLoadSave(_d.databox, GridLayout):
 
 class DataboxPlot(_d.databox, GridLayout):
 
-    def __init__(self, file_type="*.dat", autosettings_path=None, **kwargs):
+    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, **kwargs):
         """
         A collection of common controls and functionality for plotting, saving, and
         loading data. This object inherits all databox functionality and adds
@@ -2099,11 +2115,11 @@ class DataboxPlot(_d.databox, GridLayout):
         self._label_path     = self.place_object(Label(""))
 
         self.place_object(Label("")) # spacer
-        self.button_script     = self.place_object(Button("Show Script", checkable=True)).set_checked(False)
-        self.button_autoscript = self.place_object(Button("Auto",        checkable=True)).set_checked(True) 
-        self.button_multi      = self.place_object(Button("Multi",       checkable=True)).set_checked(True) 
-        self.button_link_x     = self.place_object(Button("Link X",      checkable=True)).set_checked(True)
-        self.button_enabled    = self.place_object(Button("Enabled",     checkable=True)).set_checked(True)
+        self.button_script     = self.place_object(Button  ("Show Script", checkable=True)).set_checked(False)
+        self.combo_autoscript  = self.place_object(ComboBox(['Manual Script', 'Autoscript 1', 'Autoscript 2', 'Autoscript 3', 'Custom Autoscript'])).set_value(autoscript) 
+        self.button_multi      = self.place_object(Button  ("Multi",       checkable=True)).set_checked(True) 
+        self.button_link_x     = self.place_object(Button  ("Link X",      checkable=True)).set_checked(autoscript==1)
+        self.button_enabled    = self.place_object(Button  ("Enabled",     checkable=True)).set_checked(True)
 
         # keep the buttons shaclackied together
         self.set_column_stretch(5)
@@ -2148,8 +2164,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_load      .signal_clicked.connect(self._button_load_clicked)
         self.button_autosave  .signal_toggled.connect(self._button_autosave_clicked)
         self.button_script    .signal_toggled.connect(self._button_script_clicked)
-        self.button_autoscript.signal_toggled.connect(self._button_autoscript_clicked)
-
+        self.combo_autoscript .signal_changed.connect(self._combo_autoscript_clicked)
         self.button_multi     .signal_toggled.connect(self._button_multi_clicked)
         self.button_link_x    .signal_toggled.connect(self._button_link_x_clicked)
         self.button_enabled   .signal_toggled.connect(self._button_enabled_clicked)
@@ -2157,7 +2172,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.script           .signal_changed.connect(self._script_changed)
 
         # list of controls we should auto-save / load
-        self._autosettings_controls = ["self.button_autoscript",
+        self._autosettings_controls = ["self.combo_autoscript",
                                        "self.button_enabled",
                                        "self.button_multi",
                                        "self.button_link_x",
@@ -2189,7 +2204,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self._update_linked_axes()
         self.save_gui_settings()
 
-    def _button_autoscript_clicked(self, checked):
+    def _combo_autoscript_clicked(self, *a):
         """
         Called whenever the button is clicked.
         """
@@ -2301,6 +2316,87 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         self.plot()
 
+    def _autoscript(self):
+        """
+        Automatically generates a python script for plotting. 
+        """
+        # This should never happen unless I screwed up.
+        if self.combo_autoscript.get_index() == 0: return "ERROR: Ask Jack."
+        
+        # if there is no data, leave it blank
+        if   len(self)==0: return "x = []; y = []; xlabels=[]; ylabels=[]"
+
+        # if there is one column, make up a one-column script
+        elif len(self)==1: return "x = [None]\ny = [ d[0] ]\n\nxlabels=[ 'Data Point' ]\nylabels=[ 'd[0]' ]"
+            
+        # Shared x-axis (column 0)
+        elif self.combo_autoscript.get_index() == 1:
+        
+            # hard code the first columns
+            sx = "x = [ d[0]"
+            sy = "y = [ d[1]"
+
+            # hard code the first labels
+            sxlabels = "xlabels = '" +self.ckeys[0]+"'"
+            sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
+
+            # loop over any remaining columns and append.
+            for n in range(2,len(self)):
+                sy += ", d["+str(n)+"]"
+                sylabels += ", '"+self.ckeys[n]+"'"
+
+            return sx+" ]\n"+sy+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
+            
+        
+        # Column pairs
+        elif self.combo_autoscript.get_index() == 2:
+            
+            # hard code the first columns
+            sx = "x = [ d[0]"
+            sy = "y = [ d[1]"
+
+            # hard code the first labels
+            sxlabels = "xlabels = [ '"+self.ckeys[0]+"'"
+            sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
+
+            # Loop over the remaining columns and append
+            for n in range(1,len(self)/2):
+                sx += ", d["+str(2*n  )+"]"
+                sy += ", d["+str(2*n+1)+"]"
+                sxlabels += ", '"+self.ckeys[2*n  ]+"'"
+                sylabels += ", '"+self.ckeys[2*n+1]+"'"
+
+            return sx+" ]\n"+sy+" ]\n\n"+sxlabels+" ]\n"+sylabels+" ]\n"
+            
+        # Column triples
+        elif self.combo_autoscript.get_index() == 3:
+            
+            # hard code the first columns
+            sx = "x = [ d[0], d[0]"
+            sy = "y = [ d[1], d[2]"
+
+            # hard code the first labels
+            sxlabels = "xlabels = [ '"+self.ckeys[0]+"', '"+self.ckeys[0]+"'"
+            sylabels = "ylabels = [ '"+self.ckeys[1]+"', '"+self.ckeys[2]+"'"
+
+            # Loop over the remaining columns and append
+            for n in range(1,len(self)/3):
+                sx += ", d["+str(3*n  )+"], d["+str(3*n  )+"]"
+                sy += ", d["+str(3*n+1)+"], d["+str(3*n+2)+"]"
+                
+                sxlabels += ", '"+self.ckeys[3*n  ]+"', '"+self.ckeys[3*n  ]+"'"
+                sylabels += ", '"+self.ckeys[3*n+1]+"', '"+self.ckeys[3*n+2]+"'"
+
+            return sx+" ]\n"+sy+" ]\n\n"+sxlabels+" ]\n"+sylabels+" ]\n"
+            
+        else: return self.autoscript_custom()
+
+    def autoscript_custom(self):
+        """
+        Overwrite this function to redefine the custom autoscript.
+        """
+        return "To use the 'Custom Autoscript' option, you must overwrite the function 'self.autoscript_custom' with your own (which must return a valid python script string)."
+
     def plot(self):
         """
         Sets the internal databox to the supplied value and plots it.
@@ -2313,34 +2409,8 @@ class DataboxPlot(_d.databox, GridLayout):
             return self
 
         # if there is no script, create a default
-        if self.button_autoscript.is_checked():
-
-            # if there is no data, leave it blank
-            if   len(self)==0: s = "x = []; y = []; xlabels=[]; ylabels=[]"
-
-            # if there is one column, make up a one-column script
-            elif len(self)==1: s = "x = [None]\ny = [d[0]]\n\nxlabels=['Data Point']\nylabels=['d[0]']"
-
-            # otherwise assume the first column is the x-axis for everything
-            else:
-                # hard code the first columns
-                sx = "x = [ d[0]"
-                sy = "y = [ d[1]"
-
-                # hard code the first labels
-                sxlabels = "xlabels = '" +self.ckeys[0]+"'"
-                sylabels = "ylabels = ['"+self.ckeys[1]+"'"
-
-                # loop over any remaining columns and append.
-                for n in range(2,len(self)):
-                    sy += ", d["+str(n)+"]"
-                    sylabels += ", '"+self.ckeys[n]+"'"
-
-                s = sx+" ]\n"+sy+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
-
-            # only change it if the script is different
-            if not s.strip() == str(self.script.get_text()).strip(): self.script.set_text(s)
-
+        if not self.combo_autoscript.get_index()==0: 
+            self.script.set_text(self._autoscript())
 
         ##### Try the script and make the curves / plots match
 
@@ -2446,8 +2516,8 @@ class DataboxPlot(_d.databox, GridLayout):
         self.grid_script._widget.setVisible(self.button_script.get_value())
 
         # whether we should be able to edit it.
-        if self.button_autoscript.get_value(): self.script.disable()
-        else:                                  self.script.enable()
+        if not self.combo_autoscript.get_index()==0: self.script.disable()
+        else:                                        self.script.enable()
 
 
     def _set_number_of_plots(self, n):
