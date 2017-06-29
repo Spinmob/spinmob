@@ -610,7 +610,7 @@ class Window(GridLayout):
         return self
 
 
-    def show(self, block_command_line=False, block_timing=0.02):
+    def show(self, block_command_line=False, block_timing=0.05):
         """
         Shows the window and raises it.
 
@@ -705,18 +705,36 @@ class Docker(Window):
          
     def _disabled(self):
         """
-        Function disabled for Docker object.
+        This function is disabled for Docker object.
         """
-        self.print_message("Function disabled for Docker object.")
+        self.print_message("This function is disabled for Docker object.")
         return
         
-    def show(self):
+    def show(self, block_command_line=False, block_timing=0.05):
         """
         Shows the window and raises it.
+
+        If block_command_line is 0, this will start the window up and allow you
+        to monkey with the command line at the same time. Otherwise, the
+        window will block the command line and process events every
+        block_timing seconds.
         """
 
+        self._is_open = True
         self._window.show()
         self._window.raise_()
+
+        # start the blocking loop
+        if block_command_line:
+            
+            # stop when the window closes
+            while self._is_open:
+                _a.processEvents()
+                _t.sleep(block_timing)
+
+            # wait a moment in case there is some shutdown stuff.
+            _t.sleep(0.5)
+
         return self
 
     
