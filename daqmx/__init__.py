@@ -1,5 +1,7 @@
-import PyDAQmx  as _mx
 import numpy    as _n
+import PyDAQmx  as _mx
+
+
 
 import spinmob as _s
 _settings = _s.settings
@@ -137,8 +139,13 @@ class task_base:
         print("Settings:")
         for k in keys: print('  ', k, '=', self.settings[k])
 
-    has_key = settings.has_key
+    def has_key(self, k):
+        """
+        Python-2 style function to see if a key exists.
+        """
+        return k in self.keys()
 
+    
 
 
 class ai_task(task_base):
@@ -198,8 +205,8 @@ class ai_task(task_base):
                          "ai_units"             : _mx.DAQmx_Val_Volts})
 
         # make sure this key exists in kwargs
-        if not kwargs.has_key("ai_channels"):        kwargs["ai_channels"]        = self["ai_channels"]    
-        if not kwargs.has_key("ai_input_couplings"): kwargs["ai_input_couplings"] = self["ai_input_couplings"]
+        if not "ai_channels"        in kwargs:        kwargs["ai_channels"]        = self["ai_channels"]    
+        if not "ai_input_couplings" in kwargs: kwargs["ai_input_couplings"] = self["ai_input_couplings"]
         
         # make sure ai_channels is a list
         x = kwargs["ai_channels"]
