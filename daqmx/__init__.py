@@ -166,23 +166,25 @@ class ai_task(task_base):
         Note, when you set ai_rate and start(), this will automatically
         query the actual rate and update ai_rate internally!        
         
-         "ai_task_name"      : "Default AI Task",
-         "ai_rate"           : 10000,
-         "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
-         "ai_samples"        : 1000,
-         "ai_timeout"        : 1000.0/10000.0 + 3.0,
+        Parameters
+        ----------
+        ai_task_name : "Default AI Task",
+        ai_rate      : 10000,
+        ai_mode      : _mx.DAQmx_Val_FiniteSamps,
+        ai_samples   : 1000,
+        ai_timeout   : 1000.0/10000.0 + 3.0,
          
-         "ai_clock_source"   : "",
-         "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-         "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
-         "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+        ai_clock_source    : "",
+        ai_clock_edge      : _mx.DAQmx_Val_Rising,
+        ai_trigger_source  : "UNSPECIFIED: ai_trigger_source",
+        ai_trigger_slope   : _mx.DAQmx_Val_RisingSlope,
          
-         "ai_channels"          : [0],
-         "ai_input_couplings"   : [None], # can also be None, "AC", "DC", "GND", ["AC","DC","DC","GND"]...
-         "ai_min"               : -10.0,
-         "ai_max"               : 10.0,
-         "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
-         "ai_units"             : _mx.DAQmx_Val_Volts
+        ai_channels           : [0],
+        ai_input_couplings    : [None], # can also be None, "AC", "DC", "GND", ["AC","DC","DC","GND"]...
+        ai_min                : -10.0,
+        ai_max                : 10.0,
+        ai_terminal_config    : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
+        ai_units              : _mx.DAQmx_Val_Volts
         
         """
         self.settings = dict(
@@ -376,25 +378,23 @@ class ao_task(task_base):
         Note, when you set ao_rate and start(), this will automatically
         query the actual rate and update ao_rate internally!        
         
-        "ao_task_name"      : "Default Output Task",
-        "ao_mode"           : _mx.DAQmx_Val_FiniteSamps,
-        "ao_timeout"        : 10.0,
-        
-        "ao_channels"       : [],   # must be a list of string channel names
-        "ao_rate"           : 10000,
-        "ao_waveforms"      : [[1,2,3,0]],
-        "ao_min"            : -10.0,
-        "ao_max"            : 10.0,
-        "ao_units"          : _mx.DAQmx_Val_Volts,
-        
-        "ao_clock_source"   : "",
-        "ao_clock_edge"     : _mx.DAQmx_Val_Rising,
-        
-        "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
-        "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
-        
-        "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
-        "ao_export_terminal" : None
+        Parameters
+        ----------
+        ao_task_name      : "Default Output Task",
+        ao_mode           : _mx.DAQmx_Val_FiniteSamps,
+        ao_timeout        : 10.0,
+        ao_channels       : [],   # must be a list of string channel names
+        ao_rate           : 10000,
+        ao_waveforms      : [[1,2,3,0]],
+        ao_min            : -10.0,
+        ao_max            : 10.0,
+        ao_units          : _mx.DAQmx_Val_Volts,
+        ao_clock_source   : "",
+        ao_clock_edge     : _mx.DAQmx_Val_Rising,
+        ao_trigger_source : "UNSPECIFIED: ao_trigger_source",
+        ao_trigger_slope  : _mx.DAQmx_Val_RisingSlope,
+        ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
+        ao_export_terminal" : None
         """
         
         self.settings = dict(
