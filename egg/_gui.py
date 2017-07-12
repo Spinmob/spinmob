@@ -1560,11 +1560,19 @@ class TreeDictionary(BaseObject):
         return self
 
 
-    def connect_any_signal_changed(self, function):
+    def connect_any_signal_changed(self, function=None):
         """
         Connects the "anything changed" signal for all of the tree to the
         specified function.
+        
+        Parameters
+        ----------
+        function
+            Function to connect to this signal. Setting to None means
+            it will connect to self.autosave
         """
+        if function==None: function = self.autosave
+        
         # loop over all top level parameters
         for i in range(self._widget.topLevelItemCount()):
 
@@ -1955,6 +1963,14 @@ class TreeDictionary(BaseObject):
         """
         self.print_message("signal change!")
         #if self.autosave: self.save()
+
+    def autosave(self, *a):
+        """
+        Runs self.save() with no arguments. This is a convenience function;
+        you can connect signals to it, such as with 
+        self.connect_any_signal_changed()
+        """
+        self.save()
 
     def save(self, path=None):
         """
