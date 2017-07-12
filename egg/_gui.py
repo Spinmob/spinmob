@@ -1867,7 +1867,7 @@ class TreeDictionary(BaseObject):
         self._find_parameter(name.split('/')).show()        
         
 
-    def _get_parameter_widget(self, name):
+    def get_parameter_widget(self, name):
         """
         Returns the Qt widget associated with the parameter.
         """
