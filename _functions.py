@@ -1,10 +1,30 @@
 #import wx    as _wx
 import numpy   as _n
 import os      as _os
+import sys     as _sys
 import shutil  as _shutil
 import spinmob as _s
-import pickle as _cPickle
-import copy   as _copy
+import pickle  as _cPickle
+
+# Import our local visa library
+def import_path(path):
+    """
+    Imports a python module and returns it (adds path to sys.path).
+    
+    Parameters
+    ----------
+      path
+          Full path to python module, e.g., "/my/full/path/module.py"
+    """
+    include_path, filename = _os.path.split(path)
+    module              = filename[0:len(filename)-3]
+    
+    # Insert the path
+    if include_path not in _sys.path: _sys.path.insert(0, include_path)
+    
+    exec("import "+module+" as _x")
+    return _x
+
 
 def coarsen_array(a, level=2, method='mean'):
     """
