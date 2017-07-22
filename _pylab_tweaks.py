@@ -206,7 +206,7 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
         fitters[-1].autoscale_eydata_and_fit()
         print(fitters[-1])
         print("<click the graph to continue>")
-        fitters[-1].ginput(timeout=0)
+        if not axes.lines[-1] == l: fitters[-1].ginput(timeout=0)
 
     return fitters
 
