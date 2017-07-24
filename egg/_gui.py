@@ -1947,7 +1947,9 @@ class TreeDictionary(BaseObject):
             else:                               x.setValue(list(x.forward.keys())[0])
 
         # otherwise just set the value
-        else: x.setValue(value)
+        else: 
+            # Force the type!
+            x.setValue(eval(x.type()+"("+str(value)+")"))
 
         # If we're supposed to unblock the user signals for this parameter
         if block_user_signals: self.unblock_user_signals(name, ignore_error)
