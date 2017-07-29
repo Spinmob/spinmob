@@ -1,5 +1,0 @@
-inty	'42'
-floaty	'42.0'
-stringy	"'test'"
-listy	"'37.2'"
-
