@@ -1529,8 +1529,11 @@ class TreeDictionary(BaseObject):
         s = "\nTreeDictionary() -> "+str(self.default_save_path)+"\n"
 
         for k in self.get_dictionary()[0]:
-            s = s + "  "+k+" = "+repr(self[k])+"\n"
-
+            
+            if not self.get_type(k) in ['list']:
+                s = s + "  "+k+" = "+repr(self[k])+"\n"
+            else:
+                s = s + "  "+k+" = "+repr(self[k])+" from "+repr(self.get_list_values(k)) + "\n"
         return s
 
     def block_events(self):
@@ -1775,6 +1778,11 @@ class TreeDictionary(BaseObject):
         # update the default kwargs
         other_kwargs = dict(type = 'str')
         other_kwargs.update(kwargs)
+        
+        # Fix 'values' for list objects to be only strings
+        if other_kwargs['type'] == 'list':
+            for n in range(len(other_kwargs['values'])):
+                other_kwargs['values'][n] = str(other_kwargs['values'][n])
 
         # split into (presumably existing) branches and parameter
         s = name.split('/')
@@ -1867,11 +1875,17 @@ class TreeDictionary(BaseObject):
         self._find_parameter(name.split('/')).show()        
         
 
-    def get_parameter_widget(self, name):
+    def get_widget(self, name):
         """
         Returns the Qt widget associated with the parameter.
         """
         return self._find_parameter(name.split('/'))
+
+    def get_type(self, name):
+        """
+        Returns the type string of the specified parameter.
+        """
+        return str(self.get_widget(name).opts['type'])
 
     def get_value(self, name):
         """
@@ -1907,6 +1921,8 @@ class TreeDictionary(BaseObject):
                 # Otherwise, just return None and do nothing                
                 else: return None
 
+        # For strings, make sure the returned value is always a string.
+        elif x.opts['type'] in ['str']: return str(value)
                 
         # Otherwise assume it is a value with bounds or limits (depending on 
         # the version of pyqtgraph)    
@@ -1921,6 +1937,18 @@ class TreeDictionary(BaseObject):
         return value
 
     __getitem__ = get_value
+
+    def get_list_values(self, name):
+        """
+        Returns the values for a list item of the specified name.
+        """
+        # Make sure it's a list
+        if not self.get_type(name) in ['list']: 
+            self.print_message('ERROR: "'+name+'" is not a list.')
+            return
+        
+        # Return a copy of the list values
+        return list(self.get_widget(name).opts['values'])
 
     def set_value(self, name, value, ignore_error=False, block_user_signals=False):
         """
@@ -1943,13 +1971,16 @@ class TreeDictionary(BaseObject):
         
         # for lists, make sure the value exists!!
         if x.type() in ['list']:
-            if value in list(x.forward.keys()): x.setValue(value)
-            else:                               x.setValue(list(x.forward.keys())[0])
+            
+            # Make sure it exists before trying to set it
+            if str(value) in list(x.forward.keys()): x.setValue(str(value))
+            
+            # Otherwise default to the first key
+            else: x.setValue(list(x.forward.keys())[0])
 
-        # otherwise just set the value
+        # otherwise just set the value (forcing the type!)
         else: 
-            # Force the type!
-            x.setValue(eval(x.type()+"("+str(value)+")"))
+            x.setValue(eval(x.opts['type'])(str(value)))
 
         # If we're supposed to unblock the user signals for this parameter
         if block_user_signals: self.unblock_user_signals(name, ignore_error)

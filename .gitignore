@@ -7,4 +7,4 @@ build/
 dist/
 Spinmob.egg*/
 *.cfg
-crimson/examples/gui_settings/
+gui_settings/
