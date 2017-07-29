@@ -68,6 +68,13 @@ class Test_egg(_ut.TestCase):
         self.d['listy'] = 37.2
         self.assertEqual(self.d['listy'], str(37.2))
         
+        # Save, load, and make sure the values are still the same (with types)
+        self.d.save()
+        self.d.load()
+        self.assertEqual(self.d['inty'], 32)
+        self.assertEqual(self.d['floaty'], 45.5555)
+        self.assertEqual(type(self.d['stringy']),  str)
+        self.assertEqual(self.d['listy'], str(37.2))
         
 
 if __name__ == "__main__":
