@@ -1979,8 +1979,12 @@ class TreeDictionary(BaseObject):
             else: x.setValue(list(x.forward.keys())[0])
 
         # otherwise just set the value (forcing the type!)
-        else: 
-            x.setValue(eval(x.opts['type'])(str(value)))
+#        elif x.opts['type'] in ['bool']:  x.setValue(bool(value))
+#        elif x.opts['type'] in ['int']:   x.setValue(int(value))
+#        elif x.opts['type'] in ['float']: x.setValue(float(value))
+        
+        # Bail to a hopeful set method for other types
+        else: x.setValue(eval(x.opts['type'])(value))
 
         # If we're supposed to unblock the user signals for this parameter
         if block_user_signals: self.unblock_user_signals(name, ignore_error)
