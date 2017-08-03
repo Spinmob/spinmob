@@ -19,7 +19,7 @@ def _match_data_sets(x,y):
     Makes sure everything is the same shape. "Intelligently"
     """
     # Handle the None for x or y
-    if x==None: 
+    if x is None: 
         # If x is none, y can be either [1,2] or [[1,2],[1,2]]
         if _fun.is_iterable(y[0]):
             # make an array of arrays to match
@@ -28,7 +28,7 @@ def _match_data_sets(x,y):
                 x.append(list(range(len(y[n]))))
         else: x = list(range(len(y)))
     
-    if y==None: 
+    if y is None: 
         # If x is none, y can be either [1,2] or [[1,2],[1,2]]
         if _fun.is_iterable(x[0]):
             # make an array of arrays to match
@@ -49,8 +49,8 @@ def _match_data_sets(x,y):
 
     # Clean up any remaining Nones
     for n in range(len(x)):
-        if x[n] == None: x[n] = list(range(len(y[n])))
-        if y[n] == None: y[n] = list(range(len(x[n])))
+        if x[n] is None: x[n] = list(range(len(y[n])))
+        if y[n] is None: y[n] = list(range(len(x[n])))
     
     return x, y
 
@@ -63,7 +63,7 @@ def _match_error_to_data_set(x, ex):
     if not _fun.is_iterable(ex):
         
         # Just make a matched list of Nones
-        if ex == None: ex = [ex]*len(x)
+        if ex is None: ex = [ex]*len(x)
         
         # Make arrays of numbers
         if _fun.is_a_number(ex): 
