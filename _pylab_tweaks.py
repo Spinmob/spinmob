@@ -210,7 +210,7 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
 
     return fitters
 
-def format_figure(figure=None, tall=False, draw=True):
+def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
     """
     This formats the figure in a compact way with (hopefully) enough useful
     information for printing large data sets. Used mostly for line and scatter
@@ -226,8 +226,9 @@ def format_figure(figure=None, tall=False, draw=True):
 
     if figure == None: figure = _pylab.gcf()
 
-    if tall: set_figure_window_geometry(figure, (0,0), (550,700))
-    else:    set_figure_window_geometry(figure, (0,0), (550,400))
+    if modify_geometry:
+        if tall: set_figure_window_geometry(figure, (0,0), (550,700))
+        else:    set_figure_window_geometry(figure, (0,0), (550,400))
 
     legend_position=1.01
 

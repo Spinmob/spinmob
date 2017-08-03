@@ -470,7 +470,7 @@ def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabel='',               \
             title='', shell_history=0, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
             coarsen=0, style=None,  clear=True, axes=None, xscale='linear', yscale='linear', grid=False,       \
-            legend='best', legend_max=20, autoformat=True, tall=False, draw=True, **kwargs):
+            legend='best', legend_max=20, autoformat=True, tall=False, modify_geometry=True, draw=True, **kwargs):
     """
     Plots specified data.
 
@@ -501,7 +501,6 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
 
     **kwargs are sent to pylab.errorbar()
     """
-
     _pylab.ioff()
     
     # Make sure the dimensionality of the data sets matches
@@ -572,7 +571,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     if grid: _pylab.grid(True)
 
     if autoformat:
-        _pt.format_figure(draw=False)
+        _pt.format_figure(draw=False, modify_geometry=modify_geometry)
         _pt.auto_zoom(axes=axes, draw=False)
 
     # update the canvas
