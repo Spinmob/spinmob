@@ -62,8 +62,14 @@ class Test_plot_functions(_ut.TestCase):
         self.assertEqual(_s._plotting_mess._match_error_to_data_set([[1,2,3],[1,2]], [None, 22]),
                         [None, [22, 22]])
         
-
-
+    def test_plots(self):
+        
+        _s.plot.xy.function()
+        _s.pylab.ginput(timeout=1)
+        _s.plot.magphase.function()
+        _s.pylab.ginput(timeout=1)
+        _s.plot.image.function()
+        _s.pylab.ginput(timeout=1)
         
 
 if __name__ == "__main__":
