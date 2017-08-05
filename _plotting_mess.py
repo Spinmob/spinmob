@@ -470,34 +470,55 @@ def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabel='',               \
             title='', shell_history=0, xshift=0, yshift=0, xshift_every=1, yshift_every=1,        \
             coarsen=0, style=None,  clear=True, axes=None, xscale='linear', yscale='linear', grid=False,       \
-            legend='best', legend_max=20, autoformat=True, tall=False, modify_geometry=True, draw=True, **kwargs):
+            legend='best', legend_max=20, autoformat=True, autoformat_window=True, tall=False, draw=True, **kwargs):
     """
     Plots specified data.
 
-    xdata, ydata        Arrays (or arrays of arrays) of data to plot
-    eydata, exdata      Arrays of x and y errorbar values
-    label               string or array of strings for the line labels
-    xlabel=''           label for the x-axis
-    ylabel=''           label for the y-axis
-    title=''            title for the axes; set to None to have nothing.
-    shell_history=0     how many commands from the pyshell history to include
-                        with the title
-    xshift=0, yshift=0  progressive shifts on the data, to make waterfall plots
-    xshift_every=1      perform the progressive shift every 1 or n'th line.
-    yshift_every=1      perform the progressive shift every 1 or n'th line.
-    style               style cycle object.
-    clear=True          if no axes are specified, clear the figure, otherwise
-                        clear just the axes.
-    axes=None           which axes to use, or "gca" for the current axes
-    xscale,yscale       'linear' by default. Set either to 'log' for log axes
-    grid=False          Should we draw a grid on the axes?
-    legend='best'       where to place the legend (see pylab.legend())
-                        Set this to None to ignore the legend.
-    legend_max=20       number of legend entries before it's truncated with '...'
-    autoformat=True     Should we format the figure for printing?
-    False               Should the format be tall?
-    draw=True           whether or not to draw the plot after plotting
-
+    Parameters
+    ----------
+    xdata, ydata        
+        Arrays (or arrays of arrays) of data to plot
+    eydata, exdata      
+        Arrays of x and y errorbar values
+    label               
+        string or array of strings for the line labels
+    xlabel=''           
+        label for the x-axis
+    ylabel=''           
+        label for the y-axis
+    title=''            
+        title for the axes; set to None to have nothing.
+    shell_history=0     
+        how many commands from the pyshell history to include with the title
+    xshift=0, yshift=0  
+        progressive shifts on the data, to make waterfall plots
+    xshift_every=1      
+        perform the progressive shift every 1 or n'th line.
+    yshift_every=1      
+        perform the progressive shift every 1 or n'th line.
+    style               
+        style cycle object.
+    clear=True          
+        if no axes are specified, clear the figure, otherwise clear just the axes.
+    axes=None           
+        which axes to use, or "gca" for the current axes
+    xscale,yscale       
+        'linear' by default. Set either to 'log' for log axes
+    grid=False          
+        Should we draw a grid on the axes?
+    legend='best'       
+        where to place the legend (see pylab.legend())
+        Set this to None to ignore the legend.
+    legend_max=20       
+        number of legend entries before it's truncated with '...'
+    autoformat=True     
+        Should we format the figure for printing?
+    autoformat_window=True
+        Should we resize and reposition the window when autoformatting?
+    tall=False               
+        Should the format be tall?
+    draw=True           
+        whether or not to draw the plot after plotting
 
     **kwargs are sent to pylab.errorbar()
     """
@@ -571,7 +592,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     if grid: _pylab.grid(True)
 
     if autoformat:
-        _pt.format_figure(draw=False, modify_geometry=modify_geometry)
+        _pt.format_figure(draw=False, modify_geometry=autoformat_window)
         _pt.auto_zoom(axes=axes, draw=False)
 
     # update the canvas
