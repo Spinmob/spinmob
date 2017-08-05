@@ -151,6 +151,29 @@ def click_estimate_difference():
 
     return [c2[0][0]-c1[0][0], c2[0][1]-c1[0][1]]
 
+
+def copy_figure_to_clipboard(figure='gcf'):
+    """
+    Copies the specified figure to the system clipboard. Specifying 'gcf'
+    will use the current figure.
+    """    
+    try:
+        import pyqtgraph as _p
+    
+        # Get the current figure if necessary        
+        if figure is 'gcf': figure = _s.pylab.gcf() 
+        
+        # Store the figure as an image
+        path = _os.path.join(_s.settings.path_home, "clipboard.png")
+        figure.savefig(path)
+        
+        # Set the clipboard. I know, it's weird to use pyqtgraph, but 
+        # This covers both Qt4 and Qt5 with their Qt4 wrapper!
+        _p.QtGui.QApplication.instance().clipboard().setImage(_p.QtGui.QImage(path))
+        
+    except:         
+        print("This function currently requires pyqtgraph to be installed.")
+
 def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
     """
     Differentiates the data visible on the specified axes using
