@@ -25,11 +25,22 @@ import time           as _time
 #############################################################
 
 class databox:
+    """
+    An object to hold, save, and load columns of data and header information.
+    
+    Parameters
+    ----------
+    delimiter    
+        The delimiter the file uses. None (default) means "Try to figure it out" (reasonably smart)
+    debug        
+        Displays some partial debug information while running
 
+    **kwargs are sent to self.h()
+    """
+    
     # this is used by the load_file to rename some of the annoying
     # column names that aren't consistent between different types of data files (and older data files)
     # or to just rename columns with difficult-to-remember ckeys.
-
     obnoxious_ckeys = {}
     #obnoxious_ckeys = {"example_annoying1" : "unified_name1",
     #                   "example_annoying2" : "unified_name2"}
@@ -66,13 +77,7 @@ class databox:
 
  
     def __init__(self, delimiter=None, debug=False, **kwargs):
-        """
-        delimiter    The delimiter the file uses. None (default) means
-                     "Try to figure it out" (reasonably smart)
-        debug        Displays some partial debug information while running
-
-        **kwargs are sent to self.h()
-        """
+        
 
         # this keeps the dictionaries from getting all jumbled with each other
         self.clear_columns()
@@ -959,7 +964,49 @@ class databox:
 ###########################################
 
 class fitter():
+    """
+    Creates an object for fitting data to functions.
 
+    Parameters
+    ----------
+    f = ['a*x*cos(b*x)+c', 'a*x+c']
+        function or list of functions
+    p = 'a=1.5, b, c=-2'
+        comma-delimited list of fit parameters (and optional guess values)
+    c = None 
+        comma-delimited list of constants (and values), following the format
+        of 'p' above
+    bg = None
+        optional background function or list of functions, following the format
+        of 'f' above
+    g = None
+        optional globals dictionary used when for evaluating string functions
+
+    f, p, bg are sent to set_functions()
+
+    **kwargs are sent to settings
+
+    Typical workflow
+    ----------------
+    my_fitter = fitter('a*x+b', 'a,b')    
+        creates the fitter object
+    my_fitter.set_data([1,2,3],[1,2,1])   
+        sets the data to be fit
+    my_fitter.fit()                       
+        does the fitting
+
+    Tips
+    ----
+    Usage
+        All methods starting without an underscore are meant to be used
+        by a "typical" user. For example, do not set data directly; 
+        use set_data(), which clears the fit results. Otherwise the fit 
+        results will not match the existing data.
+        
+    See the spinmob wiki on github!
+    """
+    
+    
     f  = None    # list of functions
     bg = None    # list of background functions (for subtracting etc)
 
@@ -980,34 +1027,6 @@ class fitter():
     results = None  # full output from the fitter.
 
     def __init__(self, f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None, g=None, **kwargs):
-        """
-        Creates an object for fitting data to functions.
-
-        f  = function or list of functions
-        p  = comma-delimited list of fit parameters
-        c  = comma-delimited list of constants
-        bg = optional background function or list of functions
-        g  = optional globals dictionary for evaluating functions)
-
-        f, p, bg are sent to set_functions()
-
-        **kwargs are sent to settings
-
-        Typical workflow:
-            my_fitter = fitter('a*x+b', 'a,b')    # creates the fitter object
-            my_fitter.set_data([1,2,3],[1,2,1])   # sets the data to be fit
-            my_fitter.fit()                       # does the fitting
-
-        Tips:
-
-            Do not set data directly; use set_data(), which clears the fit
-            results. Otherwise the fit results will not match the existing data.
-
-            When errors are completely unknown, try autoscale_errors_and_fit()
-            repeatedly until the reduced chi squareds of all the data sets
-            are approximately 1. This is one way to more-or-less estimate
-            the error from the data itself.
-        """
 
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = _n.__dict__
@@ -2185,14 +2204,32 @@ class fitter():
 # Dialogs for loading data
 ############################
 
-def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
+def load(path='ask', first_data_line='auto', filters='*.*', text='Select a file, FACEHEAD.', default_directory='default_directory', quiet=True, header_only=False, transpose=False, **kwargs):
     """
     Loads a data file into the databox data class. Returns the data object.
 
     Most keyword arguments are sent to databox.load() so check there
     for documentation.(if their function isn't obvious).
 
-    transpose=False    Return databox.transpose().
+    Parameters
+    ----------
+    path='ask'
+        Supply a path to a data file; "ask" means pop up a dialog.
+    first_data_line="auto"
+        Specify the index of the first data line, or have it figure this out
+        automatically.
+    filters="*.*"
+        Specify file filters.
+    text="Select a file, FACEHEAD."
+        Window title text.
+    default_directory="default_directory"
+        Which directory to start in (by key). This lives in spinmob.settings.
+    quiet=True
+        Don't print stuff while loading.
+    header_only=False
+        Load only the header information.
+    transpose = False    
+        Return databox.transpose().
 
     **kwargs are sent to databox(), so check there for more information.
     """
@@ -2210,9 +2247,26 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
     """
     Loads a list of data files into a list of databox data objects.
     Returns said list.
-
-    Explicit keyword arguments are sent to databox.load() so check there
-    for documentation.(if their function isn't obvious).
+    
+    Parameters
+    ----------
+    path='ask'
+        Supply a path to a data file; "ask" means pop up a dialog.
+    first_data_line="auto"
+        Specify the index of the first data line, or have it figure this out
+        automatically.
+    filters="*.*"
+        Specify file filters.
+    text="Select some files, FACEHEAD."
+        Window title text.
+    default_directory="default_directory"
+        Which directory to start in (by key). This lives in spinmob.settings.
+    quiet=True
+        Don't print stuff while loading.
+    header_only=False
+        Load only the header information.
+    transpose = False    
+        Return databox.transpose().
 
     **kwargs are sent to databox(), so check there for more information.
     """

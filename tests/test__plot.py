@@ -65,11 +65,11 @@ class Test_plot_functions(_ut.TestCase):
     def test_plots(self):
         
         _s.plot.xy.function()
-        _s.pylab.ginput(timeout=1)
+        _s.pylab.ginput(timeout=0.5)
         _s.plot.magphase.function()
-        _s.pylab.ginput(timeout=1)
+        _s.pylab.ginput(timeout=0.5)
         _s.plot.image.function()
-        _s.pylab.ginput(timeout=1)
+        _s.pylab.ginput(timeout=0.5)
         
 
 if __name__ == "__main__":
