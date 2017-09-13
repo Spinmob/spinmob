@@ -8,7 +8,14 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
-from . import _temporary_fixes
+
+# If imported by spinmob
+try:    from . import _temporary_fixes
+
+# If running the file directly
+except: import _temporary_fixes
+
+
 _a = _g.mkQApp()
 
 # set the font if we're in linux
@@ -2668,20 +2675,38 @@ class DataboxPlot(_d.databox, GridLayout):
         if len(self.plot_widgets) <= 1: return
 
         # get the first plotItem
-        p = self.plot_widgets[0].plotItem
-
+        a = self.plot_widgets[0].plotItem.getViewBox()
+        
         # now loop through all the axes and link / unlink the axes
         for n in range(1,len(self.plot_widgets)):
+            
+            # Get one of the others
+            b = self.plot_widgets[n].plotItem.getViewBox() 
+            
+            # link the axis, but only if it isn't already
+            if self.button_link_x.is_checked() and b.linkedView(b.XAxis) == None:
+                b.linkView(b.XAxis, a)
+            
+            # Otherwise, unlink the guy, but only if it's linked to begin with
+            elif not self.button_link_x.is_checked() and not b.linkedView(b.XAxis) == None:
+                b.linkView(b.XAxis, None)
 
-            # link or unlink the axis
-            if self.button_link_x.is_checked():
-                self.plot_widgets[n].plotItem.setXLink(p)
-            else:
-                self.plot_widgets[n].plotItem.setXLink(None)
 
 
 
-
+if __name__ == '__main__':
+    w = Window()
+    p = w.place_object(DataboxPlot())
+    w.show()
+    
+    p[0] = [1,2]
+    p[1] = [1,2]
+    p[2] = [2,1]
+    p[3] = [1,2]
+    
+    while True:    
+        p.plot()
+        w.process_events()
 
 
 
