@@ -994,6 +994,9 @@ class fitter():
         sets the data to be fit
     my_fitter.fit()                       
         does the fitting
+    my_fitter.results 
+        contains the output of scipy.leastsq.optimize (see scipy docs)
+        
 
     Tips
     ----
