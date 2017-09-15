@@ -366,7 +366,6 @@ def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exs
 
     See spinmob.plot.magphase.data() for additional optional keyword arguments.
     """
-    print(ds)
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, g=g, **kwargs)
 
 def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, g=None, **kwargs):

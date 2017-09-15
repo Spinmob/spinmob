@@ -122,17 +122,7 @@ class Test_databox(_ut.TestCase):
         exp = None
         self.assertEqual(val, exp)
 
-    def test_h_Fragment(self):
-        """
-        This should have spinmob print out an error message.
-
-        TODO: possible better way of handling/collecting this error message
-        while testing.
-        """
-        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
-        val = d.h('fragment')
-        exp = None
-        self.assertEqual(val, exp)
+    
 
     def test_h_GoodFragment(self):
         """
