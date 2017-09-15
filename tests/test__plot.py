@@ -4,6 +4,7 @@ Module for testing _data.py
 """
 import spinmob as _s
 import unittest as _ut
+import os as _os
 
 
 
@@ -14,7 +15,9 @@ class Test_plot_functions(_ut.TestCase):
     def setUp(self):
         """
         """
-        
+        # Path to the spinmob module
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
+
     def tearDown(self):
         """
         """
@@ -66,10 +69,24 @@ class Test_plot_functions(_ut.TestCase):
         
         _s.plot.xy.function()
         _s.pylab.ginput(timeout=0.5)
+        
         _s.plot.magphase.function()
         _s.pylab.ginput(timeout=0.5)
+        
+        # Advanced files plotting
+        paths = [_os.path.join(self.data_path,'basic.dat'),
+                 _os.path.join(self.data_path,'basic2.dat'),
+                 _os.path.join(self.data_path,'basic3.dat')]
+        pants = 32
+        _s.plot.xy.files(0, 'a*b*pants*d[1]*2**n where a=2; b=3', g=dict(pants=pants), yscale='log', paths=paths)
+        _s.pylab.ginput(timeout=0.5)
+        _s.plot.magphase.files(0, 'a*b*pants*d[1]*2**m where a=2; b=3', g=dict(pants=pants), mscale='log', paths=paths)
+        _s.pylab.ginput(timeout=0.5)
+        
+        # End with this one to facilitate playing.
         _s.plot.image.function()
         _s.pylab.ginput(timeout=0.5)
+        
         
 
 if __name__ == "__main__":
