@@ -171,6 +171,7 @@ def complex_databoxes(ds, script='d[1]+1j*d[2]', escript=None, **kwargs):
         Complex-valued script for error bars
 
     See spinmob.plot.complex.data() for additional optional keyword arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     """
     datas  = []
     labels = []
@@ -206,6 +207,7 @@ def complex_files(script='d[1]+1j*d[2]', escript=None, **kwargs):
         Complex-valued script for error bars
 
     See spinmob.plot.complex.data() for additional optional keyword arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     
     Common additional parameters
     ----------------------------
@@ -365,6 +367,7 @@ def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exs
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.magphase.data() for additional optional keyword arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, g=g, **kwargs)
 
@@ -387,6 +390,7 @@ def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=No
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.magphase.data() for additional optional arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     
     Common additional parameters
     ----------------------------
@@ -530,6 +534,7 @@ def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exs
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.realimag.data() for additional optional keyword arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=realimag_data, g=g, **kwargs)
 
@@ -552,6 +557,7 @@ def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.realimag.data() for additional optional arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     
     Common additional parameters
     ----------------------------
@@ -743,6 +749,8 @@ def xy_databoxes(ds, xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.xy.data() for additional optional keyword arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
+    
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=xy_data, g=g, **kwargs)
 
@@ -766,6 +774,8 @@ def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=None, **
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.xy.data() for additional optional arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
+    
     
     Common additional parameters
     ----------------------------
@@ -1147,6 +1157,7 @@ def image_file(path='ask', zscript='self[1:]', xscript='[0,1]', yscript='d[0]', 
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.image.data() for additional optional keyword arguments.
+    See spinmob.data.databox.execute_script() for more information about scripts.
     """
     if 'delimiter' in kwargs: delimiter = kwargs.pop('delimiter')
     else:                           delimiter = None
