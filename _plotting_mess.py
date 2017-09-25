@@ -302,11 +302,11 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     p  = []
     em = []
     ep = []
+    
+    # Note this is a loop over data sets, not points.
     for l in range(len(ydata)):
         m.append(_n.abs(ydata[l]))
         p.append(_n.angle(ydata[l]))
-        if phase=='degrees': m[-1] = m[-1]*180.0/_n.pi
-                              
         # get the mag - phase errors
         if eydata[l] is None:
             em.append(None)
@@ -318,7 +318,10 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
             ep.append(0.5*((er+ei) - (er-ei)*_n.cos(p[l]))/m[l] )
 
         # convert to degrees
-        if phase=='degrees' and not ep[l] is None: ep[l] = ep[l]*180.0/_n.pi
+        if phase=='degrees': 
+            p[-1] = p[-1]*180.0/_n.pi
+            if not ep[l] is None: 
+                ep[l] = ep[l]*180.0/_n.pi
 
 
     if phase=='degrees':         plabel = plabel + " (degrees)"

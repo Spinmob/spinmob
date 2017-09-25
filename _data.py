@@ -421,6 +421,7 @@ class databox:
         # now move it
         _shutil.move(temporary_path, path)
 
+        return self
 
     def get_data_point(self, n):
         """
@@ -496,6 +497,8 @@ class databox:
 
                 # reconvert to an array
                 self[i] = _n.array(data)
+        
+        return self
 
     def append_data_point(self, new_data):
         """
@@ -692,19 +695,24 @@ class databox:
         """
         for k in other_databox.hkeys: self.insert_header(k, other_databox.h(k))
 
+        return self
+
     def copy_columns(self, other_databox):
         """
         Loops over the ckeys of the other_databox, updating this databoxes' columns.
         """
         for k in other_databox.ckeys: self.insert_column(other_databox[k], k)
 
+        return self
+    
     def copy_all(self, other_databox):
         """
         Copies the header and columns from other_databox to this databox.
         """
         self.copy_headers(other_databox)
         self.copy_columns(other_databox)
-
+        return self
+    
     def insert_globals(self, *args, **kwargs):
         """
         Appends or overwrites the supplied object in the self.extra_globals.
@@ -746,6 +754,7 @@ class databox:
         if not hkey in self.hkeys:
             if index is None: self.hkeys.append(str(hkey))
             else:             self.hkeys.insert(index, str(hkey))
+        return self
 
     def pop_header(self, hkey):
         """
@@ -814,6 +823,8 @@ class databox:
         if not ckey in self.ckeys:
             if index is None: self.ckeys.append(ckey)
             else:             self.ckeys.insert(index, ckey)
+        
+        return self
 
     def append_column(self, data_array, ckey='temp'):
         """
@@ -835,7 +846,7 @@ class databox:
             print("ERROR: ckey '"+ckey+"' already exists!")
             return
 
-        self.insert_column(data_array, ckey)
+        return self.insert_column(data_array, ckey)
 
     def clear_columns(self):
         """
@@ -843,7 +854,7 @@ class databox:
         """
         self.ckeys   = []
         self.columns = {}
-
+        return self
 
     def clear_headers(self):
         """
@@ -851,6 +862,7 @@ class databox:
         """
         self.hkeys    = []
         self.headers  = {}
+        return self
 
     def clear(self):
         """
@@ -858,6 +870,7 @@ class databox:
         """
         self.clear_columns()
         self.clear_headers()
+        return self
 
     def rename_header(self, old_name, new_name):
         """
@@ -865,6 +878,7 @@ class databox:
         """
         self.hkeys[self.hkeys.index(old_name)] = new_name
         self.headers[new_name] = self.headers.pop(old_name)
+        return self
 
     def rename_column(self, column, new_name):
         """
@@ -874,6 +888,7 @@ class databox:
         if type(column) is not str: column = self.ckeys[column]
         self.ckeys[self.ckeys.index(column)] = new_name
         self.columns[new_name] = self.columns.pop(column)
+        return self
 
     def trim(self, *conditions):
         """
@@ -933,7 +948,7 @@ class databox:
         """
         if keys is None: keys = list(dictionary.keys())
         for k in keys: self.insert_header(k, dictionary[k])
-
+        return self
 
 
 
