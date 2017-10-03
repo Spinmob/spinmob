@@ -35,7 +35,7 @@ class databox:
     debug        
         Displays some partial debug information while running
 
-    **kwargs are sent to self.h()
+    Additional optional keyword arguments are sent to self.h()
     """
     
     # this is used by the load_file to rename some of the annoying
@@ -59,6 +59,15 @@ class databox:
 
 
 
+    def __init__(self, delimiter=None, debug=False, **kwargs):
+        
+        # this keeps the dictionaries from getting all jumbled with each other
+        self.clear_columns()
+        self.clear_headers()
+
+        self.debug     = debug
+        self.delimiter = delimiter
+
     def __setitem__(self, n, x):
         """
         set's the n'th column to x (n can be a column name too)
@@ -76,16 +85,6 @@ class databox:
         return len(self.ckeys)
 
  
-    def __init__(self, delimiter=None, debug=False, **kwargs):
-        
-
-        # this keeps the dictionaries from getting all jumbled with each other
-        self.clear_columns()
-        self.clear_headers()
-
-        self.debug     = debug
-        self.delimiter = delimiter
-
     def __repr__(self):
 
         s = "<databox instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
@@ -1674,7 +1673,7 @@ class fitter():
 
 
 
-    def fit(self, pguess=None, method='leastsq', **kwargs):
+    def fit(self, pguess=None, **kwargs):
         """
         This will try to determine fit parameters using scipy.optimize's leastsq
         algorithm. This function relies on a previous call of set_data()
@@ -2304,7 +2303,8 @@ def load(path='ask', first_data_line='auto', filters='*.*', text='Select a file,
     transpose = False    
         Return databox.transpose().
 
-    **kwargs are sent to databox(), so check there for more information.
+    Additioinal optional keyword arguments are sent to spinmob.data.databox(), 
+    so check there for more information.
     """
     d = databox(**kwargs)
     d.load_file(path=path, first_data_line=first_data_line,
@@ -2341,7 +2341,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
     transpose = False    
         Return databox.transpose().
 
-    **kwargs are sent to databox(), so check there for more information.
+    Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
     if paths == "ask": paths = _s.dialogs.open_multiple(filters, text, default_directory)
     if paths is None : return
