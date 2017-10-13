@@ -1037,34 +1037,26 @@ class fitter():
     Creates an object for fitting data to functions.
 
     Parameters
-    ----------
-    f = ['a*x*cos(b*x)+c', 'a*x+c']
-        function or list of functions
-    p = 'a=1.5, b, c=-2'
-        comma-delimited list of fit parameters (and optional guess values)
-    c = None 
-        comma-delimited list of constants (and values), following the format
-        of 'p' above
-    bg = None
-        optional background function or list of functions, following the format
-        of 'f' above
-    g = None
-        optional globals dictionary used when for evaluating string functions
-
-    f, p, bg are sent to set_functions()
-
-    **kwargs are sent to settings
+    ----------    
+    Keyword arguments are sent to self.set() (i.e., they update the fitter
+    settings.)
 
     Typical workflow
     ----------------
-    my_fitter = fitter('a*x+b', 'a,b')    
-        creates the fitter object
+    my_fitter = fitter()    
+        Creates the fitter object
+
+    my_fitter.set_functions('a*x+b', 'a,b')
+        Sets the function(s) and free parameters.
+
     my_fitter.set_data([1,2,3],[1,2,1])   
-        sets the data to be fit
+        Sets the data to be fit.
+
     my_fitter.fit()                       
-        does the fitting
+        Does the fitting.
+
     my_fitter.results 
-        contains the output of scipy.leastsq.optimize (see scipy docs)
+        Contains the output of scipy.leastsq.optimize (see scipy docs)
         
 
     Tips
@@ -1100,14 +1092,10 @@ class fitter():
 
     results = None  # full output from the fitter.
 
-    def __init__(self, f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None, g=None, **kwargs):
+    def __init__(self, **kwargs):
 
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = _n.__dict__
-
-        # update the globals dictionary
-        if not g is None: self._globals.update(g)
-
         self._pnames    = []
         self._cnames    = []
         self._fnames    = []
@@ -1155,9 +1143,6 @@ class fitter():
 
         # settings that should not be lists in general (i.e. not one per data set)
         self._single_settings = list(['autoplot', 'first_figure'])
-
-        # set the functions
-        self.set_functions(f, p, c, bg)
 
         # update the default settings
         for k in list(kwargs.keys()): self[k] = kwargs[k]
@@ -1506,6 +1491,8 @@ class fitter():
         self['scale_exdata'] = [1.0]*len(self._set_xdata)
 
         if self['autoplot']: self.plot()
+        
+        return self
 
     def _eydata_warning(self, eydata, exdata):
         """
@@ -1726,6 +1713,8 @@ class fitter():
         """
         if self._set_xdata is None:
             return self._error("No data. Please use set_data() prior to fitting.")
+        if self._f_raw is None:
+            return self._error("No functions. Please use set_functions() prior to fitting.")
 
         # Send the keyword arguments to the settings
         self.set(**kwargs)
@@ -1823,6 +1812,7 @@ class fitter():
         Removes any fit results.
         """
         self.results = None
+        return self
 
     def _evaluate_all_functions(self, xdata, p=None):
         """
@@ -2008,6 +1998,10 @@ class fitter():
 
         kwargs will update the settings
         """
+        ####################################################
+        # MAKE SURE THIS HANDLES THE CASE OF NO FUNCTIONS
+        #######################################################
+
         if self._set_xdata is None or self._set_ydata is None:
             return self._error("No data. Please use set_data() prior to plotting.")
 
@@ -2019,7 +2013,6 @@ class fitter():
 
         # update the massaged data
         self._massage_data()
-
 
         # get the residuals
         r = None
@@ -2396,7 +2389,6 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
     
 if __name__ == "__main__":
     
-    import spinmob as sm
-    d=sm.data.databox()
-    x = d.load_file("C:\\Users\\jaxankey\\Miniconda3\\envs\\Python27-PyQt4\\Lib\\site-packages\\spinmob\\tests\\fixtures\\data\\mixed_complex_data.dat")
-    
+    f = fitter('a*x+b', 'a,b').set_data([1,2,3,4,5],[1,2,1,2,1],0.1,0.2)
+        
+
