@@ -1284,10 +1284,11 @@ def trim_data_uber(arrays, conditions):
     not met for the n'th data point, the n'th data point is rejected for
     all supplied arrays.
 
-    Example:
-      x = numpy.linspace(0,10,20)
-      y = numpy.sin(x)
-      trim_data_uber([x,y], [x>3,x<9,y<0.7])
+    Example
+    -------
+    x = numpy.linspace(0,10,20)
+    y = numpy.sin(x)
+    trim_data_uber([x,y], [x>3,x<9,y<0.7])
       
     This will keep only the x-y pairs in which 3<x<9 and y<0.7, returning
     a list of shorter arrays (all having the same length, of course).
@@ -1303,7 +1304,9 @@ def trim_data_uber(arrays, conditions):
 
     # assemble and return trimmed data    
     output = []
-    for n in range(len(arrays)): output.append(arrays[n][ns])
+    for n in range(len(arrays)): 
+        if not arrays[n] == None: output.append(arrays[n][ns])
+        else:                     output.append(None)
     return output
     
 

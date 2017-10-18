@@ -21,7 +21,7 @@ _colormap = None
 
 def _match_data_sets(x,y):
     """
-    Makes sure everything is the same shape. "Intelligently"
+    Makes sure everything is the same shape. "Intelligently".
     """
     # Handle the None for x or y
     if x is None: 
