@@ -6,12 +6,11 @@ import shutil  as _shutil
 import numpy          as _n
 import scipy.optimize as _opt
 import scipy.special  as _special
+import scipy.odr      as _odr
 import pylab          as _p
 import textwrap       as _textwrap
 import spinmob        as _s
 import time           as _time
-
-
 
 
 
@@ -1434,11 +1433,11 @@ class fitter():
         Uses internal settings to update the functions.
         """
 
-        self.f      = []
-        self.bg     = []
-        self._fnames  = []
-        self._bgnames = []
-        self._f_odr = [] # Like f, but different parameters, for use in ODR
+        self.f             = []
+        self.bg            = []
+        self._fnames       = []
+        self._bgnames      = []
+        self._odr_models   = [] # Like f, but different parameters, for use in ODR
 
 
         f  = self._f_raw
@@ -1472,7 +1471,7 @@ class fitter():
                 self._fnames.append(f[n])
             
                 # "ODR" compatible function (for x-error bars), based on self.f
-                self._f_odr.append( eval('lambda p,x: self.f[n]('+pstring_odr+')', dict(self=self, n=n)))
+                self._odr_models.append( _odr.Model(eval('lambda p,x: self.f[n]('+pstring_odr+')', dict(self=self, n=n))))
             
             # Otherwise, just append it.
             else:
@@ -1838,6 +1837,17 @@ class fitter():
         Processes the data and stores it.
         """
         self._xdata_massaged, self._ydata_massaged, self._eydata_massaged, self._exdata_massaged = self.get_processed_data()
+        
+        # Create the odr data.
+        self._odr_datas = []
+        for n in range(len(self._xdata_massaged)):
+            # Only exdata can be None; make sure it's zeros at least.
+            ex = self._exdata_massaged[n]
+            if ex == None: ex = _n.zeros(len(self._eydata_massaged[n]))
+            self._odr_datas.append(_odr.RealData(self._xdata_massaged[n],
+                                                 self._ydata_massaged[n], 
+                                                 sx=ex, 
+                                                 sy=self._eydata_massaged[n]))
         return self
 
     def fit(self, **kwargs):
@@ -2032,21 +2042,35 @@ class fitter():
 
         # If one elment is None, they all are, as per set_data()
         # First case: no x-errors specified.
+        residuals = []
         if self._set_exdata[0] == None:
             
             # evaluate the function for all the data, returns a list!
             f = self._evaluate_all_functions(self._xdata_massaged, p)
     
             # get the full residuals list
-            residuals = []
             for n in range(len(f)):
                 numerator = self._ydata_massaged[n]-f[n]
                 denominator = _n.absolute(self._eydata_massaged[n])
                 residuals.append(numerator/denominator)
             return residuals
     
-        # Otherwise, we have to use ODR to get the residuals
-        #else:
+        # Otherwise, we have to use ODR method to get the residuals
+        else:
+            # If we have results, we can return what popped out of odr (easy)
+            if not self.results == None:        
+                o = self.results
+                d = self._odr_datas[n]
+                
+                # Get the x and y residuals
+                delta = o.delta/d.sx; np.place(delta, np.zeros(len(delta)), delta==np.nan)
+                eps   = o.eps  /d.sy; np.place(eps,   np.zeros(len(eps)),   eps  ==np.nan)
+                
+                # The sign is by default that of the y-displacement
+                # This will never be zero unless the point is on the line (or the model has infinite slope)
+                sign  = -np.sign(eps)
+                r = sign*np.sqrt(delta**2 + eps**2)
+
             
             
     def _studentized_residuals_concatenated(self, p=None):
