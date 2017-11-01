@@ -1141,14 +1141,14 @@ class fitter():
         s = s + "\nCONSTANTS\n"
         for c in self._cnames: s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
 
-        s = s + "\nGUESS (reduced chi squared = {:s})\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squareds(self._pguess),3)))
+        s = s + "\nGUESS (reduced chi^2 = {:s}, {:d} DOF)\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squared(self._pguess),5)), int(self.degrees_of_freedom()))
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
         if self._set_xdata is None or self._set_ydata is None: s = s + "\nNO DATA\n"
 
         else:
             if self.results and not self.results[1] is None:
-                s = s + "\nFIT RESULTS (reduced chi squared = {:s})\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squareds(),3)))
+                s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squared(),5)), int(self.degrees_of_freedom()))
                 for n in range(len(self._pnames)):
                     s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
 
@@ -1403,6 +1403,8 @@ class fitter():
         self['scale_eydata'] = [1.0]*len(self._set_xdata)
 
         if self['autoplot']: self.plot()
+        
+        return self
 
     def _eydata_warning(self, eydata):
         """
@@ -1751,7 +1753,8 @@ class fitter():
         """
         Returns a string v +/- e with the right number of sig figs.
         """
-        sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
+        if _n.isnan(e): sig_figs = 1
+        else:           sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
         return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
         
     def studentized_residuals(self, p=None):
@@ -1793,10 +1796,12 @@ class fitter():
 
     def chi_squareds(self, p=None):
         """
-        returns a list of chi squared for each data set. Also uses ydata_massaged.
+        Returns a list of chi squared for each data set. Also uses ydata_massaged.
 
         p=None means use the fit results
         """
+        if self._set_xdata == None or self._set_ydata == None: return None
+        
         if p is None: p = self.results[0]
 
         # get the residuals
@@ -1807,13 +1812,38 @@ class fitter():
         for r in rs: cs.append(sum(r**2))
         return cs
 
+    def chi_squared(self, p=None):
+        """
+        Returns the total chi squared (summed over all massaged data sets).
+        
+        p=None means use the fit results.
+        """
+        return sum(self.chi_squareds(p))
+
+    def degrees_of_freedom(self):
+        """
+        Returns the number of degrees of freedom.
+        """
+        if self._set_xdata == None or self._set_ydata == None: return None
+        
+        # Temporary hack: get the studentized residuals, which uses the massaged data
+        # This should later be changed to get_massaged_data()
+        r = self.studentized_residuals()
+        
+        # calculate the number of points
+        N = 0.0
+        for i in range(len(r)): N += len(r[i])
+        
+        return N-len(self._pnames)
+        
+        
+
     def reduced_chi_squareds(self, p=None):
         """
-        Returns the reduced chi squared for each data set. 
+        Returns the reduced chi squared for each massaged data set. 
 
         p=None means use the fit results.
         """
-        
         if self._set_xdata == None or self._set_ydata == None: return None
 
         if p is None: p = self.results[0]
@@ -1827,12 +1857,24 @@ class fitter():
         for i in range(len(r)): N += len(r[i])
 
         # degrees of freedom
-        dof_per_point = 1.0*(N-len(self._pnames))/N
+        dof_per_point = self.degrees_of_freedom()/N
 
         for n in range(len(r)):
             r[n] = sum(r[n]**2)/(len(r[n])*dof_per_point)
 
         return r
+
+    def reduced_chi_squared(self, p=None):
+        """
+        Returns the reduced chi squared for all massaged data sets. 
+
+        p=None means use the fit results.
+        """
+        
+        if self._set_xdata == None or self._set_ydata == None: return None
+        if p is None: p = self.results[0]
+        
+        return self.chi_squared(p) / self.degrees_of_freedom()
 
     def autoscale_eydata(self):
         """
@@ -2024,6 +2066,8 @@ class fitter():
                 t1 = "Fit: "
                 for i in range(len(self._pnames)):
                     t1 = t1 + self._pnames[i] + "={:s}, ".format(self._format_value_error(self.results[0][i], _n.sqrt(self.results[1][i][i]), '$\pm$'))
+                t1 = t1 + '$\chi^2_r$={} ({} DOF)'.format(str(_s.fun.round_sigfigs(self.reduced_chi_squared(),3)), int(self.degrees_of_freedom()))
+                
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
             elif self.results:
