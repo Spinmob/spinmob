@@ -100,7 +100,7 @@ class Test_databox(_ut.TestCase):
 
     def test___getslice__(self):
         d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
-        val = d.__getslice__(0, 1)
+        val = d[0:1]
         val = val[0]
         val = val.tolist()
         val = val[0:5]   # Just check the first five elements
@@ -122,17 +122,7 @@ class Test_databox(_ut.TestCase):
         exp = None
         self.assertEqual(val, exp)
 
-    def test_h_Fragment(self):
-        """
-        This should have spinmob print out an error message.
-
-        TODO: possible better way of handling/collecting this error message
-        while testing.
-        """
-        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
-        val = d.h('fragment')
-        exp = None
-        self.assertEqual(val, exp)
+    
 
     def test_h_GoodFragment(self):
         """

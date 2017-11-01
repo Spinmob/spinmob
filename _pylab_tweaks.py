@@ -4,8 +4,14 @@ import pylab             as _pylab
 import time              as _time
 import matplotlib        as _mpl
 import numpy             as _n
-from . import _functions        as _fun
-from . import _pylab_colormap
+
+try:
+    from . import _functions        as _fun
+    from . import _pylab_colormap
+except:
+    import _functions as _fun
+    import _pylab_colormap
+
 import spinmob           as _s
 
 # Python 3 or 2?
@@ -151,6 +157,29 @@ def click_estimate_difference():
 
     return [c2[0][0]-c1[0][0], c2[0][1]-c1[0][1]]
 
+
+def copy_figure_to_clipboard(figure='gcf'):
+    """
+    Copies the specified figure to the system clipboard. Specifying 'gcf'
+    will use the current figure.
+    """    
+    try:
+        import pyqtgraph as _p
+    
+        # Get the current figure if necessary        
+        if figure is 'gcf': figure = _s.pylab.gcf() 
+        
+        # Store the figure as an image
+        path = _os.path.join(_s.settings.path_home, "clipboard.png")
+        figure.savefig(path)
+        
+        # Set the clipboard. I know, it's weird to use pyqtgraph, but 
+        # This covers both Qt4 and Qt5 with their Qt4 wrapper!
+        _p.QtGui.QApplication.instance().clipboard().setImage(_p.QtGui.QImage(path))
+        
+    except:         
+        print("This function currently requires pyqtgraph to be installed.")
+
 def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
     """
     Differentiates the data visible on the specified axes using
@@ -206,11 +235,11 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
         fitters[-1].autoscale_eydata_and_fit()
         print(fitters[-1])
         print("<click the graph to continue>")
-        fitters[-1].ginput(timeout=0)
+        if not axes.lines[-1] == l: fitters[-1].ginput(timeout=0)
 
     return fitters
 
-def format_figure(figure=None, tall=False, draw=True):
+def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
     """
     This formats the figure in a compact way with (hopefully) enough useful
     information for printing large data sets. Used mostly for line and scatter
@@ -226,8 +255,9 @@ def format_figure(figure=None, tall=False, draw=True):
 
     if figure == None: figure = _pylab.gcf()
 
-    if tall: set_figure_window_geometry(figure, (0,0), (550,700))
-    else:    set_figure_window_geometry(figure, (0,0), (550,400))
+    if modify_geometry:
+        if tall: set_figure_window_geometry(figure, (0,0), (550,700))
+        else:    set_figure_window_geometry(figure, (0,0), (550,400))
 
     legend_position=1.01
 

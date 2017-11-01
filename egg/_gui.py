@@ -8,7 +8,14 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
-from . import _temporary_fixes
+
+# If imported by spinmob
+try:    from . import _temporary_fixes
+
+# If running the file directly
+except: import _temporary_fixes
+
+
 _a = _g.mkQApp()
 
 # set the font if we're in linux
@@ -1529,8 +1536,11 @@ class TreeDictionary(BaseObject):
         s = "\nTreeDictionary() -> "+str(self.default_save_path)+"\n"
 
         for k in self.get_dictionary()[0]:
-            s = s + "  "+k+" = "+repr(self[k])+"\n"
-
+            
+            if not self.get_type(k) in ['list']:
+                s = s + "  "+k+" = "+repr(self[k])+"\n"
+            else:
+                s = s + "  "+k+" = "+repr(self[k])+" from "+repr(self.get_list_values(k)) + "\n"
         return s
 
     def block_events(self):
@@ -1560,11 +1570,19 @@ class TreeDictionary(BaseObject):
         return self
 
 
-    def connect_any_signal_changed(self, function):
+    def connect_any_signal_changed(self, function=None):
         """
         Connects the "anything changed" signal for all of the tree to the
         specified function.
+        
+        Parameters
+        ----------
+        function
+            Function to connect to this signal. Setting to None means
+            it will connect to self.autosave
         """
+        if function==None: function = self.autosave
+        
         # loop over all top level parameters
         for i in range(self._widget.topLevelItemCount()):
 
@@ -1767,6 +1785,11 @@ class TreeDictionary(BaseObject):
         # update the default kwargs
         other_kwargs = dict(type = 'str')
         other_kwargs.update(kwargs)
+        
+        # Fix 'values' for list objects to be only strings
+        if other_kwargs['type'] == 'list':
+            for n in range(len(other_kwargs['values'])):
+                other_kwargs['values'][n] = str(other_kwargs['values'][n])
 
         # split into (presumably existing) branches and parameter
         s = name.split('/')
@@ -1859,11 +1882,17 @@ class TreeDictionary(BaseObject):
         self._find_parameter(name.split('/')).show()        
         
 
-    def _get_parameter_widget(self, name):
+    def get_widget(self, name):
         """
         Returns the Qt widget associated with the parameter.
         """
         return self._find_parameter(name.split('/'))
+
+    def get_type(self, name):
+        """
+        Returns the type string of the specified parameter.
+        """
+        return str(self.get_widget(name).opts['type'])
 
     def get_value(self, name):
         """
@@ -1899,6 +1928,8 @@ class TreeDictionary(BaseObject):
                 # Otherwise, just return None and do nothing                
                 else: return None
 
+        # For strings, make sure the returned value is always a string.
+        elif x.opts['type'] in ['str']: return str(value)
                 
         # Otherwise assume it is a value with bounds or limits (depending on 
         # the version of pyqtgraph)    
@@ -1913,6 +1944,18 @@ class TreeDictionary(BaseObject):
         return value
 
     __getitem__ = get_value
+
+    def get_list_values(self, name):
+        """
+        Returns the values for a list item of the specified name.
+        """
+        # Make sure it's a list
+        if not self.get_type(name) in ['list']: 
+            self.print_message('ERROR: "'+name+'" is not a list.')
+            return
+        
+        # Return a copy of the list values
+        return list(self.get_widget(name).opts['values'])
 
     def set_value(self, name, value, ignore_error=False, block_user_signals=False):
         """
@@ -1935,11 +1978,20 @@ class TreeDictionary(BaseObject):
         
         # for lists, make sure the value exists!!
         if x.type() in ['list']:
-            if value in list(x.forward.keys()): x.setValue(value)
-            else:                               x.setValue(list(x.forward.keys())[0])
+            
+            # Make sure it exists before trying to set it
+            if str(value) in list(x.forward.keys()): x.setValue(str(value))
+            
+            # Otherwise default to the first key
+            else: x.setValue(list(x.forward.keys())[0])
 
-        # otherwise just set the value
-        else: x.setValue(value)
+        # otherwise just set the value (forcing the type!)
+#        elif x.opts['type'] in ['bool']:  x.setValue(bool(value))
+#        elif x.opts['type'] in ['int']:   x.setValue(int(value))
+#        elif x.opts['type'] in ['float']: x.setValue(float(value))
+        
+        # Bail to a hopeful set method for other types
+        else: x.setValue(eval(x.opts['type'])(value))
 
         # If we're supposed to unblock the user signals for this parameter
         if block_user_signals: self.unblock_user_signals(name, ignore_error)
@@ -1955,6 +2007,14 @@ class TreeDictionary(BaseObject):
         """
         self.print_message("signal change!")
         #if self.autosave: self.save()
+
+    def autosave(self, *a):
+        """
+        Runs self.save() with no arguments. This is a convenience function;
+        you can connect signals to it, such as with 
+        self.connect_any_signal_changed()
+        """
+        self.save()
 
     def save(self, path=None):
         """
@@ -2615,20 +2675,38 @@ class DataboxPlot(_d.databox, GridLayout):
         if len(self.plot_widgets) <= 1: return
 
         # get the first plotItem
-        p = self.plot_widgets[0].plotItem
-
+        a = self.plot_widgets[0].plotItem.getViewBox()
+        
         # now loop through all the axes and link / unlink the axes
         for n in range(1,len(self.plot_widgets)):
+            
+            # Get one of the others
+            b = self.plot_widgets[n].plotItem.getViewBox() 
+            
+            # link the axis, but only if it isn't already
+            if self.button_link_x.is_checked() and b.linkedView(b.XAxis) == None:
+                b.linkView(b.XAxis, a)
+            
+            # Otherwise, unlink the guy, but only if it's linked to begin with
+            elif not self.button_link_x.is_checked() and not b.linkedView(b.XAxis) == None:
+                b.linkView(b.XAxis, None)
 
-            # link or unlink the axis
-            if self.button_link_x.is_checked():
-                self.plot_widgets[n].plotItem.setXLink(p)
-            else:
-                self.plot_widgets[n].plotItem.setXLink(None)
 
 
 
-
+if __name__ == '__main__':
+    w = Window()
+    p = w.place_object(DataboxPlot())
+    w.show()
+    
+    p[0] = [1,2]
+    p[1] = [1,2]
+    p[2] = [2,1]
+    p[3] = [1,2]
+    
+    while True:    
+        p.plot()
+        w.process_events()
 
 
 

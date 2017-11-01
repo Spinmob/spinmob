@@ -1,0 +1,8 @@
+#!/bin/sh
+
+rm -rf dist/*
+python setup.py sdist
+
+pip install twine
+twine upload dist/*
+

@@ -1,5 +1,8 @@
-import PyDAQmx  as _mx
-import numpy    as _n
+import numpy     as _n
+import PyDAQmx   as _mx
+import traceback as _traceback
+
+
 
 import spinmob as _s
 _settings = _s.settings
@@ -137,8 +140,13 @@ class task_base:
         print("Settings:")
         for k in keys: print('  ', k, '=', self.settings[k])
 
-    has_key = settings.has_key
+    def has_key(self, k):
+        """
+        Python-2 style function to see if a key exists.
+        """
+        return k in self.keys()
 
+    
 
 
 class ai_task(task_base):
@@ -159,47 +167,51 @@ class ai_task(task_base):
         Note, when you set ai_rate and start(), this will automatically
         query the actual rate and update ai_rate internally!        
         
-         "ai_task_name"      : "Default AI Task",
-         "ai_rate"           : 10000,
-         "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
-         "ai_samples"        : 1000,
-         "ai_timeout"        : 1000.0/10000.0 + 3.0,
-         
-         "ai_clock_source"   : "",
-         "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-         "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
-         "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
-         
-         "ai_channels"          : [0],
-         "ai_input_couplings"   : [None], # can also be None, "AC", "DC", "GND", ["AC","DC","DC","GND"]...
-         "ai_min"               : -10.0,
-         "ai_max"               : 10.0,
-         "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
-         "ai_units"             : _mx.DAQmx_Val_Volts
+        Parameters
+        ----------
+        "ai_task_name"      : "Default AI Task",
+        "ai_rate"           : 10000,
+        "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
+        "ai_samples"        : 1000,
+        "ai_delay"          : 0,
+        "ai_timeout"        : 1000.0/10000.0 + 3.0,
         
+        "ai_clock_source"   : "",
+        "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
+        "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
+        "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+        
+        "ai_channels"          : [0],
+        "ai_input_couplings"   : [None], 
+        "ai_min"               : -10.0,
+        "ai_max"               : 10.0,
+        "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
+        "ai_units"             : _mx.DAQmx_Val_Volts
+
         """
         self.settings = dict(
-                        {"ai_task_name"      : "Default AI Task",
-                         "ai_rate"           : 10000,
-                         "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
-                         "ai_samples"        : 1000,
-                         "ai_timeout"        : 1000.0/10000.0 + 3.0,
-                         
-                         "ai_clock_source"   : "",
-                         "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
-                         "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
-                         "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
-                         
-                         "ai_channels"          : [0],
-                         "ai_input_couplings"   : [None], 
-                         "ai_min"               : -10.0,
-                         "ai_max"               : 10.0,
-                         "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
-                         "ai_units"             : _mx.DAQmx_Val_Volts})
+                       {"ai_task_name"      : "Default AI Task",
+                        "ai_rate"           : 10000,
+                        "ai_mode"           : _mx.DAQmx_Val_FiniteSamps,
+                        "ai_samples"        : 1000,
+                        "ai_delay"          : 0,
+                        "ai_timeout"        : 1000.0/10000.0 + 3.0,
+                        
+                        "ai_clock_source"   : "",
+                        "ai_clock_edge"     : _mx.DAQmx_Val_Rising,
+                        "ai_trigger_source" : "UNSPECIFIED: ai_trigger_source",
+                        "ai_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
+                        
+                        "ai_channels"          : [0],
+                        "ai_input_couplings"   : [None], 
+                        "ai_min"               : -10.0,
+                        "ai_max"               : 10.0,
+                        "ai_terminal_config"   : _mx.DAQmx_Val_Cfg_Default, # also DAQmx_Val_RSE, NRSE, Diff
+                        "ai_units"             : _mx.DAQmx_Val_Volts})
 
         # make sure this key exists in kwargs
-        if not kwargs.has_key("ai_channels"):        kwargs["ai_channels"]        = self["ai_channels"]    
-        if not kwargs.has_key("ai_input_couplings"): kwargs["ai_input_couplings"] = self["ai_input_couplings"]
+        if not "ai_channels"        in kwargs: kwargs["ai_channels"]        = self["ai_channels"]    
+        if not "ai_input_couplings" in kwargs: kwargs["ai_input_couplings"] = self["ai_input_couplings"]
         
         # make sure ai_channels is a list
         x = kwargs["ai_channels"]
@@ -210,7 +222,8 @@ class ai_task(task_base):
         
         # Note this overwrites the entries in self.settings
         task_base.__init__(self, **kwargs)
-
+    
+        
 
     def start(self, test=False, **kwargs):
         """
@@ -222,7 +235,7 @@ class ai_task(task_base):
 
         kwargs are sent to self() to set parameters.
         """
-
+        
         # update any last-minute settings
         self(**kwargs)
         debug(self.settings)
@@ -286,6 +299,7 @@ class ai_task(task_base):
         _mx.DAQmxCfgSampClkTiming(self._handle, self["ai_clock_source"], self["ai_rate"],
                                   self["ai_clock_edge"], self["ai_mode"], self["ai_samples"])
 
+        
         # get the actual ai_rate
         ai_rate = _mx.float64()
         _mx.DAQmxGetSampClkRate(self._handle, _mx.byref(ai_rate))
@@ -298,13 +312,25 @@ class ai_task(task_base):
                                      self.settings["ai_trigger_source"],
                                      self.settings["ai_trigger_slope"])
 
+        # Set the post-trigger delay
+        try:
+            n = self["ai_delay"] * 10e6
+            if n < 2: n=2
+            _mx.DAQmxSetStartTrigDelayUnits(self._handle, _mx.DAQmx_Val_Ticks)
+            _mx.DAQmxSetStartTrigDelay     (self._handle, n)
+        except:
+            _traceback.print_exc()
+        
         # in test mode, just check that it doesn't fail and clean up.
         if test: self.clean()
 
         # otherwise, start the show!
         else:
             debug("input start")
-            _mx.DAQmxStartTask(self._handle)
+            try:
+                _mx.DAQmxStartTask(self._handle)
+            except:
+                _traceback.print_exc()
 
         return True
 
@@ -369,25 +395,28 @@ class ao_task(task_base):
         Note, when you set ao_rate and start(), this will automatically
         query the actual rate and update ao_rate internally!        
         
+        Parameters
+        ----------
         "ao_task_name"      : "Default Output Task",
         "ao_mode"           : _mx.DAQmx_Val_FiniteSamps,
         "ao_timeout"        : 10.0,
-        
-        "ao_channels"       : [],   # must be a list of string channel names
+
+        "ao_channels"       : [0],
         "ao_rate"           : 10000,
+        "ao_delay"          : 0,
         "ao_waveforms"      : [[1,2,3,0]],
         "ao_min"            : -10.0,
         "ao_max"            : 10.0,
         "ao_units"          : _mx.DAQmx_Val_Volts,
-        
+
         "ao_clock_source"   : "",
         "ao_clock_edge"     : _mx.DAQmx_Val_Rising,
-        
+
         "ao_trigger_source" : "UNSPECIFIED: ao_trigger_source",
         "ao_trigger_slope"  : _mx.DAQmx_Val_RisingSlope,
         
         "ao_export_signal"   : _mx.DAQmx_Val_StartTrigger,
-        "ao_export_terminal" : None
+        "ao_export_terminal" : None}
         """
         
         self.settings = dict(
@@ -397,6 +426,7 @@ class ao_task(task_base):
 
                 "ao_channels"       : [0],
                 "ao_rate"           : 10000,
+                "ao_delay"          : 0,
                 "ao_waveforms"      : [[1,2,3,0]],
                 "ao_min"            : -10.0,
                 "ao_max"            : 10.0,
@@ -417,7 +447,8 @@ class ao_task(task_base):
 
         task_base.__init__(self, **kwargs)
 
-
+        
+        
 
     def start(self, test=False, **kwargs):
         """
@@ -515,6 +546,15 @@ class ao_task(task_base):
         debug("output trigger")
         _mx.DAQmxCfgDigEdgeStartTrig(self._handle, self["ao_trigger_source"], self["ao_trigger_slope"])
 
+        # Set the post-trigger delay
+        try:
+            n = self["ao_delay"] * 10e6
+            if n < 2: n=2
+            _mx.DAQmxSetStartTrigDelayUnits(self._handle, _mx.DAQmx_Val_Ticks)
+            _mx.DAQmxSetStartTrigDelay     (self._handle, n)
+        except:
+            _traceback.print_exc()
+        
         # write the data to the analog outputs (arm it)
         debug("output write", len(data))
         write_success = _mx.int32()
@@ -530,7 +570,10 @@ class ao_task(task_base):
         else:
             # Start the task!!
             debug("output start")
-            _mx.DAQmxStartTask(self._handle)
+            try:
+                _mx.DAQmxStartTask(self._handle)
+            except:
+                _traceback.print_exc()
 
         return True
 
@@ -677,6 +720,7 @@ class daqmx_system:
         ai_selected_channel_names = []
         for n in range(len(ai_channels)):
             ai_selected_channel_names.append(ai_channel_names[ai_channels[n]])
+
 
         # save the header info
         d.h(ai_trigger_source = "/"+self[device]+"/100kHzTimebase",

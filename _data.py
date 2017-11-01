@@ -25,11 +25,22 @@ import time           as _time
 #############################################################
 
 class databox:
+    """
+    An object to hold, save, and load columns of data and header information.
+    
+    Parameters
+    ----------
+    delimiter    
+        The delimiter the file uses. None (default) means "Try to figure it out" (reasonably smart)
+    debug        
+        Displays some partial debug information while running
 
+    Additional optional keyword arguments are sent to self.h()
+    """
+    
     # this is used by the load_file to rename some of the annoying
     # column names that aren't consistent between different types of data files (and older data files)
     # or to just rename columns with difficult-to-remember ckeys.
-
     obnoxious_ckeys = {}
     #obnoxious_ckeys = {"example_annoying1" : "unified_name1",
     #                   "example_annoying2" : "unified_name2"}
@@ -48,6 +59,15 @@ class databox:
 
 
 
+    def __init__(self, delimiter=None, debug=False, **kwargs):
+        
+        # this keeps the dictionaries from getting all jumbled with each other
+        self.clear_columns()
+        self.clear_headers()
+
+        self.debug     = debug
+        self.delimiter = delimiter
+
     def __setitem__(self, n, x):
         """
         set's the n'th column to x (n can be a column name too)
@@ -65,22 +85,6 @@ class databox:
         return len(self.ckeys)
 
  
-    def __init__(self, delimiter=None, debug=False, **kwargs):
-        """
-        delimiter    The delimiter the file uses. None (default) means
-                     "Try to figure it out" (reasonably smart)
-        debug        Displays some partial debug information while running
-
-        **kwargs are sent to self.h()
-        """
-
-        # this keeps the dictionaries from getting all jumbled with each other
-        self.clear_columns()
-        self.clear_headers()
-
-        self.debug     = debug
-        self.delimiter = delimiter
-
     def __repr__(self):
 
         s = "<databox instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
@@ -114,7 +118,7 @@ class databox:
 
         return globbies
 
-    def load_file(self, path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEPANTS.", default_directory=None, header_only=False, quiet=False):
+    def load_file(self, path='ask', first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False):
         """
         This will clear the databox, load a file, storing the header info in 
         self.headers, and the data in self.columns
@@ -130,15 +134,21 @@ class databox:
         last header line with the same (or more) number of elements as the 
         first data line.
         
-        filters            Filter for the file dialog (if path isn't specified)
-        text               Prompt on file dialog
-        default_directory  Which spinmob.settings key to use for the dialog's
-                           default directory. Will create one...
-        header_only        Only load the header
-        quiet              Don't print anything while loading.
-        transpose          Take a transpose, converting columns into rows
-        
-
+        Parameters
+        ----------
+        path='ask'
+            Path to the file. Using 'ask' will bring up a dialog.
+        filters='*.*'            
+            Filter for the file dialog (if path isn't specified)
+        text='Select a file, FACEPANTS.'               
+            Prompt on file dialog
+        default_directory=None
+            Which spinmob.settings key to use for the dialog's default 
+            directory. Will create one if it doesn't already exist.
+        header_only=False        
+            Only load the header
+        quiet=False              
+            Don't print anything while loading.
         """
         
         if default_directory is None: default_directory = self.directory
@@ -333,19 +343,25 @@ class databox:
 
         return self
 
-    def save_file(self, path="ask", filters="*.dat", force_overwrite=False, header_only=False, delimiter='use current'):
+    def save_file(self, path='ask', filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current'):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
 
-        filters="*.dat"         File filter for the file dialog (for path="ask")
-        force_overwrite=False   Normally, if the file * exists, this will copy that
-                                to *.backup. If the backup already exists, this
-                                function will abort. Setting this to True will
-                                force overwriting the backup file.
-        header_only=False       Only output the header?
-        delimiter="use current" This will set the delimiter of the output file
-                                "use current" means use self.delimiter
+        Parameters
+        ----------
+        filters='*.dat'         
+            File filter for the file dialog (for path="ask")
+        force_overwrite=False   
+            Normally, if the file * exists, this will copy that
+            to *.backup. If the backup already exists, this
+            function will abort. Setting this to True will
+            force overwriting the backup file.
+        header_only=False       
+            Only output the header?
+        delimiter='use current' 
+            This will set the delimiter of the output file
+            'use current' means use self.delimiter
         """
         
         # Make sure there isn't a problem later with no-column databoxes
@@ -404,12 +420,16 @@ class databox:
         # now move it
         _shutil.move(temporary_path, path)
 
+        return self
 
     def get_data_point(self, n):
         """
         Returns the n'th data point (starting at 0) from all columns.
 
-        n       index of data point to return.
+        Parameters
+        ----------
+        n       
+            Index of data point to return.
         """
         # loop over the columns and pop the data
         point = []
@@ -422,7 +442,10 @@ class databox:
         This will remove and return the n'th data point (starting at 0) from
         all columns.
 
-        n       index of data point to pop.
+        Parameters
+        ----------
+        n       
+            Index of data point to pop.
         """
 
         # loop over the columns and pop the data
@@ -443,9 +466,13 @@ class databox:
     def insert_data_point(self, new_data, index=None):
         """
         Inserts a data point at index n.
-
-        new_data    a list or array of new data points, one for each column.
-        index       where to insert the point(s) in each column. None => append.
+        
+        Parameters
+        ----------
+        new_data    
+            A list or array of new data points, one for each column.
+        index       
+            Where to insert the point(s) in each column. None => append.
         """
 
         if not len(new_data) == len(self.columns) and not len(self.columns)==0:
@@ -469,50 +496,63 @@ class databox:
 
                 # reconvert to an array
                 self[i] = _n.array(data)
+        
+        return self
 
     def append_data_point(self, new_data):
         """
         Appends the supplied data point to the column(s).
 
-        new_data    a list or array of new data points, one for each column.
+        Parameters
+        ----------
+        new_data    
+            A list or array of new data points, one for each column.
         """
         return self.insert_data_point(new_data)
 
-    def execute_script(self, script, g={}):
+    def execute_script(self, script, g=None):
         """
         Runs a script, returning the result.
 
+        Parameters
+        ----------
+        script
+            String script to be evaluated (see below).
+        g=None
+            Optional dictionary of additional globals for the script evaluation.
+            These will automatically be inserted into self.extra_globals.
+
+        Usage
+        -----
         Scripts are of the form:
 
-        "3.0 + x/y - self[0] where x=3.0*c('my_column')+h('setting'); y=c(1)"
+        "3.0 + x/y - d[0] where x=3.0*c('my_column')+h('setting'); y=d[1]"
 
-        "self" refers to the data object, giving access to everything, enabling
-        complete control over the universe. c() and h() give quick reference
-        to self.c() and self.h() to get columns and header lines
+        By default, "d" refers to the databox object itself, giving access to 
+        everything and enabling complete control over the universe. Meanwhile, 
+        c() and h() give quick reference to d.c() and d.h() to get columns and 
+        header lines. Additionally, these scripts can see all of the numpy 
+        functions like sin, cos, sqrt, etc.
 
-        Additionally, these scripts can see all of the numpy functions like sin,
-        cos, sqrt, etc.
-
-        Finally, if you would like access to additional globals, set
-        self.extra_globals to the appropriate globals dictionary or add globals
-        using insert_global(). Setting g=globals() will automatically insert
-        your globals into this databox instance.
+        If you would like access to additional globals in a script,
+        there are a few options in addition to specifying the g parametres. 
+        You can set self.extra_globals to the appropriate globals dictionary 
+        or add globals using self.insert_global(). Setting g=globals() will 
+        automatically insert all of your current globals into this databox 
+        instance.
 
         There are a few shorthand scripts available as well. You can simply type
-        a column name such as "my_column" or a column number like 2. However, I
+        a column name such as 'my_column' or a column number like 2. However, I
         only added this functionality as a shortcut, and something like
-        "2.0*a where a=F" will not work unless F is defined somehow. I figure
-        since you're already writing a complicated script, you don't want to
-        accidentally shortcut your way into using a column instead of a constant!
-        Use "2.0*a where a=c('F')" instead.
-
-        NOTE: You shouldn't try to use variables like 'c=...' or 'h=...' because
-        they are already column and header functions!
-
+        "2.0*a where a=my_column" will not work unless 'my_column is otherwise
+        defined. I figure since you're already writing a complicated script in 
+        that case, you don't want to accidentally shortcut your way into using 
+        a column instead of a constant! Use "2.0*a where a=c('my_column')" 
+        instead.
         """
 
         # add any extra user-supplied global variables for the eventual eval() call.
-        self.extra_globals.update(g)
+        if not g==None: self.extra_globals.update(g)
 
         # If the script is not a list of scripts, return the script value.
         # This is the termination of a recursive call.
@@ -650,41 +690,58 @@ class databox:
 
     def copy_headers(self, other_databox):
         """
-        Loops over the hkeys of the other_databox and sets this databoxes' header.
+        Loops over the hkeys of the other_databox, updating this databoxes' header.
         """
         for k in other_databox.hkeys: self.insert_header(k, other_databox.h(k))
 
+        return self
+
     def copy_columns(self, other_databox):
         """
-        Loops over the ckeys of the other_databox and sets this databoxes' columns.
+        Loops over the ckeys of the other_databox, updating this databoxes' columns.
         """
         for k in other_databox.ckeys: self.insert_column(other_databox[k], k)
 
+        return self
+    
     def copy_all(self, other_databox):
         """
-        Copies the header and columns from other_databox.
+        Copies the header and columns from other_databox to this databox.
         """
         self.copy_headers(other_databox)
         self.copy_columns(other_databox)
-
-    def insert_global(self, thing, name=None):
+        return self
+    
+    def insert_globals(self, *args, **kwargs):
         """
         Appends or overwrites the supplied object in the self.extra_globals.
 
         Use this to expose execute_script() or _parse_script() etc... to external
         objects and functions.
 
-        If name=None, use thing.__name__
+        Regular arguments are assumed to have a __name__ attribute (as is the
+        case for functions) to use as the key, and keyword arguments will just 
+        be added as dictionary elements.
         """
-
-        if name is None: name=thing.__name__
-        self.extra_globals[name] = thing
+        for a in args: kwargs[a.__name__] = a
+        self.extra_globals.update(kwargs)
 
     def insert_header(self, hkey, value, index=None):
         """
         This will insert/overwrite a value to the header and hkeys.
 
-        If hkey is an integer, use self.hkeys[hkey]
+        Parameters
+        ----------
+        hkey
+            Header key. Will be appended to self.hkeys if non existent, or 
+            inserted at the specified index. 
+            If hkey is an integer, uses self.hkeys[hkey].
+        value
+            Value of the header.
+        index=None
+            If specified (integer), hkey will be inserted at this location in 
+            self.hkeys.
+            
         """
         #if hkey is '': return
 
@@ -696,6 +753,7 @@ class databox:
         if not hkey in self.hkeys:
             if index is None: self.hkeys.append(str(hkey))
             else:             self.hkeys.insert(index, str(hkey))
+        return self
 
     def pop_header(self, hkey):
         """
@@ -745,10 +803,15 @@ class databox:
         """
         This will insert/overwrite a new column and fill it with the data from the
         the supplied array.
-
-        data_array  data; can be a list, but will be converted to numpy array
-        ckey        name of the column; if an integer is supplied, uses self.ckeys[ckey]
-        index       where to insert this column. None => append to end.
+        
+        Parameters
+        ----------
+        data_array  
+            Data; can be a list, but will be converted to numpy array
+        ckey        
+            Name of the column; if an integer is supplied, uses self.ckeys[ckey]
+        index       
+            Where to insert this column. None => append to end.
         """
 
         # if it's an integer, use the ckey from the list
@@ -759,14 +822,20 @@ class databox:
         if not ckey in self.ckeys:
             if index is None: self.ckeys.append(ckey)
             else:             self.ckeys.insert(index, ckey)
+        
+        return self
 
     def append_column(self, data_array, ckey='temp'):
         """
         This will append a new column and fill it with the data from the
         the supplied array.
-
-        data_array  data; can be a list, but will be converted to numpy array
-        ckey        name of the column.
+        
+        Parameters
+        ----------
+        data_array  
+            Data; can be a list, but will be converted to numpy array
+        ckey        
+            Name of the column.
         """
         if not type(ckey) is str:
             print("ERROR: ckey should be a string!")
@@ -776,7 +845,7 @@ class databox:
             print("ERROR: ckey '"+ckey+"' already exists!")
             return
 
-        self.insert_column(data_array, ckey)
+        return self.insert_column(data_array, ckey)
 
     def clear_columns(self):
         """
@@ -784,7 +853,7 @@ class databox:
         """
         self.ckeys   = []
         self.columns = {}
-
+        return self
 
     def clear_headers(self):
         """
@@ -792,6 +861,7 @@ class databox:
         """
         self.hkeys    = []
         self.headers  = {}
+        return self
 
     def clear(self):
         """
@@ -799,6 +869,7 @@ class databox:
         """
         self.clear_columns()
         self.clear_headers()
+        return self
 
     def rename_header(self, old_name, new_name):
         """
@@ -806,6 +877,7 @@ class databox:
         """
         self.hkeys[self.hkeys.index(old_name)] = new_name
         self.headers[new_name] = self.headers.pop(old_name)
+        return self
 
     def rename_column(self, column, new_name):
         """
@@ -815,6 +887,7 @@ class databox:
         if type(column) is not str: column = self.ckeys[column]
         self.ckeys[self.ckeys.index(column)] = new_name
         self.columns[new_name] = self.columns.pop(column)
+        return self
 
     def trim(self, *conditions):
         """
@@ -822,9 +895,10 @@ class databox:
         can be truth arrays (having the same length as the columns!)
         or scripted strings.
 
-        Example:
-            d1 = spinmob.data.load()
-            d2 = d1.trim( (2<d1[0]) & (d1[0]<10) | (d1[3]==22), 'sin(d[2])*h("gain")<32.2')
+        Example Workflow
+        ----------------
+        d1 = spinmob.data.load()
+        d2 = d1.trim( (2<d1[0]) & (d1[0]<10) | (d1[3]==22), 'sin(d[2])*h("gain")<32.2')
 
         Note this will not modify the databox, rather it will generate a new
         one with the same header information and return it.
@@ -873,7 +947,7 @@ class databox:
         """
         if keys is None: keys = list(dictionary.keys())
         for k in keys: self.insert_header(k, dictionary[k])
-
+        return self
 
 
 
@@ -959,7 +1033,52 @@ class databox:
 ###########################################
 
 class fitter():
+    """
+    Creates an object for fitting data to functions.
 
+    Parameters
+    ----------
+    f = ['a*x*cos(b*x)+c', 'a*x+c']
+        function or list of functions
+    p = 'a=1.5, b, c=-2'
+        comma-delimited list of fit parameters (and optional guess values)
+    c = None 
+        comma-delimited list of constants (and values), following the format
+        of 'p' above
+    bg = None
+        optional background function or list of functions, following the format
+        of 'f' above
+    g = None
+        optional globals dictionary used when for evaluating string functions
+
+    f, p, bg are sent to set_functions()
+
+    **kwargs are sent to settings
+
+    Typical workflow
+    ----------------
+    my_fitter = fitter('a*x+b', 'a,b')    
+        creates the fitter object
+    my_fitter.set_data([1,2,3],[1,2,1])   
+        sets the data to be fit
+    my_fitter.fit()                       
+        does the fitting
+    my_fitter.results 
+        contains the output of scipy.leastsq.optimize (see scipy docs)
+        
+
+    Tips
+    ----
+    Usage
+        All methods starting without an underscore are meant to be used
+        by a "typical" user. For example, do not set data directly; 
+        use set_data(), which clears the fit results. Otherwise the fit 
+        results will not match the existing data.
+        
+    See the spinmob wiki on github!
+    """
+    
+    
     f  = None    # list of functions
     bg = None    # list of background functions (for subtracting etc)
 
@@ -980,34 +1099,6 @@ class fitter():
     results = None  # full output from the fitter.
 
     def __init__(self, f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None, g=None, **kwargs):
-        """
-        Creates an object for fitting data to functions.
-
-        f  = function or list of functions
-        p  = comma-delimited list of fit parameters
-        c  = comma-delimited list of constants
-        bg = optional background function or list of functions
-        g  = optional globals dictionary for evaluating functions)
-
-        f, p, bg are sent to set_functions()
-
-        **kwargs are sent to settings
-
-        Typical workflow:
-            my_fitter = fitter('a*x+b', 'a,b')    # creates the fitter object
-            my_fitter.set_data([1,2,3],[1,2,1])   # sets the data to be fit
-            my_fitter.fit()                       # does the fitting
-
-        Tips:
-
-            Do not set data directly; use set_data(), which clears the fit
-            results. Otherwise the fit results will not match the existing data.
-
-            When errors are completely unknown, try autoscale_errors_and_fit()
-            repeatedly until the reduced chi squareds of all the data sets
-            are approximately 1. This is one way to more-or-less estimate
-            the error from the data itself.
-        """
 
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = _n.__dict__
@@ -1584,7 +1675,7 @@ class fitter():
 
 
 
-    def fit(self, pguess=None, method='leastsq', **kwargs):
+    def fit(self, pguess=None, **kwargs):
         """
         This will try to determine fit parameters using scipy.optimize's leastsq
         algorithm. This function relies on a previous call of set_data()
@@ -2229,16 +2320,35 @@ class fitter():
 # Dialogs for loading data
 ############################
 
-def load(path="ask", first_data_line="auto", filters="*.*", text="Select a file, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
+def load(path='ask', first_data_line='auto', filters='*.*', text='Select a file, FACEHEAD.', default_directory='default_directory', quiet=True, header_only=False, transpose=False, **kwargs):
     """
     Loads a data file into the databox data class. Returns the data object.
 
     Most keyword arguments are sent to databox.load() so check there
     for documentation.(if their function isn't obvious).
 
-    transpose=False    Return databox.transpose().
+    Parameters
+    ----------
+    path='ask'
+        Supply a path to a data file; "ask" means pop up a dialog.
+    first_data_line="auto"
+        Specify the index of the first data line, or have it figure this out
+        automatically.
+    filters="*.*"
+        Specify file filters.
+    text="Select a file, FACEHEAD."
+        Window title text.
+    default_directory="default_directory"
+        Which directory to start in (by key). This lives in spinmob.settings.
+    quiet=True
+        Don't print stuff while loading.
+    header_only=False
+        Load only the header information.
+    transpose = False    
+        Return databox.transpose().
 
-    **kwargs are sent to databox(), so check there for more information.
+    Additioinal optional keyword arguments are sent to spinmob.data.databox(), 
+    so check there for more information.
     """
     d = databox(**kwargs)
     d.load_file(path=path, first_data_line=first_data_line,
@@ -2254,11 +2364,28 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
     """
     Loads a list of data files into a list of databox data objects.
     Returns said list.
+    
+    Parameters
+    ----------
+    path='ask'
+        Supply a path to a data file; "ask" means pop up a dialog.
+    first_data_line="auto"
+        Specify the index of the first data line, or have it figure this out
+        automatically.
+    filters="*.*"
+        Specify file filters.
+    text="Select some files, FACEHEAD."
+        Window title text.
+    default_directory="default_directory"
+        Which directory to start in (by key). This lives in spinmob.settings.
+    quiet=True
+        Don't print stuff while loading.
+    header_only=False
+        Load only the header information.
+    transpose = False    
+        Return databox.transpose().
 
-    Explicit keyword arguments are sent to databox.load() so check there
-    for documentation.(if their function isn't obvious).
-
-    **kwargs are sent to databox(), so check there for more information.
+    Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
     if paths == "ask": paths = _s.dialogs.open_multiple(filters, text, default_directory)
     if paths is None : return

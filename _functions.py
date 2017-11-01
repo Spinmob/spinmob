@@ -3,8 +3,9 @@ import numpy   as _n
 import os      as _os
 import shutil  as _shutil
 import spinmob as _s
-import pickle as _cPickle
-import copy   as _copy
+import pickle  as _cPickle
+
+
 
 def coarsen_array(a, level=2, method='mean'):
     """
