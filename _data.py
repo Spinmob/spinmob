@@ -1854,15 +1854,13 @@ class fitter():
 
         This function relies on a previous call to set_data().
 
-        p=None means use the fit results
+        p=None means use the fit results; if no fit, use guess results.
         """
         if self._xdata_massaged is None or self._ydata_massaged is None: return
         
         if p is None:
-            if not self.results:
-                self._error("Can't call studentized_residuals(None) without a fit result.")
-                return
-            p = self.results[0]
+            if self.results: p = self.results[0]
+            else:            p = self._pguess
 
         # evaluate the function for all the data, returns a list!
         f = self._evaluate_all_functions(self._xdata_massaged, p)
