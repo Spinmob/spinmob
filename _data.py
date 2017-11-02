@@ -1115,6 +1115,7 @@ class fitter():
 
         # default settings
         self._settings = dict(autoplot      = True,     # whether we always plot when changing stuff
+                              plot_all_data = False,    # whether to plot only the trimmed data
                               plot_fit      = True,     # include f in plots?
                               plot_bg       = True,     # include bg in plots?
                               plot_ey       = True,     # include error bars?
@@ -1144,7 +1145,7 @@ class fitter():
         self._settings['silent'] = False
 
         # settings that don't require a re-fit
-        self._safe_settings =list(['bg_names', 'fpoints', 'f_names',
+        self._safe_settings =list(['bg_names', 'fpoints', 'f_names', 'plot_all_data',
                                    'plot_bg', 'plot_ey', 'plot_guess', 'plot_fit',
                                    'silent', 'style_bg', 'style_data', 'style_guess',
                                    'style_fit', 'subtract_bg', 'xscale', 'yscale',
@@ -2058,8 +2059,8 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            x = self._get_xdata_for_plotting(n=n)
-
+            x, xfull = self._get_xdata_for_function(n=n)
+            
             # get the thing to subtract from ydata
             if self['subtract_bg'][n] and not self.bg[n] is None:
 
@@ -2075,7 +2076,6 @@ class fitter():
             else:
                 dy_data = 0*self._xdata_massaged[n]
                 dy_func = 0*x
-
 
             # add the data to the plot
             if self['plot_ey'][n]:
@@ -2190,32 +2190,44 @@ class fitter():
 
         return self
 
-    def _get_xdata_for_plotting(self, n):
+    def _get_xdata_for_function(self, n):
         """
+        Generates the x-data for plotting the function.
+        
         Parameters
         ----------
-        n: int
+        n
+            Which data set?
 
         Returns
         -------
         float
         """
-        # get the xdata for the curves
-        if self['fpoints'][n] is None:
-            x = self._xdata_massaged[n]
+        
+        # Figure out which data set to use
+        xdata_trim = self._xdata_massaged[n]
+        if self['plot_all_data']: xdata_full = self.get_data()[0][n]
+        else:                     xdata_full = xdata_trim
+        
+        # Use the xdata itself for the function
+        if self['fpoints'][n] in [None, 0]: 
+            return _n.array(xdata_trim), _n.array(xdata_full)
+            
+        # Otherwise, generate xdata with the number of fpoints
+        
+        # do exponential ranging if xscale is log
+        if self['xscale'][n] == 'log':
+            xf = _n.logspace(_n.log10(min(xdata_full)), _n.log10(max(xdata_full)),
+                             self['fpoints'][n], True, 10.0)
+        
+        # otherwise do linear spacing
         else:
-            # do exponential ranging if xscale is log
-            if self['xscale'][n] == 'log':
-                x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
-                                _n.log10(max(self._xdata_massaged[n])),
-                                self['fpoints'][n], True, 10.0)
-
-            # otherwise do linear spacing
-            else:
-                x = _n.linspace(min(self._xdata_massaged[n]),
-                                max(self._xdata_massaged[n]),
-                                self['fpoints'][n])
-        return x
+            xf = _n.linspace(min(xdata_full), max(xdata_full), self['fpoints'][n])
+    
+        # Get the trimmed data
+        xt = _s.fun.trim_data_uber([xf], [xf>=min(xdata_trim), xf<=max(xdata_trim)])[0]
+        
+        return xt, xf
 
     def trim(self, n='all', x=True, y=True):
         """
