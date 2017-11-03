@@ -2021,7 +2021,7 @@ class fitter():
             return self._error("No data. Please use set_data() prior to plotting.")
 
         # get the data
-        xdata, ydata, eydata = self.get_data()
+        xdatas, ydatas, eydatas = self.get_data()
 
         # update settings
         for k in kwargs: self[k] = kwargs[k]
@@ -2038,7 +2038,7 @@ class fitter():
         else:                        r = self.studentized_residuals(self._pguess)
 
         # make a new plot for each data set
-        for n in range(len(xdata)):
+        for n in range(len(xdatas)):
 
             # get the next figure
             fig = _p.figure(self['first_figure']+n)
@@ -2059,23 +2059,37 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            x, xfull = self._get_xdata_for_function(n=n)
+            # Get the data to plot
+            if self['plot_all_data']: 
+                xdata  = xdatas[n]
+                ydata  = ydatas[n]
+                eydata = eydatas[n]
+                
+                
+            else:
+                xdata  = self._xdata_massaged[n]
+                ydata  = self._ydata_massaged[n]
+                eydata = self._eydata_massaged[n]
+            
+
+            # Get the xdata for plotting the function
+            xt, xf = self._get_xdata_for_function(n=n)
             
             # get the thing to subtract from ydata
             if self['subtract_bg'][n] and not self.bg[n] is None:
 
                 # if we have a fit, use that.
                 if self.results:
-                    dy_data = self._evaluate_bg(n, self._xdata_massaged[n], self.results[0])
-                    dy_func = self._evaluate_bg(n, x,                       self.results[0])
+                    dy_data = self._evaluate_bg(n, xdata, self.results[0])
+                    dy_func = self._evaluate_bg(n, xt,    self.results[0])
 
                 # otherwise, use the _pguess background
                 else:
-                    dy_data = self._evaluate_bg(n, self._xdata_massaged[n], self._pguess)
-                    dy_func = self._evaluate_bg(n, x,                       self._pguess)
+                    dy_data = self._evaluate_bg(n, xdata, self._pguess)
+                    dy_func = self._evaluate_bg(n, xt,    self._pguess)
             else:
-                dy_data = 0*self._xdata_massaged[n]
-                dy_func = 0*x
+                dy_data = 0*xdata
+                dy_func = 0*xt
 
             # add the data to the plot
             if self['plot_ey'][n]:
@@ -2186,7 +2200,7 @@ class fitter():
             _p.show()
 
         # for some reason, it's necessary to touch every figure, too
-        for n in range(len(xdata)-1,-1,-1): _p.figure(self['first_figure']+n)
+        for n in range(len(xdatas)-1,-1,-1): _p.figure(self['first_figure']+n)
 
         return self
 
