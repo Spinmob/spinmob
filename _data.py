@@ -19,7 +19,6 @@ import time           as _time
 
 
 
-
 #############################################################
 # Class for storing / manipulating / saving / loading data
 #############################################################
@@ -1233,11 +1232,16 @@ class fitter():
         s = s + "\nCONSTANTS\n"
         for c in self._cnames: s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
 
-        s = s + "\nGUESS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
+        if self._set_xdata is None or self._set_ydata is None: 
+            s = s + "\nGUESS\n"
+        else:
+            s = s + "\nGUESS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
                 self._format_value_error(self.reduced_chi_squared(self._pguess), _n.sqrt(2.0/self.degrees_of_freedom())), 
                         int(self.degrees_of_freedom()))
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
+
+        # If we have no data, don't print fit stuff.
         if self._set_xdata is None or self._set_ydata is None: s = s + "\nNO DATA\n"
 
         else:
@@ -2107,25 +2111,25 @@ class fitter():
             a2.set_autoscale_on(False)
 
             # add the _pguess curves
-            y_guess = self._evaluate_f(n,x,self._pguess)-dy_func
+            y_guess = self._evaluate_f(n,xt,self._pguess)-dy_func
             if self['plot_guess'][n]:
 
                 # plot the _pguess background curve
                 if self['plot_bg'][n] and self.bg[n] is not None:
-                    a2.plot(x, self._evaluate_bg(n,x,self._pguess)-dy_func, **self['style_guess'][n])
+                    a2.plot(xt, self._evaluate_bg(n,xt,self._pguess)-dy_func, **self['style_guess'][n])
 
                 # plot the _pguess main curve
-                a2.plot(x, y_guess, **self['style_guess'][n])
+                a2.plot(xt, y_guess, **self['style_guess'][n])
 
             # add the fit curves (if we have a fit)
             if self['plot_fit'] and self.results:
 
                 # plot the background curve
                 if self['plot_bg'][n] and self.bg[n] is not None:
-                    a2.plot(x, self._evaluate_bg(n,x,self.results[0])-dy_func, **self['style_fit'][n])
+                    a2.plot(xt, self._evaluate_bg(n,xt,self.results[0])-dy_func, **self['style_fit'][n])
 
                 # plot the pfit main curve
-                a2.plot(x, self._evaluate_f(n,x,self.results[0])-dy_func, **self['style_fit'][n])
+                a2.plot(xt, self._evaluate_f(n,xt,self.results[0])-dy_func, **self['style_fit'][n])
 
             a2.set_autoscale_on(True)
 
@@ -2436,5 +2440,4 @@ if __name__ == "__main__":
     
     import spinmob as sm
     d=sm.data.databox()
-    x = d.load_file("C:\\Users\\jaxankey\\Miniconda3\\envs\\Python27-PyQt4\\Lib\\site-packages\\spinmob\\tests\\fixtures\\data\\mixed_complex_data.dat")
     
