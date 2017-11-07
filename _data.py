@@ -2165,7 +2165,7 @@ class fitter():
             # Assemble the title
             wrap = 80
             indent = '      '
-            t = _textwrap.fill('Function ('+str(n)+'/'+str(len(ydata)-1)+'): y = '+self._fnames[n], wrap, subsequent_indent=indent)
+            t = _textwrap.fill('Function ('+str(n)+'/'+str(len(self._fnames)-1)+'): y = '+self._fnames[n], wrap, subsequent_indent=indent)
 
             if len(self._cnames):
                 t1 = "Constants: "
