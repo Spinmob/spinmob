@@ -1853,7 +1853,7 @@ class fitter():
         """
         Returns a string v +/- e with the right number of sig figs.
         """
-        if _n.isnan(e): sig_figs = 1
+        if _n.isnan(e) or _n.isinf(e): sig_figs = 1
         else:           sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
         return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
         
@@ -1972,7 +1972,7 @@ class fitter():
         if self._set_xdata == None or self._set_ydata == None: return None
         if p is None: p = self.results[0]
         
-        return self.chi_squared(p) / self.degrees_of_freedom()
+        return _n.divide(self.chi_squared(p), self.degrees_of_freedom())
 
     def autoscale_eydata(self):
         """
@@ -2063,13 +2063,13 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            # Get the data to plot
+            # Use all of the data to plot
             if self['plot_all_data']: 
                 xdata  = xdatas[n]
                 ydata  = ydatas[n]
                 eydata = eydatas[n]
                 
-                
+            # Use only the trimmed / massaged data
             else:
                 xdata  = self._xdata_massaged[n]
                 ydata  = self._ydata_massaged[n]
@@ -2091,19 +2091,21 @@ class fitter():
                 else:
                     dy_data = self._evaluate_bg(n, xdata, self._pguess)
                     dy_func = self._evaluate_bg(n, xt,    self._pguess)
+            
+            # If we have no background defined, dy is zero.
             else:
                 dy_data = 0*xdata
                 dy_func = 0*xt
 
             # add the data to the plot
             if self['plot_ey'][n]:
-                a2.errorbar(self._xdata_massaged[n],
-                            self._ydata_massaged[n]-dy_data,
-                            self._eydata_massaged[n],
+                a2.errorbar(xdata,
+                            ydata-dy_data,
+                            eydata,
                             **self['style_data'][n])
             else:
-                a2.plot(    self._xdata_massaged[n],
-                            self._ydata_massaged[n]-dy_data,
+                a2.plot(    xdata,
+                            ydata-dy_data,
                             **self['style_data'][n])
 
             # set the plot range according to just the data
@@ -2178,7 +2180,7 @@ class fitter():
                 for i in range(len(self._pnames)):
                     t1 = t1 + self._pnames[i] + "={:s}, ".format(self._format_value_error(self.results[0][i], _n.sqrt(self.results[1][i][i]), '$\pm$'))
                 t1 = t1 + '$\chi^2_r$={} ({} DOF)'.format(
-                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(2.0/self.degrees_of_freedom()), '$\pm$'), 
+                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom())), '$\pm$'), 
                         int(self.degrees_of_freedom()))
                 
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)

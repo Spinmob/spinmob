@@ -187,7 +187,7 @@ class Test_databox(_ut.TestCase):
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
 
-
+f = None
 class Test_fitter(_ut.TestCase):
     """
     Test class for fitter.
@@ -202,25 +202,49 @@ class Test_fitter(_ut.TestCase):
         
     def test_fit(self):
         """
-        Test against Example 7.1 in Bevington.
+        Test a simple example
         """
+        global f
         
         # Load a test file and fit it, making sure "f" is defined at each step.
         f = _s.data.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006')
         f.__repr__()
         f.set_data([0,1,2,3,4,5,6,7], [0,1,2,1,3,4,5,3], 0.5)
-        _s.pylab.ginput(timeout=0.5)
+        _s.pylab.ginput(timeout=0.3)
         
         f.fit()
-        _s.pylab.ginput(timeout=0.5)
+        _s.pylab.ginput(timeout=0.3)
         
-        # Check that the reduced chi^2 is close to the 1.5 value of Bevington
+        # Check that the reduced chi^2 is roughly correct
         r = f.reduced_chi_squareds()
         self.assertIs(type(r), list)
         self.assertAlmostEqual(r[0], 3.89, 2)
+    
+        # trim the data
+        f.set(xmin=1.5, xmax=6.5)
+        _s.pylab.ginput(timeout=0.3)
         
-
+        f.fit()
+        _s.pylab.ginput(timeout=0.3)
         
+        # Check that the reduced chi^2 is roughly correct
+        r = f.reduced_chi_squareds()
+        self.assertIs(type(r), list)
+        self.assertAlmostEqual(r[0], 2.514, 2)
+        
+        # trim the data
+        f.set(xmin=0.5, coarsen=2)
+        _s.pylab.ginput(timeout=0.3)
+        
+        f.fit()
+        _s.pylab.ginput(timeout=0.3)
+        
+        
+        
+        ####
+        # NEEDS Coarsened data, coarsened with trim and full plotting
+    
+    
 
 if __name__ == "__main__":
     _ut.main()
