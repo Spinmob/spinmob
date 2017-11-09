@@ -1236,7 +1236,7 @@ class fitter():
             s = s + "\nGUESS\n"
         else:
             s = s + "\nGUESS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
-                self._format_value_error(self.reduced_chi_squared(self._pguess), _n.sqrt(2.0/self.degrees_of_freedom())), 
+                self._format_value_error(self.reduced_chi_squared(self._pguess), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
                         int(self.degrees_of_freedom()))
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
@@ -1247,7 +1247,7 @@ class fitter():
         else:
             if self.results and not self.results[1] is None:
                 s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
-                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(2.0/self.degrees_of_freedom())), 
+                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
                         int(self.degrees_of_freedom()))
                 for n in range(len(self._pnames)):
                     s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))

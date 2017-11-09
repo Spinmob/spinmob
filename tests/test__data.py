@@ -198,22 +198,36 @@ class Test_fitter(_ut.TestCase):
         # Path to the spinmob module
         self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
         
+        self.x1 = [0,1,2,3,4,5,6,7]
+        self.y1 = [0,1,2,1,3,4,5,3]
+        
         return
         
     def test_fit(self):
         """
-        Test a simple example
+        Basic tests for a simple example smallish data set.
+         - Create fitter
+         - Set data (plots)
+         - Fit and known result
+         - Trim with xmin and xmax
+         - Fit
+         - Trim and coarsen
+         - Fit with 0 DOF
+         - __repr__ doesn't crash at each step
         """
         global f
         
         # Load a test file and fit it, making sure "f" is defined at each step.
         f = _s.data.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006')
         f.__repr__()
-        f.set_data([0,1,2,3,4,5,6,7], [0,1,2,1,3,4,5,3], 0.5)
+        
+        f.set_data(self.x1, self.y1, 0.5)
         _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
         f.fit()
         _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
         # Check that the reduced chi^2 is roughly correct
         r = f.reduced_chi_squareds()
@@ -223,26 +237,24 @@ class Test_fitter(_ut.TestCase):
         # trim the data
         f.set(xmin=1.5, xmax=6.5)
         _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
         f.fit()
         _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
-        # Check that the reduced chi^2 is roughly correct
-        r = f.reduced_chi_squareds()
-        self.assertIs(type(r), list)
-        self.assertAlmostEqual(r[0], 2.514, 2)
-        
-        # trim the data
+        # trim the data and test what happens when there are 0 DOF
         f.set(xmin=0.5, coarsen=2)
         _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
         f.fit()
         _s.pylab.ginput(timeout=0.3)
-        
+        f.__repr__()
         
         
         ####
-        # NEEDS Coarsened data, coarsened with trim and full plotting
+        # NEEDS coarsened with trim but full plotting
     
     
 
