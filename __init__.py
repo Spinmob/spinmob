@@ -32,11 +32,11 @@ _mpl.rcParams['figure.facecolor']='w'
 
 
 
-from . import _plot             as plot        ; plot._settings    = settings
-from . import _data             as data        ; data._settings    = settings
-from . import _dialogs          as dialogs     ; dialogs._settings = settings
-from . import _pylab_tweaks     as tweaks      ; tweaks._settings  = settings
-from . import _functions        as fun         ; fun._settings     = settings
+from . import _plot           as plot        ; plot._settings    = settings
+from . import _data           as data        ; data._settings    = settings
+from . import _dialogs        as dialogs     ; dialogs._settings = settings
+from . import _pylab_tweaks   as tweaks      ; tweaks._settings  = settings
+from . import _functions      as fun         ; fun._settings     = settings
 
 plot.tweaks._pylab_colormap._settings = settings
 

@@ -218,7 +218,10 @@ class Test_fitter(_ut.TestCase):
         global f
         
         # Load a test file and fit it, making sure "f" is defined at each step.
-        f = _s.data.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006')
+        f = _s.data.fitter()
+        f.__repr__()
+        
+        f.set_functions()('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006')
         f.__repr__()
         
         f.set_data(self.x1, self.y1, 0.5)

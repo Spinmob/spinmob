@@ -4,14 +4,17 @@ import numpy        as _n
 import itertools    as _itertools
 import time         as _time
 
-try:
-    from . import _functions        as _fun
-    from . import _pylab_tweaks     as _pt
-    from . import _data             as _data
-except:
-    import _functions    as _fun
-    import _pylab_tweaks as _pt
-    import _data         as _data
+
+try:    from . import _functions as _fun
+except:        import _functions as _fun
+
+try:    from . import _pylab_tweaks as _pt
+except:        import _pylab_tweaks as _pt
+
+from . import _data as _data
+
+try:    from . import _data as _data
+except:        import _data as _data
 
 # expose all the eval statements to all the functions in numpy
 from numpy import *
