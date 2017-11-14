@@ -5,6 +5,7 @@ Module for testing _data.py
 import os      as _os # For loading fixtures
 import numpy   as _n
 import spinmob as _s
+import time    as _t
 
 import unittest as _ut
 
@@ -186,33 +187,76 @@ class Test_databox(_ut.TestCase):
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
 
-
+f = None
 class Test_fitter(_ut.TestCase):
     """
     Test class for fitter.
     """
     debug = False
 
-    def setUp(self):
+    def setUp(self): 
+        # Path to the spinmob module
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
+        
+        self.x1 = [0,1,2,3,4,5,6,7]
+        self.y1 = [0,1,2,1,3,4,5,3]
+        
+        return
+        
+    def test_fit(self):
         """
-        Test against Example 7.1 in Bevington.
+        Basic tests for a simple example smallish data set.
+         - Create fitter
+         - Set data (plots)
+         - Fit and known result
+         - Trim with xmin and xmax
+         - Fit
+         - Trim and coarsen
+         - Fit with 0 DOF
+         - __repr__ doesn't crash at each step
         """
+        global f
+        
         # Load a test file and fit it, making sure "f" is defined at each step.
-        d = _s.data.load(path=_os.path.join(self.data_path,"Bevington Ex 7p1.csv"))
-        f = _s.data.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006', autoplot=False)
-        f.__repr__()
-        f.set_data(d[0], d[1], 0.05)
-        f.__repr__()
-        f.fit()
+        f = _s.data.fitter('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006')
         f.__repr__()
         
-        # Check that the reduced chi^2 is close to the 1.5 value of Bevington
+        f.set_data(self.x1, self.y1, 0.5)
+        _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
+        
+        f.fit()
+        _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
+        
+        # Check that the reduced chi^2 is roughly correct
         r = f.reduced_chi_squareds()
         self.assertIs(type(r), list)
-        self.assertAlmostEqual(r[0], 1.5, 1)
+        self.assertAlmostEqual(r[0], 3.89, 2)
+    
+        # trim the data
+        f.set(xmin=1.5, xmax=6.5)
+        _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
-
+        f.fit()
+        _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
         
+        # trim the data and test what happens when there are 0 DOF
+        f.set(xmin=0.5, coarsen=2)
+        _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
+        
+        f.fit()
+        _s.pylab.ginput(timeout=0.3)
+        f.__repr__()
+        
+        
+        ####
+        # NEEDS coarsened with trim but full plotting
+    
+    
 
 if __name__ == "__main__":
     _ut.main()

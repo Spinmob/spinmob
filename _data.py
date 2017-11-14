@@ -1175,8 +1175,39 @@ class fitter():
         self._pguess    = []
         self._constants = []
 
+        # default settings
+        self._settings = dict(autoplot      = True,     # whether we always plot when changing stuff
+                              plot_all_data = False,    # whether to plot only the trimmed data
+                              plot_fit      = True,     # include f in plots?
+                              plot_bg       = True,     # include bg in plots?
+                              plot_ey       = True,     # include error bars?
+                              plot_guess    = True,     # include the guess?
+                              plot_guess_zoom = False,  # zoom to include plot?
+                              subtract_bg   = False,    # subtract bg from plots?
+                              first_figure  = 0,        # first figure number to use
+                              fpoints       = 1000,     # number of points to use when plotting f
+                              xmin          = None,     # list of limits for trimming x-data
+                              xmax          = None,     # list of limits for trimming x-data
+                              ymin          = None,     # list of limits for trimming y-data
+                              ymax          = None,     # list of limits for trimming y-data
+                              xlabel        = None,     # list of x labels
+                              ylabel        = None,     # list of y labels
+                              xscale        = 'linear', # axis scale type
+                              yscale        = 'linear', # axis scale type
+                              scale_eydata  = 1.0,      # by how much should we scale the eydata?
+                              coarsen       = 1,        # how much to coarsen the data
+
+                              # styles of plots
+                              style_data   = dict(marker='+', color='b',   ls=''),
+                              style_fit    = dict(marker='',  color='r',    ls='-'),
+                              style_guess  = dict(marker='',  color='0.25', ls='-'),
+                              style_bg     = dict(marker='',  color='k',    ls='-'))
+
+        # Silence warnings
+        self._settings['silent'] = False
+
         # settings that don't require a re-fit
-        self._safe_settings =list(['bg_names', 'fpoints', 'f_names',
+        self._safe_settings =list(['bg_names', 'fpoints', 'f_names', 'plot_all_data',
                                    'plot_bg', 'plot_ey', 'plot_guess', 'plot_fit',
                                    'silent', 'style_bg', 'style_data', 'style_guess',
                                    'style_fit', 'subtract_bg', 'xscale', 'yscale',
@@ -1290,13 +1321,17 @@ class fitter():
                 s = s+"  {:15s} {:s}\n".format(k, str(self[k]))
 
 
-        if len(self._fnames) == 0:
-            s = s + "\nNO FUNCTIONS: Use set_functions() prior to fitting.\n"
-
+        if self._set_xdata is None or self._set_ydata is None: 
+            s = s + "\nGUESS\n"
         else:
-            s = s + "\nFUNCTIONS\n"
-            for n in range(len(self._fnames)): 
-                s = s + "  f[" + str(n) + "]: " + self._fnames[n] + "\n"
+            s = s + "\nGUESS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
+                self._format_value_error(self.reduced_chi_squared(self._pguess), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
+                        int(self.degrees_of_freedom()))
+        for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
+
+
+        # If we have no data, don't print fit stuff.
+        if self._set_xdata is None or self._set_ydata is None: s = s + "\nNO DATA\n"
 
         if len(self._cnames):
             s = s + "\nCONSTANTS\n"
@@ -1310,7 +1345,9 @@ class fitter():
 
         else:
             if self.results and not self.results[1] is None:
-                s = s + "\nFIT RESULTS (reduced chi squared = {:s})\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squareds(),3)))
+                s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
+                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
+                        int(self.degrees_of_freedom()))
                 for n in range(len(self._pnames)):
                     s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
 
@@ -2019,7 +2056,8 @@ class fitter():
         """
         Returns a string v +/- e with the right number of sig figs.
         """
-        sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
+        if _n.isnan(e) or _n.isinf(e): sig_figs = 1
+        else:           sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
         return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
         
     def studentized_residuals(self, p=None):
@@ -2028,14 +2066,13 @@ class fitter():
 
         This function relies on a previous call to set_data().
 
-        p=None means use the fit results
+        p=None means use the fit results; if no fit, use guess results.
         """
         if self._xdata_massaged is None or self._ydata_massaged is None: return
         
         if p is None:
-            
-            # Use the guess if we haven't fit
-            if not self.results: p = self._pguess
+            if self.results: p = self.results[0]
+            else:            p = self._pguess
 
             # Otherwise use the results.
             else:                p = self.results[0]
@@ -2085,10 +2122,12 @@ class fitter():
 
     def chi_squareds(self, p=None):
         """
-        returns a list of chi squared for each data set. Also uses ydata_massaged.
+        Returns a list of chi squared for each data set. Also uses ydata_massaged.
 
         p=None means use the fit results
         """
+        if self._set_xdata == None or self._set_ydata == None: return None
+        
         if p is None: p = self.results[0]
 
         # get the residuals
@@ -2099,13 +2138,38 @@ class fitter():
         for r in rs: cs.append(sum(r**2))
         return cs
 
+    def chi_squared(self, p=None):
+        """
+        Returns the total chi squared (summed over all massaged data sets).
+        
+        p=None means use the fit results.
+        """
+        return sum(self.chi_squareds(p))
+
+    def degrees_of_freedom(self):
+        """
+        Returns the number of degrees of freedom.
+        """
+        if self._set_xdata == None or self._set_ydata == None: return None
+        
+        # Temporary hack: get the studentized residuals, which uses the massaged data
+        # This should later be changed to get_massaged_data()
+        r = self.studentized_residuals()
+        
+        # calculate the number of points
+        N = 0.0
+        for i in range(len(r)): N += len(r[i])
+        
+        return N-len(self._pnames)
+        
+        
+
     def reduced_chi_squareds(self, p=None):
         """
-        Returns the reduced chi squared for each data set. 
+        Returns the reduced chi squared for each massaged data set. 
 
         p=None means use the fit results.
         """
-        
         if self._set_xdata == None or self._set_ydata == None: return None
 
         if p is None: p = self.results[0]
@@ -2119,12 +2183,24 @@ class fitter():
         for i in range(len(r)): N += len(r[i])
 
         # degrees of freedom
-        dof_per_point = 1.0*(N-len(self._pnames))/N
+        dof_per_point = self.degrees_of_freedom()/N
 
         for n in range(len(r)):
             r[n] = sum(r[n]**2)/(len(r[n])*dof_per_point)
 
         return r
+
+    def reduced_chi_squared(self, p=None):
+        """
+        Returns the reduced chi squared for all massaged data sets. 
+
+        p=None means use the fit results.
+        """
+        
+        if self._set_xdata == None or self._set_ydata == None: return None
+        if p is None: p = self.results[0]
+        
+        return _n.divide(self.chi_squared(p), self.degrees_of_freedom())
 
     def autoscale_eydata(self):
         """
@@ -2198,7 +2274,7 @@ class fitter():
             else:                        r = self.studentized_residuals(self._pguess)
 
         # make a new plot for each data set
-        for n in range(len(xdata)):
+        for n in range(len(xdatas)):
 
             # get the next figure
             fig = _p.figure(self['first_figure']+n)
@@ -2219,34 +2295,49 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            x = self._get_xdata_for_plotting(n=n)
+            # Use all of the data to plot
+            if self['plot_all_data']: 
+                xdata  = xdatas[n]
+                ydata  = ydatas[n]
+                eydata = eydatas[n]
+                
+            # Use only the trimmed / massaged data
+            else:
+                xdata  = self._xdata_massaged[n]
+                ydata  = self._ydata_massaged[n]
+                eydata = self._eydata_massaged[n]
+            
 
+            # Get the xdata for plotting the function
+            xt, xf = self._get_xdata_for_function(n=n)
+            
             # get the thing to subtract from ydata
             if self['subtract_bg'][n] and not self.bg[n] is None:
 
                 # if we have a fit, use that.
                 if self.results:
-                    dy_data = self._evaluate_bg(n, self._xdata_massaged[n], self.results[0])
-                    dy_func = self._evaluate_bg(n, x,                       self.results[0])
+                    dy_data = self._evaluate_bg(n, xdata, self.results[0])
+                    dy_func = self._evaluate_bg(n, xt,    self.results[0])
 
                 # otherwise, use the _pguess background
                 else:
-                    dy_data = self._evaluate_bg(n, self._xdata_massaged[n], self._pguess)
-                    dy_func = self._evaluate_bg(n, x,                       self._pguess)
+                    dy_data = self._evaluate_bg(n, xdata, self._pguess)
+                    dy_func = self._evaluate_bg(n, xt,    self._pguess)
+            
+            # If we have no background defined, dy is zero.
             else:
-                dy_data = 0*self._xdata_massaged[n]
-                dy_func = 0*x
-
+                dy_data = 0*xdata
+                dy_func = 0*xt
 
             # add the data to the plot
             if self['plot_ey'][n]:
-                a2.errorbar(self._xdata_massaged[n],
-                            self._ydata_massaged[n]-dy_data,
-                            self._eydata_massaged[n],
+                a2.errorbar(xdata,
+                            ydata-dy_data,
+                            eydata,
                             **self['style_data'][n])
             else:
-                a2.plot(    self._xdata_massaged[n],
-                            self._ydata_massaged[n]-dy_data,
+                a2.plot(    xdata,
+                            ydata-dy_data,
                             **self['style_data'][n])
 
             # set the plot range according to just the data
@@ -2333,6 +2424,10 @@ class fitter():
                 t1 = "Fit: "
                 for i in range(len(self._pnames)):
                     t1 = t1 + self._pnames[i] + "={:s}, ".format(self._format_value_error(self.results[0][i], _n.sqrt(self.results[1][i][i]), '$\pm$'))
+                t1 = t1 + '$\chi^2_r$={} ({} DOF)'.format(
+                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom())), '$\pm$'), 
+                        int(self.degrees_of_freedom()))
+                
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
             elif self.results:
@@ -2356,36 +2451,48 @@ class fitter():
             _p.show()
 
         # for some reason, it's necessary to touch every figure, too
-        for n in range(len(xdata)-1,-1,-1): _p.figure(self['first_figure']+n)
+        for n in range(len(xdatas)-1,-1,-1): _p.figure(self['first_figure']+n)
 
         return self
 
-    def _get_xdata_for_plotting(self, n):
+    def _get_xdata_for_function(self, n):
         """
+        Generates the x-data for plotting the function.
+        
         Parameters
         ----------
-        n: int
+        n
+            Which data set?
 
         Returns
         -------
         float
         """
-        # get the xdata for the curves
-        if self['fpoints'][n] is None:
-            x = self._xdata_massaged[n]
+        
+        # Figure out which data set to use
+        xdata_trim = self._xdata_massaged[n]
+        if self['plot_all_data']: xdata_full = self.get_data()[0][n]
+        else:                     xdata_full = xdata_trim
+        
+        # Use the xdata itself for the function
+        if self['fpoints'][n] in [None, 0]: 
+            return _n.array(xdata_trim), _n.array(xdata_full)
+            
+        # Otherwise, generate xdata with the number of fpoints
+        
+        # do exponential ranging if xscale is log
+        if self['xscale'][n] == 'log':
+            xf = _n.logspace(_n.log10(min(xdata_full)), _n.log10(max(xdata_full)),
+                             self['fpoints'][n], True, 10.0)
+        
+        # otherwise do linear spacing
         else:
-            # do exponential ranging if xscale is log
-            if self['xscale'][n] == 'log':
-                x = _n.logspace(_n.log10(min(self._xdata_massaged[n])),
-                                _n.log10(max(self._xdata_massaged[n])),
-                                self['fpoints'][n], True, 10.0)
-
-            # otherwise do linear spacing
-            else:
-                x = _n.linspace(min(self._xdata_massaged[n]),
-                                max(self._xdata_massaged[n]),
-                                self['fpoints'][n])
-        return x
+            xf = _n.linspace(min(xdata_full), max(xdata_full), self['fpoints'][n])
+    
+        # Get the trimmed data
+        xt = _s.fun.trim_data_uber([xf], [xf>=min(xdata_trim), xf<=max(xdata_trim)])[0]
+        
+        return xt, xf
 
     def trim(self, n='all', x=True, y=True):
         """
