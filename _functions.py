@@ -1126,25 +1126,23 @@ def round_sigfigs(x, n=2):
     Rounds the number to the specified significant figures. x can also be 
     a list or array of numbers (in these cases, a numpy array is returned).
     """
-    # Handle None case
-    if x==None: return None
-    
-    iterable = True
-    if not is_iterable(x):
-        iterable = False
-        x = [x]
-    
+    iterable = is_iterable(x)
+    if not iterable: x = [x]
+
     # make a copy to be safe
     x = _n.array(x)
     
     # loop over the elements
     for i in range(len(x)):
-        sig_figs = -int(_n.floor(_n.log10(abs(x[i]))))+n-1
-        x[i] = _n.round(x[i], sig_figs)
+        
+        # Handle the weird cases
+        if not x[i] in [None, _n.inf, _n.nan]:
+            sig_figs = -int(_n.floor(_n.log10(abs(x[i]))))+n-1
+            x[i] = _n.round(x[i], sig_figs)
         
     if iterable: return x
     else:        return x[0]
-    
+
 def _save_object(object, path="ask", text="Save this object where?"):
     if path=="ask": path = _s.dialogs.Save("*.pickle", text=text)
     if path == "": return
@@ -1305,7 +1303,7 @@ def trim_data_uber(arrays, conditions):
     # assemble and return trimmed data    
     output = []
     for n in range(len(arrays)): 
-        if not arrays[n] == None: output.append(arrays[n][ns])
+        if not arrays[n] is None: output.append(arrays[n][ns])
         else:                     output.append(None)
     return output
     

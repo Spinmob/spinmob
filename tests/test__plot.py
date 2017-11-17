@@ -67,6 +67,7 @@ class Test_plot_functions(_ut.TestCase):
         
     def test_plots(self):
         
+        _s.pylab.figure(20)
         _s.plot.xy.function()
         _s.pylab.ginput(timeout=0.5)
         

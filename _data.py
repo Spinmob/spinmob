@@ -1038,7 +1038,7 @@ class fitter():
     Creates an object for fitting data to functions.
 
     Parameters
-    ----------    
+    ----------
     Keyword arguments are sent to self.set(). Arguments that apply to a data
     set can be specified as a single element or list of elements. For example:
     
@@ -1148,7 +1148,7 @@ class fitter():
     
 
     def __init__(self, **kwargs):
-
+        
         self.f  = []    # list of functions
         self.bg = []    # list of background functions (for subtracting etc)
     
@@ -1253,6 +1253,8 @@ class fitter():
                  style_bg     = dict(marker='',  color='k',   ls='-'),)
         self._initializing = False
 
+        # Update with kwargs
+        self(**kwargs)
 
 
     def set(self, **kwargs):
@@ -1326,43 +1328,49 @@ class fitter():
                 s = s+"  {:15s} {:s}\n".format(k, str(self[k]))
 
 
+        # Print the constants out
+        if len(self._cnames):
+            s = s + "\nCONSTANTS\n"
+            for c in self._cnames: 
+                s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
+
+
+
+        # If we don't have any data.
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: 
             s = s + "\nGUESS\n"
+
+        # If we do have data, give mor information
         else:
             s = s + "\nGUESS (reduced chi^2 = {:s}, {} DOF)\n".format(
+                
+                # Reduced chi^2
                 self._format_value_error(self.reduced_chi_squared(self._pguess), 
                                          _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
                         self.degrees_of_freedom())
+        
+        # Always print the guess parameters
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
 
-        # If we have no data, don't print fit stuff.
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0: s = s + "\nNO DATA\n"
 
-        if len(self._cnames):
-            s = s + "\nCONSTANTS\n"
-            for c in self._cnames: s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
+        # Print out the fit results
+        if self.results and not self.results[1] is None:
+            s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
+                    self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
+                    int(self.degrees_of_freedom()))
+            for n in range(len(self._pnames)):
+                s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
 
-        if len(self.f):
-            s = s + "\nGUESS (reduced chi squared = {:s})\n".format(str(_s.fun.round_sigfigs(self.reduced_chi_squareds(self._pguess),3)))
-            for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
+        # If the fit did not converge, the covariance matrix is None
+        elif self.results and self.results[1] is None:
+            s = s + "\nFIT DID NOT CONVERGE\n"
+            for n in range(len(self._pnames)):
+                s = s + "  {:10s} = {:G} (meaningless)\n".format(self._pnames[n], self.results[0][n])
 
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0: s = s + "\nNO DATA: Use set_data() prior to fitting.\n"
-
-        else:
-            if self.results and not self.results[1] is None:
-                s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
-                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
-                        int(self.degrees_of_freedom()))
-                for n in range(len(self._pnames)):
-                    s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
-
-            elif self.results and self.results[1] is None:
-                s = s + "\nFIT DID NOT CONVERGE\n"
-                for n in range(len(self._pnames)):
-                    s = s + "  {:10s} = {:G} (meaningless)\n".format(self._pnames[n], self.results[0][n])
-
-            else: s = s + "\nNO FIT RESULTS\n"
+        # No fit results
+        else: 
+            s = s + "\nNO FIT RESULTS\n"
 
         return s
 
@@ -1390,9 +1398,10 @@ class fitter():
         if key in self._cnames: return self._constants[self._cnames.index(key)]
         return self._settings[key]
 
-    def _error(self, message): print("ERROR: "+str(message))
+    def _error(self, message): 
+        raise BaseException(str(message))
 
-    def set_functions(self,  f=['a*x*cos(b*x)+c', 'a*x+c'], p='a=1.5, b, c=-2', c=None, bg=None):
+    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=1.5, b, c=-2', c=None, bg=None):
         """
         Sets the function(s) used to describe the data.
 
@@ -1459,12 +1468,6 @@ class fitter():
 
         # use the internal settings we just set to create the functions
         self._update_functions()
-        
-        # Complain if the number of data sets is not equal to the number of 
-        # functions
-        if not len(self.f) == 0 and not len(self.f) == len(self._set_xdata):
-            print(self.f, self._set_xdata, len(self.f)==0)
-            self._error("Number of data sets does not equal the number of functions.")
         
         if self['autoplot']: self.plot()
         
@@ -1549,10 +1552,10 @@ class fitter():
         eydata=None      
             Error bars for ydata. These can be None (for guessed error) or data 
             / numbers matching the dimensionality of xdata and ydata
-        exdata=None
+        exdata=None 
             x-error bars. Note if these are set to something other than None,
             the fitting method switches from scipy.optimize.leastsq to
-            scipy.optimize.odr.
+            scipy.optimize.odr. NOT IMPLEMENTED YET.
 
         Notes
         -----
@@ -1655,13 +1658,6 @@ class fitter():
         # set the eyscale to 1 for each data set
         self['scale_eydata'] = [1.0]*len(self._set_xdata)
         self['scale_exdata'] = [1.0]*len(self._set_xdata)
-
-        # Warn if something is amiss
-        if not len(xdata)  == len(self.f) \
-        or not len(ydata)  == len(self.f) \
-        or not len(eydata) == len(self.f) \
-        or not len(exdata) == len(self.f):
-            self._error("Number of data sets is not equal to the number of functions.")
         
         # Update the settings so they match the number of data sets.
         for k in self._settings.keys(): self[k] = self[k]
@@ -1842,16 +1838,22 @@ class fitter():
         exdata_massaged = []
         for n in range(len(xdata)):
 
+            # Create local mins and maxes
+            xmin = xmins[n]
+            ymin = ymins[n]
+            xmax = xmaxs[n]
+            ymax = ymaxs[n]
+            
             # handle "None" limits
-            if xmins[n] is None: xmins[n] = min(xdata[n])
-            if xmaxs[n] is None: xmaxs[n] = max(xdata[n])
-            if ymins[n] is None: ymins[n] = min(ydata[n])
-            if ymaxs[n] is None: ymaxs[n] = max(ydata[n])
+            if xmin is None: xmin = min(xdata[n])
+            if xmax is None: xmax = max(xdata[n])
+            if ymin is None: ymin = min(ydata[n])
+            if ymax is None: ymax = max(ydata[n])
 
             # trim the data
             [x, y, ey, ex] = _s.fun.trim_data_uber([xdata[n], ydata[n], eydata[n], exdata[n]],
-                                                   [xdata[n]>=xmins[n], xdata[n]<=xmaxs[n],
-                                                    ydata[n]>=ymins[n], ydata[n]<=ymaxs[n]])
+                                                   [xdata[n]>=xmin, xdata[n]<=xmax,
+                                                    ydata[n]>=ymin, ydata[n]<=ymax])
             
             # Catch the over-trimmed case
             if(len(x)==0):
@@ -1882,16 +1884,16 @@ class fitter():
         """
         self._xdata_massaged, self._ydata_massaged, self._eydata_massaged, self._exdata_massaged = self.get_processed_data()
         
-        # Create the odr data.
-        self._odr_datas = []
-        for n in range(len(self._xdata_massaged)):
-            # Only exdata can be None; make sure it's zeros at least.
-            ex = self._exdata_massaged[n]
-            if ex == None: ex = _n.zeros(len(self._eydata_massaged[n]))
-            self._odr_datas.append(_odr.RealData(self._xdata_massaged[n],
-                                                 self._ydata_massaged[n], 
-                                                 sx=ex, 
-                                                 sy=self._eydata_massaged[n]))
+#        # Create the odr data.
+#        self._odr_datas = []
+#        for n in range(len(self._xdata_massaged)):
+#            # Only exdata can be None; make sure it's zeros at least.
+#            ex = self._exdata_massaged[n]
+#            if ex == None: ex = _n.zeros(len(self._eydata_massaged[n]))
+#            self._odr_datas.append(_odr.RealData(self._xdata_massaged[n],
+#                                                 self._ydata_massaged[n], 
+#                                                 sx=ex, 
+#                                                 sy=self._eydata_massaged[n]))
         return self
 
     def fit(self, **kwargs):
@@ -2064,7 +2066,8 @@ class fitter():
         Returns a string v +/- e with the right number of sig figs.
         """
         # If we have weird stuff
-        if not _s.fun.is_a_number(v) or not _s.fun.is_a_number(e): 
+        if not _s.fun.is_a_number(v) or not _s.fun.is_a_number(e) \
+            or v in [_n.inf, _n.nan] or e in [_n.inf, _n.nan]: 
             return str(v)+pm+str(e)
         
         # Normal values.
@@ -2147,9 +2150,7 @@ class fitter():
 
         # square em and sum em.
         cs = []
-        for r in rs: 
-            if _s.fun.is_a_number(r): cs.append(sum(r**2))
-            else:                     cs.append(r)
+        for r in rs: cs.append(sum(r**2))
         return cs
 
     def chi_squared(self, p=None):
@@ -2261,10 +2262,9 @@ class fitter():
         ####################################################
         # MAKE SURE THIS HANDLES THE CASE OF NO FUNCTIONS
         #######################################################
-
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
-            return self._error("No data. Please use set_data() prior to plotting.")
-
+        
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
+        
         # get the data
         xdatas, ydatas, eydatas, exdatas = self.get_data()
 
@@ -2281,7 +2281,7 @@ class fitter():
     
             # otherwise get the guess residuals
             else:                        r = self.studentized_residuals(self._pguess)
-
+        
         # make a new plot for each data set
         for n in range(len(xdatas)):
 
@@ -2318,7 +2318,6 @@ class fitter():
                 eydata = self._eydata_massaged[n]
                 exdata = self._exdata_massaged[n]
             
-
             # Get the xdata for plotting the function
             xft, xf = self._get_xdata_for_function(n=n)
             
@@ -2423,7 +2422,7 @@ class fitter():
             
             # Include the function names if available
             if n < len(self.f):
-                t = _textwrap.fill('Function ('+str(n)+'/'+str(len(ydata)-1)+'): y = '+self._fnames[n], wrap, subsequent_indent=indent)
+                t = _textwrap.fill('Function ('+str(n)+'/'+str(len(self._fnames)-1)+'): y = '+self._fnames[n], wrap, subsequent_indent=indent)
             else:
                 t = "No functions defined. Use set_functions()."
 
@@ -2520,12 +2519,9 @@ class fitter():
         if len(self._set_xdata)==0 or len(self._set_ydata)==0:
             self._error("No data. Please use set_data() and plot() prior to trimming.")
             return
-
-        # get the data
-        xdata, ydata, eydata = self.get_data()
-
+        
         if _s.fun.is_a_number(n): n = [n]
-        elif isinstance(n,str):   n = list(range(len(xdata)))
+        elif isinstance(n,str):   n = list(range(len(self._set_xdata)))
 
         # loop over the specified plots
         for i in n:
@@ -2549,41 +2545,78 @@ class fitter():
 
         return self
 
-    def zoom(self, n='all', xfactor=2.0, yfactor=1.0):
+    def untrim(self, n='all'):
+        """
+        Removes xmin, xmax, ymin, and ymax. 
+        
+        Parameters
+        ----------
+        n='all'
+            Which data set to perform this action upon. 'all' means all data
+            sets, or you can specify a list.
+        """
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
+            self._error("No data. Please use set_data() and plot() prior to zooming.")
+            return
+
+        if   _s.fun.is_a_number(n): n = [n]
+        elif isinstance(n,str):     n = list(range(len(self._set_xdata)))
+
+        # loop over the specified plots
+        for i in n:
+            self['xmin'][i] = None
+            self['xmax'][i] = None
+            self['ymin'][i] = None
+            self['ymax'][i] = None
+            
+        # now show the update.
+        self.clear_results()
+        if self['autoplot']: self.plot()
+        return self
+    
+    def zoom(self, n='all', xfactor=2.0, yfactor=2.0):
         """
         This will scale the chosen data set's plot range by the
         specified xfactor and yfactor, respectively, and set the trim limits
         xmin, xmax, ymin, ymax accordingly
 
-        n='all'     Which figure to zoom out. 'all' means all figures, or
-                    you can specify a list.
+        Parameters
+        ----------
+        n='all'     
+            Which data set to perform this action upon. 'all' means all data
+            sets, or you can specify a list.
+        xfactor=2.0
+            Factor by which to scale the x range.
+        yfactor=2.0
+            Factor by which to scale the y range.
         """
         if len(self._set_xdata)==0 or len(self._set_ydata)==0:
             self._error("No data. Please use set_data() and plot() prior to zooming.")
             return
 
         # get the data
-        xdata, ydata, eydata = self.get_data()
+        xdata, ydata, eydata, exdata = self.get_data()
 
         if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):     n = list(range(len(xdata)))
 
         # loop over the specified plots
         for i in n:
+            fig = self['first_figure']+i
             try:
-                xmin, xmax = _p.figure(self['first_figure]']+i).axes[1].get_xlim()
+                xmin, xmax = _p.figure(fig).axes[1].get_xlim()
                 xc = 0.5*(xmin+xmax)
                 xs = 0.5*abs(xmax-xmin)
                 self['xmin'][i] = xc - xfactor*xs
                 self['xmax'][i] = xc + xfactor*xs
 
-                ymin, ymax = _p.figure(self['first_figure]']+i).axes[1].get_ylim()
+                ymin, ymax = _p.figure(fig).axes[1].get_ylim()
                 yc = 0.5*(ymin+ymax)
                 ys = 0.5*abs(ymax-ymin)
                 self['ymin'][i] = yc - yfactor*ys
                 self['ymax'][i] = yc + yfactor*ys
             except:
-                self._error("Data "+str(i)+" is not currently plotted.")
+                self._error("Data "+str(fig)+" is not currently plotted.")
 
         # now show the update.
         self.clear_results()
