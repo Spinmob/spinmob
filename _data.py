@@ -2230,8 +2230,8 @@ class fitter():
     def autoscale_eydata(self):
         """
         Rescales the error so the next fit will give reduced chi squareds of 1.
-
-        Each data set will be scaled independently.
+        Each data set will be scaled independently, and you may wish to run 
+        this a few times until it converges.
         """
         if not self.results:
             self._error("You must complete a fit first.")
@@ -2249,24 +2249,8 @@ class fitter():
         if self['autoplot']: self.plot()
 
         return self
-
-    def autoscale_eydata_and_fit(self):
-        """
-        Shortcut to
-
-        self.autoscale_eydata()
-        self.fit_leastsq(_pguess=self.results[0])
-        """
-        if not self.results:
-            self._error("You must complete a fit first.")
-            return
-
-        # use the fit as a guess
-        self._pguess = self.results[0]
-
-        self.autoscale_eydata()
-        self.fit(pguess=self._pguess)
-        return self
+    
+    
 
     def plot(self, **kwargs):
         """
