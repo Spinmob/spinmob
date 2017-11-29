@@ -19,22 +19,34 @@ class Test_functions(_ut.TestCase):
     Test class for databox.
     """
 
-    def setUp(self):
-        """
-        """
-        return
-
-    def tearDown(self):
-        """
-        """
-        return
+    def setUp(self):    return
+    def tearDown(self): return
     
     def test_is_a_number(self):
         
+        # Normal test
         self.assertTrue(_f.is_a_number(7))
+        
+        # String test (used for databox loading I believe)
         self.assertTrue(_f.is_a_number('100'))
+        
+        # Non-numbers
         self.assertFalse(_f.is_a_number([]))
+    
+    def test_fft(self):
 
+        t = _n.linspace(0,10,1024)
+        y = _n.cos(2*_n.pi*37*t+1)
 
-if __name__ == "__main__":
-    _ut.main()
+        # Survival tests        
+        f, Y = _f.fft(t,y)
+    
+    def test_psd(self):
+
+        t = _n.linspace(0,10,1024)
+        y = _n.cos(2*_n.pi*37*t+1)
+
+        # Survival tests        
+        f, Y = _f.psd(t,y)
+
+if __name__ == "__main__": _ut.main()

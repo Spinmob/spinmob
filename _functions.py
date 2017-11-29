@@ -982,13 +982,15 @@ def psd(t, y, pow2=False, window=None):
     P = P / len(y)**2
 
     Fpos = psdfreq(t, pow2=pow2)
-    Ppos = P[0:len(P)/2] + P[0:-len(P)/2]
+    Ppos = P[0:int(len(P)/2)] + P[0:int(-len(P)/2)]
     Ppos[0] = Ppos[0]/2.0
 
     # get the normalized power in y^2/Hz
     Ppos  = Ppos/(Fpos[1]-Fpos[0])
 
     return Fpos, Ppos
+
+
 
 def fft(t, y, pow2=False, window=None):
     """
@@ -1034,7 +1036,7 @@ def fft(t, y, pow2=False, window=None):
 
     f = _n.fft.fftfreq(len(t), t[1]-t[0])
 
-    return _n.concatenate([f[len(f)/2+1:],f[0:len(f)/2]]) , _n.concatenate([fft[len(fft)/2+1:],fft[0:len(fft)/2]])
+    return _n.concatenate([f[int(len(f)/2+1):],f[0:int(len(f)/2)]]) , _n.concatenate([fft[int(len(fft)/2+1):],fft[0:int(len(fft)/2)]])
 
 def psdfreq(t, pow2=False):
     """
@@ -1049,7 +1051,7 @@ def psdfreq(t, pow2=False):
     F = _n.fft.fftfreq(len(t), t[1]-t[0])
 
     # now add the positive and negative frequency components
-    return F[0:len(F)/2]
+    return F[0:int(len(F)/2)]
 
 
 def read_lines(path):
