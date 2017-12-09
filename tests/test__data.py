@@ -198,10 +198,10 @@ class Test_fitter(_ut.TestCase):
         self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
         
         self.x1 = [0,1,2,3,4,5,6,7]
-        self.y1 = [0,1,2,1,3,4,5,3]
+        self.y1 = [10,1,2,1,3,4,5,3]
         self.y2 = [2,1,2,4,5,2,1,5]
         self.ey = [0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7]
-        self.plot_delay = 0.2
+        self.plot_delay = 0.1
         
         return
         
@@ -209,14 +209,13 @@ class Test_fitter(_ut.TestCase):
         """
         Basic tests for a simple example smallish data set.
         """
-        global f
-        
         # Load a test file and fit it, making sure "f" is defined at each step.
         f = _s.data.fitter()
         f.__repr__()
         
         f.set_functions('a1 + a2*x + a3*x**2.', 'a1=-1., a2=0.04, a3=0.00006')
         f.__repr__()
+        f.plot()
 
         f.set_data(self.x1, self.y1, 0.5)
         _s.pylab.ginput(timeout=self.plot_delay)
@@ -230,7 +229,7 @@ class Test_fitter(_ut.TestCase):
         # Check that the reduced chi^2 is roughly correct
         r = f.reduced_chi_squareds()
         self.assertIs(type(r), list)
-        self.assertAlmostEqual(r[0], 3.89, 2)
+        self.assertAlmostEqual(r[0], 29.2238, 2)
     
         # trim the data
         f.set(xmin=1.5, xmax=6.5)
@@ -273,8 +272,6 @@ class Test_fitter(_ut.TestCase):
         Also includes
          - trim, zoom, etc
         """
-        global f
-        
         f = _s.data.fitter(first_figure=10)
         f.__repr__()
         
@@ -310,6 +307,28 @@ class Test_fitter(_ut.TestCase):
         # Fit
         f.fit()
         f.__repr__()
+    
+    def test_get_processed_data(self):
+        """
+        Test self.get_processed_data().
+        """
+        global f
+        
+        f = _s.data.fitter(first_figure=7, autoplot=False)
+        f.__repr__()
+        
+        # Set the data first
+        f.set_data(self.x1, [self.y1,self.y2], self.ey)
+        f.__repr__()
+        
+        # Massage conditions
+        f(xmin=1.5, ymax=3, coarsen=3)
+        f.__repr__()
+        
+        # Levels of process
+        self.assertAlmostEqual(f.get_processed_data(                )[0][1][0], 4.333333333333)
+        self.assertAlmostEqual(f.get_processed_data(do_trim=False   )[0][1][1], 4.0)
+        self.assertAlmostEqual(f.get_processed_data(do_coarsen=False)[2][0][3], 1.7)
 
 if __name__ == "__main__":
     _ut.main()

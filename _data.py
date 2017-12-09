@@ -1070,7 +1070,7 @@ class fitter():
         Include fit curve in plot(s)?
     plot_bg       = True,     
         Include background curve(s) in plots?
-    plot_ey       = True
+    plot_errors   = True
         Include error bars in plot(s)?
     plot_guess    = True,     
         Include the guess(es)?
@@ -1082,9 +1082,7 @@ class fitter():
         Style for fit curve(s).
     style_guess  = dict(marker='',  color='0.25', ls='-')
         Style for guess curve(s).
-    style_bg     = dict(marker='',  color='k', ls='-')
-        Style for background curve(s).
-
+    
 
     
     Data Options
@@ -1185,7 +1183,7 @@ class fitter():
                               plot_all_data = False,    # whether to plot only the trimmed data
                               plot_fit      = True,     # include f in plots?
                               plot_bg       = True,     # include bg in plots?
-                              plot_ey       = True,     # include error bars?
+                              plot_errors       = True,     # include error bars?
                               plot_guess    = True,     # include the guess?
                               plot_guess_zoom = False,  # zoom to include plot?
                               subtract_bg   = False,    # subtract bg from plots?
@@ -1205,15 +1203,14 @@ class fitter():
                               # styles of plots
                               style_data   = dict(marker='+', color='b',   ls=''),
                               style_fit    = dict(marker='',  color='r',    ls='-'),
-                              style_guess  = dict(marker='',  color='0.25', ls='-'),
-                              style_bg     = dict(marker='',  color='k',    ls='-'))
+                              style_guess  = dict(marker='',  color='0.25', ls='-'))
 
         # Silence warnings
         self._settings['silent'] = False
 
         # settings that don't require a re-fit
         self._safe_settings =list(['bg_names', 'fpoints', 'f_names', 'plot_all_data',
-                                   'plot_bg', 'plot_ey', 'plot_guess', 'plot_fit',
+                                   'plot_bg', 'plot_errors', 'plot_guess', 'plot_fit',
                                    'silent', 'style_bg', 'style_data', 'style_guess',
                                    'style_fit', 'subtract_bg', 'xscale', 'yscale',
                                    'xlabel', 'ylabel'])
@@ -1227,8 +1224,7 @@ class fitter():
                  autoplot      = True,     # whether we always plot when changing stuff
                  plot_fit      = True,     # include f in plots?
                  plot_bg       = True,     # include bg in plots?
-                 plot_ex       = True,     # include the x error bars?
-                 plot_ey       = True,     # include the y error bars?
+                 plot_errors   = True,     # include the y error bars?
                  plot_guess    = True,     # include the guess?
                  plot_guess_zoom = False,  # zoom to include plot?
                  subtract_bg   = False,    # subtract bg from plots?
@@ -1337,7 +1333,7 @@ class fitter():
 
 
         # If we don't have any data.
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0: 
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0 or len(self.f)==0: 
             s = s + "\nGUESS\n"
 
         # If we do have data, give mor information
@@ -1401,7 +1397,7 @@ class fitter():
     def _error(self, message): 
         raise BaseException(str(message))
 
-    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=1.5, b, c=-2', c=None, bg=None):
+    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=-0.2, b, c=3', c=None, bg=None):
         """
         Sets the function(s) used to describe the data.
 
@@ -1540,7 +1536,7 @@ class fitter():
         self.clear_results()
 
 
-    def set_data(self, xdata=[1,2,3,4,5], ydata=[[1,2,1,2,1],[3,2,3,4,3]], eydata=None, exdata=None, **kwargs):
+    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, exdata=None, **kwargs):
         """
         This will handle the different types of supplied data and put everything
         in a standard format for processing.
@@ -1785,6 +1781,18 @@ class fitter():
         # return it
         return xdata, ydata, eydata, exdata
 
+    def get_pnames(self):
+        """
+        Returns a list of parameter names.
+        """
+        return list(self._pnames)
+    
+    def get_cnames(self):
+        """
+        Returns a list of constant names.
+        """
+        return list(self._cnames)
+
     def set_guess_to_fit_result(self):
         """
         If you have a fit result, set the guess parameters to the
@@ -1801,9 +1809,18 @@ class fitter():
 
         return self
 
-    def get_processed_data(self):
+    def get_processed_data(self, do_trim=True, do_coarsen=True):
         """
-        This will trim and coarsen the data sets according to self._settings.
+        This will trim and coarsen the data sets according to settings.
+        
+        Returns processed xdata, ydata, eydata, exdata.
+        
+        Parameters
+        ----------
+        do_trim=True
+            Whether we should trim the data
+        do_coarsen=True
+            Whether we should coarsen the data
         
         Settings
         --------
@@ -1815,7 +1832,7 @@ class fitter():
         """
 
         # get the data
-        xdata, ydata, eydata, exdata = self.get_data()
+        xdatas, ydatas, eydatas, exdatas = self.get_data()
 
         # get the trim limits (trimits)
         xmins   = self['xmin']
@@ -1825,50 +1842,56 @@ class fitter():
         coarsen = self['coarsen'] 
 
         # make sure we have one limit for each data set
-        if type(xmins)   is not list: xmins   = [xmins]  *len(xdata)
-        if type(xmaxs)   is not list: xmaxs   = [xmaxs]  *len(xdata)
-        if type(ymins)   is not list: ymins   = [ymins]  *len(xdata)
-        if type(ymaxs)   is not list: ymaxs   = [ymaxs]  *len(xdata)
-        if type(coarsen) is not list: coarsen = [coarsen]*len(xdata)
+        if type(xmins)   is not list: xmins   = [xmins]  *len(xdatas)
+        if type(xmaxs)   is not list: xmaxs   = [xmaxs]  *len(xdatas)
+        if type(ymins)   is not list: ymins   = [ymins]  *len(xdatas)
+        if type(ymaxs)   is not list: ymaxs   = [ymaxs]  *len(xdatas)
+        if type(coarsen) is not list: coarsen = [coarsen]*len(xdatas)
 
         # this should cover all the data sets (dimensions should match!)
         xdata_massaged  = []
         ydata_massaged  = []
         eydata_massaged = []
         exdata_massaged = []
-        for n in range(len(xdata)):
+        for n in range(len(xdatas)):
 
-            # Create local mins and maxes
-            xmin = xmins[n]
-            ymin = ymins[n]
-            xmax = xmaxs[n]
-            ymax = ymaxs[n]
+            if do_trim:
+                # Create local mins and maxes
+                xmin = xmins[n]
+                ymin = ymins[n]
+                xmax = xmaxs[n]
+                ymax = ymaxs[n]
+                
+                # handle "None" limits
+                if xmin is None: xmin = min(xdatas[n])
+                if xmax is None: xmax = max(xdatas[n])
+                if ymin is None: ymin = min(ydatas[n])
+                if ymax is None: ymax = max(ydatas[n])
+    
+                # trim the data
+                [x, y, ey, ex] = _s.fun.trim_data_uber([xdatas[n], ydatas[n], eydatas[n], exdatas[n]],
+                                                       [xdatas[n]>=xmin, xdatas[n]<=xmax,
+                                                        ydatas[n]>=ymin, ydatas[n]<=ymax])
+
+                # Catch the over-trimmed case
+                if(len(x)==0):
+                    print("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
+                    x  = xdatas[n]
+                    y  = ydatas[n]
+                    ey = eydatas[n]
+                    ex = exdatas[n]
+
+            # No trim
+            else: [x, y, ey, ex] = [xdatas[n], ydatas[n], eydatas[n], exdatas[n]]
+
             
-            # handle "None" limits
-            if xmin is None: xmin = min(xdata[n])
-            if xmax is None: xmax = max(xdata[n])
-            if ymin is None: ymin = min(ydata[n])
-            if ymax is None: ymax = max(ydata[n])
-
-            # trim the data
-            [x, y, ey, ex] = _s.fun.trim_data_uber([xdata[n], ydata[n], eydata[n], exdata[n]],
-                                                   [xdata[n]>=xmin, xdata[n]<=xmax,
-                                                    ydata[n]>=ymin, ydata[n]<=ymax])
-            
-            # Catch the over-trimmed case
-            if(len(x)==0):
-                print("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
-                x  = xdata[n]
-                y  = ydata[n]
-                ey = eydata[n]
-                ex = exdata[n]
-
             # coarsen the data
-            x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
-            y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
-            ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
-            if not ex == None:
-                ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+            if do_coarsen:
+                x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
+                y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
+                ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+                if not ex == None:
+                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
 
             # store the result
             xdata_massaged.append(x)
@@ -1876,7 +1899,7 @@ class fitter():
             eydata_massaged.append(ey)
             exdata_massaged.append(ex)
             
-        return [xdata_massaged, ydata_massaged, eydata_massaged, exdata_massaged]
+        return xdata_massaged, ydata_massaged, eydata_massaged, exdata_massaged
 
     def _massage_data(self):
         """
@@ -2080,46 +2103,33 @@ class fitter():
         Returns a list of studentized residuals, (ydata - model)/error
 
         This function relies on a previous call to set_data().
-
-        p=None means use the fit results; if no fit, use guess results.
+        
+        Parameters
+        ----------
+        p=None 
+            Function parameters to use. None means use the fit results; if no fit, use guess results.
         """
-        if self._xdata_massaged is None or self._ydata_massaged is None: return
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return
+        
+        # If we haven't massaged the data yet
+        if self._xdata_massaged is None: self._massage_data()
         
         if p is None:
-            if self.results: p = self.results[0]
-            else:            p = self._pguess
+            if self.results is None: p = self._pguess
+            else:                    p = self.results[0]
 
-        # If one elment is None, they all are, as per set_data()
-        # First case: no x-errors specified.
+        # evaluate the function for all the data, returns a list!
+        f = self._evaluate_all_functions(self._xdata_massaged, p)
+
+        # get the full residuals list
         residuals = []
-        if self._set_exdata[0] == None:
-            
-            # evaluate the function for all the data, returns a list!
-            f = self._evaluate_all_functions(self._xdata_massaged, p)
+        for n in range(len(f)):
+            numerator = self._ydata_massaged[n]-f[n]
+            denominator = _n.absolute(self._eydata_massaged[n])
+            residuals.append(numerator/denominator)
+        return residuals
     
-            # get the full residuals list
-            for n in range(len(f)):
-                numerator = self._ydata_massaged[n]-f[n]
-                denominator = _n.absolute(self._eydata_massaged[n])
-                residuals.append(numerator/denominator)
-            return residuals
-    
-        # Otherwise, we have to use ODR method to get the residuals
-        else:
-            # If we have results, we can return what popped out of odr (easy)
-            if not self.results == None:        
-                o = self.results
-                d = self._odr_datas[n]
-                
-                # Get the x and y residuals
-                delta = o.delta/d.sx; _n.place(delta, _n.zeros(len(delta)), delta==_n.nan)
-                eps   = o.eps  /d.sy; _n.place(eps,   _n.zeros(len(eps)),   eps  ==_n.nan)
-                
-                # The sign is by default that of the y-displacement
-                # This will never be zero unless the point is on the line (or the model has infinite slope)
-                sign  = -_n.sign(eps)
-                r = sign*_n.sqrt(delta**2 + eps**2)
-                print("SHIT!", r)
+        
             
             
     def _studentized_residuals_concatenated(self, p=None):
@@ -2175,7 +2185,7 @@ class fitter():
         r = self.studentized_residuals()
         
         # Happens if data / functions not defined
-        if r == None: return None
+        if r == None: return
         
         # calculate the number of points
         N = 0.0
@@ -2265,32 +2275,42 @@ class fitter():
         
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
         
-        # get the data
-        xdatas, ydatas, eydatas, exdatas = self.get_data()
-
+        # Get the trimmed and full processed data
+        xts, yts, eyts, exts = self.get_processed_data()
+        xas, yas, eyas, exas = self.get_processed_data(do_trim=False)
+        
         # update settings
         for k in kwargs: self[k] = kwargs[k]
 
-        # update the massaged data
-        self._massage_data()
-
         if not len(self.f) == 0:
+            # Update the massaged data
+            self._massage_data()
+            
             # get the residuals
-            r = None
-            if not self.results is None: r = self.studentized_residuals(self.results[0])
-    
+            if self.results == None: 
+                rt = self.studentized_residuals(self._pguess)
+                
             # otherwise get the guess residuals
-            else:                        r = self.studentized_residuals(self._pguess)
+            else:
+                rt = self.studentized_residuals(self.results[0])
+                
         
         # make a new plot for each data set
-        for n in range(len(xdatas)):
-
+        for n in range(len(self._set_xdata)):
+            xt = xts[n]
+            xa = xas[n]
+            yt = yts[n]
+            ya = yas[n]
+            eyt = eyts[n]
+            eya = eyas[n]
+            #ext = exts[n]
+            eyt = eyts[n]
+            
             # get the next figure
             fig = _p.figure(self['first_figure']+n)
 
-            # turn off interactive mode
+            # turn off interactive mode and clear the figure
             _p.ioff()
-
             fig.clear()
 
             # set up two axes. One for data and one for residuals.
@@ -2304,96 +2324,155 @@ class fitter():
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
 
-            # Use all of the data to plot
-            if self['plot_all_data']: 
-                xdata  = xdatas[n]
-                ydata  = ydatas[n]
-                eydata = eydatas[n]
-                exdata = exdatas[n]
-                
-            # Use only the trimmed / massaged data
-            else:
-                xdata  = self._xdata_massaged[n]
-                ydata  = self._ydata_massaged[n]
-                eydata = self._eydata_massaged[n]
-                exdata = self._exdata_massaged[n]
+            # Get the function xdata
+            fxa = self._get_xdata_for_function(n,xa)
+            fxt = self._get_xdata_for_function(n,xt)
             
-            # Get the xdata for plotting the function
-            xft, xf = self._get_xdata_for_function(n=n)
-            
-            # get the thing to subtract from ydata
+            # get the values to subtract from ydata if subtracting the background
             if self['subtract_bg'][n] and not self.bg[n] is None:
 
-                # if we have a fit, use that.
-                if self.results:
-                    dydata = self._evaluate_bg(n, xdata, self.results[0])
-                    dyft   = self._evaluate_bg(n, xft,   self.results[0])
+                # if we have a fit, use that for the background
+                if self.results: p = self.results[0]
+                else:            p = self._pguess
+                
+                # Get the background data
+                d_ya  = self._evaluate_bg(n, xa,  p)
+                d_fya = self._evaluate_bg(n, fxa, p)
+                d_yt  = self._evaluate_bg(n, xt,  p)
+                d_fyt = self._evaluate_bg(n, fxt, p)
 
-                # otherwise, use the _pguess background
-                else:
-                    dydata = self._evaluate_bg(n, xdata, self._pguess)
-                    dyft   = self._evaluate_bg(n, xft,   self._pguess)
+            # Otherwise just make some zero arrays
+            else:
+                d_ya  = 0*xa
+                d_fya = 0*fxa
+                d_yt  = 0*xt
+                d_fyt = 0*fxt
+
+
+
+            # If we're supposed to, add the "all" data and function
+            if self['plot_all_data'][n]:
+                
+                # Make it faint.
+                style_data  = dict(self['style_data' ][n]); style_data ['alpha'] = 0.3
+                
+                if self['plot_errors'][n]: a2.errorbar(xa, ya-d_ya, eya, **style_data)
+                else:                      a2.plot    (xa, ya-d_ya,      **style_data)
             
-            # If we have no background defined, dy is zero.
-            else:
-                dydata = 0*xdata
-                dyft = 0*xft
-
-            # add the data to the plot
-            if self['plot_ey'][n]:
-                a2.errorbar(xdata,
-                            ydata-dydata,
-                            eydata,
-                            **self['style_data'][n])
-            else:
-                a2.plot(    xdata,
-                            ydata-dydata,
-                            **self['style_data'][n])
-
+            # add the trimmed data
+            if self['plot_errors'][n]:     a2.errorbar(xt, yt-d_yt, eyt, **self['style_data'][n])
+            else:                          a2.plot(    xt, yt-d_yt,      **self['style_data'][n])
+                            
             # set the plot range according to just the data
             _s.tweaks.auto_zoom(axes=a2, draw=False)
             a2.set_autoscale_on(False)
 
 
-            if n < len(self.f):
-                
-                # add the _pguess curves
-                yft = self._evaluate_f(n,xft,self._pguess)-dyft
-                
-                if self['plot_guess'][n]:
-    
-                    # plot the _pguess background curve
-                    if self['plot_bg'][n] and self.bg[n] is not None:
-                        a2.plot(xft, self._evaluate_bg(n,xft,self._pguess)-dyft, **self['style_guess'][n])
-    
-                    # plot the _pguess main curve
-                    a2.plot(xft, yft, **self['style_guess'][n])
-    
-                # add the fit curves (if we have a fit)
-                if self['plot_fit'] and self.results:
-    
-                    # plot the background curve
-                    if self['plot_bg'][n] and self.bg[n] is not None:
-                        a2.plot(xft, self._evaluate_bg(n,xft,self.results[0])-dyft, **self['style_fit'][n])
-    
-                    # plot the pfit main curve
-                    a2.plot(xft, self._evaluate_f(n,xft,self.results[0])-dyft, **self['style_fit'][n])
 
-            # Autoscale the axes
+            # Now plot the functions
+            if n < len(self.f): # If there are any functions to plot
+                
+                
+                # Plot the guess under the fit
+                if self['plot_guess'][n]:
+                                    
+                    # FULL BACKGROUND
+                    if self['plot_all_data'][n]:
+                        
+                        # Make it faint.
+                        style_guess = dict(self['style_guess'][n]); style_guess['alpha'] = 0.3
+                
+                        # FULL background guess
+                        if self['plot_bg'][n] and self.bg[n] is not None:
+                            bg_gya = self._evaluate_bg(n, fxa, self._pguess)
+                            a2.plot(fxa, bg_gya-d_fya, **style_guess)
+                        
+                        # FULL guess
+                        gya = self._evaluate_f (n, fxa, self._pguess)
+                        a2.plot(fxa, gya-d_fya, **style_guess)
+                        
+                        # Update the trimmed datas so that the points line up
+                        [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
+
+                    # TRIMMED GUESS BACKGROUND
+                    
+                    # TRIMMED guess background curve
+                    if self['plot_bg'][n] and self.bg[n] is not None:
+                        bg_gyt = self._evaluate_bg(n, fxt, self._pguess)
+                        a2.plot(fxt, bg_gyt-d_fyt, **self['style_guess'][n])
+
+                    # TRIMMED main guess curve
+                    gyt = self._evaluate_f (n, fxt, self._pguess)
+                    a2.plot(fxt, gyt-d_fyt, **self['style_guess'][n])
+    
+                # End of plot guess under the fit
+    
+                # Plot the fit if there is one
+                if not self.results == None:
+    
+                    # FULL FIT
+                    if self['plot_all_data'][n]:
+                        
+                        # Make it faint.
+                        style_fit = dict(self['style_fit'][n]); style_fit['alpha'] = 0.3
+                
+                        # FULL background fit
+                        if self['plot_bg'][n] and self.bg[n] is not None:
+                            bg_fya = self._evaluate_bg(n, fxa, self.results[0])
+                            a2.plot(fxa, bg_fya-d_fya, **style_fit)
+                        
+                        # FULL fit
+                        fya = self._evaluate_f (n, fxa, self.results[0])
+                        a2.plot(fxa, fya-d_fya, **style_fit)
+    
+                        # Update the trimmed datas so that the points line up
+                        [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
+                            
+                    # TRIMMED FIT BACKGROUND
+                    if self['plot_bg'][n] and self.bg[n] is not None: 
+                        bg_fyt = self._evaluate_bg(n, fxt, self.results[0])                    
+                        a2.plot(fxt, bg_fyt-d_fyt, **self['style_fit'][n])
+    
+                    # TRIMMED main guess curve
+                    fyt = self._evaluate_f(n, fxt, self.results[0])
+                    a2.plot(fxt, fyt-d_fyt, **self['style_fit'][n])
+
+            # Re-enable the autoscale
             a2.set_autoscale_on(True)
 
 
 
             # plot the residuals only if there are functions defined
-            if self.results is not None and len(self.f):
-                a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
-                a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_fit'][n])
-                _s.tweaks.auto_zoom(axes=a1, draw=False)
+            if len(self.f):
+                
+                # If we're supposed to also plot all the data, we have to 
+                # Manually calculate the residuals. Clunky, I know.
+                if self['plot_all_data'][n]:
+                    
+                    # Figure out what guy to use for the residuals
+                    if self.results is None: 
+                        p = self._pguess
+                        style = style_guess
+                    else:                    
+                        p = self.results[0]
+                        style = style_fit
+                    
+                    # Calculate them
+                    ra = (ya-self._evaluate_f(n, xa, p))/eya
+                        
+                    # style_data, style_guess, and style_fit should already be faint
+                    a1.errorbar(xa, ra, _n.ones(len(ra)), **style_data)
+                    
+                    # Put the line on top
+                    a1.plot([min(xa), max(xa)], [0,0], **style)
+                
+                # Figure out what style to use for the line
+                if self.results is None: style = self['style_guess'][n]
+                else:                    style = self['style_fit'  ][n]
 
-            # otherwise plot the guess residuals, again, only if functions are defined
-            elif self['plot_guess'][n] and len(self.f):
-                a1.errorbar(self._xdata_massaged[n], r[n], _n.ones(len(r[n])),             **self['style_data'][n])
-                a1.plot([min(self._xdata_massaged[n]),max(self._xdata_massaged[n])],[0,0], **self['style_guess'][n])
+                # Main residuals plot
+                a1.errorbar (xt, rt[n], _n.ones(len(xt)), **self['style_data'][n])
+                a1.plot([min(xt), max(xt)], [0,0], **style)
                 _s.tweaks.auto_zoom(axes=a1, draw=False)
 
                 
@@ -2451,11 +2530,7 @@ class fitter():
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
 
             # if we're supposed to plot the guess and zoom to include it
-            if self['plot_guess_zoom'][n]:
-                ymin, ymax = a2.get_ylim()
-                a2.set_ylim(min(ymin,min(dyft)),
-                            max(ymax,max(dyft)))
-
+            if self['plot_guess_zoom'][n]: _s.tweaks.auto_zoom(axes=a2, draw=False)
 
             # turn back to interactive and show the plots.
             _p.ion()
@@ -2463,49 +2538,40 @@ class fitter():
             _p.show()
 
         # for some reason, it's necessary to touch every figure, too
-        for n in range(len(xdatas)-1,-1,-1): _p.figure(self['first_figure']+n)
+        #for n in range(len(xt)-1,-1,-1): _p.figure(self['first_figure']+n)
 
         return self
 
-    def _get_xdata_for_function(self, n):
+    def _get_xdata_for_function(self, n, xdata):
         """
         Generates the x-data for plotting the function.
         
         Parameters
         ----------
         n
-            Which data set?
+            Which data set we're using
+        xdata
+            Data set upon which to base this
 
         Returns
         -------
         float
         """
         
-        # Figure out which data set to use
-        xdata_trim = self._xdata_massaged[n]
-        if self['plot_all_data']: xdata_full = self.get_data()[0][n]
-        else:                     xdata_full = xdata_trim
-        
         # Use the xdata itself for the function
-        if self['fpoints'][n] in [None, 0]: 
-            return _n.array(xdata_trim), _n.array(xdata_full)
+        if self['fpoints'][n] in [None, 0]: return _n.array(xdata)
             
         # Otherwise, generate xdata with the number of fpoints
         
         # do exponential ranging if xscale is log
         if self['xscale'][n] == 'log':
-            xf = _n.logspace(_n.log10(min(xdata_full)), _n.log10(max(xdata_full)),
-                             self['fpoints'][n], True, 10.0)
+            return _n.logspace(_n.log10(min(xdata)), _n.log10(max(xdata)),
+                               self['fpoints'][n], True, 10.0)
         
         # otherwise do linear spacing
         else:
-            xf = _n.linspace(min(xdata_full), max(xdata_full), self['fpoints'][n])
+            return _n.linspace(min(xdata), max(xdata), self['fpoints'][n])
     
-        # Get the trimmed data
-        xt = _s.fun.trim_data_uber([xf], [xf>=min(xdata_trim), xf<=max(xdata_trim)])[0]
-        
-        return xt, xf
-
     def trim(self, n='all', x=True, y=True):
         """
         This will set xmin and xmax based on the current zoom-level of the
@@ -2727,10 +2793,16 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
     
 
     
+if __name__ == '__main__':
     
+    x1 = [0,1,2,3,4,5,6,7]
+    y1 = [10,1,2,1,3,4,5,3]
+    y2 = [2,1,2,4,5,2,1,5]
+    ey = [0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7]
     
-if __name__ == "__main__":
-    
-    f = fitter('a*x+b', 'a,b').set_data([1,2,3,4,5],[1,2,1,2,1],0.1,0.2)
-        
-
+    # Load a test file and fit it, making sure "f" is defined at each step.
+    f = fitter()
+    f.set_functions('a', 'a=0.5')
+    f.set_data(x1, y1, 0.5)
+    f.set(xmin=1.5, xmax=6.5)
+               
