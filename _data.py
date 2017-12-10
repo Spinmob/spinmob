@@ -1183,7 +1183,7 @@ class fitter():
                               plot_all_data = False,    # whether to plot only the trimmed data
                               plot_fit      = True,     # include f in plots?
                               plot_bg       = True,     # include bg in plots?
-                              plot_errors       = True,     # include error bars?
+                              plot_errors   = True,     # include error bars?
                               plot_guess    = True,     # include the guess?
                               plot_guess_zoom = False,  # zoom to include plot?
                               subtract_bg   = False,    # subtract bg from plots?
@@ -1258,6 +1258,8 @@ class fitter():
         Changes a setting or multiple settings. Can also call self() or
         change individual parameters with self['parameter'] = value
         """
+        if len(kwargs)==0: return self
+        
         # Set settings
         for k in list(kwargs.keys()): self[k] = kwargs[k]
         
@@ -1700,9 +1702,7 @@ class fitter():
         has been run.
         """
         # make sure we've done a "set data" call
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
-            print("\nERROR: You must call set_data() first!")
-            return [[]]
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return [[]]
 
         # update the globals with the current fit parameter guess values
         for n in range(len(self._pnames)): self._set_data_globals[self._pnames[n]] = self._pguess[n]
@@ -2098,11 +2098,12 @@ class fitter():
         
         return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
         
-    def studentized_residuals(self, p=None):
+    def _studentized_residuals_fast(self, p=None):
         """
         Returns a list of studentized residuals, (ydata - model)/error
 
-        This function relies on a previous call to set_data().
+        This function relies on a previous call to set_data(), and assumes
+        self._massage_data() has been called (to increase speed).
         
         Parameters
         ----------
@@ -2110,9 +2111,6 @@ class fitter():
             Function parameters to use. None means use the fit results; if no fit, use guess results.
         """
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return
-        
-        # If we haven't massaged the data yet
-        if self._xdata_massaged is None: self._massage_data()
         
         if p is None:
             if self.results is None: p = self._pguess
@@ -2129,9 +2127,6 @@ class fitter():
             residuals.append(numerator/denominator)
         return residuals
     
-        
-            
-            
     def _studentized_residuals_concatenated(self, p=None):
         """
         This function returns a big long list of residuals so leastsq() knows
@@ -2139,8 +2134,21 @@ class fitter():
 
         p=None means use the fit results
         """
-        if p is None: p = self.results[0]
-        return _n.concatenate(self.studentized_residuals(p))
+        return _n.concatenate(self._studentized_residuals_fast(p))
+
+    def studentized_residuals(self, p=None):
+        """
+        Massages the data and calculates the studentized residuals for 
+        each data set / function.
+        
+        Parameters
+        ----------
+        p=None
+            List of parameter values for the functions. If None, it will use
+            the fit results or guess values (if no fit results exist).
+        """
+        self._massage_data()
+        return self._studentized_residuals_fast(p)
 
     def chi_squareds(self, p=None):
         """
@@ -2269,10 +2277,8 @@ class fitter():
 
         kwargs will update the settings
         """
-        ####################################################
-        # MAKE SURE THIS HANDLES THE CASE OF NO FUNCTIONS
-        #######################################################
         
+        # Make sure there is data to plot.
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
         
         # Get the trimmed and full processed data
@@ -2282,20 +2288,10 @@ class fitter():
         # update settings
         for k in kwargs: self[k] = kwargs[k]
 
-        if not len(self.f) == 0:
-            # Update the massaged data
-            self._massage_data()
-            
-            # get the residuals
-            if self.results == None: 
-                rt = self.studentized_residuals(self._pguess)
-                
-            # otherwise get the guess residuals
-            else:
-                rt = self.studentized_residuals(self.results[0])
-                
+        # Calculate all studentized residuals
+        if len(self.f) > 0: rt = self.studentized_residuals()
         
-        # make a new plot for each data set
+        # make a new figure for each data set
         for n in range(len(self._set_xdata)):
             xt = xts[n]
             xa = xas[n]
@@ -2362,13 +2358,10 @@ class fitter():
             # add the trimmed data
             if self['plot_errors'][n]:     a2.errorbar(xt, yt-d_yt, eyt, **self['style_data'][n])
             else:                          a2.plot(    xt, yt-d_yt,      **self['style_data'][n])
-                            
-            # set the plot range according to just the data
+                           
+            # Zoom on just the data for now
             _s.tweaks.auto_zoom(axes=a2, draw=False)
-            a2.set_autoscale_on(False)
-
-
-
+            
             # Now plot the functions
             if n < len(self.f): # If there are any functions to plot
                 
@@ -2405,8 +2398,8 @@ class fitter():
                     gyt = self._evaluate_f (n, fxt, self._pguess)
                     a2.plot(fxt, gyt-d_fyt, **self['style_guess'][n])
     
-                # End of plot guess under the fit
-    
+                
+                
                 # Plot the fit if there is one
                 if not self.results == None:
     
@@ -2437,11 +2430,9 @@ class fitter():
                     fyt = self._evaluate_f(n, fxt, self.results[0])
                     a2.plot(fxt, fyt-d_fyt, **self['style_fit'][n])
 
-            # Re-enable the autoscale
-            a2.set_autoscale_on(True)
-
-
-
+                if self['plot_guess_zoom'][n]: _s.tweaks.auto_zoom(axes=a2, draw=False)
+            
+            
             # plot the residuals only if there are functions defined
             if len(self.f):
                 
@@ -2473,8 +2464,6 @@ class fitter():
                 # Main residuals plot
                 a1.errorbar (xt, rt[n], _n.ones(len(xt)), **self['style_data'][n])
                 a1.plot([min(xt), max(xt)], [0,0], **style)
-                _s.tweaks.auto_zoom(axes=a1, draw=False)
-
                 
                 
             # Tidy up
@@ -2493,7 +2482,6 @@ class fitter():
             else:                         _p.ylabel(self['ylabel'][n])
             a1.set_ylabel('Studentized\nResiduals')
 
-            
             
             # Assemble the title
             wrap = 80
@@ -2529,17 +2517,13 @@ class fitter():
 
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
 
-            # if we're supposed to plot the guess and zoom to include it
-            if self['plot_guess_zoom'][n]: _s.tweaks.auto_zoom(axes=a2, draw=False)
-
+            
             # turn back to interactive and show the plots.
             _p.ion()
             _p.draw()
             _p.show()
-
-        # for some reason, it's necessary to touch every figure, too
-        #for n in range(len(xt)-1,-1,-1): _p.figure(self['first_figure']+n)
-
+        
+        # End of new figure for each data set loop
         return self
 
     def _get_xdata_for_function(self, n, xdata):
@@ -2794,6 +2778,10 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
 
     
 if __name__ == '__main__':
+
+#    _s.plot.xy.function()
+#    _s.tweaks.auto_zoom()
+#    a = _s.pylab.gca()
     
     x1 = [0,1,2,3,4,5,6,7]
     y1 = [10,1,2,1,3,4,5,3]
@@ -2804,5 +2792,5 @@ if __name__ == '__main__':
     f = fitter()
     f.set_functions('a', 'a=0.5')
     f.set_data(x1, y1, 0.5)
-    f.set(xmin=1.5, xmax=6.5)
+    f.set(xmin=1.5, xmax=6.5, coarsen=2)
                

@@ -7,6 +7,7 @@ import unittest as _ut
 import os as _os
 
 
+a = None
 
 class Test_plot_functions(_ut.TestCase):
     """
@@ -64,7 +65,34 @@ class Test_plot_functions(_ut.TestCase):
         
         self.assertEqual(_s._plotting_mess._match_error_to_data_set([[1,2,3],[1,2]], [None, 22]),
                         [None, [22, 22]])
+    
+    def test_auto_zoom(self):
+        global a
+        _s.pylab.figure(40)
         
+        _s.pylab.plot([1,2,3],[1,2,1])
+        a = _s.pylab.gca()
+        
+        a.set_xlim(1.5,2.5)
+        a.set_ylim(1.5,2.5)
+        _s.tweaks.auto_zoom()
+        self.assertAlmostEqual(3.04, a.get_xlim()[1])
+        self.assertAlmostEqual(2.02, a.get_ylim()[1])
+        
+        a.set_xlim(1.5,2.5)
+        a.set_ylim(1.5,2.5)
+        _s.tweaks.auto_zoom(False, True)
+        self.assertAlmostEqual(2.5, a.get_xlim()[1])
+        self.assertAlmostEqual(2.02, a.get_ylim()[1])
+        
+        a.set_xlim(1.5,2.5)
+        a.set_ylim(1.5,2.5)
+        _s.tweaks.auto_zoom(True, False)
+        self.assertAlmostEqual(3.04, a.get_xlim()[1])
+        self.assertAlmostEqual(2.5, a.get_ylim()[1])
+        
+        
+    
     def test_plots(self):
         
         _s.pylab.figure(20)
@@ -87,7 +115,8 @@ class Test_plot_functions(_ut.TestCase):
         # End with this one to facilitate playing.
         _s.plot.image.function()
         _s.pylab.ginput(timeout=0.5)
-        
+    
+    
         
 
 if __name__ == "__main__":

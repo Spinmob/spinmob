@@ -43,65 +43,92 @@ def add_text(text, x=0.01, y=0.01, axes="gca", draw=True, **kwargs):
     axes.text(x, y, text, transform=axes.transAxes, **kwargs)
     if draw: _pylab.draw()
 
-def auto_zoom(zoomx=1, zoomy=1, axes="gca", x_space=0.04, y_space=0.04, draw=True):
+def auto_zoom(zoomx=True, zoomy=True, axes="gca", x_space=0.04, y_space=0.04, draw=True):
     """
     Looks at the bounds of the plotted data and zooms accordingly, leaving some
     space around the data.
     """
 
+    # Disable auto-updating by default.
     _pylab.ioff()
 
     if axes=="gca": axes = _pylab.gca()
 
-    a = axes
+    # get the current bounds
+    x10, x20 = axes.get_xlim()
+    y10, y20 = axes.get_ylim()
 
-    # get all the lines
-    lines = a.get_lines()
+    # Autoscale using pylab's technique (catches the error bars!)
+    axes.autoscale(enable=True, tight=True)
 
-    # get the current limits, in case we're not zooming one of the axes.
-    x1, x2 = a.get_xlim()
-    y1, y2 = a.get_ylim()
+    # Add padding
+    if axes.get_xscale() == 'linear':
+        x1, x2 = axes.get_xlim()
+        xc = 0.5*(x1+x2)
+        xs = 0.5*(1+x_space)*(x2-x1)
+        axes.set_xlim(xc-xs, xc+xs)
+    
+    if axes.get_yscale() == 'linear':
+        y1, y2 = axes.get_ylim()
+        yc = 0.5*(y1+y2)
+        ys = 0.5*(1+y_space)*(y2-y1)
+        axes.set_ylim(yc-ys, yc+ys)
+    
+    # If we weren't supposed to zoom x or y, reset them
+    if not zoomx: axes.set_xlim(x10, x20)
+    if not zoomy: axes.set_ylim(y10, y20)
+    
+    if draw: 
+        _pylab.ion()
+        _pylab.draw()
 
-    xdata = []
-    ydata = []
-    for n in range(0,len(lines)):
-        # store this line's data
-
-        # build up a huge data array
-        if isinstance(lines[n], _mpl.lines.Line2D):
-            x, y = lines[n].get_data()
-
-            for n in range(len(x)):
-                # if we're not zooming x and we're in range, append
-                if not zoomx and x[n] >= x1 and x[n] <= x2:
-                    xdata.append(x[n])
-                    ydata.append(y[n])
-
-                elif not zoomy and y[n] >= y1 and y[n] <= y2:
-                    xdata.append(x[n])
-                    ydata.append(y[n])
-
-                elif zoomy and zoomx:
-                    xdata.append(x[n])
-                    ydata.append(y[n])
-
-    if len(xdata):
-        xmin = min(xdata)
-        xmax = max(xdata)
-        ymin = min(ydata)
-        ymax = max(ydata)
-
-        # we want a 3% white space boundary surrounding the data in our plot
-        # so set the range accordingly
-        if zoomx: a.set_xlim(xmin-x_space*(xmax-xmin), xmax+x_space*(xmax-xmin))
-        if zoomy: a.set_ylim(ymin-y_space*(ymax-ymin), ymax+y_space*(ymax-ymin))
-
-        if draw:
-            _pylab.ion()
-            _pylab.draw()
-
-    else:
-        return
+##    # get all the lines
+##    lines = a.get_lines()
+##
+##    # get the current limits, in case we're not zooming one of the axes.
+##    x1, x2 = a.get_xlim()
+##    y1, y2 = a.get_ylim()
+##
+##    xdata = []
+##    ydata = []
+##    for n in range(0,len(lines)):
+##        # store this line's data
+##
+##        # build up a huge data array
+##        if isinstance(lines[n], _mpl.lines.Line2D):
+##            x, y = lines[n].get_data()
+##
+##            for n in range(len(x)):
+##                # if we're not zooming x and we're in range, append
+##                if not zoomx and x[n] >= x1 and x[n] <= x2:
+##                    xdata.append(x[n])
+##                    ydata.append(y[n])
+##
+##                elif not zoomy and y[n] >= y1 and y[n] <= y2:
+##                    xdata.append(x[n])
+##                    ydata.append(y[n])
+##
+##                elif zoomy and zoomx:
+##                    xdata.append(x[n])
+##                    ydata.append(y[n])
+##
+##    if len(xdata):
+##        xmin = min(xdata)
+##        xmax = max(xdata)
+##        ymin = min(ydata)
+##        ymax = max(ydata)
+##
+##        # we want a 3% white space boundary surrounding the data in our plot
+##        # so set the range accordingly
+##        if zoomx: a.set_xlim(xmin-x_space*(xmax-xmin), xmax+x_space*(xmax-xmin))
+##        if zoomy: a.set_ylim(ymin-y_space*(ymax-ymin), ymax+y_space*(ymax-ymin))
+##
+##        if draw:
+##            _pylab.ion()
+##            _pylab.draw()
+#
+#    else:
+#        return
 
 def click_estimate_slope():
     """
@@ -2056,6 +2083,5 @@ class style_cycle:
 style = style_cycle(colors     = ['k','r','b','g','m'],
                     markers    = ['o', '^', 's'],
                     linestyles = ['-'])
-
 
 
