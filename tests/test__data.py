@@ -241,7 +241,7 @@ class Test_fitter(_ut.TestCase):
         f.__repr__()
         
         # trim the data and test what happens when there are 0 DOF
-        f.set(xmin=0.5, coarsen=2)
+        f.set(xmin=1.5, coarsen=2, plot_all_data=True, plot_guess_zoom=True)
         _s.pylab.ginput(timeout=self.plot_delay)
         f.__repr__()
         
@@ -322,12 +322,12 @@ class Test_fitter(_ut.TestCase):
         f.__repr__()
         
         # Massage conditions
-        f(xmin=1.5, ymax=3, coarsen=3)
+        f(xmin=1.5, ymax=3, coarsen=2)
         f.__repr__()
         
         # Levels of process
-        self.assertAlmostEqual(f.get_processed_data(                )[0][1][0], 4.333333333333)
-        self.assertAlmostEqual(f.get_processed_data(do_trim=False   )[0][1][1], 4.0)
+        self.assertAlmostEqual(f.get_processed_data(                )[0][1][1], 6.5)
+        self.assertAlmostEqual(f.get_processed_data(do_trim=False   )[0][1][3], 6.5)
         self.assertAlmostEqual(f.get_processed_data(do_coarsen=False)[2][0][3], 1.7)
 
 if __name__ == "__main__":

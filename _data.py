@@ -1070,6 +1070,8 @@ class fitter():
         Include fit curve in plot(s)?
     plot_bg       = True,     
         Include background curve(s) in plots?
+    plot_all_data = False,
+        Continue to plot the trimmed data?
     plot_errors   = True
         Include error bars in plot(s)?
     plot_guess    = True,     
@@ -1178,39 +1180,12 @@ class fitter():
         self._pguess    = []
         self._constants = []
 
-        # default settings
-        self._settings = dict(autoplot      = True,     # whether we always plot when changing stuff
-                              plot_all_data = False,    # whether to plot only the trimmed data
-                              plot_fit      = True,     # include f in plots?
-                              plot_bg       = True,     # include bg in plots?
-                              plot_errors   = True,     # include error bars?
-                              plot_guess    = True,     # include the guess?
-                              plot_guess_zoom = False,  # zoom to include plot?
-                              subtract_bg   = False,    # subtract bg from plots?
-                              first_figure  = 0,        # first figure number to use
-                              fpoints       = 1000,     # number of points to use when plotting f
-                              xmin          = None,     # list of limits for trimming x-data
-                              xmax          = None,     # list of limits for trimming x-data
-                              ymin          = None,     # list of limits for trimming y-data
-                              ymax          = None,     # list of limits for trimming y-data
-                              xlabel        = None,     # list of x labels
-                              ylabel        = None,     # list of y labels
-                              xscale        = 'linear', # axis scale type
-                              yscale        = 'linear', # axis scale type
-                              scale_eydata  = 1.0,      # by how much should we scale the eydata?
-                              coarsen       = 1,        # how much to coarsen the data
-
-                              # styles of plots
-                              style_data   = dict(marker='+', color='b',   ls=''),
-                              style_fit    = dict(marker='',  color='r',    ls='-'),
-                              style_guess  = dict(marker='',  color='0.25', ls='-'))
-
         # Silence warnings
         self._settings['silent'] = False
 
         # settings that don't require a re-fit
         self._safe_settings =list(['bg_names', 'fpoints', 'f_names', 'plot_all_data',
-                                   'plot_bg', 'plot_errors', 'plot_guess', 'plot_fit',
+                                   'plot_bg', 'plot_errors', 'plot_guess', 'plot_guess_zoom', 'plot_fit',
                                    'silent', 'style_bg', 'style_data', 'style_guess',
                                    'style_fit', 'subtract_bg', 'xscale', 'yscale',
                                    'xlabel', 'ylabel'])
@@ -1222,6 +1197,7 @@ class fitter():
         self._initializing = True
         self.set(silent        = False,    # Ignore warnings
                  autoplot      = True,     # whether we always plot when changing stuff
+                 plot_all_data = False,    # Plot all of the data even after trimming?
                  plot_fit      = True,     # include f in plots?
                  plot_bg       = True,     # include bg in plots?
                  plot_errors   = True,     # include the y error bars?
@@ -1243,7 +1219,7 @@ class fitter():
                  coarsen       = 1,        # how much to coarsen the data
 
                  # styles of plots
-                 style_data   = dict(marker='o', color='b',   ls='', mec='w'),
+                 style_data   = dict(marker='o', color='b',   ls='', mec='b'),
                  style_fit    = dict(marker='',  color='r',   ls='-'),
                  style_guess  = dict(marker='',  color='0.25',ls='-'),
                  style_bg     = dict(marker='',  color='k',   ls='-'),)
@@ -1809,18 +1785,18 @@ class fitter():
 
         return self
 
-    def get_processed_data(self, do_trim=True, do_coarsen=True):
+    def get_processed_data(self, do_coarsen=True, do_trim=True):
         """
-        This will trim and coarsen the data sets according to settings.
+        This will coarsen and then trim the data sets according to settings.
         
         Returns processed xdata, ydata, eydata, exdata.
         
         Parameters
         ----------
-        do_trim=True
-            Whether we should trim the data
         do_coarsen=True
             Whether we should coarsen the data
+        do_trim=True
+            Whether we should trim the data
         
         Settings
         --------
@@ -1854,36 +1830,11 @@ class fitter():
         eydata_massaged = []
         exdata_massaged = []
         for n in range(len(xdatas)):
-
-            if do_trim:
-                # Create local mins and maxes
-                xmin = xmins[n]
-                ymin = ymins[n]
-                xmax = xmaxs[n]
-                ymax = ymaxs[n]
-                
-                # handle "None" limits
-                if xmin is None: xmin = min(xdatas[n])
-                if xmax is None: xmax = max(xdatas[n])
-                if ymin is None: ymin = min(ydatas[n])
-                if ymax is None: ymax = max(ydatas[n])
-    
-                # trim the data
-                [x, y, ey, ex] = _s.fun.trim_data_uber([xdatas[n], ydatas[n], eydatas[n], exdatas[n]],
-                                                       [xdatas[n]>=xmin, xdatas[n]<=xmax,
-                                                        ydatas[n]>=ymin, ydatas[n]<=ymax])
-
-                # Catch the over-trimmed case
-                if(len(x)==0):
-                    print("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
-                    x  = xdatas[n]
-                    y  = ydatas[n]
-                    ey = eydatas[n]
-                    ex = exdatas[n]
-
-            # No trim
-            else: [x, y, ey, ex] = [xdatas[n], ydatas[n], eydatas[n], exdatas[n]]
-
+            
+            x  = xdatas[n]
+            y  = ydatas[n]
+            ey = eydatas[n]
+            ex = exdatas[n]
             
             # coarsen the data
             if do_coarsen:
@@ -1892,7 +1843,34 @@ class fitter():
                 ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
                 if not ex == None:
                     ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+            
+            if do_trim:
+                # Create local mins and maxes
+                xmin = xmins[n]
+                ymin = ymins[n]
+                xmax = xmaxs[n]
+                ymax = ymaxs[n]
+                
+                # handle "None" limits
+                if xmin is None: xmin = min(x)
+                if xmax is None: xmax = max(x)
+                if ymin is None: ymin = min(y)
+                if ymax is None: ymax = max(y)
+    
+                # trim the data
+                [xt, yt, eyt, ext] = _s.fun.trim_data_uber([x, y, ey, ex],
+                                                       [x>=xmin, x<=xmax,
+                                                        y>=ymin, y<=ymax])
 
+                # Catch the over-trimmed case
+                if(len(xt)==0): 
+                    self._error("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
+                else:
+                    x = xt
+                    y = yt
+                    ey = eyt
+                    ex = ext
+            
             # store the result
             xdata_massaged.append(x)
             ydata_massaged.append(y)
@@ -2344,7 +2322,9 @@ class fitter():
                 d_yt  = 0*xt
                 d_fyt = 0*fxt
 
-
+            
+            
+            # PLOT DATA FIRST
 
             # If we're supposed to, add the "all" data and function
             if self['plot_all_data'][n]:
@@ -2362,7 +2342,10 @@ class fitter():
             # Zoom on just the data for now
             _s.tweaks.auto_zoom(axes=a2, draw=False)
             
-            # Now plot the functions
+            
+            
+            # PLOT FUNCTIONS
+            
             if n < len(self.f): # If there are any functions to plot
                 
                 
@@ -2789,8 +2772,10 @@ if __name__ == '__main__':
     ey = [0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7]
     
     # Load a test file and fit it, making sure "f" is defined at each step.
-    f = fitter()
+    f = fitter(plot_all_data=True, plot_guess_zoom=True)
     f.set_functions('a', 'a=0.5')
     f.set_data(x1, y1, 0.5)
     f.set(xmin=1.5, xmax=6.5, coarsen=2)
+    f.fit()
+    
                
