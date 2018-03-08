@@ -975,10 +975,10 @@ class databox:
             start = n.start
             stop  = n.stop
             step  = n.step
-            
+
             # Fix up the unspecifieds
             if start == None: start = 0
-            if stop  == None: stop  = len(self)
+            if stop  == None or stop>len(self): stop  = len(self)
             if step  == None: step  = 1
             
             # Return what was asked for
