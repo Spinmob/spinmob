@@ -256,10 +256,10 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
         x,y = _s.fun.trim_data_uber([x,y],[xmin<x,x<xmax,ymin<y,y<ymax])
 
         # create a fitter
-        fitters.append(_s.data.fitter(f=f, p=p, **kwargs))
+        fitters.append(_s.data.fitter(**kwargs).set_functions(f=f, p=p))
         fitters[-1].set_data(x,y)
         fitters[-1].fit()
-        fitters[-1].autoscale_eydata_and_fit()
+        fitters[-1].autoscale_eydata().fit()
         print(fitters[-1])
         print("<click the graph to continue>")
         if not axes.lines[-1] == l: fitters[-1].ginput(timeout=0)
