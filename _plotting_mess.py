@@ -685,8 +685,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     # now loop over the list of data in xdata and ydata
     for n in range(0,len(xdata)):
         # get the label
-        l = str(n)+": "+str(label[n])
-
+        if label[n]=='_nolegend_':
+            l = '_nolegend_'
+        else:
+            l = str(n)+": "+str(label[n])
+        
         # calculate the x an y progressive shifts
         dx = xshift*(n/xshift_every)
         dy = yshift*(n/yshift_every)
