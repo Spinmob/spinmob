@@ -302,10 +302,11 @@ class databox:
         
         
         # define a quick function to convert i's to j's
-        if _sys.version_info[0] >= 3:
-            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8') 
-        else:
-            def fix(x): return str(x.replace('i','j'))
+#        if _sys.version_info[0] >= 4:
+#            print('v3')
+#            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8') 
+#        
+        def fix(x): return str(x.replace('i','j'))
         
         # loop over the remaining data lines, converting to numbers
         #return lines[first_data_line:]
