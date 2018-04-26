@@ -1040,8 +1040,11 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     y_width = abs(float(Y[-1] - Y[0])/(len(Z)-1))
 
     # reverse the Z's
+    # Transpose and reverse
+    Z = Z.transpose()
     Z = Z[-1::-1]
-
+    
+    
     # get rid of the label and title kwargs
     xlabel=''
     ylabel=''
@@ -1146,7 +1149,7 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
         zgrid = _n.array(zgrid)
 
     # now plot!
-    image_data(zgrid, x, y, **default_kwargs)
+    image_data(zgrid.transpose(), x, y, **default_kwargs)
 
 
 def image_file(path='ask', zscript='self[1:]', xscript='[0,1]', yscript='d[0]', g=None, **kwargs):
@@ -1186,7 +1189,7 @@ def image_file(path='ask', zscript='self[1:]', xscript='[0,1]', yscript='d[0]', 
     X = d(xscript, g)
     Y = d(yscript, g)
     Z = _n.array(d(zscript, g))
-    Z = Z.transpose()
+#    Z = Z.transpose()
 
     # plot!
     image_data(Z, X, Y, **default_kwargs)
