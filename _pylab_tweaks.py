@@ -223,7 +223,7 @@ def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
 
     manipulate_shown_data(D, fxname=None, fyname=fyname, **kwargs)
 
-def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
+def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", verbose=True, **kwargs):
     """
     Fast-and-loos quick fit:
 
@@ -260,8 +260,9 @@ def fit_shown_data(f="a*x+b", p="a=1, b=2", axes="gca", **kwargs):
         fitters[-1].set_data(x,y)
         fitters[-1].fit()
         fitters[-1].autoscale_eydata().fit()
-        print(fitters[-1])
-        print("<click the graph to continue>")
+        if verbose:
+            print(fitters[-1])
+            print("<click the graph to continue>")
         if not axes.lines[-1] == l: fitters[-1].ginput(timeout=0)
 
     return fitters

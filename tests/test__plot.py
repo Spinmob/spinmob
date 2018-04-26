@@ -116,7 +116,9 @@ class Test_plot_functions(_ut.TestCase):
         _s.plot.image.function()
         _s.pylab.ginput(timeout=0.5)
     
-    
+    def test_fit_shown_data(self):
+        _s.plot.xy.function()
+        _s.tweaks.fit_shown_data()
         
 
 if __name__ == "__main__":
