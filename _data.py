@@ -306,8 +306,9 @@ class databox:
 #            print('v3')
 #            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8') 
 #        
-        def fix(x): return str(x.replace('i','j'))
-        
+#       def fix(x): return str(x.replace('i','j'))     
+        def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
+
         # loop over the remaining data lines, converting to numbers
         #return lines[first_data_line:]
         z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
