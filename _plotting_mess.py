@@ -1022,6 +1022,9 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     See matplotlib's imshow() for additional optional arguments. 
     """
     global _colormap
+    
+    # Set interpolation to something more relevant for every day science
+    if not 'interpolation' in kwargs.keys(): kwargs['interpolation'] = 'nearest'
 
     _pylab.ioff()
 
