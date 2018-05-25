@@ -306,8 +306,8 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
     h = 0.75
 
     # buffers on left and bottom edges
-    bb = 0.12
-    bl = 0.12
+    bb = 0.15
+    bl = 0.15
 
     xscale = w / (xmax-xmin)
     yscale = h / (ymax-ymin)
@@ -318,6 +318,7 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
     # loop over the axes
     for axes in figure.get_axes():
 
+        # Get the axes bounds
         (x,y,dx,dy) = axes.get_position().bounds
         y  = bb + (y-ymin)*yscale
         dy = dy * yscale
