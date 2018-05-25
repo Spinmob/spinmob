@@ -301,13 +301,13 @@ class databox:
         
         
         
-        # define a quick function to convert i's to j's
-#        if _sys.version_info[0] >= 4:
-#            print('v3')
-#            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8') 
-#        
-#       def fix(x): return str(x.replace('i','j'))     
-        def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
+        # Python 2 format
+        if _sys.version_info[0] == 2:
+            def fix(x): return str(x.replace('i','j'))     
+        
+        # Python 3 format
+        else:
+            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
 
         # loop over the remaining data lines, converting to numbers
         #return lines[first_data_line:]
