@@ -302,18 +302,23 @@ class databox:
         
         
         # Python 2 format
-        if _sys.version_info[0] == 2:
-            def fix(x): return str(x.replace('i','j'))     
+        #if _sys.version_info[0] == 2:
+        try:
+            def fix(x): return str(x.replace('i','j'))
+            
+            # loop over the remaining data lines, converting to numbers
+            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                              delimiter=self.delimiter,
+                              dtype=_n.complex)
         
         # Python 3 format
-        else:
+        except:
             def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
 
-        # loop over the remaining data lines, converting to numbers
-        #return lines[first_data_line:]
-        z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                          delimiter=self.delimiter,
-                          dtype=_n.complex)
+            # loop over the remaining data lines, converting to numbers
+            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                              delimiter=self.delimiter,
+                              dtype=_n.complex)
         
         
         
