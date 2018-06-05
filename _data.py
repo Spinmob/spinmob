@@ -1166,7 +1166,8 @@ class fitter():
         self._set_ydata  = []
         self._set_eydata = []
         self._set_exdata = []
-        self._set_data_globals = dict(_n.__dict__) # defaults to numpy
+        self._set_data_globals = dict(_n.__dict__) # defaults to numpy and scipy.special
+        self._set_data_globals.update(_special.__dict__)
 
         self._xdata_massaged  = None
         self._ydata_massaged  = None
@@ -1179,7 +1180,7 @@ class fitter():
         
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = _n.__dict__
-        self._globals.update()
+        self._globals.update(_special.__dict__)
         self._pnames    = []
         self._cnames    = []
         self._fnames    = []

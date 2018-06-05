@@ -18,6 +18,7 @@ except:        import _data as _data
 
 # expose all the eval statements to all the functions in numpy
 from numpy import *
+from scipy.special import *
 
 # handle for the colormap so it doesn't immediately close
 _colormap = None
