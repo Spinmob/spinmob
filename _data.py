@@ -1383,7 +1383,7 @@ class fitter():
     def _error(self, message): 
         raise BaseException(str(message))
 
-    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=-0.2, b, c=3', c=None, bg=None):
+    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=-0.2, b, c=3', c=None, bg=None, **kwargs):
         """
         Sets the function(s) used to describe the data.
 
@@ -1407,6 +1407,10 @@ class fitter():
         bg=None         
             Can be functions in the same format as f describing a
             background (which can be subtracted during fits, etc)
+        
+        
+        Additional keyword arguments are added to the globals used when
+        evaluating the functions.
         """
 
         # initialize everything
@@ -1414,6 +1418,9 @@ class fitter():
         self._cnames    = []
         self._pguess    = []
         self._constants = []
+        
+        # Update the globals
+        self._globals.update(kwargs)
 
         # store these for later
         self._f_raw  = f
@@ -1943,6 +1950,14 @@ class fitter():
         """
         Turns parameters to constants. As arguments, parameters must be strings.
         As keyword arguments, they can be set at the same time.
+        
+        Note this will NOT work when specifying a non-string fit function, 
+        because there is no flexibility in the number of arguments. To get
+        around this, suppose you've defined a function stuff(x,a,b). Instead
+        of sending the stuff object to self.set_functions() directly, make it
+        a string function, e.g.:
+        
+          self.set_functions('stuff(x,a,b)', 'a,b', stuff=stuff)
         """
 
         # first set all the keyword argument values
@@ -2076,13 +2091,16 @@ class fitter():
         """
         # If we have weird stuff
         if not _s.fun.is_a_number(v) or not _s.fun.is_a_number(e) \
-            or v in [_n.inf, _n.nan] or e in [_n.inf, _n.nan]: 
+            or v in [_n.inf, _n.nan, _n.NAN] or e in [_n.inf, _n.nan, _n.NAN]: 
             return str(v)+pm+str(e)
         
         # Normal values.
-        sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
-        
-        return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
+        try:
+            sig_figs = -int(_n.floor(_n.log10(abs(e))))+1            
+            return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
+
+        except:
+            return str(v)+pm+str(e)
         
     def _studentized_residuals_fast(self, p=None):
         """

@@ -329,6 +329,23 @@ class Test_fitter(_ut.TestCase):
         self.assertAlmostEqual(f.get_processed_data(                )[0][1][1], 6.5)
         self.assertAlmostEqual(f.get_processed_data(do_trim=False   )[0][1][3], 6.5)
         self.assertAlmostEqual(f.get_processed_data(do_coarsen=False)[2][0][3], 1.7)
+    
+    def test_fix_free_and_function_globals(self):
+        """
+        Tests whether we can specify globals for the functions and do a fix()
+        and free() call.
+        """
+        global f
+        
+        def my_fun(x,a,b): return a*x+b
+        
+        f = _s.data.fitter().set_data([1,2,3],[1,2,1],0.1).set_functions('stuff(x,a,b)', 'a,b', stuff=my_fun)
+        f.fix('a', b=2)
+        self.assertEqual(f['b'], 2)
+        self.assertEqual(f._cnames, ['a','b'])
+        f.fit()
+        f.free('a')
+        f.fit()
 
 if __name__ == "__main__":
     _ut.main()
