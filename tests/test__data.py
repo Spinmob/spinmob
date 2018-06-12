@@ -343,9 +343,13 @@ class Test_fitter(_ut.TestCase):
         f.fix('a', b=2)
         self.assertEqual(f['b'], 2)
         self.assertEqual(f._cnames, ['a','b'])
+        f.__repr__()
         f.fit()
+        f.__repr__()
         f.free('a')
+        f.__repr__()
         f.fit()
-
+        f.__repr__()
+        
 if __name__ == "__main__":
     _ut.main()
