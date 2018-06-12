@@ -118,7 +118,7 @@ class Test_plot_functions(_ut.TestCase):
     
     def test_fit_shown_data(self):
         _s.plot.xy.function()
-        _s.tweaks.fit_shown_data()
+        _s.tweaks.fit_shown_data(verbose=False)
         
 
 if __name__ == "__main__":
