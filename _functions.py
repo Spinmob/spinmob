@@ -647,8 +647,8 @@ def fit_linear(xdata, ydata):
     outside the range defined by xrange
 
     """
-    x = xdata
-    y = ydata
+    x = _n.array(xdata)
+    y = _n.array(ydata)
 
     ax  = _n.average(x)
     ay  = _n.average(y)
