@@ -199,7 +199,7 @@ def complex_databoxes(ds, script='d[1]+1j*d[2]', escript=None, **kwargs):
 
 
 
-def complex_files(script='d[1]+1j*d[2]', escript=None, **kwargs):
+def complex_files(script='d[1]+1j*d[2]', escript=None, paths='ask', **kwargs):
     """
     Loads files and plots complex data in the real-imaginary plane.
 
@@ -209,6 +209,8 @@ def complex_files(script='d[1]+1j*d[2]', escript=None, **kwargs):
         Complex-valued script for data array.
     escript=None       
         Complex-valued script for error bars
+    paths='ask'
+        List of paths to open.
 
     See spinmob.plot.complex.data() for additional optional keyword arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
@@ -219,7 +221,7 @@ def complex_files(script='d[1]+1j*d[2]', escript=None, **kwargs):
         Set the file filters for the dialog.
 
     """
-    ds = _data.load_multiple()
+    ds = _data.load_multiple(paths=paths)
 
     if len(ds) == 0: return
 
@@ -378,7 +380,7 @@ def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exs
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, g=g, **kwargs)
 
-def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, g=None, **kwargs):
+def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, paths='ask', g=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot the ydata's magnitude and phase versus xdata.
@@ -393,6 +395,8 @@ def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=No
         Script for y error
     exscript=None
         Script for x error
+    paths='ask'
+        List of paths to open.
     g=None                                    
         Optional dictionary of globals for the scripts
 
@@ -405,7 +409,7 @@ def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=No
         Set the file filters for the dialog.
 
     """
-    return files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, g=g, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=magphase_databoxes, paths=paths, g=g, **kwargs)
 
 def magphase_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
     """
@@ -545,7 +549,7 @@ def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exs
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=realimag_data, g=g, **kwargs)
 
-def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, g=None, **kwargs):
+def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, paths='ask', g=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot the ydata's real and imaginary parts versus xdata.
@@ -560,6 +564,8 @@ def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
         Script for y error
     exscript=None
         Script for x error
+    paths='ask'
+        List of paths to open.
     g=None                                    
         Optional dictionary of globals for the scripts
 
@@ -571,7 +577,7 @@ def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
     filters="*.*" 
         Set the file filters for the dialog.
     """
-    return files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, g=g, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, paths=paths, g=g, **kwargs)
 
 
 def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
@@ -765,7 +771,7 @@ def xy_databoxes(ds, xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=xy_data, g=g, **kwargs)
 
 
-def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=None, **kwargs):
+def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, paths='ask', g=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot the ydata versus xdata.
@@ -780,6 +786,8 @@ def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=None, **
         Script for y error
     exscript=None
         Script for x error
+    paths='ask'
+        List of paths to open.
     g=None                                    
         Optional dictionary of globals for the scripts
 
@@ -792,7 +800,7 @@ def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=None, **
     filters="*.*" 
         Set the file filters for the dialog.
     """
-    return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, g=g, **kwargs)
+    return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, paths=paths, g=g, **kwargs)
 
 def xy_function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, **kwargs):
     """
@@ -1003,7 +1011,7 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
     if 'label' not in kwargs:  kwargs['label']  = labels
 
     # plot!
-    if complex_plane: plotter(real(ydatas),imag(ydatas), **kwargs)
+    if complex_plane: plotter(_n.real(ydatas),_n.imag(ydatas), **kwargs)
     else:             plotter(xdatas, ydatas, **kwargs)
 
 

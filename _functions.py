@@ -642,13 +642,20 @@ def find_zero_bisect(f, xmin, xmax, xprecision):
 
 def fit_linear(xdata, ydata):
     """
-
-    Returns slope and intercept of line of best fit, excluding data
-    outside the range defined by xrange
+    Returns slope and intercept of line of best fit:
+        
+        y = a*x + b
+    
+    through the supplied data.
+    
+    Parameters
+    ----------
+    xdata, ydata:
+        Arrays of x data and y data (having matching lengths).
 
     """
-    x = xdata
-    y = ydata
+    x = _n.array(xdata)
+    y = _n.array(ydata)
 
     ax  = _n.average(x)
     ay  = _n.average(y)
