@@ -2328,11 +2328,13 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         self.load_file()
 
-    def save_file(self, path="ask", force_overwrite=False, just_settings=False):
+    def save_file(self, path="ask", force_overwrite=False, just_settings=False, **kwargs):
         """
         Saves the data in the databox to a file.
 
         just_settings=True means only save the configuration of the controls
+        
+        **kwargs are sent to the normal databox save_file() function.
         """
 
         # if it's just the settings file, make a new databox
@@ -2344,8 +2346,8 @@ class DataboxPlot(_d.databox, GridLayout):
         # add all the controls settings
         for x in self._autosettings_controls: self._store_gui_setting(d, x)
 
-        # save the file
-        _d.databox.save_file(d, path, self._file_type, force_overwrite)
+        # save the file using the skeleton function
+        _d.databox.save_file(d, path, self._file_type, force_overwrite, **kwargs)
 
     def load_file(self, path="ask", just_settings=False):
         """
