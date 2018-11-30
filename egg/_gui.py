@@ -1606,8 +1606,8 @@ class TreeDictionary(BaseObject):
         x.sigValueChanged.connect(function)
         
         # Keep track of the functions
-        if self._connection_lists.has_key(name): self._connection_lists[name].append(function)
-        else:                                    self._connection_lists[name] = [function]
+        if name in self._connection_lists: self._connection_lists[name].append(function)
+        else:                              self._connection_lists[name] = [function]
 
         return self
 
@@ -1626,7 +1626,7 @@ class TreeDictionary(BaseObject):
         if x==None: return None
             
         # disconnect it from all its functions
-        if self._connection_lists.has_key(name):
+        if name in self._connection_lists:
             for f in self._connection_lists[name]: x.sigValueChanged.disconnect(f)
         
         return self
@@ -1646,7 +1646,7 @@ class TreeDictionary(BaseObject):
         if x==None: return None
             
         # reconnect it to all its functions
-        if self._connection_lists.has_key(name):
+        if name in self._connection_lists:
             for f in self._connection_lists[name]: x.sigValueChanged.connect(f)
         
         return self
