@@ -240,6 +240,16 @@ class BaseObject(object):
 
 class GridLayout(BaseObject):
 
+    '''
+    This is a raw, unencapsulated grid layout upon which things like windows
+    are built. 
+    
+    Parameters
+    ----------
+    margins
+        Set to True or False to include the buffer around the layout's contents.
+    '''
+    
     log = None
 
     def __init__(self, margins=_defaults['margins']):
@@ -402,13 +412,32 @@ class GridLayout(BaseObject):
 
 class Window(GridLayout):
 
-    def __init__(self, title='Window', size=[700,500], autosettings_path=None, margins=_defaults['margins']):
-        """
-        This class is a simplified Qt window builder. Hopefully.
+    """
+    This class is a simplified Qt window builder. It behaves like a GridLayout
+    encapsulated within a window object.
 
-        Users are expected to use all properties not starting with an underscore,
-        and all the underlying Qt objects have names starting with an underscore.
-        """
+    Users are expected to use all properties not starting with an underscore,
+    and all the underlying Qt objects have names starting with an underscore.
+    
+    Parameters
+    ----------
+    title='Window'
+        Text for the window's title bar.
+    size=[700,500]
+        Starting size of the window. 
+    autosettings_path=None
+        If set to a file name, e.g. "w.txt", the window will create and update
+        the file gui_settings/w.txt every time a window setting changes (e.g.,
+        if you resize or move it.) Previous settings will be automatically
+        loaded when the program is next run.
+    margins
+        Set to True or False to decide whether to include some buffer space 
+        around the widgets in the window.
+    
+    """
+        
+    
+    def __init__(self, title='Window', size=[700,500], autosettings_path=None, margins=_defaults['margins']):
         self._parent = self
 
         # initialize the grid layout
