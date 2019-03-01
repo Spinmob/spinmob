@@ -1,5 +1,4 @@
 import os      as _os
-import sys     as _sys
 import shutil  as _shutil
 
 # do this so all the scripts will work with all the numpy functions
@@ -1069,7 +1068,8 @@ class fitter():
     Figure Options
     --------------
     first_figure  = 0
-        First figure number to use.
+        First figure number to use. This can prevent overwriting an existing
+        figure when calling self.plot().
     fpoints       = 1000     
         Number of points to use when plotting the fit, guess, and background.
         Set fpoints = None to use the xdata points.
@@ -1116,8 +1116,6 @@ class fitter():
         Scale(s) for y-axis (could be 'log').
     scale_eydata  = 1.0
         Optional scale factor(s) for the eydata.
-    scale_exdata  = 1.0
-        Optional scale factor(s) for the exdata.
     coarsen       = 1
         How much to coarsen the data, i.e., averaging each group of the 
         specified number of points into a single point (and propagating errors).
@@ -1165,14 +1163,14 @@ class fitter():
         self._set_xdata  = [] # definitions from which data is derived during fits
         self._set_ydata  = []
         self._set_eydata = []
-        self._set_exdata = []
+        #self._set_exdata = []
         self._set_data_globals = dict(_n.__dict__) # defaults to numpy + scipy special
         self._set_data_globals.update(_special.__dict__)
 
         self._xdata_massaged  = None
         self._ydata_massaged  = None
         self._eydata_massaged = None
-        self._exdata_massaged = None
+        #self._exdata_massaged = None
 
         self._settings = dict()   # dictionary containing all the fitter settings
     
@@ -1223,7 +1221,7 @@ class fitter():
                  xscale        = 'linear', # axis scale type
                  yscale        = 'linear', # axis scale type
                  scale_eydata  = 1.0,      # by how much should we scale the eydata?
-                 scale_exdata  = 1.0,      # by how much should we scale the exdata?
+                 #scale_exdata  = 1.0,      # by how much should we scale the exdata?
                  coarsen       = 1,        # how much to coarsen the data
 
                  # styles of plots
@@ -1529,7 +1527,7 @@ class fitter():
         self.clear_results()
 
 
-    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, exdata=None, **kwargs):
+    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, **kwargs):
         """
         This will handle the different types of supplied data and put everything
         in a standard format for processing.
@@ -1541,17 +1539,13 @@ class fitter():
         eydata=None      
             Error bars for ydata. These can be None (for guessed error) or data 
             / numbers matching the dimensionality of xdata and ydata
-        exdata=None 
-            x-error bars. Note if these are set to something other than None,
-            the fitting method switches from scipy.optimize.leastsq to
-            scipy.optimize.odr. NOT IMPLEMENTED YET.
 
         Notes
         -----
         xdata, ydata, and eydata can all be scripts or lists of scripts that
         produce arrays. Any python code will work, and the scripts
         automatically know about all numpy functions, the guessed parameters,
-        and the data itself (as x, y, ey, and ex). However, the scripts are
+        and the data itself (as x, y, ey). However, the scripts are
         executed in order -- xdata, ydata, and eydata -- so the xdata script
         cannot know about ydata or eydata, the ydata script cannot know about
         eydata, and the eydata script knows about xdata and ydata.
@@ -1581,7 +1575,7 @@ class fitter():
         Additional optional keyword arguments are added to the globals for 
         script evaluation.
         """
-        self._edata_warning(eydata, exdata)
+        self._edata_warning(eydata)
 
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
         
@@ -1593,7 +1587,7 @@ class fitter():
         if type(xdata)  is str: xdata  = [xdata]
         if type(ydata)  is str: ydata  = [ydata]
         if type(eydata) is str or _s.fun.is_a_number(eydata) or eydata is None: eydata = [eydata]
-        if type(exdata) is str or _s.fun.is_a_number(exdata) or exdata is None: exdata = [exdata]
+        #if type(exdata) is str or _s.fun.is_a_number(exdata) or exdata is None: exdata = [exdata]
 
         # xdata and ydata   ['script'], [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
@@ -1608,7 +1602,7 @@ class fitter():
         # if the first element of eydata is a number, this could also just be an error bar value
         # Note: there is some ambiguity here, if the number of data sets equals the number of data points!
         if _s.fun.is_a_number(eydata[0]) and len(eydata) == len(ydata[0]): eydata = [eydata]
-        if _s.fun.is_a_number(exdata[0]) and len(exdata) == len(xdata[0]): exdata = [exdata]
+        #if _s.fun.is_a_number(exdata[0]) and len(exdata) == len(xdata[0]): exdata = [exdata]
         
         # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
@@ -1616,7 +1610,7 @@ class fitter():
         # Inflate the x, ex, and ey data sets to match the ydata sets
         while len(xdata)  < len(ydata): xdata .append( xdata[0])
         while len(ydata)  < len(xdata): ydata .append( ydata[0])
-        while len(exdata) < len(xdata): exdata.append(exdata[0])
+        #while len(exdata) < len(xdata): exdata.append(exdata[0])
         while len(eydata) < len(ydata): eydata.append(eydata[0])
 
 
@@ -1624,29 +1618,29 @@ class fitter():
         while len(ydata)  < len(self.f): ydata.append(ydata[0])
         while len(xdata)  < len(self.f): xdata.append(xdata[0])
         while len(eydata) < len(self.f): eydata.append(eydata[0])
-        while len(exdata) < len(self.f): exdata.append(exdata[0])
+        #while len(exdata) < len(self.f): exdata.append(exdata[0])
 
         # xdata and ydata   ['script','script'], [[1,2,3],[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script','script'], [[1,1,1],[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3,3], [3,[1,2,3]], [None,None]
 
         # Clean up exdata. If any element isn't None, the other None elements need
         # to be set to 0 so that ODR works.
-        if not exdata.count(None) == len(exdata):
-            # Search for and replace all None's with 0
-            for n in range(len(exdata)):
-                if exdata[n] == None: exdata[n] = 0
-        
+#        if not exdata.count(None) == len(exdata):
+#            # Search for and replace all None's with 0
+#            for n in range(len(exdata)):
+#                if exdata[n] == None: exdata[n] = 0
+#        
         
         # store the data, script, or whatever it is!
         self._set_xdata  = xdata
         self._set_ydata  = ydata
         self._set_eydata = eydata
-        self._set_exdata = exdata
+        #self._set_exdata = exdata
         self._set_data_globals.update(kwargs)
 
         # set the eyscale to 1 for each data set
         self['scale_eydata'] = [1.0]*len(self._set_xdata)
-        self['scale_exdata'] = [1.0]*len(self._set_xdata)
+        #self['scale_exdata'] = [1.0]*len(self._set_xdata)
         
         # Update the settings so they match the number of data sets.
         for k in self._settings.keys(): self[k] = self[k]
@@ -1656,7 +1650,7 @@ class fitter():
         
         return self
 
-    def _edata_warning(self, eydata, exdata):
+    def _edata_warning(self, eydata):
         """
         Warning if eydata is None.
 
@@ -1664,8 +1658,8 @@ class fitter():
         """
         if self['silent'] is True:
             pass
-        elif eydata is None and exdata is None:
-            print("\nWARNING: Not specifying eydata or exdata results in a random guess for the ydata error bars. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n")
+        elif eydata is None:
+            print("\nWARNING: Not specifying eydata results in a random guess for the ydata error bars. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n")
             print("  eydata = 0.1")
             print("  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n")
 
@@ -1689,7 +1683,7 @@ class fitter():
 
     def get_data(self):
         """
-        Returns current xdata, ydata, eydata, and exdata, after set_data() 
+        Returns current xdata, ydata, eydata, after set_data() 
         has been run.
         """
         # make sure we've done a "set data" call
@@ -1712,7 +1706,7 @@ class fitter():
         xdata  = list(self._set_xdata)
         ydata  = list(self._set_ydata)
         eydata = list(self._set_eydata)
-        exdata = list(self._set_exdata)
+        #exdata = list(self._set_exdata)
 
         # make sure they're all lists of numpy arrays
         for n in range(len(xdata)):
@@ -1752,25 +1746,25 @@ class fitter():
             # make it an array
             eydata[n] = _n.array(eydata[n]) * self["scale_eydata"][n]
 
-        # make sure they're all lists of numpy arrays
-        for n in range(len(exdata)):
-
-            # handle scripts
-            if type(exdata[n]) is str:
-                exdata[n] = self.evaluate_script(exdata[n], **self._set_data_globals)
-
-            # None is okay for exdata
-
-            # handle constant error bars (possibly returned by script)
-            if _s.fun.is_a_number(exdata[n]):
-                exdata[n] = _n.ones(len(xdata[n])) * exdata[n]
-
-            # make it an array
-            if not exdata[n] == None:
-                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
+#        # make sure they're all lists of numpy arrays
+#        for n in range(len(exdata)):
+#
+#            # handle scripts
+#            if type(exdata[n]) is str:
+#                exdata[n] = self.evaluate_script(exdata[n], **self._set_data_globals)
+#
+#            # None is okay for exdata
+#
+#            # handle constant error bars (possibly returned by script)
+#            if _s.fun.is_a_number(exdata[n]):
+#                exdata[n] = _n.ones(len(xdata[n])) * exdata[n]
+#
+#            # make it an array
+#            if not exdata[n] == None:
+#                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
 
         # return it
-        return xdata, ydata, eydata, exdata
+        return xdata, ydata, eydata
 
     def get_pnames(self):
         """
@@ -1804,7 +1798,7 @@ class fitter():
         """
         This will coarsen and then trim the data sets according to settings.
         
-        Returns processed xdata, ydata, eydata, exdata.
+        Returns processed xdata, ydata, eydata.
         
         Parameters
         ----------
@@ -1823,7 +1817,7 @@ class fitter():
         """
 
         # get the data
-        xdatas, ydatas, eydatas, exdatas = self.get_data()
+        xdatas, ydatas, eydatas = self.get_data()
 
         # get the trim limits (trimits)
         xmins   = self['xmin']
@@ -1843,21 +1837,21 @@ class fitter():
         xdata_massaged  = []
         ydata_massaged  = []
         eydata_massaged = []
-        exdata_massaged = []
+        #exdata_massaged = []
         for n in range(len(xdatas)):
             
             x  = xdatas[n]
             y  = ydatas[n]
             ey = eydatas[n]
-            ex = exdatas[n]
+            #ex = exdatas[n]
             
             # coarsen the data
             if do_coarsen:
                 x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
                 y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
                 ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
-                if not ex == None:
-                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+#                if not ex == None:
+#                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
             
             if do_trim:
                 # Create local mins and maxes
@@ -1873,9 +1867,9 @@ class fitter():
                 if ymax is None: ymax = max(y)
     
                 # trim the data
-                [xt, yt, eyt, ext] = _s.fun.trim_data_uber([x, y, ey, ex],
-                                                       [x>=xmin, x<=xmax,
-                                                        y>=ymin, y<=ymax])
+                [xt, yt, eyt] = _s.fun.trim_data_uber([x, y, ey],
+                                                      [x>=xmin, x<=xmax,
+                                                       y>=ymin, y<=ymax])
 
                 # Catch the over-trimmed case
                 if(len(xt)==0): 
@@ -1884,21 +1878,21 @@ class fitter():
                     x = xt
                     y = yt
                     ey = eyt
-                    ex = ext
+                    #ex = ext
             
             # store the result
             xdata_massaged.append(x)
             ydata_massaged.append(y)
             eydata_massaged.append(ey)
-            exdata_massaged.append(ex)
+            #exdata_massaged.append(ex)
             
-        return xdata_massaged, ydata_massaged, eydata_massaged, exdata_massaged
+        return xdata_massaged, ydata_massaged, eydata_massaged#, exdata_massaged
 
     def _massage_data(self):
         """
         Processes the data and stores it.
         """
-        self._xdata_massaged, self._ydata_massaged, self._eydata_massaged, self._exdata_massaged = self.get_processed_data()
+        self._xdata_massaged, self._ydata_massaged, self._eydata_massaged = self.get_processed_data()
         
 #        # Create the odr data.
 #        self._odr_datas = []
@@ -1915,9 +1909,8 @@ class fitter():
     def fit(self, **kwargs):
         """
         This will try to determine fit parameters using scipy.optimize.leastsq
-        algorithm. If exdata is set, this will use scipy.optimize.odr to 
-        determine the residuals, which is much slower. This function relies on 
-        a previous call of set_data() and set_functions().
+        algorithm. This function relies on a previous call of set_data() and 
+        set_functions().
 
         Notes
         -----
@@ -2286,8 +2279,8 @@ class fitter():
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
         
         # Get the trimmed and full processed data
-        xts, yts, eyts, exts = self.get_processed_data()
-        xas, yas, eyas, exas = self.get_processed_data(do_trim=False)
+        xts, yts, eyts = self.get_processed_data()
+        xas, yas, eyas = self.get_processed_data(do_trim=False)
         
         # update settings
         for k in kwargs: self[k] = kwargs[k]
@@ -2654,7 +2647,7 @@ class fitter():
             return
 
         # get the data
-        xdata, ydata, eydata, exdata = self.get_data()
+        xdata, ydata, eydata = self.get_data()
 
         if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):     n = list(range(len(xdata)))
