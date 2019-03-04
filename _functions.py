@@ -696,7 +696,7 @@ def frange(start, end, inc=1.0):
     return start + ns*inc
 
 
-def generate_fake_data(f='2*x-5', x=[1,2,3,4,5], ey=1, ex=0, **kwargs):
+def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, **kwargs):
     """
     Generates a set of fake data from the underlying "reality" (or mean
     behavior) function f.
@@ -729,8 +729,11 @@ def generate_fake_data(f='2*x-5', x=[1,2,3,4,5], ey=1, ex=0, **kwargs):
     if not _s.fun.is_iterable(ey): ey = _n.array([ey]*len(x))
     
     # Get the x and y exact values first, then randomize
-    x = _n.random.normal(_n.array(x),   ey)
-    y = _n.random.normal(fitty.f[0](x), ex)
+    x = _n.array(x) 
+    y = fitty.f[0](x)
+    
+    x = _n.random.normal(_n.array(x),ex)
+    y = _n.random.normal(y,          ey)
     
     # make a databox
     d = _s.data.databox()

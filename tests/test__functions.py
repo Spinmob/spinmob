@@ -48,5 +48,10 @@ class Test_functions(_ut.TestCase):
 
         # Survival tests        
         f, Y = _f.psd(t,y)
+        
+    def test_generate_fake_data(self):
+        
+        # Survival test
+        _f.generate_fake_data('cos(x)*3',_n.linspace(-5,5,11),1,2)
 
 if __name__ == "__main__": _ut.main()
