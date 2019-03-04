@@ -1010,11 +1010,7 @@ def fft(t, y, pow2=False, window=None):
 
     window = None
         can be set to any of the windowing functions in numpy,
-        e.g. window='hanning'. Note the numpy windows return an 
-        array peaked at 1. When this window is applied, we use
-        the weighting y*window*len(y)/sum(window) to renormalize
-        the PSD such that its integral returns the variance of the
-        time domain data (as usual).
+        e.g. window='hanning'. 
     """
     # make sure they're numpy arrays, and make copies to avoid the referencing error
     y = _n.array(y)
@@ -1040,7 +1036,7 @@ def fft(t, y, pow2=False, window=None):
     # apply the window
     if w:
         a = w(len(y))
-        y = len(y) * a * y / sum(a)
+        y = len(y) * a
 
     # do the actual fft, and normalize
     Y = _n.fft.fftshift( _n.fft.fft(y) / len(t) )
@@ -1071,11 +1067,7 @@ def psd(t, y, pow2=False, window=None):
 
     window = None
         can be set to any of the windowing functions in numpy,
-        e.g. window='hanning'. Note the numpy windows return an 
-        array peaked at 1. When this window is applied, we use
-        the weighting y*window*len(y)/sum(window) to renormalize
-        the PSD such that its integral returns the variance of the
-        time domain data (as usual).
+        e.g. window='hanning'. 
 
     returns frequencies, psd (y^2/Hz)
     """
