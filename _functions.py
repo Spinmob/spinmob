@@ -696,6 +696,54 @@ def frange(start, end, inc=1.0):
     return start + ns*inc
 
 
+def generate_fake_data(f='2*x-5', x=[1,2,3,4,5], ey=1, ex=0, **kwargs):
+    """
+    Generates a set of fake data from the underlying "reality" (or mean
+    behavior) function f.
+    
+    Parameters
+    ----------
+        f:
+            Underlying "reality" function or mean behavior. This can be any
+            python-evaluable string, and will have access to all the numpy
+            functions (e.g., cos), scipy's special functions (e.g., erf), and
+            any other variables defined by keyword arguments
+        ex, ey:
+            Uncertainty "strength" for x and y data. This can be a constant or an 
+            array of values. If the distributions (below) are normal, this 
+            corresponds to the standard deviation.
+    
+    Keyword arguments are used as additional globals in the function evaluation.
+    
+    Returns a databox containing the data and other relevant information in the
+    header.
+    """
+    
+    # Make a fitter object, which handily interprets string functions
+    # The "+0*x" is a trick to ensure the function takes x as an argument 
+    # (makes it a little more idiot proof).
+    fitty = _s.data.fitter().set_functions(f+"+0*x",'') 
+    
+    # Make sure both errors are arrays of the right length
+    if not _s.fun.is_iterable(ex): ex = _n.array([ex]*len(x))
+    if not _s.fun.is_iterable(ey): ey = _n.array([ey]*len(x))
+    
+    # Get the x and y exact values first, then randomize
+    x = _n.random.normal(_n.array(x),   ey)
+    y = _n.random.normal(fitty.f[0](x), ex)
+    
+    # make a databox
+    d = _s.data.databox()
+    d['x']  = x
+    d['y']  = y
+    d['ey'] = ey
+    d['ex'] = ex
+    d.h(reality=f)
+    
+    return d
+
+
+
 def get_shell_history():
     """
     This only works with some shells.
