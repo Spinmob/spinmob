@@ -1099,14 +1099,7 @@ def psd(t, y, pow2=False, window=None):
 
     return f, P
 
-if __name__ == '__main__':
-    
-    t = [1,2,3,4,5,6,7]
-    y = [1,2,1,2,1,2,1]
-    f1, Y = fft(t,y)
-    f, P = psd(t,y)
-    
-    print(sum(P)*(f[1]-f[0]), sum(_n.array(y)**2)/len(y))
+
     
 
 

@@ -53,7 +53,7 @@ class Test_functions(_ut.TestCase):
     def test_psd(self):
 
         # Odd number of points
-        t    = _n.linspace(0,10,1001)
+        t    = _n.linspace(0,10,101)
         y    = _n.cos(t) + 1
         f, P = _f.psd(t,y)
         
@@ -61,15 +61,13 @@ class Test_functions(_ut.TestCase):
         self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average(y**2))
 
         # Even number of points
-        t    = _n.linspace(0,10,1000)
+        t    = _n.linspace(0,10,100)
         y    = _n.cos(t) + 1
         f, P = _f.psd(t,y)
         
         # Integral test
         self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average(y**2))
     
-    
-        
     
         
     def test_generate_fake_data(self):
