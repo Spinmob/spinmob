@@ -1024,19 +1024,14 @@ def fft(t, y, pow2=False, window=None):
         y.resize(keep)
         t.resize(keep)
 
-    # try to get the windowing function
-    w = None
+    # Window the data
     if not window in [None, False, 0]:
         try:
-            w = eval("_n."+window, globals())
+            w = eval("_n."+window, dict(_n=_n))
+            y = y * w(len(y))
         except:
             print("ERROR: Bad window!")
             return
-
-    # apply the window
-    if w:
-        a = w(len(y))
-        y = len(y) * a
 
     # do the actual fft, and normalize
     Y = _n.fft.fftshift( _n.fft.fft(y) / len(t) )
@@ -1092,7 +1087,10 @@ def psd(t, y, pow2=False, window=None):
     return f, P
 
 
-    
+#if __name__ == '__main__':
+#    t = _n.linspace(0,10,1000)
+#    y = _n.cos(t*10)+1   
+#    f, P = psd(t,y,True,'hanning')    
 
 
 def read_lines(path):

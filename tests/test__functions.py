@@ -70,11 +70,11 @@ class Test_functions(_ut.TestCase):
     
         # Windowed, pow2
         t    = _n.linspace(0,10,100)
-        y    = _n.cos(t) + 1
+        y    = _n.cos(5*t) + 1
         f, P = _f.psd(t,y,pow2=True,window='hanning')
         
         # Integral test
-        self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average(y**2))
+        self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average( (y[0:64]*_n.hanning(64))**2))
     
         
     def test_generate_fake_data(self):
