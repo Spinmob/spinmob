@@ -35,23 +35,48 @@ class Test_functions(_ut.TestCase):
     
     def test_fft(self):
 
-        t = _n.linspace(0,10,1024)
-        y = _n.cos(2*_n.pi*37*t+1)
+        # Odd number of points
+        f, Y = _f.fft([1,2,3,4,5],[1,2,1,2,1])
+        self.assertEqual(f[0],-0.4)
+        self.assertEqual(f[-1],0.4)
+        self.assertAlmostEqual(Y[0],-0.1+0.30776835j)
+        self.assertAlmostEqual(Y[2],1.4)
 
-        # Survival tests        
-        f, Y = _f.fft(t,y)
+        # Even number of points
+        f, Y = _f.fft([1,2,3,4],[1,2,1,2])
+        self.assertEqual(f[0],-0.5)
+        self.assertEqual(f[-1],0.25)
+        self.assertAlmostEqual(Y[0],-0.5)
+        self.assertAlmostEqual(Y[2],1.5)
+        
     
     def test_psd(self):
 
-        t = _n.linspace(0,10,1024)
-        y = _n.cos(2*_n.pi*37*t+1)
+        # Odd number of points
+        t    = _n.linspace(0,10,1001)
+        y    = _n.cos(t) + 1
+        f, P = _f.psd(t,y)
+        
+        # Integral test
+        self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average(y**2))
 
-        # Survival tests        
-        f, Y = _f.psd(t,y)
+        # Even number of points
+        t    = _n.linspace(0,10,1000)
+        y    = _n.cos(t) + 1
+        f, P = _f.psd(t,y)
+        
+        # Integral test
+        self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average(y**2))
+    
+    
+        
+    
         
     def test_generate_fake_data(self):
         
         # Survival test
         _f.generate_fake_data('cos(x)*3',_n.linspace(-5,5,11),1,2)
+    
+        
 
 if __name__ == "__main__": _ut.main()

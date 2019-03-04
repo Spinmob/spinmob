@@ -992,76 +992,29 @@ def _load_object(path="ask", text="Load a pickled object."):
     return object
 
 
-
-def psd(t, y, pow2=False, window=None):
-    """
-    Single-sided power spectral density, assuming real valued inputs.
-
-    This goes through the numpy fourier transform process, assembling and returning
-    (frequencies, psd) given time and signal data y. Use psdfreq() to get the frequencies.
-
-    powers_of_2     Set this to true if you only want to keep the first 2^n data
-                    points (speeds up the FFT substantially)
-
-    window          can be set to any of the windowing functions in numpy,
-                    e.g. window="hanning"
-
-    returns frequencies, psd (y^2/Hz)
-    """
-    # make sure they're numpy arrays
-    y = _n.array(y)
-    t = _n.array(t)
-
-    # if we're doing the power of 2, do it
-    if pow2:
-        keep  = 2**int(_n.log2(len(y)))
-
-        # now resize the data
-        y.resize(keep)
-        t.resize(keep)
-
-    # try to get the windowing function
-    w = None
-    if window:
-        try:
-            w = eval("_n."+window, globals())
-        except:
-            print("ERROR: Bad window!")
-            return
-
-    # apply the window
-    if w:
-        a = w(len(y))
-        y = len(y) * a * y / sum(a)
-
-    # do the actual fft, and normalize the power
-    fft = _n.fft.fft(y)
-    P = _n.real(fft*fft.conj())
-    P = P / len(y)**2
-
-    Fpos = psdfreq(t, pow2=pow2)
-    Ppos = P[0:int(len(P)/2)] + P[0:int(-len(P)/2)]
-    Ppos[0] = Ppos[0]/2.0
-
-    # get the normalized power in y^2/Hz
-    Ppos  = Ppos/(Fpos[1]-Fpos[0])
-
-    return Fpos, Ppos
-
-
-
 def fft(t, y, pow2=False, window=None):
     """
-    FFT of y, assuming complex or real-valued inputs.
+    FFT of y, assuming complex or real-valued inputs. This goes through the 
+    numpy fourier transform process, assembling and returning (frequencies, 
+    complex fft) given time and signal data y.
 
-    This goes through the numpy fourier transform process, assembling and returning
-    (frequencies, complex fft) given time and signal data y.
+    Parameters
+    ----------
+    t,y
+        Time (t) and signal (y) arrays with which to perform the fft. Note the t
+        array is assumed to be evenly spaced.
+        
+    pow2 = False
+        Set this to true if you only want to keep the first 2^n data
+        points (speeds up the FFT substantially)
 
-    powers_of_2     Set this to true if you only want to keep the first 2^n data
-                    points (speeds up the FFT substantially)
-
-    window          can be set to any of the windowing functions in numpy,
-                    e.g. window="hanning"
+    window = None
+        can be set to any of the windowing functions in numpy,
+        e.g. window='hanning'. Note the numpy windows return an 
+        array peaked at 1. When this window is applied, we use
+        the weighting y*window*len(y)/sum(window) to renormalize
+        the PSD such that its integral returns the variance of the
+        time domain data (as usual).
     """
     # make sure they're numpy arrays, and make copies to avoid the referencing error
     y = _n.array(y)
@@ -1077,7 +1030,7 @@ def fft(t, y, pow2=False, window=None):
 
     # try to get the windowing function
     w = None
-    if not window in [None, "None", "none", False, "False", "false", 0]:
+    if not window in [None, False, 0]:
         try:
             w = eval("_n."+window, globals())
         except:
@@ -1090,26 +1043,71 @@ def fft(t, y, pow2=False, window=None):
         y = len(y) * a * y / sum(a)
 
     # do the actual fft, and normalize
-    fft = _n.fft.fft(y) / len(t)
+    Y = _n.fft.fftshift( _n.fft.fft(y) / len(t) )
+    f = _n.fft.fftshift( _n.fft.fftfreq(len(t), t[1]-t[0]) )
+    
+    return f, Y
+    
 
-    f = _n.fft.fftfreq(len(t), t[1]-t[0])
 
-    return _n.concatenate([f[int(len(f)/2+1):],f[0:int(len(f)/2)]]) , _n.concatenate([fft[int(len(fft)/2+1):],fft[0:int(len(fft)/2)]])
 
-def psdfreq(t, pow2=False):
+
+
+def psd(t, y, pow2=False, window=None):
     """
-    Given time array t, returns the positive frequencies of the FFT, including zero.
+    Single-sided power spectral density, assuming real valued inputs. This goes 
+    through the numpy fourier transform process, assembling and returning
+    (frequencies, psd) given time and signal data y. 
+    
+    Parameters
+    ----------
+    t,y
+        Time (t) and signal (y) arrays with which to perform the PSD. Note the t
+        array is assumed to be evenly spaced.
+
+    pow2 = False
+        Set this to true if you only want to keep the first 2^n data
+        points (speeds up the FFT substantially)
+
+    window = None
+        can be set to any of the windowing functions in numpy,
+        e.g. window='hanning'. Note the numpy windows return an 
+        array peaked at 1. When this window is applied, we use
+        the weighting y*window*len(y)/sum(window) to renormalize
+        the PSD such that its integral returns the variance of the
+        time domain data (as usual).
+
+    returns frequencies, psd (y^2/Hz)
     """
-    # if we're doing the power of 2, do it
-    if pow2:
-        keep  = 2**int(_n.log2(len(t)))
-        t.resize(keep)
 
-    # get the frequency array
-    F = _n.fft.fftfreq(len(t), t[1]-t[0])
+    # do the actual fft
+    f, Y = fft(t,y,pow2,window)
+    
+    # take twice the negative frequency branch, because it contains the 
+    # extra frequency point when the number of points is odd.
+    f = _n.abs(f[int(len(f)/2)::-1])
+    P = _n.abs(Y[int(len(Y)/2)::-1])**2 / (f[1]-f[0])
 
-    # now add the positive and negative frequency components
-    return F[0:int(len(F)/2)]
+    # Since this is the same as the positive frequency branch, double the
+    # appropriate frequencies. For even number of points, there is one
+    # extra negative frequency to avoid doubling. For odd, you only need to
+    # avoid the DC value.
+    
+    # For the even
+    if len(t)%2 == 0: P[1:len(P)-1] = P[1:len(P)-1]*2
+    else:             P[1:]         = P[1:]*2
+
+    return f, P
+
+if __name__ == '__main__':
+    
+    t = [1,2,3,4,5,6,7]
+    y = [1,2,1,2,1,2,1]
+    f1, Y = fft(t,y)
+    f, P = psd(t,y)
+    
+    print(sum(P)*(f[1]-f[0]), sum(_n.array(y)**2)/len(y))
+    
 
 
 def read_lines(path):
