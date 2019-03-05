@@ -992,7 +992,7 @@ def _load_object(path="ask", text="Load a pickled object."):
     return object
 
 
-def fft(t, y, pow2=False, window=None):
+def fft(t, y, pow2=False, window=None, rescale=False):
     """
     FFT of y, assuming complex or real-valued inputs. This goes through the 
     numpy fourier transform process, assembling and returning (frequencies, 
@@ -1009,8 +1009,13 @@ def fft(t, y, pow2=False, window=None):
         points (speeds up the FFT substantially)
 
     window = None
-        can be set to any of the windowing functions in numpy,
-        e.g. window='hanning'. 
+        Can be set to any of the windowing functions in numpy that require only
+        the number of points as the argument, e.g. window='hanning'. 
+        
+    rescale = False
+        If True, the FFT will be rescaled by the square root of the ratio of 
+        variances before and after windowing, such that the sum of component 
+        amplitudes squared is equal to the actual variance.
     """
     # make sure they're numpy arrays, and make copies to avoid the referencing error
     y = _n.array(y)
@@ -1027,8 +1032,18 @@ def fft(t, y, pow2=False, window=None):
     # Window the data
     if not window in [None, False, 0]:
         try:
-            w = eval("_n."+window, dict(_n=_n))
-            y = y * w(len(y))
+            # Get the windowing array
+            w = eval("_n."+window, dict(_n=_n))(len(y))
+            
+            # Store the original variance
+            v0 = _n.average(abs(y)**2)
+            
+            # window the time domain data 
+            y = y * w
+            
+            # Rescale by the variance ratio
+            if rescale: y = y * _n.sqrt(v0 / _n.average(abs(y)**2))
+            
         except:
             print("ERROR: Bad window!")
             return
@@ -1044,11 +1059,19 @@ def fft(t, y, pow2=False, window=None):
 
 
 
-def psd(t, y, pow2=False, window=None):
+def psd(t, y, pow2=False, window=None, rescale=False):
     """
     Single-sided power spectral density, assuming real valued inputs. This goes 
     through the numpy fourier transform process, assembling and returning
     (frequencies, psd) given time and signal data y. 
+    
+    Note it is defined such that sum(psd)*df, where df is the frequency
+    spacing, is the variance of the original signal for any range of frequencies.
+    This includes the DC and Nyquist components: 
+        
+        sqrt(psd[0]*df)  = average value of original time trace
+        
+        sqrt(psd[-1]*df) = amplitude of Nyquist component (for even # points)
     
     Parameters
     ----------
@@ -1063,12 +1086,15 @@ def psd(t, y, pow2=False, window=None):
     window = None
         can be set to any of the windowing functions in numpy,
         e.g. window='hanning'. 
+        
+    rescale = False
+        If True, the FFT will be rescaled by the average window value.
 
     returns frequencies, psd (y^2/Hz)
     """
 
     # do the actual fft
-    f, Y = fft(t,y,pow2,window)
+    f, Y = fft(t,y,pow2,window,rescale)
     
     # take twice the negative frequency branch, because it contains the 
     # extra frequency point when the number of points is odd.
@@ -1088,9 +1114,10 @@ def psd(t, y, pow2=False, window=None):
 
 
 #if __name__ == '__main__':
-#    t = _n.linspace(0,10,1000)
-#    y = _n.cos(t*10)+1   
-#    f, P = psd(t,y,True,'hanning')    
+#    t  = _n.linspace(0,10,1000)
+#    y  = _n.cos(t*10)
+#    yh = y*_n.hanning(len(y))
+#    f, P = psd(t,y,True,'hanning',True)    
 
 
 def read_lines(path):

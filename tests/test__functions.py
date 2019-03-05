@@ -75,7 +75,26 @@ class Test_functions(_ut.TestCase):
         
         # Integral test
         self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average( (y[0:64]*_n.hanning(64))**2))
+
+
+        # Windowed, pow2, rescaled
+        t    = _n.linspace(0,10,100)
+        y    = _n.cos(5*t) + 1
+        f, P = _f.psd(t,y,pow2=True,window='hanning',rescale=True)
+        
+        # Integral test
+        self.assertAlmostEqual(sum(P)*(f[1]-f[0]), _n.average( y[0:64]**2))
+
     
+        # DC and nyquist component test
+        f, P = _f.psd([1,2,3,4],[1,2,1,2])
+        self.assertEqual(( P[0]*(f[1]-f[0]))**0.5, 1.5)
+        self.assertEqual((P[-1]*(f[1]-f[0]))**0.5, 0.5)
+        
+        # Middle frequency component test
+        f, P = _f.psd([1,2,3,4],[1,2,2,1])
+        self.assertEqual((P[0]*(f[1]-f[0]))**0.5, 1.5)
+        self.assertEqual((P[1]*(f[1]-f[0]))**0.5, 0.5)
         
     def test_generate_fake_data(self):
         
