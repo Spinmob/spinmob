@@ -217,6 +217,10 @@ class Test_databox(_ut.TestCase):
         _os.remove('test_binary.txt')
         _os.remove('test_binary.txt.backup')
 
+        # Load the difficult one to encode
+        d = _s.data.load(path=_os.path.join(self.data_path, "difficult.binary"))
+        
+
     
     
     def test_load_dialogs(self):

@@ -173,35 +173,45 @@ class databox:
         # clear all the existing data
         self.clear()
 
-        # open said file for reading, read in all the lines and close
-        f = open(path, 'r')
 
-        # Check the first line for SPINMOB_BINARY
-        first_line = f.readline().strip()
-        
+
+        # First check if the file is SPINMOB_BINARY format!
+        f = open(path, 'rb')
+
         # If this file is in SPINMOB_BINARY mode!
-        if first_line[0:14] == 'SPINMOB_BINARY':
+        if f.read(14).decode('utf-8') == 'SPINMOB_BINARY':
             
             # Next character is the delimiter
-            self.delimiter = first_line[14]
+            self.delimiter = f.read(1).decode('utf-8')
+            
+            # Find the newline and get the data type
+            s = ' '
+            while not s[-1] == '\n': s = s+f.read(1).decode('utf-8')
             
             # Rest of the line is the binary dtype
-            self.h(SPINMOB_BINARY = first_line[15:])
+            self.h(SPINMOB_BINARY = s.strip())
 
-            # Create our own lines array just for the header analysis below,
-            # and then read in the binary data.
+            # Now manually assemble the header lines to use in the analysis 
+            # below. If I try readline() on the binary file, it will crash.
             lines = ['\n']
             
-            # The end of the header is specified by 'SPINMOB_BINARY' on its
-            # own line.
-            while not lines[-1] == 'SPINMOB_BINARY': 
-                lines.append(f.readline().strip())
+            # The end of the header is specified by 'SPINMOB_BINARY' on its own line.
+            while not lines[-1] == 'SPINMOB_BINARY':
+                
+                # Get the next line, one character at a time.
+                s = ' '
+                while not s[-1] == '\n': s = s+f.read(1).decode('utf-8')
+                
+                # Okay we have it
+                lines.append(s.strip())
             
-            # Pop that last element
+            # Pop that last line, which should be 'SPINMOB_BINARY'
             lines.pop(-1)
             
             # We've reached the end of the header.
-            f.close()
+        
+        # Close the binary read.
+        f.close()
         
 
 
@@ -209,9 +219,9 @@ class databox:
         # the delimiter as usual. (In binary mode, the delimiter is specified)
         if not 'SPINMOB_BINARY' in self.hkeys:
 
-            # Read the lines and prepend the first line again.
+            # For non-binary files, we always read all the lines.
+            f = open(path, 'r')
             lines = f.readlines()
-            lines = [first_line] + lines
             f.close()
     
             # Determine the delimiter
@@ -234,10 +244,12 @@ class databox:
     
                         # quit the loop!
                         break
+        
+        # Done reading lines and auto-determining delimiter.
+            
 
 
-
-        ##### read in the header information
+        ##### Pares the header from lines
         self.header_lines = []
 
         for n in range(len(lines)):
@@ -283,7 +295,7 @@ class databox:
         
         
         
-        # First, deal with the binary mode
+        # Deal with the binary mode
         if 'SPINMOB_BINARY' in self.hkeys:
             
             # Read the binary file
@@ -321,14 +333,7 @@ class databox:
                 self[ckey] = _n.fromstring(s[start:stop], binary)
                 
                 # Go to next ckey
-                start = stop+1
-            
-            
-            
-            
-            
-            
-            self.s = s
+                start = stop+1        
         
         
         
