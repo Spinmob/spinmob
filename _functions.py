@@ -1088,7 +1088,9 @@ def psd(t, y, pow2=False, window=None, rescale=False):
         e.g. window='hanning'. 
         
     rescale = False
-        If True, the FFT will be rescaled by the average window value.
+        If True, the FFT will be rescaled by the square root of the ratio of 
+        variances before and after windowing, such that the integral 
+        sum(PSD)*df is the variance of the *original* time-domain data.
 
     returns frequencies, psd (y^2/Hz)
     """
