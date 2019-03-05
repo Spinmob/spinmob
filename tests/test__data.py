@@ -217,7 +217,13 @@ class Test_databox(_ut.TestCase):
         _os.remove('test_binary.txt')
         _os.remove('test_binary.txt.backup')
 
+    
+    
+    def test_load_dialogs(self):
         
+        # Crash tests
+        _s.data.load(text='CANCEL ME')
+        _s.data.load_multiple(text='CANCEL ME')
 
 f = None
 class Test_fitter(_ut.TestCase):

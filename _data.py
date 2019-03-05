@@ -156,7 +156,7 @@ class databox:
 
         # Ask user for a file to open
         if path == "ask":
-            path = _s.dialogs.open_single(filters=filters,
+            path = _s.dialogs.load(filters=filters,
                                         default_directory=self.directory,
                                         text=text)
         self.path = path
@@ -2916,7 +2916,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
 
     Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
-    if paths == "ask": paths = _s.dialogs.open_multiple(filters, text, default_directory)
+    if paths == "ask": paths = _s.dialogs.load_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []
