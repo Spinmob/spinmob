@@ -151,8 +151,10 @@ class databox:
             Don't print anything while loading.
         """
         
+        # Set the default directory
         if default_directory is None: default_directory = self.directory
 
+        # Ask user for a file to open
         if path == "ask":
             path = _s.dialogs.open_single(filters=filters,
                                         default_directory=self.directory,
@@ -173,29 +175,65 @@ class databox:
 
         # open said file for reading, read in all the lines and close
         f = open(path, 'r')
-        lines = f.readlines()
-        f.close()
 
-        # Determine the delimiter
-        if self.delimiter is None:
+        # Check the first line for SPINMOB_BINARY
+        first_line = f.readline().strip()
+        
+        # If this file is in SPINMOB_BINARY mode!
+        if first_line[0:14] == 'SPINMOB_BINARY':
+            
+            # Next character is the delimiter
+            self.delimiter = first_line[14]
+            
+            # Rest of the line is the binary dtype
+            self.h(SPINMOB_BINARY = first_line[15:])
 
-            # loop from the end of the file until we get something other than white space
-            for n in range(len(lines)):
+            # Create our own lines array just for the header analysis below,
+            # and then read in the binary data.
+            lines = ['\n']
+            
+            # The end of the header is specified by 'SPINMOB_BINARY' on its
+            # own line.
+            while not lines[-1] == 'SPINMOB_BINARY': 
+                lines.append(f.readline().strip())
+            
+            # Pop that last element
+            lines.pop(-1)
+            
+            # We've reached the end of the header.
+            f.close()
+        
 
-                # strip away the white space
-                s = lines[-n-1].strip()
 
-                # if this line has any content
-                if len(s) > 0:
+        # If we're not in binary mode, we can read all the lines and find
+        # the delimiter as usual. (In binary mode, the delimiter is specified)
+        if not 'SPINMOB_BINARY' in self.hkeys:
 
-                    # try the different delimiter schemes until we find one
-                    # that produces a number. Otherwise it's ambiguous.
-                    if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
-                    elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
-                    elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
-
-                    # quit the loop!
-                    break
+            # Read the lines and prepend the first line again.
+            lines = f.readlines()
+            lines = [first_line] + lines
+            f.close()
+    
+            # Determine the delimiter
+            if self.delimiter is None:
+    
+                # loop from the end of the file until we get something other than white space
+                for n in range(len(lines)):
+    
+                    # strip away the white space
+                    s = lines[-n-1].strip()
+    
+                    # if this line has any content
+                    if len(s) > 0:
+    
+                        # try the different delimiter schemes until we find one
+                        # that produces a number. Otherwise it's ambiguous.
+                        if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
+                        elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
+                        elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
+    
+                        # quit the loop!
+                        break
 
 
 
@@ -219,7 +257,7 @@ class databox:
                 # quit the header loop
                 break;
 
-            ### now we know it's a header line
+            ### after that check, we know it's a header line
 
             # save the lines for the avid user.
             self.header_lines.append(lines[n].strip())
@@ -239,110 +277,165 @@ class databox:
         # now we have a valid set of column ckeys one way or another, and we know first_data_line.
         if header_only: return self
 
-        # Make sure first_data_line isn't None (which happens if there's no data)
-        if first_data_line == "auto":
-            if not quiet: print("\nCould not find a line of pure data! Perhaps check the delimiter?")
-            if not quiet: print("The default delimiter is whitespace. For csv files, set delimiter=','\n")
-            return self
-
-
-
-        ##### at this point we've found the first_data_line,
-
-        # look for the ckeys
-
-        # special case: no header
-        if first_data_line == 0: ckeys = []
-
-        # start by assuming it's the previous line
-        else: ckeys = lines[first_data_line-1].strip().split(self.delimiter)
-
-        # count the number of actual data columns for comparison
-        column_count = len(lines[first_data_line].strip().split(self.delimiter))
-
-        # check to see if ckeys is equal in length to the
-        # number of data columns. If it isn't, it's a false ckeys line
-        if len(ckeys) >= column_count:
-            # it is close enough
-            # if we have too many column keys, mention it
-            while len(ckeys) > column_count:
-                extra = ckeys.pop(-1)
-                if not quiet: print("Extra ckey: "+extra)
-
-        else:
-            # it is an invalid ckeys line. Generate our own!
-            ckeys = []
-            for m in range(0, column_count): ckeys.append("c"+str(m))
-
-        # last step with ckeys: make sure they're all different!
-        self.ckeys = []
-        while len(ckeys):
-
-            # remove the key
-            ckey = ckeys.pop(0)
-
-            # if there is a duplicate
-            if (ckey in ckeys) or (ckey in self.ckeys):
-                # increase the label index until it's unique
-                n=0
-                while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
-                ckey = ckey+"_"+str(n)
-            self.ckeys.append(ckey)
-
-        # initialize the columns arrays
-        # I did benchmarks and there's not much improvement by using numpy-arrays here.
-        for label in self.ckeys: self.columns[label] = []
-
         
         
         
         
         
         
-        
-        # Python 2 format
-        #if _sys.version_info[0] == 2:
-        try:
-            def fix(x): return str(x.replace('i','j'))
+        # First, deal with the binary mode
+        if 'SPINMOB_BINARY' in self.hkeys:
             
-            # loop over the remaining data lines, converting to numbers
-            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                              delimiter=self.delimiter,
-                              dtype=_n.complex)
+            # Read the binary file
+            f = open(path, 'rb')
+            s = f.read()
+            f.close()
+            
+            # Get the delimiter for easier coding
+            delimiter = self.delimiter.encode('utf-8')
+            
+            # Get the binary mode, e.g., 'float32'
+            binary = self.h('SPINMOB_BINARY')
+            
+            # Number of bytes per element
+            size = eval('_n.'+binary+'().itemsize', dict(_n=_n))
+            
+            # Location of first ckey
+            start = s.find(b'SPINMOB_BINARY',14) + 15
+            
+            # Continue until we reach the last character.
+            while not start >= len(s):
+           
+                # Get the ckey
+                stop  = s.find(delimiter, start)
+                ckey  = s[start:stop].decode('utf-8')
+                
+                # Get the array length
+                start = stop+1
+                stop  = s.find(b'\n', start)
+                length = int(s[start:stop])
+                
+                # Get the data!
+                start = stop+1
+                stop  = start+size*length
+                self[ckey] = _n.fromstring(s[start:stop], binary)
+                
+                # Go to next ckey
+                start = stop+1
+            
+            
+            
+            
+            
+            
+            self.s = s
         
-        # Python 3 format
-        except:
-            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
+        
+        
+        # Otherwise we have a text file to load.
+        else:
+            # Make sure first_data_line isn't still 'auto'
+            # which happens if there's no data, or if it's a binary file
+            if first_data_line == "auto" and not 'SPINMOB_BINARY' in self.hkeys:
+                if not quiet: print("\ndatabox.load_file(): Could not find a line of pure data! Perhaps check the delimiter?")
+                return self
+    
+    
+            ##### at this point we've found the first_data_line,
+    
+            # look for the ckeys
+    
+            # special case: no header
+            if first_data_line == 0: ckeys = []
+    
+            # start by assuming it's the previous line
+            else: ckeys = lines[first_data_line-1].strip().split(self.delimiter)
+    
+            # count the number of actual data columns for comparison
+            column_count = len(lines[first_data_line].strip().split(self.delimiter))
+    
+            # check to see if ckeys is equal in length to the
+            # number of data columns. If it isn't, it's a false ckeys line
+            if len(ckeys) >= column_count:
+                # it is close enough
+                # if we have too many column keys, mention it
+                while len(ckeys) > column_count:
+                    extra = ckeys.pop(-1)
+                    if not quiet: print("Extra ckey: "+extra)
+    
+            else:
+                # it is an invalid ckeys line. Generate our own!
+                ckeys = []
+                for m in range(0, column_count): ckeys.append("c"+str(m))
+    
+            # last step with ckeys: make sure they're all different!
+            self.ckeys = []
+            while len(ckeys):
+    
+                # remove the key
+                ckey = ckeys.pop(0)
+    
+                # if there is a duplicate
+                if (ckey in ckeys) or (ckey in self.ckeys):
+                    # increase the label index until it's unique
+                    n=0
+                    while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
+                    ckey = ckey+"_"+str(n)
+                self.ckeys.append(ckey)
+    
+            # initialize the columns arrays
+            # I did benchmarks and there's not much improvement by using numpy-arrays here.
+            for label in self.ckeys: self.columns[label] = []
+    
+            
+            
+            
+            
+            
+            
+            
+            # Python 2 format
+            #if _sys.version_info[0] == 2:
+            try:
+                def fix(x): return str(x.replace('i','j'))
+                
+                # loop over the remaining data lines, converting to numbers
+                z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                                  delimiter=self.delimiter,
+                                  dtype=_n.complex)
+            
+            # Python 3 format
+            except:
+                def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
+    
+                # loop over the remaining data lines, converting to numbers
+                z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                                  delimiter=self.delimiter,
+                                  dtype=_n.complex)
+            
+            # genfromtxt returns a 1D array if there is only one data line.
+            # highly confusing behavior, numpy!
+            if len(_n.shape(z)) == 1:
+                # check to make sure the data file contains only 1 column of data
+                rows_of_data = len(lines) - first_data_line
+                if rows_of_data == 1: z = _n.array([z])
+                else: z = _n.array(z)
+    
+            # fix for different behavior of genfromtxt on single columns
+            if len(z.shape) == 2: z = z.transpose()
+            else:                 z = [z]
+    
+            # Add all the columns
+            for n in range(len(self.ckeys)):
+    
+                # if any of the imaginary components are non-zero, use complex
+                if _n.any(_n.imag(z[n])): self[n] = z[n]
+                else:                     self[n] = _n.real(z[n])
 
-            # loop over the remaining data lines, converting to numbers
-            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                              delimiter=self.delimiter,
-                              dtype=_n.complex)
-        
-        
-        
-        
-        
-        
-        # genfromtxt returns a 1D array if there is only one data line.
-        # highly confusing behavior, numpy!
-        if len(_n.shape(z)) == 1:
-            # check to make sure the data file contains only 1 column of data
-            rows_of_data = len(lines) - first_data_line
-            if rows_of_data == 1: z = _n.array([z])
-            else: z = _n.array(z)
+        # Done with loading in the columns of data
 
-        # fix for different behavior of genfromtxt on single columns
-        if len(z.shape) == 2: z = z.transpose()
-        else:                 z = [z]
-
-        # Add all the columns
-        for n in range(len(self.ckeys)):
-
-            # if any of the imaginary components are non-zero, use complex
-            if _n.any(_n.imag(z[n])): self[n] = z[n]
-            else:                     self[n] = _n.real(z[n])
-
+        
+        
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
             if k in self.columns:
@@ -350,25 +443,35 @@ class databox:
 
         return self
 
-    def save_file(self, path='ask', filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current'):
+    def save_file(self, path='ask', filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current', binary=None):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
 
         Parameters
         ----------
+        
         filters='*.dat'         
             File filter for the file dialog (for path="ask")
+        
         force_overwrite=False   
             Normally, if the file * exists, this will copy that
             to *.backup. If the backup already exists, this
             function will abort. Setting this to True will
             force overwriting the backup file.
+        
         header_only=False       
             Only output the header?
+        
         delimiter='use current' 
             This will set the delimiter of the output file
             'use current' means use self.delimiter
+        
+        binary=None
+            Set to one of the allowed numpy dtypes, e.g., float32, float64, 
+            complex64, int32, etc. Setting binary=True defaults to float64.
+            Note if the header contains the key SPINMOB_BINARY and binary=None,
+            it will save as binary using the header specification.
         """
         
         # Make sure there isn't a problem later with no-column databoxes
@@ -397,30 +500,77 @@ class databox:
         # figure out the temporary path
         temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
 
-        # open the file and write the header
+        # open the temporary file
         f = open(temporary_path, 'w')
+        
+        
+        
+        # Update the header element if overridden or added by this save command
+        if not binary == None: self.h(SPINMOB_BINARY=binary)
+        
+        # If for some reason the header says the binary mode is None or False, 
+        # Remove it so it stays in ascii mode.
+        if 'SPINMOB_BINARY' in [None, 'None', False, 'False']: 
+            self.pop_header('SPINMOB_BINARY')
+        
+        # Now use the header element to determine the binary mode
+        if 'SPINMOB_BINARY' in self.hkeys:
+            
+            # Get the binary mode (we'll use this later)
+            binary = self.pop_header('SPINMOB_BINARY')
+            
+            # Write the special first key.
+            f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
+            
+        # Write the usual header
         for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
         f.write('\n')
 
-        # if we're only supposed to write the header
+        # if we're not just supposed to write the header
         if not header_only: 
             
-            # now write the ckeys
-            elements = []
-            for ckey in self.ckeys: elements.append(str(ckey))
-            f.write(delimiter.join(elements) + "\n")
-    
-            # now loop over the data
-            for n in range(0, len(self[0])):
-                # loop over each column
+            # Normal ascii saving mode.
+            if binary in [None, 'None', False, 'False']:
+                
+                # write the ckeys
                 elements = []
-                for m in range(0, len(self.ckeys)):
-                    # write the data if there is any, otherwise, placeholder ("x")
-                    if n < len(self[m]):
-                        elements.append(str(self[m][n]))
-                    else:
-                        elements.append('_')
+                for ckey in self.ckeys: 
+                    elements.append(str(ckey).replace(delimiter,'_'))
                 f.write(delimiter.join(elements) + "\n")
+        
+                # now loop over the data
+                for n in range(0, len(self[0])):
+                    # loop over each column
+                    elements = []
+                    for m in range(0, len(self.ckeys)):
+                        # write the data if there is any, otherwise, placeholder
+                        if n < len(self[m]):
+                            elements.append(str(self[m][n]))
+                        else:
+                            elements.append('_')
+                    f.write(delimiter.join(elements) + "\n")
+
+            # Binary mode
+            else:
+                # Announce that we're done with the header. It's binary time
+                f.write('SPINMOB_BINARY\n')
+                
+                # Loop over the ckeys
+                for n in range(len(self.ckeys)):
+                    
+                    # Get the binary data string
+                    data_string = _n.array(self[n]).astype(binary).tostring()
+                    
+                    # Write the column
+                    #  ckey + delimiter + count + \n + datastring + \n
+                    f.write(str(self.ckeys[n]).replace(delimiter,'_') 
+                           + delimiter + str(len(self[n])) + '\n')
+                    f.close()
+                    f = open(temporary_path, 'ab')
+                    f.write(data_string)
+                    f.close()
+                    f = open(temporary_path, 'a')
+                    f.write('\n')
 
         f.close()
 
