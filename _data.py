@@ -1146,11 +1146,14 @@ class fitter():
         by a "typical" user. For example, do not set data directly; 
         use set_data(), which clears the fit results. Otherwise the fit 
         results will not match the existing data.
+    self.figures 
+        Setting this to a figure instance or list of figures will force the 
+        plot command to use these, rather than creating new figures.
         
     See the spinmob wiki on github, or use IPython's autocomplete to play around!
     """
     
-    
+    figures = None
 
     def __init__(self, **kwargs):
         
@@ -2271,12 +2274,22 @@ class fitter():
     def plot(self, **kwargs):
         """
         This will plot the data (with error) for inspection.
+    
+        Setting self.figures to a figure instance or list of figure instances
+        will override the creation of new figures. If you specify
+        a list, its length had better be at least as large as the
+        number of data sets.
 
         kwargs will update the settings
         """
         
         # Make sure there is data to plot.
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
+        
+        # Make sure the figures is a list
+        if not self.figures == None and not type(self.figures) == list:
+            self.figures = [self.figures]
+        
         
         # Get the trimmed and full processed data
         xts, yts, eyts = self.get_processed_data()
@@ -2300,15 +2313,16 @@ class fitter():
             eyt = eyts[n]
             
             # get the next figure
-            fig = _p.figure(self['first_figure']+n)
-
+            if self.figures == None: fig = _p.figure(self['first_figure']+n)
+            else: fig = self.figures[n]
+                    
             # turn off interactive mode and clear the figure
             _p.ioff()
             fig.clear()
-
+            
             # set up two axes. One for data and one for residuals.
-            a1 = _p.subplot(211)            # Residuals
-            a2 = _p.subplot(212, sharex=a1) # Data
+            a1 = fig.add_subplot(211)            # Residuals
+            a2 = fig.add_subplot(212, sharex=a1) # Data
             a1.set_position([0.15, 0.72, 0.75, 0.15])
             a2.set_position([0.15, 0.10, 0.75, 0.60])
 
@@ -2474,14 +2488,14 @@ class fitter():
             for m in a1.get_xticklabels(): m.set_visible(False)
             
             # Add labels to the axes
-            if self['xlabel'][n] is None: _p.xlabel('xdata['+str(n)+']')
-            else:                         _p.xlabel(self['xlabel'][n])
+            if self['xlabel'][n] is None: a2.set_xlabel('xdata['+str(n)+']')
+            else:                         a2.set_xlabel(self['xlabel'][n])
             if self['ylabel'][n] is None:
                 ylabel='ydata['+str(n)+']'
                 if self['subtract_bg'][n] and self.bg[n] is not None:
                     ylabel=ylabel+' - bg['+str(n)+']'
-                _p.ylabel(ylabel)
-            else:                         _p.ylabel(self['ylabel'][n])
+                a2.set_ylabel(ylabel)
+            else:                         a2.set_ylabel(self['ylabel'][n])
             a1.set_ylabel('Studentized\nResiduals')
 
             
@@ -2522,8 +2536,9 @@ class fitter():
             
             # turn back to interactive and show the plots.
             _p.ion()
-            _p.draw()
-            _p.show()
+            if self.figures == None:
+                _p.draw()
+                _p.show()
         
         # End of new figure for each data set loop
         return self

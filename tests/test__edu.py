@@ -3,9 +3,11 @@ import os          as _os
 import spinmob     as _s
 import spinmob.edu as _edu
 import unittest    as _ut
+import numpy       as _n
 
 
-global fdt
+
+global g
 class Test_edu(_ut.TestCase):
     """
     Test class for edu package.
@@ -26,8 +28,8 @@ class Test_edu(_ut.TestCase):
         """
         Just opens a full-featured example and lets the user play with it
         """
-        global fdt
-        fdt = _edu.fitting.fake_data_taker() 
+        global g
+        g = _edu.fitting.fake_data_taker() 
         
         
     

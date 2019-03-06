@@ -777,12 +777,33 @@ class Docker(Window):
 
 class Button(BaseObject):
 
-    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None):
-        """
-        This is a simplified button object. If you supply a QPushButton instance
-        it will use that instead.
-        """
+    """
+    This is a simplified button object. The underlying Qt object is stored as
+    self._widget.
+    
+    Parameters
+    ----------
+    text="My Button! No!"
+        Text to appear on the button.
+    checkable=False
+        Whether the button can be toggled or just pressed.
+    checked=False
+        Whether the initial state is checked.
+    QPushButton=None
+        Optionally, you can specify a QPushButton instance that it will use
+        instead of creating a new one.
+    
+    Signals
+    -------
+    self.signal_clicked
+        When the user has clicked and released the button.
+    self.signal_toggled
+        When the value has changed.
+    """
 
+    
+    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None):
+        
         # Qt button instance
         if QPushButton is None: self._widget = _g.Qt.QtGui.QPushButton(text)
         else:                   self._widget = QPushButton
@@ -1788,32 +1809,52 @@ class TreeDictionary(BaseObject):
         for n in self.naughty: name = name.replace(n, '_')
         return name
 
-    def add_parameter(self, name='test', value='42', **kwargs):
+    def add_parameter(self, name='test', value=42.0, **kwargs):
         """
-        Adds a parameter "leaf" to the tree.
+        Adds a parameter "leaf" to the tree. 
+        
+        Parameters
+        ----------
+        name='test'
+            The name of the leaf. It should be a string of the form
+            "branch1/branch2/parametername" and will be nested as indicated.
+        value=42.0
+            Value of the leaf.
+        
+        Common Keyword Arguments
+        ------------------------
+        type=None
+            If set to None, type will be automatically set to type(value).__name__.
+            This will not work for all data types, but is 
+            a nice shortcut for floats, ints, strings, etc. 
+            If it doesn't work, just specify the type manually (see below).
+        values
+            Not used by default. Only relevant for 'list' type, and should then
+            be a list of possible values.
+        step=1         
+            Step size of incrementing numbers
+        dec=False
+            Set to True to enable decade increments.
+        limits
+            Not used by default. Should be a 2-element tuple or list used to 
+            bound numerical values.
+        default  
+            Not used by default. Used to specify the default numerical value
+        siPrefix=False
+            Set to True to display units on numbers
+        suffix
+            Not used by default. Used to add unit labels to elements.
+        
 
-        The name should be a string of the form
-
-        "branch1/branch2/parametername"
-
-        and will be nested as indicated. The value should match the type
-        (the default type is 'str'). More keyword arguments can be used.
-        See pyqtgraph ParameterTree for more info.
-
-        Here are the other default kwargs:
-            type     = 'str'
-            values   = not used  # used for 'list' type
-            step     = 1         # step size of incrementing numbers
-            limits   = not used  # used to limit numerical values
-            default  = not used  # used to set the default numerical value
-            siPrefix = False     # used for displaying units on numbers
-            suffix   = not used  # used to add units (awesome)
-
+        See pyqtgraph ParameterTree for more options.
         """
 
         # update the default kwargs
-        other_kwargs = dict(type = 'str')
+        other_kwargs = dict(type=None)
         other_kwargs.update(kwargs)
+        
+        # Auto typing
+        if other_kwargs['type'] == None: other_kwargs['type'] = type(value).__name__
         
         # Fix 'values' for list objects to be only strings
         if other_kwargs['type'] == 'list':
@@ -2188,26 +2229,33 @@ class DataboxLoadSave(_d.databox, GridLayout):
 
 
 class DataboxPlot(_d.databox, GridLayout):
+    """
+    A collection of common controls and functionality for plotting, saving, and
+    loading data. This object inherits all databox functionality and adds
+    a gui to the mix.
 
-    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, **kwargs):
-        """
-        A collection of common controls and functionality for plotting, saving, and
-        loading data. This object inherits all databox functionality and adds
-        a gui to the mix.
+    ROIs for each plot can be stored in self.ROIs as a list (sub-lists allowed)
 
-        ROIs for each plot can be stored in self.ROIs as a list (sub-lists allowed)
-
-        filetype is the filter sent to file dialogs (i.e. the default data file extension)
-
+    Parameters
+    ----------
+    file_type="*.dat"
+        What type of file to use for dialogs and saving.
+    autosettings_path=None
         autosettings_path=None means do not automatically save the configuration
         of buttons / controls / script etc. Setting this to a path will cause
         DataboxPlot to automatically save / load the settings. Note you will
         need to specify a different path for each DataboxPlot instance.
+    autoscript=1
+        Sets the default autoscript entry in the combobox. Set to 4 for the 
+        custom autoscript, which can be defined by overwriting the function
+        self.autoscript_custom, which needs only return a valid script string.
 
-        Note checking "Auto-Save" does not result in the data being automatically
-        saved until you explicitly call self.autosave() (which does nothing
-        unless auto-saving is enabled).
-        """
+    Note checking the "Auto-Save" button does not result in the data being automatically
+    saved until you explicitly call self.autosave() (which does nothing
+    unless auto-saving is enabled).
+    """
+    
+    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, **kwargs):
 
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
@@ -2215,18 +2263,19 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # top row is main controls
         self.place_object(Label("Raw Data:"), alignment=1)
-        self.button_load     = self.place_object(Button("Load")                , alignment=1)
-        self.button_save     = self.place_object(Button("Save")                , alignment=1)
-        self.button_autosave = self.place_object(Button("Auto", checkable=True), alignment=1)
+        self.button_clear    = self.place_object(Button("Clear").set_width(50)               , alignment=1)
+        self.button_load     = self.place_object(Button("Load").set_width(50)                , alignment=1)
+        self.button_save     = self.place_object(Button("Save").set_width(50)                , alignment=1)
+        self.button_autosave = self.place_object(Button("Auto", checkable=True).set_width(50), alignment=1)
         self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None)))
         self._label_path     = self.place_object(Label(""))
 
         self.place_object(Label("")) # spacer
         self.button_script     = self.place_object(Button  ("Show Script", checkable=True)).set_checked(False)
-        self.combo_autoscript  = self.place_object(ComboBox(['Manual Script', 'Autoscript 1', 'Autoscript 2', 'Autoscript 3', 'Custom Autoscript'])).set_value(autoscript) 
-        self.button_multi      = self.place_object(Button  ("Multi",       checkable=True)).set_checked(True) 
-        self.button_link_x     = self.place_object(Button  ("Link X",      checkable=True)).set_checked(autoscript==1)
-        self.button_enabled    = self.place_object(Button  ("Enabled",     checkable=True)).set_checked(True)
+        self.combo_autoscript  = self.place_object(ComboBox(['Manual Script', 'Autoscript 1', 'Autoscript 2', 'Autoscript 3', 'Custom'])).set_value(autoscript) 
+        self.button_multi      = self.place_object(Button  ("Multi",       checkable=True).set_width(50)).set_checked(True) 
+        self.button_link_x     = self.place_object(Button  ("Link X",      checkable=True).set_width(50)).set_checked(autoscript==1)
+        self.button_enabled    = self.place_object(Button  ("Enabled",     checkable=True).set_width(50)).set_checked(True)
 
         # keep the buttons shaclackied together
         self.set_column_stretch(5)
@@ -2238,7 +2287,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.grid_script = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
 
         # script grid
-        self.button_plot  = self.grid_script.place_object(Button("Try it!"), 2,3)
+        self.button_plot  = self.grid_script.place_object(Button("Try it!").set_width(50), 2,3)
         self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(81)
 
@@ -2269,6 +2318,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_plot      .signal_clicked.connect(self._button_plot_clicked)
         self.button_save      .signal_clicked.connect(self._button_save_clicked)
         self.button_load      .signal_clicked.connect(self._button_load_clicked)
+        self.button_clear     .signal_clicked.connect(self._button_clear_clicked)
         self.button_autosave  .signal_toggled.connect(self._button_autosave_clicked)
         self.button_script    .signal_toggled.connect(self._button_script_clicked)
         self.combo_autoscript .signal_changed.connect(self._combo_autoscript_clicked)
@@ -2356,6 +2406,13 @@ class DataboxPlot(_d.databox, GridLayout):
         Called whenever the button is clicked.
         """
         self.load_file()
+
+    def _button_clear_clicked(self, *a):
+        """
+        Called whenever the button is clicked.
+        """
+        self.clear()
+        self.plot()
 
     def save_file(self, path="ask", force_overwrite=False, just_settings=False, **kwargs):
         """
@@ -2502,7 +2559,8 @@ class DataboxPlot(_d.databox, GridLayout):
 
     def autoscript_custom(self):
         """
-        Overwrite this function to redefine the custom autoscript.
+        Overwrite this function (returning a valid script string) to redefine 
+        the custom autoscript.
         """
         return "To use the 'Custom Autoscript' option, you must overwrite the function 'self.autoscript_custom' with your own (which must return a valid python script string)."
 
