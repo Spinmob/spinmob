@@ -271,9 +271,10 @@ class fake_data_taker():
             
             # Update the chi^2 histogram histograms
             self.axes_histograms[0].clear()
-            a,bins,c = self.axes_histograms[0].hist(self.plot_parameters[0], self.tree_settings['Stats/bins'], label='Fake Data')
+            a,bins,c = self.axes_histograms[0].hist(self.plot_parameters[0], self.tree_settings['Stats/bins'], label='$\chi^2_{reduced}$')
             self.axes_histograms[0].set_xlabel('$\chi^2_{reduced}$')
             self.axes_histograms[0].set_ylabel('Counts')
+            #self.axes_histograms[0].set_title('$\chi^2_{reduced}$ Histogram')
             
             # Plot the expected distribution.
             x2  = _n.linspace(min(0.5*(bins[1]-bins[0]),0.02), max(self.plot_parameters[0]), 400)
@@ -288,16 +289,19 @@ class fake_data_taker():
             self.axes_histograms[1].clear()
             self.axes_histograms[1].plot(self.plot_parameters[self.tree_settings['Stats/versus_x']],
                                          self.plot_parameters[self.tree_settings['Stats/versus_y']],
+                                         label=self.tree_settings['Stats/versus_y']+' vs '+self.tree_settings['Stats/versus_x'],
                                          linestyle='', marker='o', alpha=0.3)
             self.axes_histograms[1].set_xlabel(self.tree_settings['Stats/versus_x'])
             self.axes_histograms[1].set_ylabel(self.tree_settings['Stats/versus_y'])
+            self.axes_histograms[1].legend()
             
             # Now plot the distributions of the other fit parameters.
             for n in range(len(self.fitter.get_pnames())):
                 self.axes_histograms[n+2].clear()
-                self.axes_histograms[n+2].hist(self.plot_parameters[2*n+2], self.tree_settings['Stats/bins'])
+                self.axes_histograms[n+2].hist(self.plot_parameters[2*n+2], self.tree_settings['Stats/bins'], label=self.fitter.get_pnames()[n])
                 self.axes_histograms[n+2].set_xlabel(self.fitter.get_pnames()[n])
                 self.axes_histograms[n+2].set_ylabel('Counts')
+                self.axes_histograms[n+2].legend()
         
         self.figure_stats.canvas.draw()
         self.window.process_events()
