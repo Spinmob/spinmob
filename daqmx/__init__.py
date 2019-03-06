@@ -2,7 +2,7 @@ import numpy     as _n
 import PyDAQmx   as _mx
 import traceback as _traceback
 
-
+print("WARNING: This code will be phased out of Spinmob v3. You should be using NI's (new-ish) official python library anyway! This code will always be in Github's history if you need it, though.")
 
 import spinmob as _s
 _settings = _s.settings
