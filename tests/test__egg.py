@@ -89,10 +89,4 @@ if __name__ == "__main__":
     _ut.main()
     
     self = Test_egg()
-    self.test_TreeDictionary()
-    
-    import spinmob.egg as e; w = e.gui.Window(); w.place_object(self.d); w.show()
-    
-    # Try to set self.d['listy'] = '3'?
-    # Get list elements to print options and a star
     

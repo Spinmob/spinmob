@@ -191,8 +191,9 @@ class fake_data_taker():
         # If the parameters haven't changed, just append the data
         if ckeys == self.plot_parameters.ckeys:
             self.plot_parameters.append_data_point(row)
+            self.tree_settings.send_to_databox_header(self.plot_parameters)
             
-        # Otherwise, clear it out and rebuild it, and the histograms plot.
+        # Otherwise, clear it out and rebuild it, and rebuild the histograms plot.
         else:
             # Clear it out and add the first row of data
             self.plot_parameters.clear()
