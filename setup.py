@@ -1,6 +1,6 @@
 
 
-version = '2.5'
+version = '3.1'
 
 
 

@@ -1551,26 +1551,49 @@ class Timer():
 
 
 class TreeDictionary(BaseObject):
+    """
+    Simplified / Modified version of pyqtgraph's ParameterTree() object,
+    designed to store databox-ready header information and settings.
 
+    Main Changes
+    ------------
+     * simplified methods for setting parameters and getting them.
+     * all parameter names must not have self.naughty characters.
+     * default_save_path is where the settings will be saved / loaded
+       from when calling self.save() and self.load(). The settings
+       file is just a databox with no data, and you can use other
+       databox files.
+     * Note: for the 'list' type, may have to specify a list of strings.
+       Otherwise there will be confusion upon loading.
+
+    Parameters
+    ----------
+    default_save_path="settings.txt"
+        Where this object will save its settings when self.save() and self.load()
+        are called without a path specified.
+    show_header=False
+        Whether to show the top-level trunk.
+        
+    Signals
+    -------
+    self.connect_signal_changed(name, function)
+        This will connect the change event for the specified parameter
+        name to the specified function.
+        
+    self.connect_any_signal_changed(function) 
+        This will connect the signal from anything changing to the specified 
+        function. Suggest that, after adding all the parameters to the tree,
+        issue the command
+        
+            self.connect_any_signal_changed(self.tree_settings.autosave)
+            self.load()
+        
+        such that settings are automatically saved whenever something changes
+        and that the previous settings are loaded.
+
+    """
     def __init__(self, default_save_path="settings.txt", show_header=False):
-        """
-        Simplified / Modified version of pyqtgraph's ParameterTree() object,
-        designed to store databox-ready header information and settings.
-
-        Main changes:
-         * simplified methods for setting parameters and getting them.
-         * all parameter names must not have self.naughty characters.
-         * default_save_path is where the settings will be saved / loaded
-           from when calling self.save() and self.load(). The settings
-           file is just a databox with no data, and you can use other
-           databox files.
-
-        Note: because of some weirdness in how things are defined, I had to
-        write a special self.connect_...() functions for the tree
-
-        Note2: For the 'list' type, currently you must specify a list of strings.
-        Otherwise there will be confusion upon loading.
-        """
+        
         self._widget            = _g.parametertree.ParameterTree(showHeader=show_header)
         self.naughty            = [' ', '\t', '\n', '\r', ',', ';']
         self.default_save_path  = default_save_path

@@ -27,20 +27,20 @@ class Test_dialogs(_ut.TestCase):
         """
         Written this way so it's easy to cancel early.
         """
-        r = _s.dialogs.open_multiple(text="SELECT 1 FILE (OR CANCEL TO END DIALOG TESTS)")
+        r = _s.dialogs.load_multiple(text="SELECT 1 FILE (OR CANCEL TO END DIALOG TESTS)")
         if r == None: return
         self.assertEqual(type(r), list)
 
-        r = _s.dialogs.open_multiple(text="SELECT MULTIPLE FILES")
+        r = _s.dialogs.load_multiple(text="SELECT MULTIPLE FILES")
         self.assertEqual(type(r), list)
         
-        r = _s.dialogs.open_multiple(text="CANCEL ME")
+        r = _s.dialogs.load_multiple(text="CANCEL ME")
         self.assertEqual(r, None)
         
-        r = _s.dialogs.open_single(text="SELECT 1 FILE")
+        r = _s.dialogs.load(text="SELECT 1 FILE")
         self.assertEqual(type(r), str)
 
-        r = _s.dialogs.open_single(text="CANCEL ME")
+        r = _s.dialogs.load(text="CANCEL ME")
         self.assertEqual(r, None)
     
         r = _s.dialogs.save(text="SELECT A FILE (WILL NOT OVERWRITE)")

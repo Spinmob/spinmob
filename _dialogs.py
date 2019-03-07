@@ -32,7 +32,7 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
         return result
 
 
-def open_single(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
+def load(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
     """
     Pops up a dialog for opening a single file. Returns a string path or None.
     """
@@ -58,7 +58,7 @@ def open_single(filters="*.*", text='Select a file, FACEFACE!', default_director
         return result
 
 
-def open_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
+def load_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
     """
     Pops up a dialog for opening more than one file. Returns a list of string paths or None.
     """
