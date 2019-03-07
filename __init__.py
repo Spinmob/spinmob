@@ -3,8 +3,8 @@ import matplotlib   as _mpl
 import pylab
 
 # ignore warnings by default
-import warnings
-warnings.simplefilter("ignore")
+import warnings as _warnings
+_warnings.simplefilter("ignore")
 
 try: 
     import pyqtgraph    as _pyqtgraph

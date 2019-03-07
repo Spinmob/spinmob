@@ -101,6 +101,40 @@ class Test_functions(_ut.TestCase):
         # Survival test
         _f.generate_fake_data('cos(x)*3',_n.linspace(-5,5,11),1,2)
     
+    def test_coarsen_data(self):
         
+        # Simple coarsen
+        a = sm.fun.coarsen_data([1,2,3,4,5],[1,2,1,2,1])
+        self.assertEqual(_n.shape(a), (2,2))
+        self.assertEqual(a[1][1], 1.5)
+    
+        # With ey float
+        a = sm.fun.coarsen_data([1,2,3,4,5],[1,2,1,2,1],2,level=3)
+        self.assertEqual(_n.shape(a), (3,1))
+        self.assertAlmostEqual(a[2][0], 1.15470054)
+        
+        # With ey array
+        a = sm.fun.coarsen_data([1,2,3,4,5],[1,2,1,2,1],[1,2,3,4,5],level=2)
+        self.assertEqual(_n.shape(a), (3,2))
+        self.assertAlmostEqual(a[2][0], 1.118033988749895)
+        
+        # With ex and ey
+        a = sm.fun.coarsen_data([1,2,3,4,5],[1,2,1,2,1],[1,2,3,4,5],[1,2,1,2,1],level=2)
+        self.assertEqual(_n.shape(a), (4,2))
+        self.assertAlmostEqual(a[3][1], 1.118033988749895)
+        
+        # Exponential coarsen simple
+        a = sm.fun.coarsen_data(_n.linspace(0,100,100),_n.linspace(100,0,100),exponential=True)
+        self.assertEqual(_n.shape(a), (2,7))
+        self.assertAlmostEqual(a[1][5], 52.02020202020202)
+        
+        # Exponential coarsen ex and ey
+        a = sm.fun.coarsen_data(_n.linspace(0,100,100),_n.linspace(100,0,100),
+                                _n.linspace(1,2,100), 3, 1.3, exponential=True)
+        self.assertEqual(_n.shape(a), (4,16))
+        self.assertAlmostEqual(a[3][5], 2.1213203435596424)
+        
+        
+    
 
 if __name__ == "__main__": _ut.main()

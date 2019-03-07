@@ -32,6 +32,136 @@ def coarsen_array(a, level=2, method='mean'):
         print("ERROR: Could not coarsen array with method "+repr(method))
         return a
 
+def coarsen_data(x, y, ey=None, ex=None, level=2, exponential=False):
+    """
+    Coarsens the supplied data set. Returns coarsened arrays of x, y, along with
+    quadrature-coarsened arrays of ey and ex if specified.
+    
+    Parameters
+    ----------
+    x, y
+        Data arrays. Can be lists (will convert to numpy arrays).
+        These are coarsened by taking an average.
+    ey=None, ex=None
+        y and x uncertainties. Accepts arrays, lists, or numbers. 
+        These are coarsened by averaging in quadrature.
+    level=2
+        For linear coarsening (default, see below), every n=level points will
+        be averaged together (in quadrature for errors). For exponential
+        coarsening, bins will be spaced by the specified scaling=level factor;
+        for example, level=1.4 will group points within 40% of each other's x
+        values. This is a great option for log-x plots, as the outcome will be
+        evenly spaced.
+    exponential=False
+        If False, coarsen using linear spacing. If True, the bins will be 
+        exponentially spaced by the specified level. 
+    """
+    
+    # Normal coarsening
+    if not exponential:
+        
+        # Coarsen the data
+        xc  = coarsen_array(x, level, 'mean')
+        yc  = coarsen_array(y, level, 'mean')
+        
+        # Coarsen the y error in quadrature
+        if not ey is None:
+            if not is_iterable(ey): ey = [ey]*len(y)
+            eyc = _n.sqrt(coarsen_array(_n.power(ey,2)/level, level, 'mean'))
+        
+        # Coarsen the x error in quadrature
+        if not ex is None:
+            if not is_iterable(ey): ex = [ex]*len(x)
+            exc = _n.sqrt(coarsen_array(_n.power(ex,2)/level, level, 'mean'))
+        
+    # Exponential coarsen    
+    else:
+        # Make sure the data are arrays
+        x = _n.array(x)
+        y = _n.array(y)
+        
+        # Create the new arrays to fill
+        xc = []
+        yc = []
+        if not ey is None: 
+            if not is_iterable(ey): ey = _n.array([ey]*len(y))
+            eyc = []
+        if not ex is None:
+            if not is_iterable(ex): ex = _n.array([ex]*len(x))
+            exc = []
+        
+        # Find the first element that is greater than zero    
+        x0 = x[x>0][0]
+        
+        # Now loop over the exponential bins
+        n  = 0
+        while x0*level**n < x[-1]:
+            
+            # Get all the points between x[n] and x[n]*r
+            mask = _n.logical_and(x0*level**n <= x, x < x0*level**(n+1))
+                    
+            # Only do something if points exist from this range!
+            if len(x[mask]):
+                
+                # Take the average x value
+                xc.append(_n.average(x[mask]))
+                yc.append(_n.average(y[mask]))
+            
+                # do the errors in quadrature
+                if not ey is None: eyc.append(_n.sqrt(_n.average((ey**2)[mask])/len(ey[mask])))
+                if not ex is None: exc.append(_n.sqrt(_n.average((ex**2)[mask])/len(ex[mask])))
+            
+            # Increment the counter
+            n += 1
+        
+        # Done exponential loop
+
+    # Done coarsening        
+    # Return depending on situation
+    if   ey is None and ex is None: return _n.array(xc), _n.array(yc)
+    elif ex is None               : return _n.array(xc), _n.array(yc), _n.array(eyc)
+    elif ey is None               : return _n.array(xc), _n.array(yc), _n.array(exc)
+    else                          : return _n.array(xc), _n.array(yc), _n.array(eyc), _n.array(exc)
+        
+        
+
+def coarsen_matrix(Z, xlevel=0, ylevel=0, method='average'):
+    """
+    This returns a coarsened numpy matrix.
+
+    method can be 'average', 'maximum', or 'minimum'
+    """
+
+    # coarsen x
+    if not ylevel:
+        Z_coarsened = Z
+    else:
+        temp = []
+        for z in Z: temp.append(coarsen_array(z, ylevel, method))
+        Z_coarsened = _n.array(temp)
+
+    # coarsen y
+    if xlevel:
+        Z_coarsened = Z_coarsened.transpose()
+        temp = []
+        for z in Z_coarsened: temp.append(coarsen_array(z, xlevel, method))
+        Z_coarsened = _n.array(temp).transpose()
+
+    return Z_coarsened
+
+
+
+    # first coarsen the columns (if necessary)
+    if ylevel:
+        Z_ycoarsened = []
+        for c in Z: Z_ycoarsened.append(coarsen_array(c, ylevel, method))
+        Z_ycoarsened = _n.array(Z_ycoarsened)
+
+    # now coarsen the rows
+    if xlevel: return coarsen_array(Z_ycoarsened, xlevel, method)
+    else:      return _n.array(Z_ycoarsened)
+
+
 def erange(start, end, steps):
     """
     Returns a numpy array over the specified range taking geometric steps.
@@ -156,41 +286,6 @@ def chi_squared(p, f, xdata, ydata):
 
 
 
-def coarsen_matrix(Z, xlevel=0, ylevel=0, method='average'):
-    """
-    This returns a coarsened numpy matrix.
-
-    method can be 'average', 'maximum', or 'minimum'
-    """
-
-    # coarsen x
-    if not ylevel:
-        Z_coarsened = Z
-    else:
-        temp = []
-        for z in Z: temp.append(coarsen_array(z, ylevel, method))
-        Z_coarsened = _n.array(temp)
-
-    # coarsen y
-    if xlevel:
-        Z_coarsened = Z_coarsened.transpose()
-        temp = []
-        for z in Z_coarsened: temp.append(coarsen_array(z, xlevel, method))
-        Z_coarsened = _n.array(temp).transpose()
-
-    return Z_coarsened
-
-
-
-    # first coarsen the columns (if necessary)
-    if ylevel:
-        Z_ycoarsened = []
-        for c in Z: Z_ycoarsened.append(coarsen_array(c, ylevel, method))
-        Z_ycoarsened = _n.array(Z_ycoarsened)
-
-    # now coarsen the rows
-    if xlevel: return coarsen_array(Z_ycoarsened, xlevel, method)
-    else:      return _n.array(Z_ycoarsened)
 
 def combine_dictionaries(a, b):
     """
