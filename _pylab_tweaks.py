@@ -1344,20 +1344,28 @@ def smooth_line(line, smoothing=1, trim=True, draw=True):
     if draw: _pylab.draw()
 
 
-def coarsen_line(line, coarsen=1, draw=True):
+def coarsen_line(line, level=2, exponential=False, draw=True):
     """
-
-    This takes a line instance and smooths its data with nearest neighbor averaging.
-
+    Coarsens the specified line (see spinmob.coarsen_data() for more information).
+    
+    Parameters
+    ----------
+    line
+        Matplotlib line instance.
+    level=2
+        How strongly to coarsen.
+    exponential=False
+        If True, use the exponential method (great for log-x plots).
+    draw=True
+        Redraw when complete.
     """
 
     # get the actual data values
     xdata = line.get_xdata()
     ydata = line.get_ydata()
 
-    xdata = _fun.coarsen_array(xdata, coarsen)
-    ydata = _fun.coarsen_array(ydata, coarsen)
-
+    xdata,ydata = _fun.coarsen_data(xdata, ydata, level=level, exponential=exponential)
+    
     # don't do anything if we don't have any data left
     if len(ydata) == 0: print("There's nothing left in "+str(line)+"!")
 
@@ -1420,11 +1428,22 @@ def smooth_all_traces(smoothing=1, trim=True, axes="gca"):
             smooth_line(line, smoothing, trim, draw=False)
     _pylab.draw()
 
-def coarsen_all_traces(coarsen=1, axes="all", figure=None):
+def coarsen_all_traces(level=2, exponential=False, axes="all", figure=None):
     """
-
-    This function does nearest-neighbor smoothing of the data
-
+    This function does nearest-neighbor coarsening of the data. See 
+    spinmob.fun.coarsen_data for more information.
+    
+    Parameters
+    ----------
+    level=2
+        How strongly to coarsen.
+    exponential=False
+        If True, use the exponential method (great for log-x plots).
+    axes="all"
+        Which axes to coarsen.
+    figure=None
+        Which figure to use.
+    
     """
     if axes=="gca": axes=_pylab.gca()
     if axes=="all":
@@ -1440,7 +1459,7 @@ def coarsen_all_traces(coarsen=1, axes="all", figure=None):
         # loop over the lines and trim the data
         for line in lines:
             if isinstance(line, _mpl.lines.Line2D):
-                coarsen_line(line, coarsen, draw=False)
+                coarsen_line(line, level, exponential, draw=False)
     _pylab.draw()
 
 def line_math(fx=None, fy=None, axes='gca'):

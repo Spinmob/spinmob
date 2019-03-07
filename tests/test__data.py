@@ -8,7 +8,7 @@ import spinmob as _s
 
 import unittest as _ut
 
-
+d = None
 class Test_databox(_ut.TestCase):
     """
     Test class for databox.
@@ -122,8 +122,6 @@ class Test_databox(_ut.TestCase):
         exp = None
         self.assertEqual(val, exp)
 
-    
-
     def test_h_GoodFragment(self):
         """
         This should have spinmob print out an error message.
@@ -185,6 +183,70 @@ class Test_databox(_ut.TestCase):
         value = d[0].tolist()
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
+
+    def test_load_save_binary(self):
+        global d
+        
+        # Write a confusing binary file.
+        d = _s.data.databox(delimiter=',')
+        d.h(poo = 32)
+        d['pants']       = [1,2,3,4,5]
+        d['shoes,teeth'] = [1,2,1]
+        d.save_file('test_binary.txt',binary='float16')
+        
+        # Load said binary
+        d = _s.data.load('test_binary.txt')
+        self.assertEqual(len(d), 2)
+        self.assertEqual(len(d[1]), 3)
+        self.assertEqual(len(d[0]), 5)
+        self.assertEqual(len(d.hkeys), 2)
+        
+        
+        
+        # Do the same with no delimiter
+        d = _s.data.databox(delimiter=None)
+        d.h(poo = 32)
+        d['pants']       = [1,2,3,4,5]
+        d['shoes,teeth'] = [1,2,1]
+        d.save_file('test_binary.txt',binary='float16')
+        
+        # Load said binary
+        d = _s.data.load('test_binary.txt')
+        self.assertEqual(len(d), 2)
+        self.assertEqual(len(d[1]), 3)
+        self.assertEqual(len(d[0]), 5)
+        self.assertEqual(len(d.hkeys), 2)
+        self.assertEqual(d.delimiter,'\t')
+
+
+        # Now modify it and save again.
+        d.h(SPINMOB_BINARY='int64', test=['1,2,3,4',1,2,3,4])
+        d['new_column'] = [44]
+        d.delimiter = None
+        d.save_file('test_binary.txt')
+        
+        # Load it again
+        d = _s.data.load('test_binary.txt')
+        self.assertEqual(len(d.ckeys), 3)
+        self.assertEqual(len(d.hkeys), 3)
+        self.assertEqual(len(d[2]),    1)
+        self.assertEqual(d[1][1],      2)
+        
+        # Clean up.
+        _os.remove('test_binary.txt')
+        _os.remove('test_binary.txt.backup')
+
+        # Load the difficult one to encode
+        d = _s.data.load(path=_os.path.join(self.data_path, "difficult.binary"))
+        
+
+    
+    
+    def test_load_dialogs(self):
+        
+        # Crash tests
+        _s.data.load(text='CANCEL ME')
+        _s.data.load_multiple(text='CANCEL ME')
 
 f = None
 class Test_fitter(_ut.TestCase):

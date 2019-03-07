@@ -32,6 +32,136 @@ def coarsen_array(a, level=2, method='mean'):
         print("ERROR: Could not coarsen array with method "+repr(method))
         return a
 
+def coarsen_data(x, y, ey=None, ex=None, level=2, exponential=False):
+    """
+    Coarsens the supplied data set. Returns coarsened arrays of x, y, along with
+    quadrature-coarsened arrays of ey and ex if specified.
+    
+    Parameters
+    ----------
+    x, y
+        Data arrays. Can be lists (will convert to numpy arrays).
+        These are coarsened by taking an average.
+    ey=None, ex=None
+        y and x uncertainties. Accepts arrays, lists, or numbers. 
+        These are coarsened by averaging in quadrature.
+    level=2
+        For linear coarsening (default, see below), every n=level points will
+        be averaged together (in quadrature for errors). For exponential
+        coarsening, bins will be spaced by the specified scaling=level factor;
+        for example, level=1.4 will group points within 40% of each other's x
+        values. This is a great option for log-x plots, as the outcome will be
+        evenly spaced.
+    exponential=False
+        If False, coarsen using linear spacing. If True, the bins will be 
+        exponentially spaced by the specified level. 
+    """
+    
+    # Normal coarsening
+    if not exponential:
+        
+        # Coarsen the data
+        xc  = coarsen_array(x, level, 'mean')
+        yc  = coarsen_array(y, level, 'mean')
+        
+        # Coarsen the y error in quadrature
+        if not ey is None:
+            if not is_iterable(ey): ey = [ey]*len(y)
+            eyc = _n.sqrt(coarsen_array(_n.power(ey,2)/level, level, 'mean'))
+        
+        # Coarsen the x error in quadrature
+        if not ex is None:
+            if not is_iterable(ey): ex = [ex]*len(x)
+            exc = _n.sqrt(coarsen_array(_n.power(ex,2)/level, level, 'mean'))
+        
+    # Exponential coarsen    
+    else:
+        # Make sure the data are arrays
+        x = _n.array(x)
+        y = _n.array(y)
+        
+        # Create the new arrays to fill
+        xc = []
+        yc = []
+        if not ey is None: 
+            if not is_iterable(ey): ey = _n.array([ey]*len(y))
+            eyc = []
+        if not ex is None:
+            if not is_iterable(ex): ex = _n.array([ex]*len(x))
+            exc = []
+        
+        # Find the first element that is greater than zero    
+        x0 = x[x>0][0]
+        
+        # Now loop over the exponential bins
+        n  = 0
+        while x0*level**n < x[-1]:
+            
+            # Get all the points between x[n] and x[n]*r
+            mask = _n.logical_and(x0*level**n <= x, x < x0*level**(n+1))
+                    
+            # Only do something if points exist from this range!
+            if len(x[mask]):
+                
+                # Take the average x value
+                xc.append(_n.average(x[mask]))
+                yc.append(_n.average(y[mask]))
+            
+                # do the errors in quadrature
+                if not ey is None: eyc.append(_n.sqrt(_n.average((ey**2)[mask])/len(ey[mask])))
+                if not ex is None: exc.append(_n.sqrt(_n.average((ex**2)[mask])/len(ex[mask])))
+            
+            # Increment the counter
+            n += 1
+        
+        # Done exponential loop
+
+    # Done coarsening        
+    # Return depending on situation
+    if   ey is None and ex is None: return _n.array(xc), _n.array(yc)
+    elif ex is None               : return _n.array(xc), _n.array(yc), _n.array(eyc)
+    elif ey is None               : return _n.array(xc), _n.array(yc), _n.array(exc)
+    else                          : return _n.array(xc), _n.array(yc), _n.array(eyc), _n.array(exc)
+        
+        
+
+def coarsen_matrix(Z, xlevel=0, ylevel=0, method='average'):
+    """
+    This returns a coarsened numpy matrix.
+
+    method can be 'average', 'maximum', or 'minimum'
+    """
+
+    # coarsen x
+    if not ylevel:
+        Z_coarsened = Z
+    else:
+        temp = []
+        for z in Z: temp.append(coarsen_array(z, ylevel, method))
+        Z_coarsened = _n.array(temp)
+
+    # coarsen y
+    if xlevel:
+        Z_coarsened = Z_coarsened.transpose()
+        temp = []
+        for z in Z_coarsened: temp.append(coarsen_array(z, xlevel, method))
+        Z_coarsened = _n.array(temp).transpose()
+
+    return Z_coarsened
+
+
+
+    # first coarsen the columns (if necessary)
+    if ylevel:
+        Z_ycoarsened = []
+        for c in Z: Z_ycoarsened.append(coarsen_array(c, ylevel, method))
+        Z_ycoarsened = _n.array(Z_ycoarsened)
+
+    # now coarsen the rows
+    if xlevel: return coarsen_array(Z_ycoarsened, xlevel, method)
+    else:      return _n.array(Z_ycoarsened)
+
+
 def erange(start, end, steps):
     """
     Returns a numpy array over the specified range taking geometric steps.
@@ -156,41 +286,6 @@ def chi_squared(p, f, xdata, ydata):
 
 
 
-def coarsen_matrix(Z, xlevel=0, ylevel=0, method='average'):
-    """
-    This returns a coarsened numpy matrix.
-
-    method can be 'average', 'maximum', or 'minimum'
-    """
-
-    # coarsen x
-    if not ylevel:
-        Z_coarsened = Z
-    else:
-        temp = []
-        for z in Z: temp.append(coarsen_array(z, ylevel, method))
-        Z_coarsened = _n.array(temp)
-
-    # coarsen y
-    if xlevel:
-        Z_coarsened = Z_coarsened.transpose()
-        temp = []
-        for z in Z_coarsened: temp.append(coarsen_array(z, xlevel, method))
-        Z_coarsened = _n.array(temp).transpose()
-
-    return Z_coarsened
-
-
-
-    # first coarsen the columns (if necessary)
-    if ylevel:
-        Z_ycoarsened = []
-        for c in Z: Z_ycoarsened.append(coarsen_array(c, ylevel, method))
-        Z_ycoarsened = _n.array(Z_ycoarsened)
-
-    # now coarsen the rows
-    if xlevel: return coarsen_array(Z_ycoarsened, xlevel, method)
-    else:      return _n.array(Z_ycoarsened)
 
 def combine_dictionaries(a, b):
     """
@@ -696,6 +791,57 @@ def frange(start, end, inc=1.0):
     return start + ns*inc
 
 
+def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, **kwargs):
+    """
+    Generates a set of fake data from the underlying "reality" (or mean
+    behavior) function f.
+    
+    Parameters
+    ----------
+        f:
+            Underlying "reality" function or mean behavior. This can be any
+            python-evaluable string, and will have access to all the numpy
+            functions (e.g., cos), scipy's special functions (e.g., erf), and
+            any other variables defined by keyword arguments
+        ex, ey:
+            Uncertainty "strength" for x and y data. This can be a constant or an 
+            array of values. If the distributions (below) are normal, this 
+            corresponds to the standard deviation.
+    
+    Keyword arguments are used as additional globals in the function evaluation.
+    
+    Returns a databox containing the data and other relevant information in the
+    header.
+    """
+    
+    # Make a fitter object, which handily interprets string functions
+    # The "+0*x" is a trick to ensure the function takes x as an argument 
+    # (makes it a little more idiot proof).
+    fitty = _s.data.fitter().set_functions(f+"+0*x",'') 
+    
+    # Make sure both errors are arrays of the right length
+    if not _s.fun.is_iterable(ex): ex = _n.array([ex]*len(x))
+    if not _s.fun.is_iterable(ey): ey = _n.array([ey]*len(x))
+    
+    # Get the x and y exact values first, then randomize
+    x = _n.array(x) 
+    y = fitty.f[0](x)
+    
+    x = _n.random.normal(_n.array(x),ex)
+    y = _n.random.normal(y,          ey)
+    
+    # make a databox
+    d = _s.data.databox()
+    d['x']  = x
+    d['y']  = y
+    d['ey'] = ey
+    d['ex'] = ex
+    d.h(reality=f)
+    
+    return d
+
+
+
 def get_shell_history():
     """
     This only works with some shells.
@@ -941,76 +1087,30 @@ def _load_object(path="ask", text="Load a pickled object."):
     return object
 
 
-
-def psd(t, y, pow2=False, window=None):
+def fft(t, y, pow2=False, window=None, rescale=False):
     """
-    Single-sided power spectral density, assuming real valued inputs.
+    FFT of y, assuming complex or real-valued inputs. This goes through the 
+    numpy fourier transform process, assembling and returning (frequencies, 
+    complex fft) given time and signal data y.
 
-    This goes through the numpy fourier transform process, assembling and returning
-    (frequencies, psd) given time and signal data y. Use psdfreq() to get the frequencies.
+    Parameters
+    ----------
+    t,y
+        Time (t) and signal (y) arrays with which to perform the fft. Note the t
+        array is assumed to be evenly spaced.
+        
+    pow2 = False
+        Set this to true if you only want to keep the first 2^n data
+        points (speeds up the FFT substantially)
 
-    powers_of_2     Set this to true if you only want to keep the first 2^n data
-                    points (speeds up the FFT substantially)
-
-    window          can be set to any of the windowing functions in numpy,
-                    e.g. window="hanning"
-
-    returns frequencies, psd (y^2/Hz)
-    """
-    # make sure they're numpy arrays
-    y = _n.array(y)
-    t = _n.array(t)
-
-    # if we're doing the power of 2, do it
-    if pow2:
-        keep  = 2**int(_n.log2(len(y)))
-
-        # now resize the data
-        y.resize(keep)
-        t.resize(keep)
-
-    # try to get the windowing function
-    w = None
-    if window:
-        try:
-            w = eval("_n."+window, globals())
-        except:
-            print("ERROR: Bad window!")
-            return
-
-    # apply the window
-    if w:
-        a = w(len(y))
-        y = len(y) * a * y / sum(a)
-
-    # do the actual fft, and normalize the power
-    fft = _n.fft.fft(y)
-    P = _n.real(fft*fft.conj())
-    P = P / len(y)**2
-
-    Fpos = psdfreq(t, pow2=pow2)
-    Ppos = P[0:int(len(P)/2)] + P[0:int(-len(P)/2)]
-    Ppos[0] = Ppos[0]/2.0
-
-    # get the normalized power in y^2/Hz
-    Ppos  = Ppos/(Fpos[1]-Fpos[0])
-
-    return Fpos, Ppos
-
-
-
-def fft(t, y, pow2=False, window=None):
-    """
-    FFT of y, assuming complex or real-valued inputs.
-
-    This goes through the numpy fourier transform process, assembling and returning
-    (frequencies, complex fft) given time and signal data y.
-
-    powers_of_2     Set this to true if you only want to keep the first 2^n data
-                    points (speeds up the FFT substantially)
-
-    window          can be set to any of the windowing functions in numpy,
-                    e.g. window="hanning"
+    window = None
+        Can be set to any of the windowing functions in numpy that require only
+        the number of points as the argument, e.g. window='hanning'. 
+        
+    rescale = False
+        If True, the FFT will be rescaled by the square root of the ratio of 
+        variances before and after windowing, such that the sum of component 
+        amplitudes squared is equal to the actual variance.
     """
     # make sure they're numpy arrays, and make copies to avoid the referencing error
     y = _n.array(y)
@@ -1024,41 +1124,97 @@ def fft(t, y, pow2=False, window=None):
         y.resize(keep)
         t.resize(keep)
 
-    # try to get the windowing function
-    w = None
-    if not window in [None, "None", "none", False, "False", "false", 0]:
+    # Window the data
+    if not window in [None, False, 0]:
         try:
-            w = eval("_n."+window, globals())
+            # Get the windowing array
+            w = eval("_n."+window, dict(_n=_n))(len(y))
+            
+            # Store the original variance
+            v0 = _n.average(abs(y)**2)
+            
+            # window the time domain data 
+            y = y * w
+            
+            # Rescale by the variance ratio
+            if rescale: y = y * _n.sqrt(v0 / _n.average(abs(y)**2))
+            
         except:
             print("ERROR: Bad window!")
             return
 
-    # apply the window
-    if w:
-        a = w(len(y))
-        y = len(y) * a * y / sum(a)
-
     # do the actual fft, and normalize
-    fft = _n.fft.fft(y) / len(t)
+    Y = _n.fft.fftshift( _n.fft.fft(y) / len(t) )
+    f = _n.fft.fftshift( _n.fft.fftfreq(len(t), t[1]-t[0]) )
+    
+    return f, Y
+    
 
-    f = _n.fft.fftfreq(len(t), t[1]-t[0])
 
-    return _n.concatenate([f[int(len(f)/2+1):],f[0:int(len(f)/2)]]) , _n.concatenate([fft[int(len(fft)/2+1):],fft[0:int(len(fft)/2)]])
 
-def psdfreq(t, pow2=False):
+
+
+def psd(t, y, pow2=False, window=None, rescale=False):
     """
-    Given time array t, returns the positive frequencies of the FFT, including zero.
+    Single-sided power spectral density, assuming real valued inputs. This goes 
+    through the numpy fourier transform process, assembling and returning
+    (frequencies, psd) given time and signal data y. 
+    
+    Note it is defined such that sum(psd)*df, where df is the frequency
+    spacing, is the variance of the original signal for any range of frequencies.
+    This includes the DC and Nyquist components: 
+        
+        sqrt(psd[0]*df)  = average value of original time trace
+        
+        sqrt(psd[-1]*df) = amplitude of Nyquist component (for even # points)
+    
+    Parameters
+    ----------
+    t,y
+        Time (t) and signal (y) arrays with which to perform the PSD. Note the t
+        array is assumed to be evenly spaced.
+
+    pow2 = False
+        Set this to true if you only want to keep the first 2^n data
+        points (speeds up the FFT substantially)
+
+    window = None
+        can be set to any of the windowing functions in numpy,
+        e.g. window='hanning'. 
+        
+    rescale = False
+        If True, the FFT will be rescaled by the square root of the ratio of 
+        variances before and after windowing, such that the integral 
+        sum(PSD)*df is the variance of the *original* time-domain data.
+
+    returns frequencies, psd (y^2/Hz)
     """
-    # if we're doing the power of 2, do it
-    if pow2:
-        keep  = 2**int(_n.log2(len(t)))
-        t.resize(keep)
 
-    # get the frequency array
-    F = _n.fft.fftfreq(len(t), t[1]-t[0])
+    # do the actual fft
+    f, Y = fft(t,y,pow2,window,rescale)
+    
+    # take twice the negative frequency branch, because it contains the 
+    # extra frequency point when the number of points is odd.
+    f = _n.abs(f[int(len(f)/2)::-1])
+    P = _n.abs(Y[int(len(Y)/2)::-1])**2 / (f[1]-f[0])
 
-    # now add the positive and negative frequency components
-    return F[0:int(len(F)/2)]
+    # Since this is the same as the positive frequency branch, double the
+    # appropriate frequencies. For even number of points, there is one
+    # extra negative frequency to avoid doubling. For odd, you only need to
+    # avoid the DC value.
+    
+    # For the even
+    if len(t)%2 == 0: P[1:len(P)-1] = P[1:len(P)-1]*2
+    else:             P[1:]         = P[1:]*2
+
+    return f, P
+
+
+#if __name__ == '__main__':
+#    t  = _n.linspace(0,10,1000)
+#    y  = _n.cos(t*10)
+#    yh = y*_n.hanning(len(y))
+#    f, P = psd(t,y,True,'hanning',True)    
 
 
 def read_lines(path):

@@ -1,5 +1,4 @@
 import os      as _os
-import sys     as _sys
 import shutil  as _shutil
 
 # do this so all the scripts will work with all the numpy functions
@@ -152,10 +151,12 @@ class databox:
             Don't print anything while loading.
         """
         
+        # Set the default directory
         if default_directory is None: default_directory = self.directory
 
+        # Ask user for a file to open
         if path == "ask":
-            path = _s.dialogs.open_single(filters=filters,
+            path = _s.dialogs.load(filters=filters,
                                         default_directory=self.directory,
                                         text=text)
         self.path = path
@@ -172,35 +173,83 @@ class databox:
         # clear all the existing data
         self.clear()
 
-        # open said file for reading, read in all the lines and close
-        f = open(path, 'r')
-        lines = f.readlines()
+
+
+        # First check if the file is SPINMOB_BINARY format!
+        f = open(path, 'rb')
+
+        # If this file is in SPINMOB_BINARY mode!
+        if f.read(14).decode('utf-8') == 'SPINMOB_BINARY':
+            
+            # Next character is the delimiter
+            self.delimiter = f.read(1).decode('utf-8')
+            
+            # Find the newline and get the data type
+            s = ' '
+            while not s[-1] == '\n': s = s+f.read(1).decode('utf-8')
+            
+            # Rest of the line is the binary dtype
+            self.h(SPINMOB_BINARY = s.strip())
+
+            # Now manually assemble the header lines to use in the analysis 
+            # below. If I try readline() on the binary file, it will crash.
+            lines = ['\n']
+            
+            # The end of the header is specified by 'SPINMOB_BINARY' on its own line.
+            while not lines[-1] == 'SPINMOB_BINARY':
+                
+                # Get the next line, one character at a time.
+                s = ' '
+                while not s[-1] == '\n': s = s+f.read(1).decode('utf-8')
+                
+                # Okay we have it
+                lines.append(s.strip())
+            
+            # Pop that last line, which should be 'SPINMOB_BINARY'
+            lines.pop(-1)
+            
+            # We've reached the end of the header.
+        
+        # Close the binary read.
         f.close()
-
-        # Determine the delimiter
-        if self.delimiter is None:
-
-            # loop from the end of the file until we get something other than white space
-            for n in range(len(lines)):
-
-                # strip away the white space
-                s = lines[-n-1].strip()
-
-                # if this line has any content
-                if len(s) > 0:
-
-                    # try the different delimiter schemes until we find one
-                    # that produces a number. Otherwise it's ambiguous.
-                    if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
-                    elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
-                    elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
-
-                    # quit the loop!
-                    break
+        
 
 
+        # If we're not in binary mode, we can read all the lines and find
+        # the delimiter as usual. (In binary mode, the delimiter is specified)
+        if not 'SPINMOB_BINARY' in self.hkeys:
 
-        ##### read in the header information
+            # For non-binary files, we always read all the lines.
+            f = open(path, 'r')
+            lines = f.readlines()
+            f.close()
+    
+            # Determine the delimiter
+            if self.delimiter is None:
+    
+                # loop from the end of the file until we get something other than white space
+                for n in range(len(lines)):
+    
+                    # strip away the white space
+                    s = lines[-n-1].strip()
+    
+                    # if this line has any content
+                    if len(s) > 0:
+    
+                        # try the different delimiter schemes until we find one
+                        # that produces a number. Otherwise it's ambiguous.
+                        if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
+                        elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
+                        elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
+    
+                        # quit the loop!
+                        break
+        
+        # Done reading lines and auto-determining delimiter.
+            
+
+
+        ##### Pares the header from lines
         self.header_lines = []
 
         for n in range(len(lines)):
@@ -220,7 +269,7 @@ class databox:
                 # quit the header loop
                 break;
 
-            ### now we know it's a header line
+            ### after that check, we know it's a header line
 
             # save the lines for the avid user.
             self.header_lines.append(lines[n].strip())
@@ -240,110 +289,158 @@ class databox:
         # now we have a valid set of column ckeys one way or another, and we know first_data_line.
         if header_only: return self
 
-        # Make sure first_data_line isn't None (which happens if there's no data)
-        if first_data_line == "auto":
-            if not quiet: print("\nCould not find a line of pure data! Perhaps check the delimiter?")
-            if not quiet: print("The default delimiter is whitespace. For csv files, set delimiter=','\n")
-            return self
-
-
-
-        ##### at this point we've found the first_data_line,
-
-        # look for the ckeys
-
-        # special case: no header
-        if first_data_line == 0: ckeys = []
-
-        # start by assuming it's the previous line
-        else: ckeys = lines[first_data_line-1].strip().split(self.delimiter)
-
-        # count the number of actual data columns for comparison
-        column_count = len(lines[first_data_line].strip().split(self.delimiter))
-
-        # check to see if ckeys is equal in length to the
-        # number of data columns. If it isn't, it's a false ckeys line
-        if len(ckeys) >= column_count:
-            # it is close enough
-            # if we have too many column keys, mention it
-            while len(ckeys) > column_count:
-                extra = ckeys.pop(-1)
-                if not quiet: print("Extra ckey: "+extra)
-
-        else:
-            # it is an invalid ckeys line. Generate our own!
-            ckeys = []
-            for m in range(0, column_count): ckeys.append("c"+str(m))
-
-        # last step with ckeys: make sure they're all different!
-        self.ckeys = []
-        while len(ckeys):
-
-            # remove the key
-            ckey = ckeys.pop(0)
-
-            # if there is a duplicate
-            if (ckey in ckeys) or (ckey in self.ckeys):
-                # increase the label index until it's unique
-                n=0
-                while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
-                ckey = ckey+"_"+str(n)
-            self.ckeys.append(ckey)
-
-        # initialize the columns arrays
-        # I did benchmarks and there's not much improvement by using numpy-arrays here.
-        for label in self.ckeys: self.columns[label] = []
-
         
         
         
         
         
         
-        
-        # Python 2 format
-        #if _sys.version_info[0] == 2:
-        try:
-            def fix(x): return str(x.replace('i','j'))
+        # Deal with the binary mode
+        if 'SPINMOB_BINARY' in self.hkeys:
             
-            # loop over the remaining data lines, converting to numbers
-            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                              delimiter=self.delimiter,
-                              dtype=_n.complex)
+            # Read the binary file
+            f = open(path, 'rb')
+            s = f.read()
+            f.close()
+            
+            # Get the delimiter for easier coding
+            delimiter = self.delimiter.encode('utf-8')
+            
+            # Get the binary mode, e.g., 'float32'
+            binary = self.h('SPINMOB_BINARY')
+            
+            # Number of bytes per element
+            size = eval('_n.'+binary+'().itemsize', dict(_n=_n))
+            
+            # Location of first ckey
+            start = s.find(b'SPINMOB_BINARY',14) + 15
+            
+            # Continue until we reach the last character.
+            while not start >= len(s):
+           
+                # Get the ckey
+                stop  = s.find(delimiter, start)
+                ckey  = s[start:stop].decode('utf-8')
+                
+                # Get the array length
+                start = stop+1
+                stop  = s.find(b'\n', start)
+                length = int(s[start:stop])
+                
+                # Get the data!
+                start = stop+1
+                stop  = start+size*length
+                self[ckey] = _n.fromstring(s[start:stop], binary)
+                
+                # Go to next ckey
+                start = stop+1        
         
-        # Python 3 format
-        except:
-            def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
+        
+        
+        # Otherwise we have a text file to load.
+        else:
+            # Make sure first_data_line isn't still 'auto'
+            # which happens if there's no data, or if it's a binary file
+            if first_data_line == "auto" and not 'SPINMOB_BINARY' in self.hkeys:
+                if not quiet: print("\ndatabox.load_file(): Could not find a line of pure data! Perhaps check the delimiter?")
+                return self
+    
+    
+            ##### at this point we've found the first_data_line,
+    
+            # look for the ckeys
+    
+            # special case: no header
+            if first_data_line == 0: ckeys = []
+    
+            # start by assuming it's the previous line
+            else: ckeys = lines[first_data_line-1].strip().split(self.delimiter)
+    
+            # count the number of actual data columns for comparison
+            column_count = len(lines[first_data_line].strip().split(self.delimiter))
+    
+            # check to see if ckeys is equal in length to the
+            # number of data columns. If it isn't, it's a false ckeys line
+            if len(ckeys) >= column_count:
+                # it is close enough
+                # if we have too many column keys, mention it
+                while len(ckeys) > column_count:
+                    extra = ckeys.pop(-1)
+                    if not quiet: print("Extra ckey: "+extra)
+    
+            else:
+                # it is an invalid ckeys line. Generate our own!
+                ckeys = []
+                for m in range(0, column_count): ckeys.append("c"+str(m))
+    
+            # last step with ckeys: make sure they're all different!
+            self.ckeys = []
+            while len(ckeys):
+    
+                # remove the key
+                ckey = ckeys.pop(0)
+    
+                # if there is a duplicate
+                if (ckey in ckeys) or (ckey in self.ckeys):
+                    # increase the label index until it's unique
+                    n=0
+                    while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
+                    ckey = ckey+"_"+str(n)
+                self.ckeys.append(ckey)
+    
+            # initialize the columns arrays
+            # I did benchmarks and there's not much improvement by using numpy-arrays here.
+            for label in self.ckeys: self.columns[label] = []
+    
+            
+            
+            
+            
+            
+            
+            
+            # Python 2 format
+            #if _sys.version_info[0] == 2:
+            try:
+                def fix(x): return str(x.replace('i','j'))
+                
+                # loop over the remaining data lines, converting to numbers
+                z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                                  delimiter=self.delimiter,
+                                  dtype=_n.complex)
+            
+            # Python 3 format
+            except:
+                def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
+    
+                # loop over the remaining data lines, converting to numbers
+                z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                                  delimiter=self.delimiter,
+                                  dtype=_n.complex)
+            
+            # genfromtxt returns a 1D array if there is only one data line.
+            # highly confusing behavior, numpy!
+            if len(_n.shape(z)) == 1:
+                # check to make sure the data file contains only 1 column of data
+                rows_of_data = len(lines) - first_data_line
+                if rows_of_data == 1: z = _n.array([z])
+                else: z = _n.array(z)
+    
+            # fix for different behavior of genfromtxt on single columns
+            if len(z.shape) == 2: z = z.transpose()
+            else:                 z = [z]
+    
+            # Add all the columns
+            for n in range(len(self.ckeys)):
+    
+                # if any of the imaginary components are non-zero, use complex
+                if _n.any(_n.imag(z[n])): self[n] = z[n]
+                else:                     self[n] = _n.real(z[n])
 
-            # loop over the remaining data lines, converting to numbers
-            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                              delimiter=self.delimiter,
-                              dtype=_n.complex)
-        
-        
-        
-        
-        
-        
-        # genfromtxt returns a 1D array if there is only one data line.
-        # highly confusing behavior, numpy!
-        if len(_n.shape(z)) == 1:
-            # check to make sure the data file contains only 1 column of data
-            rows_of_data = len(lines) - first_data_line
-            if rows_of_data == 1: z = _n.array([z])
-            else: z = _n.array(z)
+        # Done with loading in the columns of data
 
-        # fix for different behavior of genfromtxt on single columns
-        if len(z.shape) == 2: z = z.transpose()
-        else:                 z = [z]
-
-        # Add all the columns
-        for n in range(len(self.ckeys)):
-
-            # if any of the imaginary components are non-zero, use complex
-            if _n.any(_n.imag(z[n])): self[n] = z[n]
-            else:                     self[n] = _n.real(z[n])
-
+        
+        
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
             if k in self.columns:
@@ -351,25 +448,35 @@ class databox:
 
         return self
 
-    def save_file(self, path='ask', filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current'):
+    def save_file(self, path='ask', filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current', binary=None):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
 
         Parameters
         ----------
+        
         filters='*.dat'         
             File filter for the file dialog (for path="ask")
+        
         force_overwrite=False   
             Normally, if the file * exists, this will copy that
             to *.backup. If the backup already exists, this
             function will abort. Setting this to True will
             force overwriting the backup file.
+        
         header_only=False       
             Only output the header?
+        
         delimiter='use current' 
             This will set the delimiter of the output file
             'use current' means use self.delimiter
+        
+        binary=None
+            Set to one of the allowed numpy dtypes, e.g., float32, float64, 
+            complex64, int32, etc. Setting binary=True defaults to float64.
+            Note if the header contains the key SPINMOB_BINARY and binary=None,
+            it will save as binary using the header specification.
         """
         
         # Make sure there isn't a problem later with no-column databoxes
@@ -398,30 +505,77 @@ class databox:
         # figure out the temporary path
         temporary_path = _os.path.join(_s.settings.path_home, "temp-"+str(int(1e3*_time.time()))+'-'+str(int(1e9*_n.random.rand(1))))
 
-        # open the file and write the header
+        # open the temporary file
         f = open(temporary_path, 'w')
+        
+        
+        
+        # Update the header element if overridden or added by this save command
+        if not binary == None: self.h(SPINMOB_BINARY=binary)
+        
+        # If for some reason the header says the binary mode is None or False, 
+        # Remove it so it stays in ascii mode.
+        if 'SPINMOB_BINARY' in [None, 'None', False, 'False']: 
+            self.pop_header('SPINMOB_BINARY')
+        
+        # Now use the header element to determine the binary mode
+        if 'SPINMOB_BINARY' in self.hkeys:
+            
+            # Get the binary mode (we'll use this later)
+            binary = self.pop_header('SPINMOB_BINARY')
+            
+            # Write the special first key.
+            f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
+            
+        # Write the usual header
         for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
         f.write('\n')
 
-        # if we're only supposed to write the header
+        # if we're not just supposed to write the header
         if not header_only: 
             
-            # now write the ckeys
-            elements = []
-            for ckey in self.ckeys: elements.append(str(ckey))
-            f.write(delimiter.join(elements) + "\n")
-    
-            # now loop over the data
-            for n in range(0, len(self[0])):
-                # loop over each column
+            # Normal ascii saving mode.
+            if binary in [None, 'None', False, 'False']:
+                
+                # write the ckeys
                 elements = []
-                for m in range(0, len(self.ckeys)):
-                    # write the data if there is any, otherwise, placeholder ("x")
-                    if n < len(self[m]):
-                        elements.append(str(self[m][n]))
-                    else:
-                        elements.append('_')
+                for ckey in self.ckeys: 
+                    elements.append(str(ckey).replace(delimiter,'_'))
                 f.write(delimiter.join(elements) + "\n")
+        
+                # now loop over the data
+                for n in range(0, len(self[0])):
+                    # loop over each column
+                    elements = []
+                    for m in range(0, len(self.ckeys)):
+                        # write the data if there is any, otherwise, placeholder
+                        if n < len(self[m]):
+                            elements.append(str(self[m][n]))
+                        else:
+                            elements.append('_')
+                    f.write(delimiter.join(elements) + "\n")
+
+            # Binary mode
+            else:
+                # Announce that we're done with the header. It's binary time
+                f.write('SPINMOB_BINARY\n')
+                
+                # Loop over the ckeys
+                for n in range(len(self.ckeys)):
+                    
+                    # Get the binary data string
+                    data_string = _n.array(self[n]).astype(binary).tostring()
+                    
+                    # Write the column
+                    #  ckey + delimiter + count + \n + datastring + \n
+                    f.write(str(self.ckeys[n]).replace(delimiter,'_') 
+                           + delimiter + str(len(self[n])) + '\n')
+                    f.close()
+                    f = open(temporary_path, 'ab')
+                    f.write(data_string)
+                    f.close()
+                    f = open(temporary_path, 'a')
+                    f.write('\n')
 
         f.close()
 
@@ -1069,7 +1223,8 @@ class fitter():
     Figure Options
     --------------
     first_figure  = 0
-        First figure number to use.
+        First figure number to use. This can prevent overwriting an existing
+        figure when calling self.plot().
     fpoints       = 1000     
         Number of points to use when plotting the fit, guess, and background.
         Set fpoints = None to use the xdata points.
@@ -1116,8 +1271,6 @@ class fitter():
         Scale(s) for y-axis (could be 'log').
     scale_eydata  = 1.0
         Optional scale factor(s) for the eydata.
-    scale_exdata  = 1.0
-        Optional scale factor(s) for the exdata.
     coarsen       = 1
         How much to coarsen the data, i.e., averaging each group of the 
         specified number of points into a single point (and propagating errors).
@@ -1148,11 +1301,14 @@ class fitter():
         by a "typical" user. For example, do not set data directly; 
         use set_data(), which clears the fit results. Otherwise the fit 
         results will not match the existing data.
+    self.figures 
+        Setting this to a figure instance or list of figures will force the 
+        plot command to use these, rather than creating new figures.
         
     See the spinmob wiki on github, or use IPython's autocomplete to play around!
     """
     
-    
+    figures = None
 
     def __init__(self, **kwargs):
         
@@ -1165,14 +1321,14 @@ class fitter():
         self._set_xdata  = [] # definitions from which data is derived during fits
         self._set_ydata  = []
         self._set_eydata = []
-        self._set_exdata = []
+        #self._set_exdata = []
         self._set_data_globals = dict(_n.__dict__) # defaults to numpy + scipy special
         self._set_data_globals.update(_special.__dict__)
 
         self._xdata_massaged  = None
         self._ydata_massaged  = None
         self._eydata_massaged = None
-        self._exdata_massaged = None
+        #self._exdata_massaged = None
 
         self._settings = dict()   # dictionary containing all the fitter settings
     
@@ -1223,7 +1379,7 @@ class fitter():
                  xscale        = 'linear', # axis scale type
                  yscale        = 'linear', # axis scale type
                  scale_eydata  = 1.0,      # by how much should we scale the eydata?
-                 scale_exdata  = 1.0,      # by how much should we scale the exdata?
+                 #scale_exdata  = 1.0,      # by how much should we scale the exdata?
                  coarsen       = 1,        # how much to coarsen the data
 
                  # styles of plots
@@ -1529,7 +1685,7 @@ class fitter():
         self.clear_results()
 
 
-    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, exdata=None, **kwargs):
+    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, **kwargs):
         """
         This will handle the different types of supplied data and put everything
         in a standard format for processing.
@@ -1541,17 +1697,13 @@ class fitter():
         eydata=None      
             Error bars for ydata. These can be None (for guessed error) or data 
             / numbers matching the dimensionality of xdata and ydata
-        exdata=None 
-            x-error bars. Note if these are set to something other than None,
-            the fitting method switches from scipy.optimize.leastsq to
-            scipy.optimize.odr. NOT IMPLEMENTED YET.
 
         Notes
         -----
         xdata, ydata, and eydata can all be scripts or lists of scripts that
         produce arrays. Any python code will work, and the scripts
         automatically know about all numpy functions, the guessed parameters,
-        and the data itself (as x, y, ey, and ex). However, the scripts are
+        and the data itself (as x, y, ey). However, the scripts are
         executed in order -- xdata, ydata, and eydata -- so the xdata script
         cannot know about ydata or eydata, the ydata script cannot know about
         eydata, and the eydata script knows about xdata and ydata.
@@ -1581,7 +1733,7 @@ class fitter():
         Additional optional keyword arguments are added to the globals for 
         script evaluation.
         """
-        self._edata_warning(eydata, exdata)
+        self._edata_warning(eydata)
 
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
         
@@ -1593,7 +1745,7 @@ class fitter():
         if type(xdata)  is str: xdata  = [xdata]
         if type(ydata)  is str: ydata  = [ydata]
         if type(eydata) is str or _s.fun.is_a_number(eydata) or eydata is None: eydata = [eydata]
-        if type(exdata) is str or _s.fun.is_a_number(exdata) or exdata is None: exdata = [exdata]
+        #if type(exdata) is str or _s.fun.is_a_number(exdata) or exdata is None: exdata = [exdata]
 
         # xdata and ydata   ['script'], [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
@@ -1608,7 +1760,7 @@ class fitter():
         # if the first element of eydata is a number, this could also just be an error bar value
         # Note: there is some ambiguity here, if the number of data sets equals the number of data points!
         if _s.fun.is_a_number(eydata[0]) and len(eydata) == len(ydata[0]): eydata = [eydata]
-        if _s.fun.is_a_number(exdata[0]) and len(exdata) == len(xdata[0]): exdata = [exdata]
+        #if _s.fun.is_a_number(exdata[0]) and len(exdata) == len(xdata[0]): exdata = [exdata]
         
         # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
@@ -1616,7 +1768,7 @@ class fitter():
         # Inflate the x, ex, and ey data sets to match the ydata sets
         while len(xdata)  < len(ydata): xdata .append( xdata[0])
         while len(ydata)  < len(xdata): ydata .append( ydata[0])
-        while len(exdata) < len(xdata): exdata.append(exdata[0])
+        #while len(exdata) < len(xdata): exdata.append(exdata[0])
         while len(eydata) < len(ydata): eydata.append(eydata[0])
 
 
@@ -1624,29 +1776,29 @@ class fitter():
         while len(ydata)  < len(self.f): ydata.append(ydata[0])
         while len(xdata)  < len(self.f): xdata.append(xdata[0])
         while len(eydata) < len(self.f): eydata.append(eydata[0])
-        while len(exdata) < len(self.f): exdata.append(exdata[0])
+        #while len(exdata) < len(self.f): exdata.append(exdata[0])
 
         # xdata and ydata   ['script','script'], [[1,2,3],[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script','script'], [[1,1,1],[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3,3], [3,[1,2,3]], [None,None]
 
         # Clean up exdata. If any element isn't None, the other None elements need
         # to be set to 0 so that ODR works.
-        if not exdata.count(None) == len(exdata):
-            # Search for and replace all None's with 0
-            for n in range(len(exdata)):
-                if exdata[n] == None: exdata[n] = 0
-        
+#        if not exdata.count(None) == len(exdata):
+#            # Search for and replace all None's with 0
+#            for n in range(len(exdata)):
+#                if exdata[n] == None: exdata[n] = 0
+#        
         
         # store the data, script, or whatever it is!
         self._set_xdata  = xdata
         self._set_ydata  = ydata
         self._set_eydata = eydata
-        self._set_exdata = exdata
+        #self._set_exdata = exdata
         self._set_data_globals.update(kwargs)
 
         # set the eyscale to 1 for each data set
         self['scale_eydata'] = [1.0]*len(self._set_xdata)
-        self['scale_exdata'] = [1.0]*len(self._set_xdata)
+        #self['scale_exdata'] = [1.0]*len(self._set_xdata)
         
         # Update the settings so they match the number of data sets.
         for k in self._settings.keys(): self[k] = self[k]
@@ -1656,7 +1808,7 @@ class fitter():
         
         return self
 
-    def _edata_warning(self, eydata, exdata):
+    def _edata_warning(self, eydata):
         """
         Warning if eydata is None.
 
@@ -1664,8 +1816,8 @@ class fitter():
         """
         if self['silent'] is True:
             pass
-        elif eydata is None and exdata is None:
-            print("\nWARNING: Not specifying eydata or exdata results in a random guess for the ydata error bars. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n")
+        elif eydata is None:
+            print("\nWARNING: Not specifying eydata results in a random guess for the ydata error bars. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n")
             print("  eydata = 0.1")
             print("  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n")
 
@@ -1689,7 +1841,7 @@ class fitter():
 
     def get_data(self):
         """
-        Returns current xdata, ydata, eydata, and exdata, after set_data() 
+        Returns current xdata, ydata, eydata, after set_data() 
         has been run.
         """
         # make sure we've done a "set data" call
@@ -1712,7 +1864,7 @@ class fitter():
         xdata  = list(self._set_xdata)
         ydata  = list(self._set_ydata)
         eydata = list(self._set_eydata)
-        exdata = list(self._set_exdata)
+        #exdata = list(self._set_exdata)
 
         # make sure they're all lists of numpy arrays
         for n in range(len(xdata)):
@@ -1752,25 +1904,25 @@ class fitter():
             # make it an array
             eydata[n] = _n.array(eydata[n]) * self["scale_eydata"][n]
 
-        # make sure they're all lists of numpy arrays
-        for n in range(len(exdata)):
-
-            # handle scripts
-            if type(exdata[n]) is str:
-                exdata[n] = self.evaluate_script(exdata[n], **self._set_data_globals)
-
-            # None is okay for exdata
-
-            # handle constant error bars (possibly returned by script)
-            if _s.fun.is_a_number(exdata[n]):
-                exdata[n] = _n.ones(len(xdata[n])) * exdata[n]
-
-            # make it an array
-            if not exdata[n] == None:
-                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
+#        # make sure they're all lists of numpy arrays
+#        for n in range(len(exdata)):
+#
+#            # handle scripts
+#            if type(exdata[n]) is str:
+#                exdata[n] = self.evaluate_script(exdata[n], **self._set_data_globals)
+#
+#            # None is okay for exdata
+#
+#            # handle constant error bars (possibly returned by script)
+#            if _s.fun.is_a_number(exdata[n]):
+#                exdata[n] = _n.ones(len(xdata[n])) * exdata[n]
+#
+#            # make it an array
+#            if not exdata[n] == None:
+#                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
 
         # return it
-        return xdata, ydata, eydata, exdata
+        return xdata, ydata, eydata
 
     def get_pnames(self):
         """
@@ -1804,7 +1956,7 @@ class fitter():
         """
         This will coarsen and then trim the data sets according to settings.
         
-        Returns processed xdata, ydata, eydata, exdata.
+        Returns processed xdata, ydata, eydata.
         
         Parameters
         ----------
@@ -1823,7 +1975,7 @@ class fitter():
         """
 
         # get the data
-        xdatas, ydatas, eydatas, exdatas = self.get_data()
+        xdatas, ydatas, eydatas = self.get_data()
 
         # get the trim limits (trimits)
         xmins   = self['xmin']
@@ -1843,21 +1995,21 @@ class fitter():
         xdata_massaged  = []
         ydata_massaged  = []
         eydata_massaged = []
-        exdata_massaged = []
+        #exdata_massaged = []
         for n in range(len(xdatas)):
             
             x  = xdatas[n]
             y  = ydatas[n]
             ey = eydatas[n]
-            ex = exdatas[n]
+            #ex = exdatas[n]
             
             # coarsen the data
             if do_coarsen:
                 x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
                 y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
                 ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
-                if not ex == None:
-                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+#                if not ex == None:
+#                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
             
             if do_trim:
                 # Create local mins and maxes
@@ -1873,9 +2025,9 @@ class fitter():
                 if ymax is None: ymax = max(y)
     
                 # trim the data
-                [xt, yt, eyt, ext] = _s.fun.trim_data_uber([x, y, ey, ex],
-                                                       [x>=xmin, x<=xmax,
-                                                        y>=ymin, y<=ymax])
+                [xt, yt, eyt] = _s.fun.trim_data_uber([x, y, ey],
+                                                      [x>=xmin, x<=xmax,
+                                                       y>=ymin, y<=ymax])
 
                 # Catch the over-trimmed case
                 if(len(xt)==0): 
@@ -1884,21 +2036,21 @@ class fitter():
                     x = xt
                     y = yt
                     ey = eyt
-                    ex = ext
+                    #ex = ext
             
             # store the result
             xdata_massaged.append(x)
             ydata_massaged.append(y)
             eydata_massaged.append(ey)
-            exdata_massaged.append(ex)
+            #exdata_massaged.append(ex)
             
-        return xdata_massaged, ydata_massaged, eydata_massaged, exdata_massaged
+        return xdata_massaged, ydata_massaged, eydata_massaged#, exdata_massaged
 
     def _massage_data(self):
         """
         Processes the data and stores it.
         """
-        self._xdata_massaged, self._ydata_massaged, self._eydata_massaged, self._exdata_massaged = self.get_processed_data()
+        self._xdata_massaged, self._ydata_massaged, self._eydata_massaged = self.get_processed_data()
         
 #        # Create the odr data.
 #        self._odr_datas = []
@@ -1915,9 +2067,8 @@ class fitter():
     def fit(self, **kwargs):
         """
         This will try to determine fit parameters using scipy.optimize.leastsq
-        algorithm. If exdata is set, this will use scipy.optimize.odr to 
-        determine the residuals, which is much slower. This function relies on 
-        a previous call of set_data() and set_functions().
+        algorithm. This function relies on a previous call of set_data() and 
+        set_functions().
 
         Notes
         -----
@@ -2278,6 +2429,11 @@ class fitter():
     def plot(self, **kwargs):
         """
         This will plot the data (with error) for inspection.
+    
+        Setting self.figures to a figure instance or list of figure instances
+        will override the creation of new figures. If you specify
+        a list, its length had better be at least as large as the
+        number of data sets.
 
         kwargs will update the settings
         """
@@ -2285,9 +2441,14 @@ class fitter():
         # Make sure there is data to plot.
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
         
+        # Make sure the figures is a list
+        if not self.figures == None and not type(self.figures) == list:
+            self.figures = [self.figures]
+        
+        
         # Get the trimmed and full processed data
-        xts, yts, eyts, exts = self.get_processed_data()
-        xas, yas, eyas, exas = self.get_processed_data(do_trim=False)
+        xts, yts, eyts = self.get_processed_data()
+        xas, yas, eyas = self.get_processed_data(do_trim=False)
         
         # update settings
         for k in kwargs: self[k] = kwargs[k]
@@ -2307,15 +2468,16 @@ class fitter():
             eyt = eyts[n]
             
             # get the next figure
-            fig = _p.figure(self['first_figure']+n)
-
+            if self.figures == None: fig = _p.figure(self['first_figure']+n)
+            else: fig = self.figures[n]
+                    
             # turn off interactive mode and clear the figure
             _p.ioff()
             fig.clear()
-
+            
             # set up two axes. One for data and one for residuals.
-            a1 = _p.subplot(211)            # Residuals
-            a2 = _p.subplot(212, sharex=a1) # Data
+            a1 = fig.add_subplot(211)            # Residuals
+            a2 = fig.add_subplot(212, sharex=a1) # Data
             a1.set_position([0.15, 0.72, 0.75, 0.15])
             a2.set_position([0.15, 0.10, 0.75, 0.60])
 
@@ -2481,14 +2643,14 @@ class fitter():
             for m in a1.get_xticklabels(): m.set_visible(False)
             
             # Add labels to the axes
-            if self['xlabel'][n] is None: _p.xlabel('xdata['+str(n)+']')
-            else:                         _p.xlabel(self['xlabel'][n])
+            if self['xlabel'][n] is None: a2.set_xlabel('xdata['+str(n)+']')
+            else:                         a2.set_xlabel(self['xlabel'][n])
             if self['ylabel'][n] is None:
                 ylabel='ydata['+str(n)+']'
                 if self['subtract_bg'][n] and self.bg[n] is not None:
                     ylabel=ylabel+' - bg['+str(n)+']'
-                _p.ylabel(ylabel)
-            else:                         _p.ylabel(self['ylabel'][n])
+                a2.set_ylabel(ylabel)
+            else:                         a2.set_ylabel(self['ylabel'][n])
             a1.set_ylabel('Studentized\nResiduals')
 
             
@@ -2529,8 +2691,9 @@ class fitter():
             
             # turn back to interactive and show the plots.
             _p.ion()
-            _p.draw()
-            _p.show()
+            if self.figures == None:
+                _p.draw()
+                _p.show()
         
         # End of new figure for each data set loop
         return self
@@ -2654,7 +2817,7 @@ class fitter():
             return
 
         # get the data
-        xdata, ydata, eydata, exdata = self.get_data()
+        xdata, ydata, eydata = self.get_data()
 
         if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):     n = list(range(len(xdata)))
@@ -2773,7 +2936,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
 
     Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
-    if paths == "ask": paths = _s.dialogs.open_multiple(filters, text, default_directory)
+    if paths == "ask": paths = _s.dialogs.load_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []
