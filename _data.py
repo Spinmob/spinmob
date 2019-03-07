@@ -317,15 +317,18 @@ class databox:
             
             # Continue until we reach the last character.
             while not start >= len(s):
-           
-                # Get the ckey
+                
+                # Get the location of the end of the ckey
                 stop  = s.find(delimiter, start)
-                ckey  = s[start:stop].decode('utf-8')
+                
+                # Woa, Nelly! We're at the end of the file.
+                if stop == -1: break
+                ckey  = s[start:stop].decode('utf-8').strip()
                 
                 # Get the array length
                 start = stop+1
                 stop  = s.find(b'\n', start)
-                length = int(s[start:stop])
+                length = int(s[start:stop].strip())
                 
                 # Get the data!
                 start = stop+1

@@ -187,12 +187,16 @@ class Test_databox(_ut.TestCase):
     def test_load_save_binary(self):
         global d
         
+        # Start clean.
+        if _os.path.exists('test_binary.txt'): _os.remove('test_binary.txt')
+        if _os.path.exists('test_binary.txt.backup'): _os.remove('test_binary.txt.backup')
+
         # Write a confusing binary file.
         d = _s.data.databox(delimiter=',')
         d.h(poo = 32)
         d['pants']       = [1,2,3,4,5]
         d['shoes,teeth'] = [1,2,1]
-        d.save_file('test_binary.txt',binary='float16')
+        d.save_file('test_binary.txt', binary='float16')
         
         # Load said binary
         d = _s.data.load('test_binary.txt')
@@ -218,6 +222,9 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(len(d.hkeys), 2)
         self.assertEqual(d.delimiter,'\t')
 
+        # Clean up again.
+        if _os.path.exists('test_binary.txt'): _os.remove('test_binary.txt')
+        if _os.path.exists('test_binary.txt.backup'): _os.remove('test_binary.txt.backup')
 
         # Now modify it and save again.
         d.h(SPINMOB_BINARY='int64', test=['1,2,3,4',1,2,3,4])
@@ -233,12 +240,13 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(d[1][1],      2)
         
         # Clean up.
-        _os.remove('test_binary.txt')
-        _os.remove('test_binary.txt.backup')
+        if _os.path.exists('test_binary.txt'): _os.remove('test_binary.txt')
+        if _os.path.exists('test_binary.txt.backup'): _os.remove('test_binary.txt.backup')
 
         # Load the difficult one to encode
         d = _s.data.load(path=_os.path.join(self.data_path, "difficult.binary"))
-        
+        self.assertEqual(_n.shape(d), (6,500))
+        self.assertAlmostEqual(d[4][4], 0.062340055)
 
     
     
