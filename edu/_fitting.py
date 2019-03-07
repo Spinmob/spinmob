@@ -57,6 +57,7 @@ class fitting_statistics_demo():
         
         # Set up the autosave & load.
         self.tree_settings.connect_any_signal_changed(self.tree_settings.autosave)
+        self.tree_settings.connect_any_signal_changed(self.update_all_plots)
         self.tree_settings.load()
         
         # Add the tabs and plotter to the other grid
@@ -258,6 +259,8 @@ class fitting_statistics_demo():
         """
         Update the fit plot.
         """
+        if not self.tabs_plotting.get_current_tab()==1: return
+        
         self.fitter.plot()
         self.window.process_events()
         self.figure_fit.canvas.draw()
@@ -267,7 +270,10 @@ class fitting_statistics_demo():
         """
         Update the histogram plots (actually perform the histogram and plot).
         """
-        if len(self.axes_histograms):
+        # Don't bother if we're not looking.
+        if not self.tabs_plotting.get_current_tab()==3: return
+        
+        if len(self.plot_parameters) and len(self.axes_histograms):
             
             # Update the chi^2 histogram histograms
             self.axes_histograms[0].clear()
@@ -332,3 +338,11 @@ class fitting_statistics_demo():
         
         self.figure_stats.canvas.draw()
         self.window.process_events()
+        
+    def update_all_plots(self, *a):
+        """
+        Updates the Fit and Stats plots.
+        """
+        self.update_fit_plot()
+        self.update_histograms_plot()
+            
