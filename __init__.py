@@ -14,7 +14,7 @@ try:
 
     # make sure we have a valid qt application for dialogs etc...
     _qtapp = _qtc.QCoreApplication.instance()
-    if not _qtapp: _qtapp = _qtw.QApplication(_os.sys.argv)
+    if not _qtapp: _qtapp = _qtw.QApplication([])
     
 except:
     print("Warning: pyqtgraph version 0.10 or higher is required (use a pip install).")
