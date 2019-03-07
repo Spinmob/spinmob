@@ -1,1 +1,2 @@
-from . import _fitting as fitting
+from . import _fitting
+fitting_statistics_demo = _fitting.fitting_statistics_demo

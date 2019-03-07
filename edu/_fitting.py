@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as _navbar
 from matplotlib.figure import Figure as _figure
 
 
-class fake_data_taker():
+class fitting_statistics_demo():
     
     
     def __init__(self):
@@ -48,11 +48,12 @@ class fake_data_taker():
         
         self.tree_settings.add_parameter('Fit/function',   'a*x+b')
         self.tree_settings.add_parameter('Fit/parameters', 'a=0,b=0')
-        self.tree_settings.add_parameter('Fit/y_error',    1.3)
+        self.tree_settings.add_parameter('Fit/assumed_ey', 1.3)
         
-        self.tree_settings.add_parameter('Stats/bins',     14)
-        self.tree_settings.add_parameter('Stats/versus_x', 'a')
-        self.tree_settings.add_parameter('Stats/versus_y', 'b')
+        self.tree_settings.add_parameter('Stats/bins',        14)
+        self.tree_settings.add_parameter('Stats/versus_x',    'a')
+        self.tree_settings.add_parameter('Stats/versus_y',    'b')
+        self.tree_settings.add_parameter('Stats/plot_theory', False)
         
         # Set up the autosave & load.
         self.tree_settings.connect_any_signal_changed(self.tree_settings.autosave)
@@ -159,7 +160,7 @@ class fake_data_taker():
         
         # Set the data
         self.fitter.set_data(self.plot_raw[0], self.plot_raw[1], 
-                             self.tree_settings['Fit/y_error'])
+                             self.tree_settings['Fit/assumed_ey'])
         
         # Fit!
         self.fitter.fit()
@@ -281,13 +282,15 @@ class fake_data_taker():
             self.axes_histograms[0].set_ylabel('Counts')
             
             # Plot the expected distribution.
-            x2  = _n.linspace(min(0.5*(B[1]-B[0]),0.02), max(1.5,max(self.plot_parameters[0])), 400)
-            dof = self.plot_parameters[1][-1]
-            pdf = len(self.plot_parameters[1]) * dof * _stats.chi2.pdf(x2*dof,dof) * (B[1]-B[0])
+            if self.tree_settings['Stats/plot_theory']:
+                x2  = _n.linspace(min(0.5*(B[1]-B[0]),0.02), max(1.5,max(self.plot_parameters[0])), 400)
+                dof = self.plot_parameters[1][-1]
+                pdf = len(self.plot_parameters[1]) * dof * _stats.chi2.pdf(x2*dof,dof) * (B[1]-B[0])                
+                self.axes_histograms[0].plot(x2,pdf,label='Expected ('+str(dof)+ 'DOF)')
+                self.axes_histograms[0].legend()
             
-            self.axes_histograms[0].plot(x2,pdf,label='Expected ('+str(dof)+ 'DOF)')
-            self.axes_histograms[0].legend()
-            self.axes_histograms[0].set_xlim(0)
+            # Include zero, to give a sense of scale.
+            self.axes_histograms[0].set_xlim(0,max(1.5,max(self.plot_parameters[0]))*1.05)
             
             
             # Plot the correlations
@@ -317,13 +320,14 @@ class fake_data_taker():
                 
                 # Plot the expected distribution, calculated from the mean
                 # and fit error bar.
-                x0  = _n.average(self.plot_parameters[2*n+2]) 
-                ex  = self.plot_parameters[2*n+3][-1]
-                x   = _n.linspace(x0-4*ex, x0+4*ex, 400)
-                pdf = len(self.plot_parameters[1]) * _stats.norm.pdf((x-x0)/ex)/ex * (B[1]-B[0])
-                
-                self.axes_histograms[n+2].plot(x,pdf,label='Expected')
-                self.axes_histograms[n+2].legend()
+                if self.tree_settings['Stats/plot_theory']:
+                    x0  = _n.average(self.plot_parameters[2*n+2]) 
+                    ex  = self.plot_parameters[2*n+3][-1]
+                    x   = _n.linspace(x0-4*ex, x0+4*ex, 400)
+                    pdf = len(self.plot_parameters[1]) * _stats.norm.pdf((x-x0)/ex)/ex * (B[1]-B[0])
+                    
+                    self.axes_histograms[n+2].plot(x,pdf,label='Expected')
+                    self.axes_histograms[n+2].legend()
                 
         
         self.figure_stats.canvas.draw()

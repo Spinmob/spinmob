@@ -29,7 +29,7 @@ class Test_edu(_ut.TestCase):
         Just opens a full-featured example and lets the user play with it
         """
         global g
-        g = _edu.fitting.fake_data_taker() 
+        g = _edu.fitting_statistics_demo()
         
         
     
