@@ -196,8 +196,27 @@ class Test_databox(_ut.TestCase):
         
         # Load said binary
         d = _s.data.load('test_binary.txt')
+        self.assertEqual(len(d), 2)
+        self.assertEqual(len(d[1]), 3)
+        self.assertEqual(len(d[0]), 5)
+        self.assertEqual(len(d.hkeys), 2)
         
         
+        
+        # Do the same with no delimiter
+        d = _s.data.databox(delimiter=None)
+        d.h(poo = 32)
+        d['pants']       = [1,2,3,4,5]
+        d['shoes,teeth'] = [1,2,1]
+        d.save_file('test_binary.txt',binary='float16')
+        
+        # Load said binary
+        d = _s.data.load('test_binary.txt')
+        self.assertEqual(len(d), 2)
+        self.assertEqual(len(d[1]), 3)
+        self.assertEqual(len(d[0]), 5)
+        self.assertEqual(len(d.hkeys), 2)
+        self.assertEqual(d.delimiter,'\t')
 
 
         # Now modify it and save again.
