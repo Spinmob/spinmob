@@ -270,15 +270,21 @@ class fake_data_taker():
             
             # Update the chi^2 histogram histograms
             self.axes_histograms[0].clear()
-            a,bins,c = self.axes_histograms[0].hist(self.plot_parameters[0], self.tree_settings['Stats/bins'], label='$\chi^2_{reduced}$')
+            N,B,c = self.axes_histograms[0].hist(self.plot_parameters[0], self.tree_settings['Stats/bins'], label='$\chi^2_{reduced}$')
+            x = (B[1:]+B[:-1])*0.5
+            
+            # Include the error bars
+            self.axes_histograms[0].errorbar(x, N, _n.sqrt(N), ls='', marker='+')
+            
+            # Tidy up
             self.axes_histograms[0].set_xlabel('$\chi^2_{reduced}$')
             self.axes_histograms[0].set_ylabel('Counts')
-            #self.axes_histograms[0].set_title('$\chi^2_{reduced}$ Histogram')
             
             # Plot the expected distribution.
-            x2  = _n.linspace(min(0.5*(bins[1]-bins[0]),0.02), max(1.5,max(self.plot_parameters[0])), 400)
+            x2  = _n.linspace(min(0.5*(B[1]-B[0]),0.02), max(1.5,max(self.plot_parameters[0])), 400)
             dof = self.plot_parameters[1][-1]
-            pdf = len(self.plot_parameters[1]) * dof * _stats.chi2.pdf(x2*dof,dof) * (bins[1]-bins[0])
+            pdf = len(self.plot_parameters[1]) * dof * _stats.chi2.pdf(x2*dof,dof) * (B[1]-B[0])
+            
             self.axes_histograms[0].plot(x2,pdf,label='Expected ('+str(dof)+ 'DOF)')
             self.axes_histograms[0].legend()
             self.axes_histograms[0].set_xlim(0)
@@ -299,7 +305,13 @@ class fake_data_taker():
                 
                 # Plot the histogram
                 self.axes_histograms[n+2].clear()
-                a,bins,c = self.axes_histograms[n+2].hist(self.plot_parameters[2*n+2], self.tree_settings['Stats/bins'], label=self.fitter.get_pnames()[n])
+                N,B,c = self.axes_histograms[n+2].hist(self.plot_parameters[2*n+2], self.tree_settings['Stats/bins'], label=self.fitter.get_pnames()[n])
+                x = (B[1:]+B[:-1])*0.5
+                
+                # Include the error bars
+                self.axes_histograms[n+2].errorbar(x, N, _n.sqrt(N), ls='', marker='+')
+            
+                # Tidy up
                 self.axes_histograms[n+2].set_xlabel(self.fitter.get_pnames()[n])
                 self.axes_histograms[n+2].set_ylabel('Counts')
                 
@@ -308,7 +320,8 @@ class fake_data_taker():
                 x0  = _n.average(self.plot_parameters[2*n+2]) 
                 ex  = self.plot_parameters[2*n+3][-1]
                 x   = _n.linspace(x0-4*ex, x0+4*ex, 400)
-                pdf = len(self.plot_parameters[1]) * _stats.norm.pdf((x-x0)/ex)/ex * (bins[1]-bins[0])
+                pdf = len(self.plot_parameters[1]) * _stats.norm.pdf((x-x0)/ex)/ex * (B[1]-B[0])
+                
                 self.axes_histograms[n+2].plot(x,pdf,label='Expected')
                 self.axes_histograms[n+2].legend()
                 
