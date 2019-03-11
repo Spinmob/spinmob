@@ -2269,9 +2269,10 @@ class DataboxPlot(_d.databox, GridLayout):
         DataboxPlot to automatically save / load the settings. Note you will
         need to specify a different path for each DataboxPlot instance.
     autoscript=1
-        Sets the default autoscript entry in the combobox. Set to 4 for the 
-        custom autoscript, which can be defined by overwriting the function
-        self.autoscript_custom, which needs only return a valid script string.
+        Sets the default autoscript entry in the combobox. Set to 0 for the 
+        manual script, and 4 for the custom autoscript, which can be 
+        defined by overwriting the function self.autoscript_custom, which 
+        needs only return a valid script string.
 
     Note checking the "Auto-Save" button does not result in the data being automatically
     saved until you explicitly call self.autosave() (which does nothing
@@ -2543,19 +2544,20 @@ class DataboxPlot(_d.databox, GridLayout):
             # hard code the first columns
             sx = "x = [ d[0]"
             sy = "y = [ d[1]"
-
+            
             # hard code the first labels
             sxlabels = "xlabels = [ '"+self.ckeys[0]+"'"
             sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
-
+            
             # Loop over the remaining columns and append
-            for n in range(1,len(self)/2):
+            for n in range(1,int(len(self)/2)):
                 sx += ", d["+str(2*n  )+"]"
                 sy += ", d["+str(2*n+1)+"]"
                 sxlabels += ", '"+self.ckeys[2*n  ]+"'"
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
-
+            
             return sx+" ]\n"+sy+" ]\n\n"+sxlabels+" ]\n"+sylabels+" ]\n"
+            print("test")
             
         # Column triples
         elif self.combo_autoscript.get_index() == 3:
@@ -2569,7 +2571,7 @@ class DataboxPlot(_d.databox, GridLayout):
             sylabels = "ylabels = [ '"+self.ckeys[1]+"', '"+self.ckeys[2]+"'"
 
             # Loop over the remaining columns and append
-            for n in range(1,len(self)/3):
+            for n in range(1,int(len(self)/3)):
                 sx += ", d["+str(3*n  )+"], d["+str(3*n  )+"]"
                 sy += ", d["+str(3*n+1)+"], d["+str(3*n+2)+"]"
                 
@@ -2808,7 +2810,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
 if __name__ == '__main__':
     w = Window()
-    p = w.place_object(DataboxPlot())
+    p = w.place_object(DataboxPlot(autoscript=2))
     w.show()
     
     p[0] = [1,2]
@@ -2816,10 +2818,8 @@ if __name__ == '__main__':
     p[2] = [2,1]
     p[3] = [1,2]
     
-    while True:    
-        p.plot()
-        w.process_events()
-
+    p.plot()
+    
 
 
 
