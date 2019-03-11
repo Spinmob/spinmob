@@ -12,12 +12,22 @@ from matplotlib.figure import Figure as _figure
 
 class fitting_statistics_demo():
     
+    """
+    Graphical interface for generating fake data, fitting, and collecting 
+    fit statistics.
     
-    def __init__(self):
+    Parameters
+    ----------
+    block_command_line=True
+        Whether to block the command line when the window is first shown.
+    """
+    
+    
+    def __init__(self, block_command_line=True):
         
-        self._build_gui()
+        self._build_gui(block_command_line)
 
-    def _build_gui(self):
+    def _build_gui(self, block_command_line=False):
         """
         Builds the GUI for taking fake data.
         """
@@ -54,11 +64,6 @@ class fitting_statistics_demo():
         self.tree_settings.add_parameter('Stats/versus_x',    'a')
         self.tree_settings.add_parameter('Stats/versus_y',    'b')
         self.tree_settings.add_parameter('Stats/plot_theory', False)
-        
-        # Set up the autosave & load.
-        self.tree_settings.connect_any_signal_changed(self.tree_settings.autosave)
-        self.tree_settings.connect_any_signal_changed(self.update_all_plots)
-        self.tree_settings.load()
         
         # Add the tabs and plotter to the other grid
         self.tabs_plotting = self.grid_plotting.place_object(_g.TabArea(False, 'tabs_plotting.cfg'), alignment=0)
@@ -111,8 +116,13 @@ class fitting_statistics_demo():
         # Changing tabs can update plots
         self.tabs_plotting.signal_switched.connect(self.tabs_plotting_switched)
         
+        # Set up the autosave & load.
+        self.tree_settings.connect_any_signal_changed(self.tree_settings.autosave)
+        self.tree_settings.connect_any_signal_changed(self.update_all_plots)
+        self.tree_settings.load()
+        
         # Show the window
-        self.window.show()
+        self.window.show(block_command_line)
     
     def _autoscript_raw(self):
         """
