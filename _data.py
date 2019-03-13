@@ -2523,12 +2523,12 @@ class fitter():
                 # Make it faint.
                 style_data  = dict(self['style_data' ][n]); style_data ['alpha'] = 0.3
                 
-                if self['plot_errors'][n]: a2.errorbar(xa, ya-d_ya, eya, **style_data)
-                else:                      a2.plot    (xa, ya-d_ya,      **style_data)
+                if self['plot_errors'][n]: a2.errorbar(xa, ya-d_ya, eya, zorder=5, **style_data)
+                else:                      a2.plot    (xa, ya-d_ya,      zorder=5, **style_data)
             
             # add the trimmed data
-            if self['plot_errors'][n]:     a2.errorbar(xt, yt-d_yt, eyt, **self['style_data'][n])
-            else:                          a2.plot(    xt, yt-d_yt,      **self['style_data'][n])
+            if self['plot_errors'][n]:     a2.errorbar(xt, yt-d_yt, eyt, zorder=7, **self['style_data'][n])
+            else:                          a2.plot(    xt, yt-d_yt,      zorder=7, **self['style_data'][n])
                            
             # Zoom on just the data for now
             _s.tweaks.auto_zoom(axes=a2, draw=False)
@@ -2540,23 +2540,23 @@ class fitter():
             if n < len(self.f): # If there are any functions to plot
                 
                 
-                # Plot the guess under the fit
+                # Plot the GUESS under the fit
                 if self['plot_guess'][n]:
                                     
-                    # FULL BACKGROUND
+                    # FULL GUESS
                     if self['plot_all_data'][n]:
                         
                         # Make it faint.
                         style_guess = dict(self['style_guess'][n]); style_guess['alpha'] = 0.3
                 
-                        # FULL background guess
+                        # FULL background GUESS
                         if self['plot_bg'][n] and self.bg[n] is not None:
                             bg_gya = self._evaluate_bg(n, fxa, self._pguess)
-                            a2.plot(fxa, bg_gya-d_fya, **style_guess)
+                            a2.plot(fxa, bg_gya-d_fya, zorder=9, **style_guess)
                         
                         # FULL guess
                         gya = self._evaluate_f (n, fxa, self._pguess)
-                        a2.plot(fxa, gya-d_fya, **style_guess)
+                        a2.plot(fxa, gya-d_fya, zorder=9, **style_guess)
                         
                         # Update the trimmed datas so that the points line up
                         [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
@@ -2566,15 +2566,15 @@ class fitter():
                     # TRIMMED guess background curve
                     if self['plot_bg'][n] and self.bg[n] is not None:
                         bg_gyt = self._evaluate_bg(n, fxt, self._pguess)
-                        a2.plot(fxt, bg_gyt-d_fyt, **self['style_guess'][n])
+                        a2.plot(fxt, bg_gyt-d_fyt, zorder=9, **self['style_guess'][n])
 
                     # TRIMMED main guess curve
                     gyt = self._evaluate_f (n, fxt, self._pguess)
-                    a2.plot(fxt, gyt-d_fyt, **self['style_guess'][n])
+                    a2.plot(fxt, gyt-d_fyt, zorder=9, **self['style_guess'][n])
     
                 
                 
-                # Plot the fit if there is one
+                # Plot the FIT if there is one
                 if not self.results == None:
     
                     # FULL FIT
@@ -2586,11 +2586,11 @@ class fitter():
                         # FULL background fit
                         if self['plot_bg'][n] and self.bg[n] is not None:
                             bg_fya = self._evaluate_bg(n, fxa, self.results[0])
-                            a2.plot(fxa, bg_fya-d_fya, **style_fit)
+                            a2.plot(fxa, bg_fya-d_fya, zorder=10, **style_fit)
                         
                         # FULL fit
                         fya = self._evaluate_f (n, fxa, self.results[0])
-                        a2.plot(fxa, fya-d_fya, **style_fit)
+                        a2.plot(fxa, fya-d_fya, zorder=10, **style_fit)
     
                         # Update the trimmed datas so that the points line up
                         [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
@@ -2598,11 +2598,11 @@ class fitter():
                     # TRIMMED FIT BACKGROUND
                     if self['plot_bg'][n] and self.bg[n] is not None: 
                         bg_fyt = self._evaluate_bg(n, fxt, self.results[0])                    
-                        a2.plot(fxt, bg_fyt-d_fyt, **self['style_fit'][n])
+                        a2.plot(fxt, bg_fyt-d_fyt, zorder=10, **self['style_fit'][n])
     
-                    # TRIMMED main guess curve
+                    # TRIMMED main curve
                     fyt = self._evaluate_f(n, fxt, self.results[0])
-                    a2.plot(fxt, fyt-d_fyt, **self['style_fit'][n])
+                    a2.plot(fxt, fyt-d_fyt, zorder=10, **self['style_fit'][n])
 
                 if self['plot_guess_zoom'][n]: _s.tweaks.auto_zoom(axes=a2, draw=False)
             
