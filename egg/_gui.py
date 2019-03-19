@@ -1089,11 +1089,15 @@ class ComboBox(BaseObject):
         self._widget.setCurrentIndex(index)
         return self
         
-    def get_text(self, index=1):
+    def get_text(self, index=None):
         """
-        Gets text from a given index.
+        Gets text from a given index. If index=None, returns the current value
+        self.get_text(self.get_value())
         """
-        return str(self._widget.itemText(index))
+        if index==None:
+            return self.get_text(self.get_value())
+        else:
+            return str(self._widget.itemText(index))
     
     get_value = get_index
     set_value = set_index
@@ -2287,10 +2291,11 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # top row is main controls
         self.place_object(Label("Raw Data:"), alignment=1)
-        self.button_clear    = self.place_object(Button("Clear").set_width(50)               , alignment=1)
-        self.button_load     = self.place_object(Button("Load").set_width(50)                , alignment=1)
-        self.button_save     = self.place_object(Button("Save").set_width(50)                , alignment=1)
-        self.button_autosave = self.place_object(Button("Auto", checkable=True).set_width(50), alignment=1)
+        self.button_clear    = self.place_object(Button("Clear")                 .set_width(50), alignment=1)
+        self.button_load     = self.place_object(Button("Load")                  .set_width(50), alignment=1)
+        self.button_save     = self.place_object(Button("Save")                  .set_width(50), alignment=1)
+        self.combo_binary    = self.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
+        self.button_autosave = self.place_object(Button("Auto",   checkable=True).set_width(50), alignment=1)
         self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None)))
         self._label_path     = self.place_object(Label(""))
 
@@ -2345,6 +2350,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_clear     .signal_clicked.connect(self._button_clear_clicked)
         self.button_autosave  .signal_toggled.connect(self._button_autosave_clicked)
         self.button_script    .signal_toggled.connect(self._button_script_clicked)
+        self.combo_binary     .signal_changed.connect(self._combo_binary_clicked)
         self.combo_autoscript .signal_changed.connect(self._combo_autoscript_clicked)
         self.button_multi     .signal_toggled.connect(self._button_multi_clicked)
         self.button_link_x    .signal_toggled.connect(self._button_link_x_clicked)
@@ -2353,7 +2359,8 @@ class DataboxPlot(_d.databox, GridLayout):
         self.script           .signal_changed.connect(self._script_changed)
 
         # list of controls we should auto-save / load
-        self._autosettings_controls = ["self.combo_autoscript",
+        self._autosettings_controls = ["self.combo_binary",
+                                       "self.combo_autoscript",
                                        "self.button_enabled",
                                        "self.button_multi",
                                        "self.button_link_x",
@@ -2387,10 +2394,16 @@ class DataboxPlot(_d.databox, GridLayout):
 
     def _combo_autoscript_clicked(self, *a):
         """
-        Called whenever the button is clicked.
+        Called whenever the combo is clicked.
         """
         self._synchronize_controls()
         self.plot()
+        self.save_gui_settings()
+
+    def _combo_binary_clicked(self, *a):
+        """
+        Called whenever the combo is clicked.
+        """
         self.save_gui_settings()
 
     def _button_script_clicked(self, checked):
@@ -2438,28 +2451,38 @@ class DataboxPlot(_d.databox, GridLayout):
         self.clear()
         self.plot()
 
-    def save_file(self, path="ask", force_overwrite=False, just_settings=False, **kwargs):
+    def save_file(self, path=None, force_overwrite=False, just_settings=False, **kwargs):
         """
         Saves the data in the databox to a file.
 
-        just_settings=True means only save the configuration of the controls
+        Parameters
+        ----------
+        path=None
+            Path for output. If set to None, use a save dialog.
+        force_overwrite=False
+            Do not question the overwrite if the file already exists.
+        just_settings=False 
+            Set to True to save only the state of the DataboxPlot controls
         
         **kwargs are sent to the normal databox save_file() function.
         """
-
+        # Update the binary mode
+        if not 'binary' in kwargs: kwargs['binary'] = self.combo_binary.get_text()
+        
         # if it's just the settings file, make a new databox
         if just_settings: d = _d.databox()
 
         # otherwise use the internal databox
         else: d = self
 
-        # add all the controls settings
+        # add all the controls settings to the header
         for x in self._autosettings_controls: self._store_gui_setting(d, x)
 
-        # save the file using the skeleton function
+        # save the file using the skeleton function, so as not to recursively 
+        # call this one again!
         _d.databox.save_file(d, path, self._file_type, force_overwrite, **kwargs)
 
-    def load_file(self, path="ask", just_settings=False):
+    def load_file(self, path=None, just_settings=False):
         """
         Loads a data file. After the file is loaded, calls self.after_load_file(self),
         which you can overwrite if you like!
@@ -2488,7 +2511,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # plot the data if this isn't just a settings load
         if not just_settings:
             self.plot()
-            self.after_load_file(self)
+            self.after_load_file()
 
 
     def after_load_file(self,*args):

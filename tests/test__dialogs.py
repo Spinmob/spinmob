@@ -54,7 +54,12 @@ class Test_dialogs(_ut.TestCase):
 
         r = _s.dialogs.select_directory(text="CANCEL ME")
         self.assertEqual(r, None)
-    
+
+        # Crash tests for databox dialogs
+        _s.data.load(text='CANCEL ME')
+        _s.data.load_multiple(text='CANCEL ME')
+
+
 
 if __name__ == "__main__":
     _ut.main()

@@ -1075,8 +1075,8 @@ def join(array_of_strings, delimiter=' '):
     return(output)
 
 
-def _load_object(path="ask", text="Load a pickled object."):
-    if path=="ask": path = _s.dialogs.SingleFile("*.pickle", text=text)
+def _load_object(path=None, text="Load a pickled object."):
+    if path==None: path = _s.dialogs.SingleFile("*.pickle", text=text)
     if path == "": return None
 
     f = open(path, "r")
@@ -1224,13 +1224,13 @@ def read_lines(path):
 
     return(a)
 
-def replace_in_files(search, replace, depth=0, paths="ask", confirm=True):
+def replace_in_files(search, replace, depth=0, paths=None, confirm=True):
     """
     Does a line-by-line search and replace, but only up to the "depth" line.
     """
 
     # have the user select some files
-    if paths=="ask":
+    if paths==None:
         paths = _s.dialogs.MultipleFiles('DIS AND DAT|*.*')
     if paths == []: return
 
@@ -1308,8 +1308,8 @@ def round_sigfigs(x, n=2):
     if iterable: return x
     else:        return x[0]
 
-def _save_object(object, path="ask", text="Save this object where?"):
-    if path=="ask": path = _s.dialogs.Save("*.pickle", text=text)
+def _save_object(object, path=None, text="Save this object where?"):
+    if path==None: path = _s.dialogs.Save("*.pickle", text=text)
     if path == "": return
 
     if len(path.split(".")) <= 1 or not path.split(".")[-1] == "pickle":

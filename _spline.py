@@ -365,7 +365,7 @@ def copy_spline_array(a):
     return b    
 
     
-def load_spline_array(path="ask", text="Give me a spline array to load, jerkface! No, YOU'RE the jerkface."):
+def load_spline_array(path=None, text="Give me a spline array to load, jerkface! No, YOU'RE the jerkface."):
     a = _s.load_object(path, text)
 
     b = copy_spline_array(a)

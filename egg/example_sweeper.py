@@ -18,12 +18,12 @@ n_x      = w.place_object(egg.gui.NumberBox(int=False))
 # move to the second row and add a TreeDictionary for our "settings"
 w.new_autorow()
 settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4, alignment=0)
-settings.add_parameter('sweep/x_start', -10, type='float')
-settings.add_parameter('sweep/x_stop',   10, type='float')
-settings.add_parameter('sweep/x_steps', 200, type='float')
+settings.add_parameter('sweep/x_start', 0.0)
+settings.add_parameter('sweep/x_stop',  0.004)
+settings.add_parameter('sweep/x_steps', 200)
 
 # load previous settings if they exist
-settings.load()
+settings.load(ignore_errors=True)
 
 # add a tabbed interface for the plotting area, spanning the first and second rows
 tabs = w.place_object(egg.gui.TabArea(), 10,0, row_span=2, alignment=0)
@@ -67,7 +67,7 @@ def get_data():
     """
 
     # pretend we're measuring a noisy resonance at zero
-    y = 1.0 / (1.0 + 1j*n_x.get_value()) + _n.random.rand()*0.1
+    y = 1.0 / (1.0 + 1j*(n_x.get_value()-0.002)*1000) + _n.random.rand()*0.1
 
     # and that it takes time to do so
     _t.sleep(0.1)
@@ -156,7 +156,7 @@ settings.connect_any_signal_changed(settings_changed)
 def d_sweep_after_load():
 
     # dump the header into the settings
-    settings.update(d_sweep)
+    settings.update(d_sweep, ignore_errors=True)
 
     # update the roi_sweep region
     roi_sweep.setRegion((settings['sweep/x_start'], settings['sweep/x_stop']))
@@ -177,5 +177,6 @@ def shutdown():
     return
 w.event_close = shutdown
 
-# show the window!
-w.show(True)
+if __name__ == '__main__':
+    # show the window!
+    w.show(True)

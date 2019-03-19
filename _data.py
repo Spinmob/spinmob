@@ -118,7 +118,7 @@ class databox:
 
         return globbies
 
-    def load_file(self, path='ask', first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False):
+    def load_file(self, path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False):
         """
         This will clear the databox, load a file, storing the header info in 
         self.headers, and the data in self.columns
@@ -136,8 +136,8 @@ class databox:
         
         Parameters
         ----------
-        path='ask'
-            Path to the file. Using 'ask' will bring up a dialog.
+        path=None
+            Path to the file. Using None will bring up a dialog.
         filters='*.*'            
             Filter for the file dialog (if path isn't specified)
         text='Select a file, FACEPANTS.'               
@@ -155,7 +155,7 @@ class databox:
         if default_directory is None: default_directory = self.directory
 
         # Ask user for a file to open
-        if path == "ask":
+        if path == None:
             path = _s.dialogs.load(filters=filters,
                                         default_directory=self.directory,
                                         text=text)
@@ -451,30 +451,28 @@ class databox:
 
         return self
 
-    def save_file(self, path='ask', filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current', binary=None):
+    def save_file(self, path=None, filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current', binary=None):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
 
         Parameters
         ----------
-        
+        path=None
+            Path for saving the data. If None, this will bring up
+            a save file dialog.
         filters='*.dat'         
-            File filter for the file dialog (for path="ask")
-        
+            File filter for the file dialog (for path=None)
         force_overwrite=False   
             Normally, if the file * exists, this will copy that
             to *.backup. If the backup already exists, this
             function will abort. Setting this to True will
             force overwriting the backup file.
-        
         header_only=False       
             Only output the header?
-        
         delimiter='use current' 
             This will set the delimiter of the output file
             'use current' means use self.delimiter
-        
         binary=None
             Set to one of the allowed numpy dtypes, e.g., float32, float64, 
             complex64, int32, etc. Setting binary=True defaults to float64.
@@ -488,7 +486,7 @@ class databox:
         # This is the final path. We now write to a temporary file in the user
         # directory, then move it to the destination. This (hopefully) fixes
         # problems with sync programs.
-        if path == "ask": path = _s.dialogs.save(filters, default_directory=self.directory)
+        if path in [None]: path = _s.dialogs.save(filters, default_directory=self.directory)
         if path in ["", None]:
             print("Aborted.")
             return False
@@ -513,19 +511,23 @@ class databox:
         
         
         
-        # Update the header element if overridden or added by this save command
-        if not binary == None: self.h(SPINMOB_BINARY=binary)
-        
-        # If for some reason the header says the binary mode is None or False, 
-        # Remove it so it stays in ascii mode.
-        if 'SPINMOB_BINARY' in [None, 'None', False, 'False']: 
-            self.pop_header('SPINMOB_BINARY')
+        # Override any existing binary if we're supposed to
+        if binary in [False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
+            self.pop_header('SPINMOB_BINARY', True)
+            binary = None
+            
+        # If the binary flag is any kind of binary format, add the key
+        if not binary in [None, False, 'text', 'Text', 'ASCII', 'csv', 'CSV']: 
+            self.h(SPINMOB_BINARY=binary)
         
         # Now use the header element to determine the binary mode
         if 'SPINMOB_BINARY' in self.hkeys:
             
             # Get the binary mode (we'll use this later)
             binary = self.pop_header('SPINMOB_BINARY')
+            
+            # If it's "True", default to float32
+            if binary in ['True', True, 1]: binary = 'float32'
             
             # Write the special first key.
             f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
@@ -920,27 +922,42 @@ class databox:
             else:             self.hkeys.insert(index, str(hkey))
         return self
 
-    def pop_header(self, hkey):
+    def pop_header(self, hkey, ignore_error=False):
         """
         This will remove and return the specified header value.
 
-        You can specify either a key string or an index.
+        Parameters
+        ----------
+        hkey
+            Header key you wish to pop. 
+            You can specify either a key string or an index.
+        ignore_error=False
+            Whether to quietly ignore any errors (i.e., hkey not found).
         """
 
         # try the integer approach first to allow negative values
         if type(hkey) is not str:
-            return self.headers.pop(self.hkeys.pop(hkey))
+            try:    
+                return self.headers.pop(self.hkeys.pop(hkey))
+            except: 
+                if not ignore_error:
+                    print("ERROR: pop_header() could not find hkey "+str(hkey))
+                return None
         else:
-            # find the key integer and pop it
-            hkey = self.hkeys.index(hkey)
+            
+            try:
+                # find the key integer and pop it
+                hkey = self.hkeys.index(hkey)
+    
+                # pop it!
+                return self.headers.pop(self.hkeys.pop(hkey))
 
-            # if we didn't find the column, quit
-            if hkey < 0:
-                print("Column does not exist (yes, we looked).")
+            except:
+                if not ignore_error:
+                    print("ERROR: pop_header() could not find hkey "+str(hkey))
                 return
-
-            # pop it!
-            return self.headers.pop(self.hkeys.pop(hkey))
+    
+                
 
     def pop_column(self, ckey):
         """
@@ -2872,7 +2889,7 @@ class fitter():
 # Dialogs for loading data
 ############################
 
-def load(path='ask', first_data_line='auto', filters='*.*', text='Select a file, FACEHEAD.', default_directory='default_directory', quiet=True, header_only=False, transpose=False, **kwargs):
+def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEHEAD.', default_directory='default_directory', quiet=True, header_only=False, transpose=False, **kwargs):
     """
     Loads a data file into the databox data class. Returns the data object.
 
@@ -2881,8 +2898,8 @@ def load(path='ask', first_data_line='auto', filters='*.*', text='Select a file,
 
     Parameters
     ----------
-    path='ask'
-        Supply a path to a data file; "ask" means pop up a dialog.
+    path=None
+        Supply a path to a data file; None means use a dialog.
     first_data_line="auto"
         Specify the index of the first data line, or have it figure this out
         automatically.
@@ -2912,15 +2929,15 @@ def load(path='ask', first_data_line='auto', filters='*.*', text='Select a file,
     if transpose: return d.transpose()
     return d
 
-def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Select some files, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
+def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Select some files, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
     """
     Loads a list of data files into a list of databox data objects.
     Returns said list.
     
     Parameters
     ----------
-    path='ask'
-        Supply a path to a data file; "ask" means pop up a dialog.
+    path=None
+        Supply a path to a data file; None means pop up a dialog.
     first_data_line="auto"
         Specify the index of the first data line, or have it figure this out
         automatically.
@@ -2939,7 +2956,7 @@ def load_multiple(paths="ask", first_data_line="auto", filters="*.*", text="Sele
 
     Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
-    if paths == "ask": paths = _s.dialogs.load_multiple(filters, text, default_directory)
+    if paths == None: paths = _s.dialogs.load_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []

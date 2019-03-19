@@ -2,6 +2,7 @@
 import os       as _os
 import spinmob  as _s
 import unittest as _ut
+import shutil   as _sh
 
 class Test_egg(_ut.TestCase):
     """
@@ -12,6 +13,10 @@ class Test_egg(_ut.TestCase):
         """
         """
         self.module_path = _os.path.dirname(_s.__file__)
+        
+        # Path to the data files
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
+
         return
 
     def tearDown(self):
@@ -23,7 +28,12 @@ class Test_egg(_ut.TestCase):
         """
         Just opens a full-featured example and lets the user play with it
         """
-        import spinmob.egg.example_sweeper
+        import spinmob.egg.example_sweeper as sweeper
+        _sh.rmtree('gui_settings')
+        
+        sweeper.d_sweep.load_file(_os.path.join(self.data_path, 'difficult.binary'))
+        
+        sweeper.w.show(True)
         
     def test_TreeDictionary(self):
         """

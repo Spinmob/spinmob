@@ -1717,13 +1717,13 @@ def make_inset(figure="current", width=1, height=1):
     auto_zoom(figure.axes[0], 0.07, 0.07)
 
 
-def export_figure(dpi=200, figure="gcf", path="ask"):
+def export_figure(dpi=200, figure="gcf", path=None):
     """
     Saves the actual postscript data for the figure.
     """
     if figure=="gcf": figure = _pylab.gcf()
 
-    if path=="ask": path = _s.dialogs.Save("*.*", default_directory="save_plot_default_directory")
+    if path==None: path = _s.dialogs.Save("*.*", default_directory="save_plot_default_directory")
 
     if path=="":
         print("aborted.")
@@ -1731,7 +1731,7 @@ def export_figure(dpi=200, figure="gcf", path="ask"):
 
     figure.savefig(path, dpi=dpi)
 
-def save_plot(axes="gca", path="ask"):
+def save_plot(axes="gca", path=None):
     """
     Saves the figure in my own ascii format
     """
@@ -1739,7 +1739,7 @@ def save_plot(axes="gca", path="ask"):
     global line_attributes
 
     # choose a path to save to
-    if path=="ask": path = _s.dialogs.Save("*.plot", default_directory="save_plot_default_directory")
+    if path==None: path = _s.dialogs.Save("*.plot", default_directory="save_plot_default_directory")
 
     if path=="":
         print("aborted.")

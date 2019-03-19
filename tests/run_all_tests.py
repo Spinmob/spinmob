@@ -1,6 +1,7 @@
 import unittest as _ut
 
-from test__data      import *
+from test__databox   import *
+from test__fitter    import *
 from test__functions import *
 from test__plot      import *
 from test__dialogs   import *

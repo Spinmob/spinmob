@@ -199,7 +199,7 @@ def complex_databoxes(ds, script='d[1]+1j*d[2]', escript=None, **kwargs):
 
 
 
-def complex_files(script='d[1]+1j*d[2]', escript=None, paths='ask', **kwargs):
+def complex_files(script='d[1]+1j*d[2]', escript=None, paths=None, **kwargs):
     """
     Loads files and plots complex data in the real-imaginary plane.
 
@@ -209,8 +209,8 @@ def complex_files(script='d[1]+1j*d[2]', escript=None, paths='ask', **kwargs):
         Complex-valued script for data array.
     escript=None       
         Complex-valued script for error bars
-    paths='ask'
-        List of paths to open.
+    paths=None
+        List of paths to open. None means use a dialog
 
     See spinmob.plot.complex.data() for additional optional keyword arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
@@ -380,7 +380,7 @@ def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exs
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=magphase_data, g=g, **kwargs)
 
-def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, paths='ask', g=None, **kwargs):
+def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, paths=None, g=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot the ydata's magnitude and phase versus xdata.
@@ -395,7 +395,7 @@ def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=No
         Script for y error
     exscript=None
         Script for x error
-    paths='ask'
+    paths=None
         List of paths to open.
     g=None                                    
         Optional dictionary of globals for the scripts
@@ -549,7 +549,7 @@ def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exs
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=realimag_data, g=g, **kwargs)
 
-def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, paths='ask', g=None, **kwargs):
+def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, paths=None, g=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot the ydata's real and imaginary parts versus xdata.
@@ -564,7 +564,7 @@ def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
         Script for y error
     exscript=None
         Script for x error
-    paths='ask'
+    paths=None
         List of paths to open.
     g=None                                    
         Optional dictionary of globals for the scripts
@@ -771,7 +771,7 @@ def xy_databoxes(ds, xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=xy_data, g=g, **kwargs)
 
 
-def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, paths='ask', g=None, **kwargs):
+def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, paths=None, g=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot the ydata versus xdata.
@@ -786,7 +786,7 @@ def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, paths='ask
         Script for y error
     exscript=None
         Script for x error
-    paths='ask'
+    paths=None
         List of paths to open.
     g=None                                    
         Optional dictionary of globals for the scripts
@@ -926,7 +926,7 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, g=None, pl
 
     plotter(xdatas, ydatas, eydatas, exdatas, label=labels, **kwargs)
 
-def files(xscript=0, yscript=1, eyscript=None, exscript=None, g=None, plotter=xy_databoxes, paths='ask', **kwargs):
+def files(xscript=0, yscript=1, eyscript=None, exscript=None, g=None, plotter=xy_databoxes, paths=None, **kwargs):
     """
     This will load a bunch of data files, generate data based on the supplied
     scripts, and then plot this data using the specified databox plotter.
@@ -1164,14 +1164,14 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
     image_data(zgrid.transpose(), x, y, **default_kwargs)
 
 
-def image_file(path='ask', zscript='self[1:]', xscript='[0,1]', yscript='d[0]', g=None, **kwargs):
+def image_file(path=None, zscript='self[1:]', xscript='[0,1]', yscript='d[0]', g=None, **kwargs):
     """
     Loads an data file and plots it with color. Data file must have columns of the
     same length!
 
     Parameters
     ----------
-    path='ask'
+    path=None
         Path to data file.
     zscript='self[1:]' 
         Determines how to get data from the columns
