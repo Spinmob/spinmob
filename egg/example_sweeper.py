@@ -17,13 +17,10 @@ n_x      = w.place_object(egg.gui.NumberBox(int=False))
 
 # move to the second row and add a TreeDictionary for our "settings"
 w.new_autorow()
-settings = w.place_object(egg.gui.TreeDictionary('example_sweeper.cfg'), column_span=4, alignment=0)
+settings = w.place_object(egg.gui.TreeDictionary('example_sweeper_settings.cfg'), column_span=4, alignment=0)
 settings.add_parameter('sweep/x_start', 0.0)
 settings.add_parameter('sweep/x_stop',  0.004)
 settings.add_parameter('sweep/x_steps', 200)
-
-# load previous settings if they exist
-settings.load(ignore_errors=True)
 
 # add a tabbed interface for the plotting area, spanning the first and second rows
 tabs = w.place_object(egg.gui.TabArea(), 10,0, row_span=2, alignment=0)
@@ -142,14 +139,6 @@ b_sweep.signal_clicked.connect(acquire_button_clicked)
 
 
 ######### OTHER GUI STUFF
-
-# Define a function to save the settings whenever
-# they change and connect the signal
-def settings_changed(*a): settings.save()
-
-# connecting is a little different for TreeDictionaries
-settings.connect_any_signal_changed(settings_changed)
-
 
 
 # overwrite the post_load function so it plots and sets up the settings

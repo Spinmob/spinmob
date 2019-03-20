@@ -562,7 +562,7 @@ class Window(GridLayout):
     def _load_settings(self):
         """
         Loads all the parameters from a databox text file. If path=None,
-        loads from self.default_save_path.
+        loads from self._autosettings_path.
         """
         if self._autosettings_path == None: return
         
@@ -1563,7 +1563,7 @@ class TreeDictionary(BaseObject):
     ------------
      * simplified methods for setting parameters and getting them.
      * all parameter names must not have self.naughty characters.
-     * default_save_path is where the settings will be saved / loaded
+     * autosettings_path is where the settings will be saved / loaded
        from when calling self.save() and self.load(). The settings
        file is just a databox with no data, and you can use other
        databox files.
@@ -1572,9 +1572,10 @@ class TreeDictionary(BaseObject):
 
     Parameters
     ----------
-    default_save_path="settings.txt"
+    autosettings_path=None
         Where this object will save its settings when self.save() and self.load()
-        are called without a path specified.
+        are called without a path specified. None means no settings will be
+        automatically saved.
     show_header=False
         Whether to show the top-level trunk.
         
@@ -1586,31 +1587,32 @@ class TreeDictionary(BaseObject):
         
     self.connect_any_signal_changed(function) 
         This will connect the signal from anything changing to the specified 
-        function. Suggest that, after adding all the parameters to the tree,
-        issue the command
-        
-            self.connect_any_signal_changed(self.tree_settings.autosave)
-            self.load()
-        
-        such that settings are automatically saved whenever something changes
-        and that the previous settings are loaded.
-
+        function. 
     """
-    def __init__(self, default_save_path="settings.txt", show_header=False):
+    def __init__(self, autosettings_path=None, show_header=False):
         
-        self._widget            = _g.parametertree.ParameterTree(showHeader=show_header)
-        self.naughty            = [' ', '\t', '\n', '\r', ',', ';']
-        self.default_save_path  = default_save_path
-        self._connection_lists  = dict()
-
         # Other stuff common to all objects
         BaseObject.__init__(self)
+        
+        self._widget             = _g.parametertree.ParameterTree(showHeader=show_header)
+        self.naughty             = [' ', '\t', '\n', '\r', ',', ';']
+        self._autosettings_path  = autosettings_path
+        self._connection_lists   = dict()
+        self._lazy_load_settings = dict()
+        
+        # Load the previous settings (if any)
+        self.load()
+        
+        # Connect any signal changing to the autosave
+        self.connect_any_signal_changed(self.autosave)
+            
+        
 
     def __repr__(self):
         """
         How do display this object.
         """
-        s = "\nTreeDictionary() -> "+str(self.default_save_path)+"\n"
+        s = "\nTreeDictionary() -> "+str(self._autosettings_path)+"\n"
 
         for k in self.get_dictionary()[0]:
             
@@ -1647,7 +1649,7 @@ class TreeDictionary(BaseObject):
         return self
 
 
-    def connect_any_signal_changed(self, function=None):
+    def connect_any_signal_changed(self, function):
         """
         Connects the "anything changed" signal for all of the tree to the
         specified function.
@@ -1655,18 +1657,19 @@ class TreeDictionary(BaseObject):
         Parameters
         ----------
         function
-            Function to connect to this signal. Setting to None means
-            it will connect to self.autosave
+            Function to connect to this signal.
         """
-        if function==None: function = self.autosave
         
         # loop over all top level parameters
         for i in range(self._widget.topLevelItemCount()):
 
             # make sure there is only one connection!
-            self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(
-                              function, type=_g.QtCore.Qt.UniqueConnection)
-
+            try:
+                self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(
+                                  function, type=_g.QtCore.Qt.UniqueConnection)
+            except:
+                pass
+            
         return self
 
     def connect_signal_changed(self, name, function):
@@ -1791,6 +1794,15 @@ class TreeDictionary(BaseObject):
         return x
 
 
+
+    def _clean_up_name(self, name):
+        """
+        Cleans up the name according to the rules specified in this exact
+        function. Uses self.naughty, a list of naughty characters.
+        """
+        for n in self.naughty: name = name.replace(n, '_')
+        return name
+
     def add_button(self, name, checkable=False, checked=False):
         """
         Adds (and returns) a button at the specified location. 
@@ -1826,15 +1838,15 @@ class TreeDictionary(BaseObject):
         # modify the existing class to fit our conventions
         ap.signal_clicked = ap.sigActivated
 
+        # Now set the default value if any
+        if name in self._lazy_load_settings:
+            v = self._lazy_load_settings.pop(name)
+            self.set_value(name, v)
+        
+        # Connect it to autosave (will only create unique connections)
+        self.connect_any_signal_changed(self.autosave)
+        
         return Button(name, checkable, checked, list(ap.items.keys())[0].button)
-
-    def _clean_up_name(self, name):
-        """
-        Cleans up the name according to the rules specified in this exact
-        function. Uses self.naughty, a list of naughty characters.
-        """
-        for n in self.naughty: name = name.replace(n, '_')
-        return name
 
     def add_parameter(self, name='test', value=42.0, **kwargs):
         """
@@ -1907,10 +1919,18 @@ class TreeDictionary(BaseObject):
 
         # create the leaf object
         leaf = _g.parametertree.Parameter.create(name=p, value=value, **other_kwargs)
-
+        
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(leaf)
         else:                 b.addChild(leaf)
+        
+        # Now set the default value if any
+        if name in self._lazy_load_settings:
+            v = self._lazy_load_settings.pop(name)
+            self.set_value(name, v)
+        
+        # Connect it to autosave (will only create unique connections)
+        self.connect_any_signal_changed(self.autosave)
 
         return self
 
@@ -2081,11 +2101,6 @@ class TreeDictionary(BaseObject):
             
             # Otherwise default to the first key
             else: x.setValue(list(x.forward.keys())[0])
-
-        # otherwise just set the value (forcing the type!)
-#        elif x.opts['type'] in ['bool']:  x.setValue(bool(value))
-#        elif x.opts['type'] in ['int']:   x.setValue(int(value))
-#        elif x.opts['type'] in ['float']: x.setValue(float(value))
         
         # Bail to a hopeful set method for other types
         else: x.setValue(eval(x.opts['type'])(value))
@@ -2116,18 +2131,21 @@ class TreeDictionary(BaseObject):
     def save(self, path=None):
         """
         Saves all the parameters to a text file using the databox
-        functionality. If path=None, saves to self.default_save_path.
-
-        If the file doesn't exist, it will use hard-coded defaults.
+        functionality. If path=None, saves to self._autosettings_path. If
+        self._autosettings_path=None, does not save.
         """
         if path==None: 
+            
+            if self._autosettings_path == None: return self
+            
             # Get the gui settings directory
             gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
             # make sure the directory exists
             if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)            
             
-            path = _os.path.join(gui_settings_dir, self.default_save_path)
+            # Assemble the path
+            path = _os.path.join(gui_settings_dir, self._autosettings_path)
       
         # make the databox object
         d = _d.databox()
@@ -2140,18 +2158,36 @@ class TreeDictionary(BaseObject):
 
         # save it
         d.save_file(path, force_overwrite=True, header_only=True)
+        
+        return self
 
-    def load(self, path=None, ignore_errors=False, block_user_signals=False):
+    def load(self, path=None, ignore_errors=True, block_user_signals=False):
         """
         Loads all the parameters from a databox text file. If path=None,
-        loads from self.default_save_path.
+        loads from self._autosettings_path (provided this is not None).
+        
+        Parameters
+        ----------
+        path=None
+            Path to load the settings from. If None, will load from the 
+            specified autosettings_path.
+        ignore_errors=True
+            Whether we should raise a stink when a setting doesn't exist.
+            When settings do not exist, they are stuffed into the dictionary
+            self._lazy_load_settings.
+        block_user_signals=False
+            If True, the load will not trigger any signals.
         """
         if path==None: 
+            
+            # Bail if there is no path
+            if self._autosettings_path == None: return self
+            
             # Get the gui settings directory
             gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
             # Get the final path
-            path = _os.path.join(gui_settings_dir, self.default_save_path)
+            path = _os.path.join(gui_settings_dir, self._autosettings_path)
       
         # make the databox object
         d = _d.databox()
@@ -2164,28 +2200,50 @@ class TreeDictionary(BaseObject):
         self.update(d, ignore_errors=ignore_errors, block_user_signals=block_user_signals)
         return self
 
-    def update(self, d, ignore_errors=False, block_user_signals=False):
+    def update(self, d, ignore_errors=True, block_user_signals=False):
         """
         Supply a dictionary or databox with a header of the same format
         and see what happens! (Hint: it updates the existing values.)
+        
+        This will store non-existent key-value pairs in the dictionary 
+        self._lazy_load_settings. When you add settings in the future,
+        these will be checked for the default values.
         """
         if not type(d) == dict: d = d.headers
 
+        # Update the lazy load
+        self._lazy_load_settings.update(d)
+
         # loop over the dictionary and update
-        for k in list(d.keys()):
+        for k in list(self._lazy_load_settings.keys()):
 
-            # for safety: by default assume it's a repr() with python code
-            try:    self.set_value(k, eval(str(d[k])), 
-                                   ignore_error       = ignore_errors, 
-                                   block_user_signals = block_user_signals)
+            # Only proceed if the parameter exists
+            if not self._find_parameter(k.split('/'), False, True) == None:
 
-            # if that fails try setting the value directly
-            except: self.set_value(k, d[k], 
-                                   ignore_error       = ignore_errors, 
-                                   block_user_signals = block_user_signals)
+                # Pop the value so it's not set again in the future
+                v = self._lazy_load_settings.pop(k)
+                
+                # Set the value
+                self._set_value_safe(k, v, ignore_errors, block_user_signals)
 
         return self
 
+    def _set_value_safe(self, k, v, ignore_errors=False, block_user_signals=False):
+        """
+        Actually sets the key k to value v using a safe technique:
+            first trying to evaluate str(v), then just setting it to v.
+        Used during update
+        and add parameter; too complicated for the user.
+        """
+        # for safety: by default assume it's a repr() with python code
+        try:    self.set_value(k, eval(str(v)), 
+                               ignore_error       = ignore_errors, 
+                               block_user_signals = block_user_signals)
+
+        # if that fails try setting the value directly
+        except: self.set_value(k, v, 
+                               ignore_error       = ignore_errors, 
+                               block_user_signals = block_user_signals)
 
 
 
