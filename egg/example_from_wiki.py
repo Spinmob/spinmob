@@ -2,7 +2,7 @@ import numpy as _n
 from spinmob import egg
 
 # Create the window
-w = egg.gui.Window("Hey guy.")
+w = egg.gui.Window("Hey, mammal.")
 
 # Move it to the upper left corner (plus 17 pixels)
 w.set_position([17,0])
@@ -21,7 +21,7 @@ def f(*a): print("Oooooh, received", a)
 w.connect(b.signal_clicked, f)
 
 # Create a databox with load / save buttons and place it in the window
-d = egg.gui.DataboxLoadSave()
+d = egg.gui.DataboxSaveLoad(autosettings_path='d.cfg')
 w.place_object(d)
 
 # Add some basic data, and enable the save button

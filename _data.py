@@ -162,7 +162,6 @@ class databox:
         self.path = path
 
         if path is None:
-            if not quiet: print("Aborted.")
             return None
 
         # make sure the file exists!
@@ -451,7 +450,7 @@ class databox:
 
         return self
 
-    def save_file(self, path=None, filters='*.dat', force_overwrite=False, header_only=False, delimiter='use current', binary=None):
+    def save_file(self, path=None, filters='*.dat', force_extension=None, force_overwrite=False, header_only=False, delimiter='use current', binary=None):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
@@ -463,6 +462,9 @@ class databox:
             a save file dialog.
         filters='*.dat'         
             File filter for the file dialog (for path=None)
+        force_extension=None
+            If set to a string, e.g., 'txt', it will enforce that the chosen
+            filename will have this extension.
         force_overwrite=False   
             Normally, if the file * exists, this will copy that
             to *.backup. If the backup already exists, this
@@ -490,6 +492,17 @@ class databox:
         if path in ["", None]:
             print("Aborted.")
             return False
+        
+        # Force the extension (we do this here redundantly, because the user may have also
+        # specified a path explicitly)
+        if  not force_extension == None:
+            
+            # In case the user put "*.txt" instead of just "txt"
+            force_extension = force_extension.replace('*','').replace('.','')
+            
+            # If the file doesn't end with the extension, add it
+            if not _os.path.splitext(path)[-1][1:] == force_extension:
+                path = path + '.' + force_extension
 
         # Save the path for future reference
         self.path=path

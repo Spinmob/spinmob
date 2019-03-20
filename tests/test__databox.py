@@ -196,7 +196,7 @@ class Test_databox(_ut.TestCase):
         d.h(poo = 32)
         d['pants']       = [1,2,3,4,5]
         d['shoes,teeth'] = [1,2,1]
-        d.save_file('test_binary', '*.txt', binary='float16')
+        d.save_file('test_binary', '*.txt', 'txt', binary='float16')
         
         # Load said binary
         d = _s.data.load('test_binary.txt')

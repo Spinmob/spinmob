@@ -2188,70 +2188,6 @@ class TreeDictionary(BaseObject):
 
 
 
-class DataboxLoadSave(_d.databox, GridLayout):
-
-    def __init__(self, file_type="*.dat", **kwargs):
-        """
-        This is basically just a databox with a load and save button. To change
-        the behavior of loading and saving, overwrite the functions
-        self.pre_save() and self.post_load()
-        """
-
-        # Do all the tab-area initialization; this sets _widget and _layout
-        GridLayout.__init__(self, margins=False)
-        _d.databox.__init__(self, **kwargs)
-
-        # create the controls
-        self.button_load     = self.place_object(Button("Load"), alignment=1)
-        self.button_save     = self.place_object(Button("Save"), alignment=1)
-        self.label_path      = self.place_object(Label(""), alignment=0)
-        self.set_column_stretch(2,100)
-
-        # connect the signals to the buttons
-        self.button_save.signal_clicked.connect(self._button_save_clicked)
-        self.button_load.signal_clicked.connect(self._button_load_clicked)
-
-        # disabled by default
-        self.button_save.disable()
-
-        self._file_type = file_type
-
-    def pre_save(self):
-        """
-        Function you should overwrite for what to do prior to saving.
-        """
-        return
-
-    def post_save(self):
-        """
-        Function you should overwrite if you want to do anything after saving.
-        """
-        return
-
-    def _button_save_clicked(self, *a):
-        self.pre_save()
-        self.save_file(filters=self._file_type)
-        self.post_save()
-
-    def post_load(self):
-        """
-        Function you should overwrite for what to do after loading a file.
-        """
-        return
-
-    def pre_load(self):
-        """
-        Function you should overwrite if you want to do something prior to loading.
-        """
-        return
-
-    def _button_load_clicked(self, *a):
-        self.pre_load()
-        self.load_file(filters=self._file_type)
-        self.post_load()
-
-    def disable_save(self): self.button_save.disable()
-    def enable_save(self):  self.button_save.enable()
 
 
 
@@ -2332,7 +2268,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self._autosave_directory = None
 
         # file type (e.g. *.dat) for the file dialogs
-        self._file_type = file_type
+        self.file_type = file_type
 
         # autosave settings path
         self._autosettings_path = autosettings_path
@@ -2350,7 +2286,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_clear     .signal_clicked.connect(self._button_clear_clicked)
         self.button_autosave  .signal_toggled.connect(self._button_autosave_clicked)
         self.button_script    .signal_toggled.connect(self._button_script_clicked)
-        self.combo_binary     .signal_changed.connect(self._combo_binary_clicked)
+        self.combo_binary     .signal_changed.connect(self._combo_binary_changed)
         self.combo_autoscript .signal_changed.connect(self._combo_autoscript_clicked)
         self.button_multi     .signal_toggled.connect(self._button_multi_clicked)
         self.button_link_x    .signal_toggled.connect(self._button_link_x_clicked)
@@ -2400,7 +2336,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.plot()
         self.save_gui_settings()
 
-    def _combo_binary_clicked(self, *a):
+    def _combo_binary_changed(self, *a):
         """
         Called whenever the combo is clicked.
         """
@@ -2419,7 +2355,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         if checked:
             # get the path from the user
-            path = _spinmob.dialogs.save(filters=self._file_type)
+            path = _spinmob.dialogs.save(filters=self.file_type)
 
             # abort if necessary
             if not path:
@@ -2480,7 +2416,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # save the file using the skeleton function, so as not to recursively 
         # call this one again!
-        _d.databox.save_file(d, path, self._file_type, force_overwrite, **kwargs)
+        _d.databox.save_file(d, path, self.file_type, self.file_type, force_overwrite, **kwargs)
 
     def load_file(self, path=None, just_settings=False):
         """
@@ -2501,7 +2437,7 @@ class DataboxPlot(_d.databox, GridLayout):
             header_only = False
 
         # import the settings if they exist in the header
-        if not None == _d.databox.load_file(d, path, filters=self._file_type, header_only=header_only, quiet=just_settings):
+        if not None == _d.databox.load_file(d, path, filters=self.file_type, header_only=header_only, quiet=just_settings):
             # loop over the autosettings and update the gui
             for x in self._autosettings_controls: self._load_gui_setting(d, x)
 
@@ -2827,6 +2763,100 @@ class DataboxPlot(_d.databox, GridLayout):
             # Otherwise, unlink the guy, but only if it's linked to begin with
             elif not self.button_link_x.is_checked() and not b.linkedView(b.XAxis) == None:
                 b.linkView(b.XAxis, None)
+
+
+class DataboxSaveLoad(_d.databox, GridLayout):
+
+    def __init__(self, file_type="*.dat", autosettings_path=None, **kwargs):
+        """
+        This is basically just a databox with a load and save button. To change
+        the behavior of loading and saving, overwrite the functions
+        self.pre_save() and self.post_load()
+        
+        Parameters
+        ----------
+        file_type="*.dat"
+            File extension for saving and dialogs.
+        autosettings_path=None
+            If set to a <some string>, will save it's settings to 
+            gui_settings/<some string>.
+        """
+
+        # Do all the tab-area initialization; this sets _widget and _layout
+        GridLayout.__init__(self, margins=False)
+        _d.databox.__init__(self, **kwargs)
+
+        # create the controls
+        self.button_load     = self.place_object(Button("Load"), alignment=1)
+        self.button_save     = self.place_object(Button("Save"), alignment=1)
+        self.combo_binary    = self.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
+        self.label_path      = self.place_object(Label(""), alignment=0)
+        self.set_column_stretch(2,100)
+
+        # connect the signals to the buttons
+        self.button_save .signal_clicked.connect(self._button_save_clicked)
+        self.button_load .signal_clicked.connect(self._button_load_clicked)
+        self.combo_binary.signal_changed.connect(self._combo_binary_changed)
+        
+        # disabled by default
+        self.button_save.disable()
+
+        # Store the file type for later.
+        self.file_type = file_type
+
+        # autosave settings path
+        self._autosettings_path = autosettings_path
+        
+        # list of controls we should auto-save / load
+        self._autosettings_controls = ["self.combo_binary"]
+        
+        # Load the previous settings
+        self.load_gui_settings()
+
+
+    def pre_save(self):
+        """
+        Function you should overwrite for what to do prior to saving.
+        """
+        return
+
+    def post_save(self):
+        """
+        Function you should overwrite if you want to do anything after saving.
+        """
+        return
+
+    def post_load(self):
+        """
+        Function you should overwrite for what to do after loading a file.
+        """
+        return
+
+    def pre_load(self):
+        """
+        Function you should overwrite if you want to do something prior to loading.
+        """
+        return
+
+    def _button_save_clicked(self, *a):
+        self.pre_save()
+        self.save_file(None, self.file_type, self.file_type, binary=self.combo_binary.get_text())
+
+        self.post_save()
+
+    def _button_load_clicked(self, *a):
+        self.pre_load()
+        self.load_file(filters=self.file_type)
+        self.post_load()
+
+    def _combo_binary_changed(self, *a):
+        """
+        Called whenever the combo is clicked.
+        """
+        self.save_gui_settings()
+
+    def disable_save(self): self.button_save.disable()
+    def enable_save(self):  self.button_save.enable()
 
 
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import spinmob  as _s
+import os       as _os
 import unittest as _ut
 
 # Not sure how to handle ~line 125 where if a path is not specified, the user
@@ -45,6 +46,12 @@ class Test_dialogs(_ut.TestCase):
     
         r = _s.dialogs.save(text="SELECT A FILE (WILL NOT OVERWRITE)")
         self.assertEqual(type(r), str)
+
+        r = _s.dialogs.save(text="SELECT A NON-*.XYZ FILE (WILL NOT OVERWRITE)", force_extension='XYZ')
+        self.assertEqual(_os.path.splitext(r)[1][1:], 'XYZ')
+
+        r = _s.dialogs.save(text="SELECT A NON-*.XYZ FILE (WILL NOT OVERWRITE)", force_extension='*.XYZ')
+        self.assertEqual(_os.path.splitext(r)[1][1:], 'XYZ')
 
         r = _s.dialogs.save(text="CANCEL ME")
         self.assertEqual(r, None)
