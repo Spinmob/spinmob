@@ -283,7 +283,13 @@ class GridLayout(BaseObject):
         # remove margins if necessary
         if margins==False: self._layout.setContentsMargins(0,0,0,0)
         else:              self._layout.setContentsMargins(*margins)
-
+        
+        # Expose the show and hide functions
+        # The attr check ensures classes inheriting this object's methods
+        # don't have their show's and hide's overwritten 
+        if not hasattr(self, 'show'): self.show = self._widget.show
+        if not hasattr(self, 'hide'): self.hide = self._widget.hide
+        
 
 
     def __getitem__(self, n): return self.objects[n]
@@ -823,6 +829,11 @@ class Button(BaseObject):
         self.get_value = self.is_checked
         self.set_value = self.set_checked
 
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
+
     def is_checked(self):
         """
         Whether the button is pressed.
@@ -968,6 +979,11 @@ class NumberBox(BaseObject):
 
         # set a less ridiculous width
         self.set_width(70)
+        
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
 
     def get_value(self):
         """
@@ -1023,6 +1039,11 @@ class CheckBox(BaseObject):
         # signals
         self.signal_changed = self._widget.stateChanged
         
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
+        
     def is_checked(self):
         """
         Check if checked.
@@ -1053,6 +1074,10 @@ class ComboBox(BaseObject):
         # signals
         self.signal_activated = self._widget.activated       
         self.signal_changed   = self._widget.currentIndexChanged
+        
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
         
         
     def add_item(self, text="ploop"):
@@ -1139,8 +1164,10 @@ class TabArea(BaseObject):
         self._autosettings_path = autosettings_path
         self._autosettings_controls = ["self"]
 
-        # For tabs you have to load_gui after making the tabs
-        # self.load_gui_settings()
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
 
     def _tab_changed(self, *a): self.save_gui_settings()
 
@@ -1215,6 +1242,11 @@ class Table(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
+        
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
 
     def clear(self):
         """
@@ -1327,7 +1359,7 @@ class TableDictionary(Table):
 
         # default connections
         self.signal_cell_changed.connect(self._cell_changed)
-
+        
         return
 
     def __len__(self): return self.get_row_count()
@@ -1451,6 +1483,11 @@ class TextLog(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
+        
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
 
     def get_text(self):
         """
@@ -1494,6 +1531,11 @@ class TextBox(BaseObject):
         # aliases
         self.get_value = self.get_text
         self.set_value = self.set_text
+        
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
+        
 
     def get_text(self):
         """
@@ -1605,7 +1647,10 @@ class TreeDictionary(BaseObject):
         
         # Connect any signal changing to the autosave
         self.connect_any_signal_changed(self.autosave)
-            
+        
+        # Expose the show and hide functions
+        self.show = self._widget.show
+        self.hide = self._widget.hide
         
 
     def __repr__(self):
@@ -2365,6 +2410,8 @@ class DataboxPlot(_d.databox, GridLayout):
         # load settings if a settings file exists and initialize
         self.load_gui_settings()
         self._synchronize_controls()
+        
+        
 
 
 
