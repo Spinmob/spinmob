@@ -56,6 +56,7 @@ class BaseObject(object):
         # add a load_gui_settings() to the init!
         self._autosettings_path     = None
         self._autosettings_controls = []
+        self._lazy_load    = dict()
         
         # common signals
         return
@@ -98,7 +99,6 @@ class BaseObject(object):
               not isinstance(x._parent, Window): 
                   x = x._parent
         return x._parent
-
 
     def process_events(self):
         """
@@ -167,7 +167,8 @@ class BaseObject(object):
 
     def save_gui_settings(self):
         """
-        Saves just the current configuration of the controls (if we're supposed to).
+        Saves just the current configuration of the controls if the
+        autosettings_path is set.
         """
         
         # only if we're supposed to!
@@ -192,9 +193,17 @@ class BaseObject(object):
             d.save_file(path, force_overwrite=True)
 
 
-    def load_gui_settings(self):
+    def load_gui_settings(self, lazy_only=False):
         """
         Loads the settings (if we're supposed to).
+        
+        Parameters
+        ----------
+        lazy_only=False
+            If True, it will only load the settings into self._lazy_load, and
+            not try to update the value. Presumably the widget will apply these
+            settings later, e.g., when enough tabs exist to set the current
+            tab in TabArea.
         """
 
         # only do this if we're supposed to
@@ -203,29 +212,68 @@ class BaseObject(object):
             # Get the gui settings directory
             gui_settings_dir = _os.path.join(_cwd, "gui_settings")
 
-            # make a path with a sub-directory
+            # assemble the path with a sub-directory
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
-            
+
             # databox just for loading a cfg file
             d = _d.databox()
 
-            # if the load file succeeded
-            if d.load_file(path, header_only=True, quiet=True) is not None:
+            # if the settings path exists
+            if _os.path.exists(path):
+                
+                # Load the settings
+                d.load_file(path, header_only=True, quiet=True)
 
-                # loop over the settings we're supposed to change
-                for x in self._autosettings_controls: self._load_gui_setting(d, x)
+                # Store the settings in the lazy dictionary
+                self._lazy_load.update(d.headers)
+                
+                # Loop over the settings we're supposed to change
+                # Note without specifying d, this will try to pop
+                # the value off of self._lazy_load. If 
+                #
+                if not lazy_only:
+                    for x in self._autosettings_controls: 
+                        self._load_gui_setting(x)
 
-    def _load_gui_setting(self, databox, name):
+    def _load_gui_setting(self, key, d=None):
         """
         Safely reads the header setting and sets the appropriate control
-        value. hkeys in the file are expected to have the format
-        "self.controlname"
+        value. 
+        
+        Parameters
+        ----------
+        key
+            Key string of the format 'self.controlname'.
+        d = None
+            Databox instance or dictionary, presumably containing the aforementioned
+            key. If d=None, pops the value from self._lazy_load.
         """
-
+        # Whether we should pop the value from the dictionary when we set it.
+        pop_value = False
+        
+        # If d is None, assume we're using the lazy load settings.
+        if d == None: 
+            d = self._lazy_load
+            pop_value = True
+        
+        # If we have a databox, take the header dictionary
+        if not type(d) == dict: d = d.headers
+        
         # only do this if the key exists
-        if name in databox.hkeys:
-            try:    eval(name).set_value(databox.h(name))
-            except: print("ERROR: Could not load gui setting "+repr(name))
+        if key in d:
+            
+            try:
+                # Try to set the value
+                eval(key).set_value(d[key])
+
+                # If this fails, perhaps the element does not yet exist
+                # For example, TabArea may not have all the tabs created
+                # and cannot set the active tab until later.
+                # If it's here, it worked, so pop if necessary
+                if pop_value: d.pop(key)
+           
+            except: 
+                print("ERROR: Could not load gui setting "+repr(key))
 
     def _store_gui_setting(self, databox, name):
         """
@@ -957,14 +1005,32 @@ class NumberBox(BaseObject):
 
     def __init__(self, value=0, step=1, bounds=(None,None), int=False, **kwargs):
         """
-        Simplified number box with spinners. This is pyqtgraph's SpinBox(),
-        and you can use all the other fancy keyword arguments:
+        Simplified number box with spinners. This is pyqtgraph's SpinBox().
+        Extra keyword arguments are sent to the SpinBox.
 
-            suffix      units to display
-            siPrefix    prefix on units
-            dec         whether to change the increment appropriately
-            minStep     minimum step when dec is True
-            decimals    number of decimals to display
+        Parameters
+        ----------
+        value=0
+            Initial value
+        step=1
+            Step size
+        bounds=(None,None)
+            Min and max values
+        int=False
+            Force the value to be an integer if True
+        
+        Some Common Keyword Arguments
+        -----------------------------
+        suffix=None    
+            String value for units to display
+        siPrefix=False
+            True to add a prefix on units
+        dec=False
+            True means increments grow with the size of the number.
+        minStep=None
+            Minimum step when dec is True
+        decimals    
+            Number of decimals to display
         """
 
         # pyqtgraph spinbox
@@ -1138,11 +1204,23 @@ class ComboBox(BaseObject):
 
 class TabArea(BaseObject):
 
-    def __init__(self, tabs_closable=True, autosettings_path=None):
-        """
-        Simplified QTabWidget.
-        """
+    """
+    Simplified QTabWidget.
+    
+    Parameters
+    ----------
+    autosettings_path=None
+        Set to a string file name to have this widget remember settings from 
+        the previous run.
+    tabs_closable=False
+        Set to True to make the tabs closable (you still have to link the tab
+        signals to a suitable close function, however.)
+    """
 
+    
+    
+    def __init__(self, autosettings_path=None, tabs_closable=False):
+        
         # tab widget
         self._widget = _g.Qt.QtGui.QTabWidget()
         self._widget.setTabsClosable(tabs_closable)
@@ -1168,6 +1246,13 @@ class TabArea(BaseObject):
         self.show = self._widget.show
         self.hide = self._widget.hide
         
+        # Expose the count function
+        self.get_tab_count = self._widget.count
+        
+        # Load the previous settings. Of course, we cannot set the tab
+        # yet (no tabs added!), so only load into self._lazy_load
+        self.load_gui_settings(lazy_only=True)
+               
 
     def _tab_changed(self, *a): self.save_gui_settings()
 
@@ -1186,6 +1271,11 @@ class TabArea(BaseObject):
 
         # create and append the tab to the list
         self._widget.addTab(tab._widget, title)
+
+        # try to lazy set the current tab
+        if 'self' in self._lazy_load and self.get_tab_count() > self._lazy_load['self']:
+            v = self._lazy_load.pop('self')
+            self.set_current_tab(v)
 
         self._widget.blockSignals(False)
 
@@ -1640,7 +1730,7 @@ class TreeDictionary(BaseObject):
         self.naughty             = [' ', '\t', '\n', '\r', ',', ';']
         self._autosettings_path  = autosettings_path
         self._connection_lists   = dict()
-        self._lazy_load_settings = dict()
+        self._lazy_load = dict()
         
         # Load the previous settings (if any)
         self.load()
@@ -1884,8 +1974,8 @@ class TreeDictionary(BaseObject):
         ap.signal_clicked = ap.sigActivated
 
         # Now set the default value if any
-        if name in self._lazy_load_settings:
-            v = self._lazy_load_settings.pop(name)
+        if name in self._lazy_load:
+            v = self._lazy_load.pop(name)
             self.set_value(name, v)
         
         # Connect it to autosave (will only create unique connections)
@@ -1970,8 +2060,8 @@ class TreeDictionary(BaseObject):
         else:                 b.addChild(leaf)
         
         # Now set the default value if any
-        if name in self._lazy_load_settings:
-            v = self._lazy_load_settings.pop(name)
+        if name in self._lazy_load:
+            v = self._lazy_load.pop(name)
             self.set_value(name, v)
         
         # Connect it to autosave (will only create unique connections)
@@ -2219,7 +2309,7 @@ class TreeDictionary(BaseObject):
         ignore_errors=True
             Whether we should raise a stink when a setting doesn't exist.
             When settings do not exist, they are stuffed into the dictionary
-            self._lazy_load_settings.
+            self._lazy_load.
         block_user_signals=False
             If True, the load will not trigger any signals.
         """
@@ -2251,22 +2341,22 @@ class TreeDictionary(BaseObject):
         and see what happens! (Hint: it updates the existing values.)
         
         This will store non-existent key-value pairs in the dictionary 
-        self._lazy_load_settings. When you add settings in the future,
+        self._lazy_load. When you add settings in the future,
         these will be checked for the default values.
         """
         if not type(d) == dict: d = d.headers
 
         # Update the lazy load
-        self._lazy_load_settings.update(d)
+        self._lazy_load.update(d)
 
         # loop over the dictionary and update
-        for k in list(self._lazy_load_settings.keys()):
+        for k in list(self._lazy_load.keys()):
 
             # Only proceed if the parameter exists
             if not self._find_parameter(k.split('/'), False, True) == None:
 
                 # Pop the value so it's not set again in the future
-                v = self._lazy_load_settings.pop(k)
+                v = self._lazy_load.pop(k)
                 
                 # Set the value
                 self._set_value_safe(k, v, ignore_errors, block_user_signals)
@@ -2543,8 +2633,9 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # import the settings if they exist in the header
         if not None == _d.databox.load_file(d, path, filters=self.file_type, header_only=header_only, quiet=just_settings):
+            
             # loop over the autosettings and update the gui
-            for x in self._autosettings_controls: self._load_gui_setting(d, x)
+            for x in self._autosettings_controls: self._load_gui_setting(x,d)
 
         # always sync the internal data
         self._synchronize_controls()

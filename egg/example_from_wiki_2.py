@@ -1,7 +1,7 @@
 from spinmob import egg
 
 # create the window and two tab areas
-w     = egg.gui.Window('Hey Guy II',   autosettings_path='w.cfg')
+w     = egg.gui.Window('Hey Mammal II', autosettings_path='w.cfg')
 tabs1 = w.place_object(egg.gui.TabArea(autosettings_path='tabs1.cfg'))
 tabs2 = w.place_object(egg.gui.TabArea(autosettings_path='tabs2.cfg'), alignment=0)
 
@@ -10,9 +10,6 @@ t_settings  = tabs1.add_tab("Settings")
 t_raw       = tabs2.add_tab("Raw")
 t_processed = tabs2.add_tab("Processed")
 
-# load previous settings if any
-tabs1.load_gui_settings()
-tabs2.load_gui_settings()
 
 
 

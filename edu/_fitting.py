@@ -66,7 +66,7 @@ class fitting_statistics_demo():
         self.tree_settings.add_parameter('Stats/plot_theory', False)
         
         # Add the tabs and plotter to the other grid
-        self.tabs_plotting = self.grid_plotting.place_object(_g.TabArea(False, 'tabs_plotting.cfg'), alignment=0)
+        self.tabs_plotting = self.grid_plotting.place_object(_g.TabArea('tabs_plotting.cfg'), alignment=0)
         
         # Tab for raw data
         self.tab_raw  = self.tabs_plotting.add_tab('Raw Data')
@@ -109,9 +109,6 @@ class fitting_statistics_demo():
         self.tab_stats.place_object(self.navbar_stats, alignment=0)
         self.tab_stats.new_autorow()
         self.tab_stats.place_object(self.canvas_stats, alignment=0)
-        
-        # Load last settings
-        self.tabs_plotting.load_gui_settings()
         
         # Changing tabs can update plots
         self.tabs_plotting.signal_switched.connect(self.tabs_plotting_switched)

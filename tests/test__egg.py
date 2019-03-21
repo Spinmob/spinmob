@@ -35,6 +35,7 @@ class Test_egg(_ut.TestCase):
         
         sweeper.w.show(True)
         
+        
     def test_TreeDictionary(self):
         """
         Runs through a bunch of value setting and getting, to make sure

@@ -7,7 +7,7 @@ import spinmob.egg as egg
 ##### GUI DESIGN
 
 # create the main window
-w = egg.gui.Window(autosettings_path="example_sweeper_w.cfg")
+w = egg.gui.Window(autosettings_path="example_sweeper_w")
 
 # add the "go" button
 b_sweep  = w.place_object(egg.gui.Button("Sweep!",         checkable=True))
@@ -17,20 +17,21 @@ n_x      = w.place_object(egg.gui.NumberBox(int=False))
 
 # move to the second row and add a TreeDictionary for our "settings"
 w.new_autorow()
-settings = w.place_object(egg.gui.TreeDictionary('example_sweeper_settings.cfg'), column_span=4, alignment=0)
+settings = w.place_object(egg.gui.TreeDictionary('example_sweeper_settings'), column_span=4, alignment=0)
 settings.add_parameter('sweep/x_start', 0.0)
 settings.add_parameter('sweep/x_stop',  0.004)
 settings.add_parameter('sweep/x_steps', 200)
 
 # add a tabbed interface for the plotting area, spanning the first and second rows
-tabs = w.place_object(egg.gui.TabArea(), 10,0, row_span=2, alignment=0)
+tabs = w.place_object(egg.gui.TabArea('example_sweeper_tabs'), 10,0, row_span=2, alignment=0)
 w.set_column_stretch(10)
 
 # add a tab for some plots
-t_raw = tabs.add_tab("Raw Plots")
+t_raw      = tabs.add_tab("Raw Plots")
+t_analysis = tabs.add_tab("Analysis")
 
 # add a databox plotter object to the tab
-d_sweep = t_raw.place_object(egg.gui.DataboxPlot(autosettings_path="example_sweeper_d_sweep.cfg"), alignment=0)
+d_sweep = t_raw.place_object(egg.gui.DataboxPlot(autosettings_path="example_sweeper_d_sweep"), alignment=0)
 d_sweep['x']     = []
 d_sweep['mag']   = []
 d_sweep['phase'] = []
@@ -81,8 +82,6 @@ def acquire_button_clicked(*a):
 
     # disable the settings during the sweep
     settings.disable()
-
-
 
     # figure out the sweep range from the graph if we're supposed to
     if b_select.is_checked():
