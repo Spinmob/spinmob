@@ -1,9 +1,9 @@
 from spinmob import egg
 
 # create the window and two tab areas
-w     = egg.gui.Window('Hey Mammal II', autosettings_path='w.cfg')
-tabs1 = w.place_object(egg.gui.TabArea(autosettings_path='tabs1.cfg'))
-tabs2 = w.place_object(egg.gui.TabArea(autosettings_path='tabs2.cfg'), alignment=0)
+w     = egg.gui.Window('Hey Mammal II', autosettings_path='w')
+tabs1 = w.place_object(egg.gui.TabArea(autosettings_path='tabs1'))
+tabs2 = w.place_object(egg.gui.TabArea(autosettings_path='tabs2'), alignment=0)
 
 # add some tabs
 t_settings  = tabs1.add_tab("Settings")
@@ -18,26 +18,19 @@ t_processed = tabs2.add_tab("Processed")
 ###########################
 # TREE DICTIONARY
 ###########################
-settings = t_settings.place_object(egg.gui.TreeDictionary('settings.cfg'))
+settings = t_settings.place_object(egg.gui.TreeDictionary('settings'))
 
 # add some settings
 settings.add_parameter('DAQ/Rate',      1000,      type='float', step=1000, suffix='Hz', siPrefix=True, limits=[1,1e5])
 settings.add_parameter('DAQ/Pants',        0,      type='list',  values=['required','optional'])
 settings.add_parameter('Other/Function', 'cos(t)', type='str')
 
-# load the previous settings if they exist.
-settings.load()
-
-# need to define this function to auto-save when settings change
-def settings_changed(*a): settings.save()
-settings.connect_any_signal_changed(settings_changed)
-
 
 
 #############################
 # Databox Plotter
 #############################
-d_raw = t_raw.place_object(egg.gui.DataboxPlot('*.raw', 'd_raw.cfg'), alignment=0)
+d_raw = t_raw.place_object(egg.gui.DataboxPlot('*.raw', 'd_raw'), alignment=0)
 
 # Add some ROIs
 r1 = egg.pyqtgraph.LinearRegionItem([1.5,3.5])
