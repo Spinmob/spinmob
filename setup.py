@@ -1,6 +1,6 @@
 
 
-version = '3.1.6'
+version = '3.1.7'
 
 
 
@@ -11,7 +11,7 @@ setup(name           = 'Spinmob',
       author         = 'Jack Sankey & Andrew Jayich',
       author_email   = 'jack.sankey@gmail.com',
       url            = 'https://github.com/Spinmob/spinmob/wiki',
-      packages       = ['spinmob', 'spinmob.egg', 'spinmob.daqmx'],
+      packages       = ['spinmob', 'spinmob.egg', 'spinmob.daqmx', 'spinmob.edu'],
       package_dir    = {'spinmob'      :   '.',
                         'egg'          :   'spinmob/egg',
                         'daqmx'        :   'spinmob/daqmx'}
