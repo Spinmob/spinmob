@@ -2289,8 +2289,9 @@ class TreeDictionary(BaseObject):
         keys, dictionary = self.get_dictionary()
 
         # loop over the keys and add them to the databox header
-        for k in keys: d.insert_header(k, repr(dictionary[k]))
-
+        for k in keys: 
+            d.insert_header(k, dictionary[k])
+            
         # save it
         d.save_file(path, force_overwrite=True, header_only=True)
         
@@ -2357,7 +2358,7 @@ class TreeDictionary(BaseObject):
 
                 # Pop the value so it's not set again in the future
                 v = self._lazy_load.pop(k)
-                
+               
                 # Set the value
                 self._set_value_safe(k, v, ignore_errors, block_user_signals)
 
@@ -2365,22 +2366,15 @@ class TreeDictionary(BaseObject):
 
     def _set_value_safe(self, k, v, ignore_errors=False, block_user_signals=False):
         """
-        Actually sets the key k to value v using a safe technique:
-            first trying to evaluate str(v), then just setting it to v.
-        Used during update
-        and add parameter; too complicated for the user.
+        Actually sets the value, first by trying it directly, then by 
         """
         # for safety: by default assume it's a repr() with python code
-        try:    self.set_value(k, eval(str(v)), 
-                               ignore_error       = ignore_errors, 
-                               block_user_signals = block_user_signals)
+        try:
+            self.set_value(k, v, ignore_error       = ignore_errors, 
+                                 block_user_signals = block_user_signals)
 
-        # if that fails try setting the value directly
-        except: self.set_value(k, v, 
-                               ignore_error       = ignore_errors, 
-                               block_user_signals = block_user_signals)
-
-
+        except:
+            print("TreeDictionary ERROR: Could not set '"+k+"' to '"+v+"'")
 
 
 
