@@ -110,8 +110,12 @@ class Test_egg(_ut.TestCase):
         
         # Create a new one with the same autosettings path
         self.e = _e.gui.TreeDictionary(autosettings_path='pants.txt')
+        
+        # Test the lazy load & string recall.
         self.e.add_parameter('floaty', 42.0)
         self.assertEqual(self.e['floaty'],32)
+        self.e.add_parameter('stringy', 'test')
+        self.assertEqual(self.e['stringy'],'47.2')
         
         
 
