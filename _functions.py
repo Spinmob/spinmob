@@ -791,22 +791,24 @@ def frange(start, end, inc=1.0):
     return start + ns*inc
 
 
-def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, **kwargs):
+def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, include_errors=False, **kwargs):
     """
     Generates a set of fake data from the underlying "reality" (or mean
     behavior) function f.
     
     Parameters
     ----------
-        f:
-            Underlying "reality" function or mean behavior. This can be any
-            python-evaluable string, and will have access to all the numpy
-            functions (e.g., cos), scipy's special functions (e.g., erf), and
-            any other variables defined by keyword arguments
-        ex, ey:
-            Uncertainty "strength" for x and y data. This can be a constant or an 
-            array of values. If the distributions (below) are normal, this 
-            corresponds to the standard deviation.
+    f:
+        Underlying "reality" function or mean behavior. This can be any
+        python-evaluable string, and will have access to all the numpy
+        functions (e.g., cos), scipy's special functions (e.g., erf), and
+        any other variables defined by keyword arguments
+    ex, ey:
+        Uncertainty "strength" for x and y data. This can be a constant or an 
+        array of values. If the distributions (below) are normal, this 
+        corresponds to the standard deviation.
+    include_errors=True
+        Whether the databox should include a column for ex and ey.
     
     Keyword arguments are used as additional globals in the function evaluation.
     
@@ -834,9 +836,12 @@ def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, **kwargs):
     d = _s.data.databox()
     d['x']  = x
     d['y']  = y
-    d['ey'] = ey
-    d['ex'] = ex
-    d.h(reality=f)
+    
+    if include_errors:
+        d['ey'] = ey
+        d['ex'] = ex
+    
+    d.h(reality=f, ey=ey[0], ex=ex[0])
     
     return d
 

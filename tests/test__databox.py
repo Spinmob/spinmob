@@ -118,6 +118,7 @@ class Test_databox(_ut.TestCase):
         This should have spinmob print out an error message.
         """
         d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
+        print()
         val = d.h()
         exp = None
         self.assertEqual(val, exp)
@@ -254,9 +255,10 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(_n.shape(d), (6,500))
         self.assertEqual(d[4][4], _n.float16(0.062347))
         
+        # Crash tests
+        d.c()
+
     
-
-
         
 if __name__ == "__main__":
     _ut.main()

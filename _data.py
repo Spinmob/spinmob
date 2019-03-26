@@ -1147,11 +1147,30 @@ class databox:
 
 
 
-    def c(self, n):
+    def c(self, *args, **kwargs):
         """
-        Returns the n'th column if it's an integer, otherwise the column based
-        on key.
+        Takes a single argument or keyword argument, and returns the specified 
+        column. If the argument (or keyword argument) is an integer, return the 
+        n'th column, otherwise return the column based on key.
+        
+        If no arguments are supplied, simply print the column information.
         """
+        # If not arguments, print everything
+        if len(args) + len(kwargs) == 0:
+            
+            print("Columns")
+            if len(self.ckeys)==0: print ('  No columns of data yet.')
+            
+            # Loop over the ckeys and display their information
+            for n in range(len(self.ckeys)):
+                print('  '+str(n)+': '+str(self.ckeys[n])+' '+str(_n.shape(self[n])))
+            return
+
+        # Otherwise, find n        
+        elif len(args):   n = args[0]
+        elif len(kwargs): 
+            for k in kwargs: n = kwargs[k]
+        
         # Nothing to do here.
         if len(self.columns) == 0:   return None
         
@@ -1191,7 +1210,16 @@ class databox:
         Also can take integers, returning the key'th header value.
 
         kwargs can be specified to set header elements.
+        
+        Finally, if called with no arguments or keyword arguments, this 
+        simply prints the header information.
         """
+        # If not arguments, print everything
+        if len(args) + len(kwargs) == 0:
+            print("Headers")
+            for n in range(len(self.hkeys)):
+                print('  '+str(n)+': '+str(self.hkeys[n])+' = '+repr(self.h(n)))
+            return
 
         # first loop over kwargs if there are any to set header elements
         for k in list(kwargs.keys()):
