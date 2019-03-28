@@ -43,7 +43,7 @@ class BaseObject(object):
 
     log = None
 
-    def __init__(self):
+    def __init__(self, autosettings_path=None):
         """
         Base object containing stuff common to all of our objects. When
         deriving objects from this, call BaseObject.__init__(self) as the
@@ -54,7 +54,7 @@ class BaseObject(object):
 
         # for remembering settings; for child objects, overwrite both, and
         # add a load_gui_settings() to the init!
-        self._autosettings_path     = None
+        self._autosettings_path     = autosettings_path
         self._autosettings_controls = []
         self._lazy_load    = dict()
         
@@ -165,7 +165,7 @@ class BaseObject(object):
         if self.log == None: print(message)
         else:                self.log.append_text(message)
 
-    def save_gui_settings(self):
+    def save_gui_settings(self, *a):
         """
         Saves just the current configuration of the controls if the
         autosettings_path is set.

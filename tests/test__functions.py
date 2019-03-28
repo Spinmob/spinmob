@@ -93,8 +93,8 @@ class Test_functions(_ut.TestCase):
         
         # Middle frequency component test
         f, P = _f.psd([1,2,3,4],[1,2,2,1])
-        self.assertEqual((P[0]*(f[1]-f[0]))**0.5, 1.5)
-        self.assertEqual((P[1]*(f[1]-f[0]))**0.5, 0.5)
+        self.assertAlmostEqual((P[0]*(f[1]-f[0]))**0.5, 1.5)
+        self.assertAlmostEqual((P[1]*(f[1]-f[0]))**0.5, 0.5)
         
     def test_generate_fake_data(self):
         
