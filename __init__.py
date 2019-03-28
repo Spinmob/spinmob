@@ -1,4 +1,5 @@
 import os           as _os
+import sys          as _sys
 import matplotlib   as _mpl
 import pylab
 
@@ -30,6 +31,9 @@ settings = _settings.settings()
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
 
+
+if _sys.version[0] == '2':
+    print("WARNING: Spinmob no longer supports Python 2.7 or below (which itself will not be maintained after Jan 1, 2020). USE AT YOUR OWN RISK!")
 
 
 from . import _plot           as plot        ; plot._settings    = settings
