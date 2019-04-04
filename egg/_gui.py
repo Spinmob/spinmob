@@ -2089,14 +2089,14 @@ class TreeDictionary(BaseObject):
         for p in parameter.children():
             self._get_parameter_dictionary(k, dictionary, sorted_keys, p)
 
-    def send_to_databox_header(self, databox):
+    def send_to_databox_header(self, destination_databox):
         """
         Sends all the information currently in the tree to the supplied
         databox's header, in alphabetical order. If the entries already
         exists, just updates them.
         """
         k, d = self.get_dictionary()
-        databox.update_headers(d,k)
+        destination_databox.update_headers(d,k)
 
     def get_dictionary(self):
         """
