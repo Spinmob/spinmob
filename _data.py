@@ -868,28 +868,28 @@ class databox:
 
 
 
-    def copy_headers(self, other_databox):
+    def copy_headers(self, source_databox):
         """
-        Loops over the hkeys of the other_databox, updating this databoxes' header.
+        Loops over the hkeys of the source_databox, updating this databoxes' header.
         """
-        for k in other_databox.hkeys: self.insert_header(k, other_databox.h(k))
+        for k in source_databox.hkeys: self.insert_header(k, source_databox.h(k))
 
         return self
 
-    def copy_columns(self, other_databox):
+    def copy_columns(self, source_databox):
         """
-        Loops over the ckeys of the other_databox, updating this databoxes' columns.
+        Loops over the ckeys of the source_databox, updating this databoxes' columns.
         """
-        for k in other_databox.ckeys: self.insert_column(other_databox[k], k)
+        for k in source_databox.ckeys: self.insert_column(source_databox[k], k)
 
         return self
     
-    def copy_all(self, other_databox):
+    def copy_all(self, source_databox):
         """
-        Copies the header and columns from other_databox to this databox.
+        Copies the header and columns from source_databox to this databox.
         """
-        self.copy_headers(other_databox)
-        self.copy_columns(other_databox)
+        self.copy_headers(source_databox)
+        self.copy_columns(source_databox)
         return self
     
     def insert_globals(self, *args, **kwargs):
