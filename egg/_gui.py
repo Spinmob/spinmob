@@ -1638,7 +1638,10 @@ class TextBox(BaseObject):
         """
         Sets the current value of the text box.
         """
-        self._widget.setText(str(text))
+        # Make sure the text is actually different, so as not to 
+        # trigger a value changed signal
+        s = str(text)
+        if not s == self.get_text(): self._widget.setText(str(text))
         return self
 
     def set_colors(self, text='black', background='white'):
@@ -2441,7 +2444,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # script grid
         self.button_plot  = self.grid_script.place_object(Button("Try it!").set_width(50), 2,3)
         self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
-        self.script.set_height(81)
+        self.script.set_height(120)
 
         # make sure the plot fills up the most space
         self.set_row_stretch(2)
@@ -2750,7 +2753,7 @@ class DataboxPlot(_d.databox, GridLayout):
             return self
 
         # if there is no script, create a default
-        if not self.combo_autoscript.get_index()==0: 
+        if not self.combo_autoscript.get_index()==0:
             self.script.set_text(self._autoscript())
 
         ##### Try the script and make the curves / plots match
