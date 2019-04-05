@@ -3,6 +3,10 @@ import sys          as _sys
 import matplotlib   as _mpl
 import pylab
 
+import traceback    as _traceback
+_sys.excepthook = _traceback.print_exception
+
+
 # ignore warnings by default
 import warnings as _warnings
 _warnings.simplefilter("ignore")
@@ -18,7 +22,7 @@ try:
     if not _qtapp: _qtapp = _qtw.QApplication([])
     
 except:
-    print("Warning: pyqtgraph version 0.10 or higher is required (use a pip install).")
+    print("Warning: pyqtgraph version 0.10 or higher is required (use a conda or pip install).")
     
     _qtc = None
     _qt  = None
