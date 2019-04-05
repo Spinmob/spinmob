@@ -1979,7 +1979,7 @@ class TreeDictionary(BaseObject):
         # Now set the default value if any
         if name in self._lazy_load:
             v = self._lazy_load.pop(name)
-            self.set_value(name, v)
+            self._set_value_safe(name, v, True, True)
         
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
@@ -2065,11 +2065,10 @@ class TreeDictionary(BaseObject):
         # Now set the default value if any
         if name in self._lazy_load:
             v = self._lazy_load.pop(name)
-            self.set_value(name, v)
+            self._set_value_safe(name, v, True, True)
         
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
-
         return self
 
 
@@ -2216,7 +2215,7 @@ class TreeDictionary(BaseObject):
         """
         Sets the variable of the supplied name to the supplied value.
 
-        Setting block_events=True will temporarily block the widget from
+        Setting block_user_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
         # first clean up the name
@@ -2264,7 +2263,8 @@ class TreeDictionary(BaseObject):
         you can connect signals to it, such as with 
         self.connect_any_signal_changed()
         """
-        self.save()
+        # Only want to do this when updating values!
+        if not a[1][0][1] == 'childAdded': self.save()
 
     def save(self, path=None):
         """
@@ -2296,7 +2296,10 @@ class TreeDictionary(BaseObject):
             d.insert_header(k, dictionary[k])
             
         # save it
-        d.save_file(path, force_overwrite=True, header_only=True)
+        try:
+            d.save_file(path, force_overwrite=True, header_only=True)
+        except:
+            print('Warning: could not save '+path.__repr__()+' once. Could be that this is being called too rapidly.')
         
         return self
 
@@ -2361,8 +2364,6 @@ class TreeDictionary(BaseObject):
 
                 # Pop the value so it's not set again in the future
                 v = self._lazy_load.pop(k)
-               
-                # Set the value
                 self._set_value_safe(k, v, ignore_errors, block_user_signals)
 
         return self
