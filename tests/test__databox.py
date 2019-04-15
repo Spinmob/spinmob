@@ -259,7 +259,7 @@ class Test_databox(_ut.TestCase):
         # Crash tests
         d.c()
 
-    def test_is_identical_to(self):
+    def test_is_same_as(self):
         global a, b, c
         
         # Create databoxes
@@ -273,13 +273,13 @@ class Test_databox(_ut.TestCase):
         a['y'] = [1,2,1]
         
         # Some non-thorough self tests 
-        self.assertTrue(a.is_identical_to(a, headers=True, 
+        self.assertTrue(a.is_same_as(a, headers=True, 
                                              columns=True, 
                                              header_order=True, 
                                              column_order=True, 
                                              ckeys=True))
         
-        self.assertTrue(a.is_identical_to(a, headers=True, 
+        self.assertTrue(a.is_same_as(a, headers=True, 
                                              columns=True, 
                                              header_order=False, 
                                              column_order=False, 
@@ -288,17 +288,17 @@ class Test_databox(_ut.TestCase):
         # Wrong number of elements
         b.h(y=4)
         b['y'] = [1,2,1]
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                               columns=True, 
                                               header_order=True, 
                                               column_order=True, 
                                               ckeys=True))
-        self.assertFalse(a.is_identical_to(b, headers=False, 
+        self.assertFalse(a.is_same_as(b, headers=False, 
                                               columns=True, 
                                               header_order=True, 
                                               column_order=True, 
                                               ckeys=True))
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                               columns=False, 
                                               header_order=True, 
                                               column_order=True, 
@@ -307,29 +307,29 @@ class Test_databox(_ut.TestCase):
         # Wrong order
         b.h(x=3)
         b['t'] = [1,2,3]
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                              columns=True, 
                                              header_order=True, 
                                              column_order=True, 
                                              ckeys=True))
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                              columns=True, 
                                              header_order=False, 
                                              column_order=True, 
                                              ckeys=True))
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                              columns=True, 
                                              header_order=True, 
                                              column_order=False, 
                                              ckeys=True))
-        self.assertTrue(a.is_identical_to(b, headers=True, 
+        self.assertTrue(a.is_same_as(b, headers=True, 
                                              columns=True, 
                                              header_order=False, 
                                              column_order=False, 
                                              ckeys=True))
         
         # no ckeys, just numbers
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                               columns=True, 
                                               header_order=True, 
                                               column_order=True, 
@@ -337,12 +337,12 @@ class Test_databox(_ut.TestCase):
         
         # Column value different
         b[1][2]=47
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                               columns=True, 
                                               header_order=False, 
                                               column_order=False, 
                                               ckeys=True))
-        self.assertTrue(a.is_identical_to(b,  headers=True, 
+        self.assertTrue(a.is_same_as(b,  headers=True, 
                                               columns=False, 
                                               header_order=False, 
                                               column_order=False, 
@@ -350,7 +350,7 @@ class Test_databox(_ut.TestCase):
         
         # Header value different
         a.h(x=4)
-        self.assertFalse(a.is_identical_to(b, headers=True, 
+        self.assertFalse(a.is_same_as(b, headers=True, 
                                               columns=False, 
                                               header_order=False, 
                                               column_order=False, 

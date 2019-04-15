@@ -92,10 +92,10 @@ class databox:
 
     def __eq__(self, other):
         
-        return self.is_identical_to(other)
+        return self.is_same_as(other)
         
         
-    def is_identical_to(self, other_databox, headers=True, columns=True, header_order=True, column_order=True, ckeys=True):
+    def is_same_as(self, other_databox, headers=True, columns=True, header_order=True, column_order=True, ckeys=True):
         """
         Tests that the important (i.e. savable) information in this databox
         is the same as that of the other_databox.
