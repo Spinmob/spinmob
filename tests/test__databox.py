@@ -361,6 +361,8 @@ class Test_databox(_ut.TestCase):
         self.assertTrue(a==c)
         self.assertFalse(a is c)
         
+        # Compare with another type
+        self.assertFalse(a.is_same_as(None))
     
     
         
