@@ -89,6 +89,84 @@ class databox:
         s = "<databox instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
         return s
 
+
+    def __eq__(self, other):
+        
+        return self.is_identical_to(other)
+        
+        
+    def is_identical_to(self, other_databox, headers=True, columns=True, header_order=True, column_order=True, ckeys=True):
+        """
+        Tests that the important (i.e. savable) information in this databox
+        is the same as that of the other_databox.
+        
+        Parameters
+        ----------
+        other_databox
+            Databox with which to compare.
+        headers=True
+            Make sure all header elements match.
+        columns=True
+            Make sure every element of every column matches.
+        header_order=True
+            Whether the order of the header elements must match.
+        column_order=True
+            Whether the order of the columns must match. This is only a sensible 
+            concern if ckeys=True.
+        ckeys=True
+            Whether the actual ckeys matter, or just the ordered columns of data.
+        
+        
+        Note the == symbol runs this function with everything True.
+        """
+        d = other_databox
+        
+        # Proceed by testing things one at a time, returning false if one fails
+        if headers:
+            
+            # Same number of elements
+            if not len(self.hkeys) == len(d.hkeys): return False
+            
+            # Elements
+            if header_order and not self.hkeys == d.hkeys: return False
+            
+            # Each value
+            for k in self.hkeys:
+                # Make sure the key exists
+                if not k in d.hkeys: return False
+                
+                # Make sure it's the same.
+                if not self.h(k) == d.h(k): return False
+                
+        if columns:
+            
+            # Same number of columns
+            if not len(self.ckeys) == len(d.ckeys): return False
+            
+            # If we're checking columns by ckeys
+            if ckeys:
+            
+                # Columns
+                if column_order and not self.ckeys == d.ckeys: return False
+                
+                # Each value of each array
+                for k in self.ckeys:
+                    # Make sure the key exists
+                    if not k in d.ckeys: return False
+                    
+                    # Check the values
+                    if not (_n.array(self[k]) == _n.array(d[k])).all(): return False
+        
+            # Otherwise we're ignoring ckeys
+            else:
+                for n in range(len(self.ckeys)):
+                    if not (_n.array(self[n]) == _n.array(d[n])).all(): return False
+        
+        # Passes all tests
+        return True
+                
+                
+
     def more_info(self):
         """
         Prints out more information about the databox.

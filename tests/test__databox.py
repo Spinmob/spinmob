@@ -8,7 +8,8 @@ import spinmob as _s
 
 import unittest as _ut
 
-d = None
+a = b = c = d = None
+
 class Test_databox(_ut.TestCase):
     """
     Test class for databox.
@@ -258,6 +259,109 @@ class Test_databox(_ut.TestCase):
         # Crash tests
         d.c()
 
+    def test_is_identical_to(self):
+        global a, b, c
+        
+        # Create databoxes
+        a = _s.data.databox()
+        b = _s.data.databox()
+        c = _s.data.databox()
+        
+        # Add headers
+        a.h(x=3,y=4)
+        a['t'] = [1,2,3]
+        a['y'] = [1,2,1]
+        
+        # Some non-thorough self tests 
+        self.assertTrue(a.is_identical_to(a, headers=True, 
+                                             columns=True, 
+                                             header_order=True, 
+                                             column_order=True, 
+                                             ckeys=True))
+        
+        self.assertTrue(a.is_identical_to(a, headers=True, 
+                                             columns=True, 
+                                             header_order=False, 
+                                             column_order=False, 
+                                             ckeys=False))
+        
+        # Wrong number of elements
+        b.h(y=4)
+        b['y'] = [1,2,1]
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                              columns=True, 
+                                              header_order=True, 
+                                              column_order=True, 
+                                              ckeys=True))
+        self.assertFalse(a.is_identical_to(b, headers=False, 
+                                              columns=True, 
+                                              header_order=True, 
+                                              column_order=True, 
+                                              ckeys=True))
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                              columns=False, 
+                                              header_order=True, 
+                                              column_order=True, 
+                                              ckeys=True))
+        
+        # Wrong order
+        b.h(x=3)
+        b['t'] = [1,2,3]
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                             columns=True, 
+                                             header_order=True, 
+                                             column_order=True, 
+                                             ckeys=True))
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                             columns=True, 
+                                             header_order=False, 
+                                             column_order=True, 
+                                             ckeys=True))
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                             columns=True, 
+                                             header_order=True, 
+                                             column_order=False, 
+                                             ckeys=True))
+        self.assertTrue(a.is_identical_to(b, headers=True, 
+                                             columns=True, 
+                                             header_order=False, 
+                                             column_order=False, 
+                                             ckeys=True))
+        
+        # no ckeys, just numbers
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                              columns=True, 
+                                              header_order=True, 
+                                              column_order=True, 
+                                              ckeys=False))
+        
+        # Column value different
+        b[1][2]=47
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                              columns=True, 
+                                              header_order=False, 
+                                              column_order=False, 
+                                              ckeys=True))
+        self.assertTrue(a.is_identical_to(b,  headers=True, 
+                                              columns=False, 
+                                              header_order=False, 
+                                              column_order=False, 
+                                              ckeys=True))
+        
+        # Header value different
+        a.h(x=4)
+        self.assertFalse(a.is_identical_to(b, headers=True, 
+                                              columns=False, 
+                                              header_order=False, 
+                                              column_order=False, 
+                                              ckeys=True))
+        
+        # == symbol => identical
+        c.copy_all(a)
+        self.assertTrue(a==c)
+        self.assertFalse(a is c)
+        
+    
     
         
 if __name__ == "__main__":
