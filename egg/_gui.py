@@ -2023,7 +2023,8 @@ class TreeDictionary(BaseObject):
             Not used by default. Used to add unit labels to elements.
         
 
-        See pyqtgraph ParameterTree for more options.
+        See pyqtgraph ParameterTree for more options. Particularly useful is the
+        tip='insert your text' option, which supplies a tooltip!
         """
 
         # update the default kwargs
@@ -2431,7 +2432,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.combo_autoscript  = self.place_object(ComboBox(['Manual Script', 'Autoscript 1', 'Autoscript 2', 'Autoscript 3', 'Custom'])).set_value(autoscript) 
         self.button_multi      = self.place_object(Button  ("Multi",       checkable=True).set_width(50)).set_checked(True) 
         self.button_link_x     = self.place_object(Button  ("Link X",      checkable=True).set_width(50)).set_checked(autoscript==1)
-        self.button_enabled    = self.place_object(Button  ("Enabled",     checkable=True).set_width(50)).set_checked(True)
+        self.button_enabled    = self.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
 
         # keep the buttons shaclackied together
         self.set_column_stretch(5)
