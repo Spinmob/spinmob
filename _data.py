@@ -56,6 +56,7 @@ class databox:
     hkeys   = []            # ordered list of header keys
     extra_globals = {}
 
+    _is_spinmob_databox = True # Flag for type checking on inhereted objects (without need to import library)
 
 
     def __init__(self, delimiter=None, debug=False, **kwargs):
@@ -970,7 +971,7 @@ class databox:
         """
         d = other_databox
         
-        if not type(self) == type(d): return False
+        if not hasattr(other_databox, '_is_spinmob_databox'): return False
         
         # Proceed by testing things one at a time, returning false if one fails
         if headers:
