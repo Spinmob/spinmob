@@ -8,7 +8,6 @@ from test__functions import *
 from test__plot      import *
 from test__dialogs   import *
 from test__egg       import *
-from test__edu       import *
 
 if _os.path.exists('gui_settings'): _sh.rmtree('gui_settings')
 
