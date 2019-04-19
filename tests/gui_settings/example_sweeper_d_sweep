@@ -1,9 +1,0 @@
-self.combo_binary	0
-self.combo_autoscript	1
-self.button_enabled	True
-self.button_multi	True
-self.button_link_x	True
-self.button_script	False
-self.number_file	0
-self.script	"x = [ d[0] ]\ny = [ d[1], d[2] ]\n\nxlabels = 'x'\nylabels = [ 'mag', 'phase' ]\n"
-
