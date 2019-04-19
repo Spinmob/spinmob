@@ -29,7 +29,7 @@ class Test_egg(_ut.TestCase):
         Just opens a full-featured example and lets the user play with it
         """
         import spinmob.egg.example_sweeper as sweeper
-        if _os.path.exists('gui_settings'): _sh.rmtree('gui_settings')
+        if _os.path.exists('.egg_settings'): _sh.rmtree('.egg_settings')
         
         sweeper.d_sweep.load_file(_os.path.join(self.data_path, 'difficult.binary'))
         
@@ -43,8 +43,8 @@ class Test_egg(_ut.TestCase):
         """
         import spinmob.egg as _e
         
-        # clear out the gui_settings
-        if _os.path.exists('gui_settings'): _sh.rmtree('gui_settings')
+        # clear out the gui settings
+        if _os.path.exists('.egg_settings'): _sh.rmtree('.egg_settings')
         
         test_list_values = [42, 'test', 'pants', 37.2, dict(stuff='otherstuff')]
         test_list_values_stringified = [str(42), 'test', 'pants', str(37.2), str(dict(stuff='otherstuff'))]
@@ -83,7 +83,7 @@ class Test_egg(_ut.TestCase):
         self.assertEqual(self.d['floaty'], 45.5555)
 
         # See if it's autosaving
-        self.assertTrue(_os.path.exists('gui_settings/pants.txt'))
+        self.assertTrue(_os.path.exists('.egg_settings/pants.txt'))
         
         # String stuff
         self.assertEqual(type(self.d['stringy']), str)
@@ -99,7 +99,7 @@ class Test_egg(_ut.TestCase):
         # Save, load, and make sure the values are still the same (with types)
         self.d.save()
         self.d.load()
-        self.assertTrue(_os.path.exists('gui_settings/pants.txt'))
+        self.assertTrue(_os.path.exists('.egg_settings/pants.txt'))
         self.assertEqual(self.d['inty'], 32)
         self.assertEqual(self.d['floaty'], 45.5555)
         self.assertEqual(type(self.d['stringy']),  str)
