@@ -175,7 +175,7 @@ class BaseObject(object):
         if self._autosettings_path:
 
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, '.egg_settings')
+            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
 
             # make sure the directory exists
             if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
@@ -210,7 +210,7 @@ class BaseObject(object):
         if self._autosettings_path is not None:
 
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, '.egg_settings')
+            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
 
             # assemble the path with a sub-directory
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
@@ -481,7 +481,7 @@ class Window(GridLayout):
         Starting size of the window. 
     autosettings_path=None
         If set to a file name, e.g. "w.txt", the window will create and update
-        the file .egg_settings/w.txt every time a window setting changes (e.g.,
+        the file egg_settings/w.txt every time a window setting changes (e.g.,
         if you resize or move it.) Previous settings will be automatically
         loaded when the program is next run.
     margins
@@ -596,7 +596,7 @@ class Window(GridLayout):
         if self._autosettings_path == None: return
         
         # Get the gui settings directory
-        gui_settings_dir = _os.path.join(_cwd, '.egg_settings')
+        gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
 
         # make sure the directory exists
         if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
@@ -621,7 +621,7 @@ class Window(GridLayout):
         if self._autosettings_path == None: return
         
         # Get the gui settings directory
-        gui_settings_dir = _os.path.join(_cwd, '.egg_settings')
+        gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
 
         # make a path with a sub-directory
         path = _os.path.join(gui_settings_dir, self._autosettings_path)
@@ -2278,7 +2278,7 @@ class TreeDictionary(BaseObject):
             if self._autosettings_path == None: return self
             
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, '.egg_settings')
+            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
 
             # make sure the directory exists
             if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)            
@@ -2327,7 +2327,7 @@ class TreeDictionary(BaseObject):
             if self._autosettings_path == None: return self
             
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, '.egg_settings')
+            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
 
             # Get the final path
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
@@ -2974,7 +2974,7 @@ class DataboxSaveLoad(_d.databox, GridLayout):
             File extension for saving and dialogs.
         autosettings_path=None
             If set to a <some string>, will save it's settings to 
-            .egg_settings/<some string>.
+            egg_settings/<some string>.
         """
 
         # Do all the tab-area initialization; this sets _widget and _layout

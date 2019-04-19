@@ -9,6 +9,6 @@ from test__plot      import *
 from test__dialogs   import *
 from test__egg       import *
 
-if _os.path.exists('.egg_settings'): _sh.rmtree('.egg_settings')
+if _os.path.exists('egg_settings'): _sh.rmtree('egg_settings')
 
 _ut.main()
