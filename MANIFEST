@@ -19,9 +19,6 @@ setup.py
 ./_pylab_tweaks.py
 ./_settings.py
 ./_spline.py
-./daqmx/__init__.py
-./edu/__init__.py
-./edu/_fitting.py
 ./egg/__init__.py
 ./egg/_gui.py
 ./egg/_temporary_fixes.py
