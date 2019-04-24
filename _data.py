@@ -1473,6 +1473,7 @@ class fitter():
         self._xdata_massaged  = None
         self._ydata_massaged  = None
         self._eydata_massaged = None
+        self._guessed_eydata  = False
         #self._exdata_massaged = None
 
         self._settings = dict()   # dictionary containing all the fitter settings
@@ -1488,7 +1489,7 @@ class fitter():
         self._bgnames   = []
         self._pguess    = []
         self._constants = []
-
+        
         # Silence warnings
         self._settings['silent'] = False
 
@@ -1654,6 +1655,14 @@ class fitter():
         # No fit results
         else: 
             s = s + "\nNO FIT RESULTS\n"
+
+        # Warning: guessed eydata
+        if self._guessed_eydata:
+            s = s + "\nWARNING: eydata was not specified for at least one data set."
+
+        # Check if there are any zero error bars.
+        if (_n.array(self.get_data()[2]) == 0).any():
+            s = s + "\nWARNING: At least one error bar is zero."
 
         return s
 
@@ -1878,8 +1887,6 @@ class fitter():
         Additional optional keyword arguments are added to the globals for 
         script evaluation.
         """
-        self._edata_warning(eydata)
-
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
         
         # At this stage:
@@ -1953,19 +1960,6 @@ class fitter():
         
         return self
 
-    def _edata_warning(self, eydata):
-        """
-        Warning if eydata is None.
-
-        This warning is suppressed if self._safe_settings['silent'] is True.
-        """
-        if self['silent'] is True:
-            pass
-        elif eydata is None:
-            print("\nWARNING: Not specifying eydata results in a random guess for the ydata error bars. This will allow you to fit, but results in meaningless fit errors. Please estimate your errors and supply an argument such as:\n")
-            print("  eydata = 0.1")
-            print("  eydata = [[0.1,0.1,0.1,0.1,0.2],[1,1,1,1,1]]\n")
-
     def evaluate_script(self, script, **kwargs):
         """
         Evaluates the supplied script (python-executable string).
@@ -2032,6 +2026,7 @@ class fitter():
         self._set_data_globals['y'] = ydata
 
         # make sure they're all lists of numpy arrays
+        self._guessed_eydata = False
         for n in range(len(eydata)):
 
             # handle scripts
@@ -2041,6 +2036,7 @@ class fitter():
             # handle None (possibly returned by script): take a visually-appealing guess at the error
             if eydata[n] is None:
                 eydata[n] = _n.ones(len(xdata[n])) * (max(ydata[n])-min(ydata[n]))*0.05
+                self._guessed_eydata = True
 
             # handle constant error bars (possibly returned by script)
             if _s.fun.is_a_number(eydata[n]):
