@@ -143,18 +143,28 @@ class BaseObject(object):
         self._widget.blockSignals(False)
         self._widget.setUpdatesEnabled(True)
 
-    def disable(self):
+    def disable(self, value=True):
         """
         Disables the widget.
+        
+        Parameters
+        ----------
+        value=True
+            If set to False, enables the widget.
         """
-        self._widget.setEnabled(False)
+        self._widget.setEnabled(not value)
         return self
 
-    def enable(self):
+    def enable(self, value=True):
         """
         Enables the widget.
+        
+        Parameters
+        ----------
+        value=True
+            If set to False, disables the widget.
         """
-        self._widget.setEnabled(True)
+        self._widget.setEnabled(value)
         return self
 
     def print_message(self, message="heya!"):
