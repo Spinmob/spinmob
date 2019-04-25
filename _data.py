@@ -1984,7 +1984,7 @@ class fitter():
         has been run.
         """
         # make sure we've done a "set data" call
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return [[]]
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return [[],[],[]]
 
         # update the globals with the current fit parameter guess values
         for n in range(len(self._pnames)): self._set_data_globals[self._pnames[n]] = self._pguess[n]

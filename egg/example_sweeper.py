@@ -161,7 +161,7 @@ d_sweep.after_load_file = d_sweep_after_load
 
 # overwrite the existing shutdown / destroy sequence
 def shutdown():
-    print("Closing but not destroying...")
+    print("\nStopping acquisition and closing window. Use w.show() to show again.")
     b_sweep.set_checked(False)
     return
 w.event_close = shutdown

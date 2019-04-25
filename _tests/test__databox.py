@@ -20,7 +20,7 @@ class Test_databox(_ut.TestCase):
         Load data
         """
         # Path to the spinmob module
-        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), '_tests', 'fixtures', 'data_files')
 
     def tearDown(self):
         """
@@ -114,16 +114,6 @@ class Test_databox(_ut.TestCase):
         exp = 'value1'
         self.assertEqual(val, exp)
 
-    def test_h_None(self):
-        """
-        This should have spinmob print out an error message.
-        """
-        d = _s.data.load(path=_os.path.join(self.data_path, "headers.dat"))
-        print()
-        val = d.h()
-        exp = None
-        self.assertEqual(val, exp)
-
     def test_h_GoodFragment(self):
         """
         This should have spinmob print out an error message.
@@ -190,7 +180,7 @@ class Test_databox(_ut.TestCase):
         global d
         
         # Start clean.
-        if _os.path.exists('test_binary.txt'): _os.remove('test_binary.txt')
+        if _os.path.exists('test_binary.txt'):        _os.remove('test_binary.txt')
         if _os.path.exists('test_binary.txt.backup'): _os.remove('test_binary.txt.backup')
 
         # Write a confusing binary file.
@@ -200,14 +190,17 @@ class Test_databox(_ut.TestCase):
         d['shoes,teeth'] = [1,2,1]
         d.save_file('test_binary', '*.txt', 'txt', binary='float16')
         
+        # Crash tests
+        print()
+        d.h()
+        d.c()
+        
         # Load said binary
         d = _s.data.load('test_binary.txt')
         self.assertEqual(len(d), 2)
         self.assertEqual(len(d[1]), 3)
         self.assertEqual(len(d[0]), 5)
         self.assertEqual(len(d.hkeys), 2)
-        
-        
         
         # Do the same with no delimiter
         d = _s.data.databox(delimiter=None)
@@ -256,8 +249,7 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(_n.shape(d), (6,500))
         self.assertEqual(d[4][4], _n.float16(0.062347))
         
-        # Crash tests
-        d.c()
+        
 
     def test_is_same_as(self):
         global a, b, c
@@ -365,6 +357,12 @@ class Test_databox(_ut.TestCase):
         self.assertFalse(a.is_same_as(None))
     
     
+    def test_load_dialogs(self):
+        
+        # Crash tests
+        _s.data.load(text='CANCEL ME')
+        _s.data.load_multiple(text='CANCEL ME')
+
         
 if __name__ == "__main__":
     _ut.main()

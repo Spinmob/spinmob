@@ -17,7 +17,7 @@ class Test_plot_functions(_ut.TestCase):
         """
         """
         # Path to the spinmob module
-        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures', 'data_files')
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), '_tests', 'fixtures', 'data_files')
 
     def tearDown(self):
         """
