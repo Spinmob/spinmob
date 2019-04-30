@@ -22,8 +22,11 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
         the same name, it will start in the last dialog's directory by default.
     force_extension=None
         Setting this to a string, e.g. 'txt', will enforce that the filename 
-        will have this extension.   
+        will have this extension. You can also set this to True, which sets it to 
+        the filters value.
     """
+    original_filters = filters
+    
     # make sure the filters contains "*.*" as an option!
     if not '*' in filters.split(';'): filters = filters + ";;All files (*)"
     
@@ -37,23 +40,29 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     # If Qt5, take the zeroth element
     if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]    
     
+    # If the string is empty, quit out.
+    if result == '': return None
+    
     # Make sure it's a string
     result = str(result)
     
     # Enforce the extension if necessary
-    if  not force_extension == None:
-            
+    if not force_extension == None:
+        
+        # If we specify True, default to the filters
+        if force_extension == True: force_extension = original_filters
+        
         # In case the user put "*.txt" instead of just "txt"
         force_extension = force_extension.replace('*','').replace('.','')
 
         # If it doesn't end with the right extension, add this.
         if not _os.path.splitext(result)[-1][1:] == force_extension:
             result = result + '.' + force_extension
-
-    if result == '': return None
-    else:
-        _settings[default_directory] = _os.path.split(result)[0]
-        return result
+    
+    # Update the user settings.
+    _settings[default_directory] = _os.path.split(result)[0]
+    return result
+    
 
 
 def load(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):

@@ -520,10 +520,11 @@ class Window(GridLayout):
         # set the central widget to that created by GridLayout.__init__
         self._window.setCentralWidget(self._widget)
 
-        # events
+        # events for moving, resizing and closing
+        self._last_event_type = None
+        self._window.eventFilter = self._event_filter
+        self._window.installEventFilter(self._window)
         self._window.closeEvent  = self._event_close
-        self._window.resizeEvent = self._event_resize
-        self._window.moveEvent   = self._event_move
         
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
@@ -578,26 +579,27 @@ class Window(GridLayout):
         """
         self.print_message("Window closed but not destroyed. Use self.show() to bring it back.")
 
+    def _event_filter(self, o, e):
+        """
+        Used to prevent all window move events from saving.
+        """
+        # Weird event sequence that happens at the end of a
+        # move or resize.
+        if self._last_event_type in [_g.QtCore.QEvent.Move, _g.QtCore.QEvent.UpdateRequest, _g.QtCore.QEvent.LayoutRequest] \
+        and e.type() == _g.QtCore.QEvent.NonClientAreaMouseMove:
+            self._save_settings()
+            return True
+        
+        # Remember the last event
+        self._last_event_type = e.type()
+        return False
+
     def _event_close(self, event):
         """
         Don't modify this.
         """
         self._is_open = False
         self.event_close()
-
-    def _event_resize(self, event):
-        """
-        Don't modify this.
-        """
-        self._save_settings()
-        return
-
-    def _event_move(self, event):
-        """
-        Don't modify this.
-        """
-        self._save_settings()
-        return
         
     def _save_settings(self):
         """
@@ -785,16 +787,17 @@ class Docker(Window):
         # Set the initial geometry
         self.set_size(size)
     
-        # events
-        self._window.moveEvent   = self._event_move
-        self._window.resizeEvent = self._event_resize
-        self._window.closeEvent  = self._event_close
-
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
         
         # Load the previous settings
         self._load_settings()
+        
+        # events for moving, resizing and closing
+        self._last_event_type = None
+        self._window.eventFilter = self._event_filter
+        self._window.installEventFilter(self._window)
+        self._window.closeEvent  = self._event_close
         
         # other useful functions to wrap
         self.get_row_count    = self._layout.rowCount
@@ -2603,16 +2606,18 @@ class DataboxPlot(_d.databox, GridLayout):
             Do not question the overwrite if the file already exists.
         just_settings=False 
             Set to True to save only the state of the DataboxPlot controls
+            Note that setting header_only=True will include settings and the usual
+            databox header.
         
         **kwargs are sent to the normal databox save_file() function.
         """
         # Update the binary mode
         if not 'binary' in kwargs: kwargs['binary'] = self.combo_binary.get_text()
         
-        # if it's just the settings file, make a new databox
+        # if it's just the settings file, make a new databox with no columns
         if just_settings: d = _d.databox()
 
-        # otherwise use the internal databox
+        # otherwise use the internal databox with the columns
         else: d = self
 
         # add all the controls settings to the header
@@ -3067,16 +3072,11 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 
 if __name__ == '__main__':
-    w = Window()
-    p = w.place_object(DataboxPlot(autoscript=2))
+    w = Window(autosettings_path = 'pants')
     w.show()
     
-    p[0] = [1,2]
-    p[1] = [1,2]
-    p[2] = [2,1]
-    p[3] = [1,2]
-    
-    p.plot()
+    d = Docker(autosettings_path = 'shoes')
+    d.show()
     
 
 

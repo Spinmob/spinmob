@@ -20,6 +20,9 @@ def coarsen_array(a, level=2, method='mean'):
     # make sure it's a numpy array
     a = _n.array(a)
     
+    # Make sure it's an integer!
+    level=int(level)
+    
     # quickest option
     if level in [0,1,False]: return a
 
