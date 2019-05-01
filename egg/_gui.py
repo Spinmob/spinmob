@@ -1,6 +1,7 @@
 import time     as _t
 import os       as _os
 import numpy    as _n
+import scipy.special as _scipy_special
 from sys import platform as _platform
 
 import spinmob as _spinmob
@@ -407,6 +408,9 @@ class GridLayout(BaseObject):
         except: None
 
         return object
+
+    # Shortcut.
+    add = place_object
 
     def remove_object(self, object=0, delete=True):
         """
@@ -2824,6 +2828,7 @@ class DataboxPlot(_d.databox, GridLayout):
         try:
             # get globals for sin, cos etc
             g = _n.__dict__
+            g.update(_scipy_special.__dict__)
             g.update(dict(d=self))
             g.update(dict(xlabels='x', ylabels='y'))
 
@@ -3119,6 +3124,7 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 if __name__ == '__main__':
     w = Window(autosettings_path = 'pants')
+    p = w.place_object(DataboxPlot())
     w.show()
     
     d = Docker(autosettings_path = 'shoes')
