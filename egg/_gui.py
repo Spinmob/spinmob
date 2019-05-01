@@ -8,6 +8,7 @@ _d = _spinmob.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
+_e = _g.QtCore.QEvent
 
 # If imported by spinmob
 try:    from . import _temporary_fixes
@@ -585,10 +586,12 @@ class Window(GridLayout):
         """
         # Weird event sequence that happens at the end of a
         # move or resize.
-        if self._last_event_type in [_g.QtCore.QEvent.Move, _g.QtCore.QEvent.UpdateRequest, _g.QtCore.QEvent.LayoutRequest] \
-        and e.type() == _g.QtCore.QEvent.NonClientAreaMouseMove:
-            self._save_settings()
-            return True
+        
+        # Covers different sequences on Linux and Windows, with and without a layout
+        if self._last_event_type in [_e.Move, _e.UpdateRequest, _e.LayoutRequest] \
+            and e.type() in [_e.NonClientAreaMouseMove, _e.WindowActivate]:
+                self._save_settings()
+                return True
         
         # Remember the last event
         self._last_event_type = e.type()
@@ -1724,6 +1727,10 @@ class TreeDictionary(BaseObject):
         Where this object will save its settings when self.save() and self.load()
         are called without a path specified. None means no settings will be
         automatically saved.
+    name=None
+        If specified as a string, this will prepend name+'/' to all elements
+        output in self.get_dictionary(), self.send_to_databox_header(), self.save()
+        and will strip them from self.load() and self.update() accordingly
     show_header=False
         Whether to show the top-level trunk.
         
@@ -1737,7 +1744,7 @@ class TreeDictionary(BaseObject):
         This will connect the signal from anything changing to the specified 
         function. 
     """
-    def __init__(self, autosettings_path=None, show_header=False):
+    def __init__(self, autosettings_path=None, name=None, show_header=False):
         
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -1747,6 +1754,7 @@ class TreeDictionary(BaseObject):
         self._autosettings_path  = autosettings_path
         self._connection_lists   = dict()
         self._lazy_load = dict()
+        self.name = name
         
         # Load the previous settings (if any)
         self.load()
@@ -1765,7 +1773,7 @@ class TreeDictionary(BaseObject):
         """
         s = "\nTreeDictionary() -> "+str(self._autosettings_path)+"\n"
 
-        for k in self.get_dictionary()[0]:
+        for k in self.get_dictionary(True)[0]:
             
             if not self.get_type(k) in ['list']:
                 s = s + "  "+k+" = "+repr(self[k])+"\n"
@@ -1823,12 +1831,12 @@ class TreeDictionary(BaseObject):
             
         return self
 
-    def connect_signal_changed(self, name, function):
+    def connect_signal_changed(self, key, function):
         """
-        Connects a changed signal from the parameters of the specified name
+        Connects a changed signal from the parameters of the specified key
         to the supplied function.
         """
-        x = self._find_parameter(name.split("/"))
+        x = self._find_parameter(key.split("/"))
 
         # if it pooped.
         if x==None: return None
@@ -1837,54 +1845,54 @@ class TreeDictionary(BaseObject):
         x.sigValueChanged.connect(function)
         
         # Keep track of the functions
-        if name in self._connection_lists: self._connection_lists[name].append(function)
-        else:                              self._connection_lists[name] = [function]
+        if key in self._connection_lists: self._connection_lists[key].append(function)
+        else:                             self._connection_lists[key] = [function]
 
         return self
 
-    def block_user_signals(self, name, ignore_error=False):
+    def block_user_signals(self, key, ignore_error=False):
         """
         Temporarily disconnects the user-defined signals for the specified 
-        parameter name. 
+        parameter key. 
         
         Note this only affects those connections made with 
         connect_signal_changed(), and I do not recommend adding new connections
         while they're blocked!
         """
-        x = self._find_parameter(name.split("/"), quiet=ignore_error)
+        x = self._find_parameter(key.split("/"), quiet=ignore_error)
 
         # if it pooped.
         if x==None: return None
             
         # disconnect it from all its functions
-        if name in self._connection_lists:
-            for f in self._connection_lists[name]: x.sigValueChanged.disconnect(f)
+        if key in self._connection_lists:
+            for f in self._connection_lists[key]: x.sigValueChanged.disconnect(f)
         
         return self
 
-    def unblock_user_signals(self, name, ignore_error=False):
+    def unblock_user_signals(self, key, ignore_error=False):
         """
         Reconnects the user-defined signals for the specified 
-        parameter name (blocked with "block_user_signal_changed")
+        parameter key (blocked with "block_user_signal_changed")
         
         Note this only affects those connections made with 
         connect_signal_changed(), and I do not recommend adding new connections
         while they're blocked!
         """
-        x = self._find_parameter(name.split("/"), quiet=ignore_error)
+        x = self._find_parameter(key.split("/"), quiet=ignore_error)
 
         # if it pooped.
         if x==None: return None
             
         # reconnect it to all its functions
-        if name in self._connection_lists:
-            for f in self._connection_lists[name]: x.sigValueChanged.connect(f)
+        if key in self._connection_lists:
+            for f in self._connection_lists[key]: x.sigValueChanged.connect(f)
         
         return self
 
-    def _find_parameter(self, name_list, create_missing=False, quiet=False):
+    def _find_parameter(self, key_list, create_missing=False, quiet=False):
         """
-        Tries to find and return the parameter of the specified name. The name
+        Tries to find and return the parameter of the specified key. The key
         should be of the form
 
         ['branch1','branch2', 'parametername']
@@ -1895,16 +1903,16 @@ class TreeDictionary(BaseObject):
         Setting quiet=True will suppress error messages (for checking)
         """
         # make a copy so this isn't destructive to the supplied list
-        s = list(name_list)
+        s = list(key_list)
 
         # if the length is zero, return the root widget
         if len(s)==0: return self._widget
 
-        # the first name must be treated differently because it is
+        # the first key must be treated differently because it is
         # the main widget, not a branch
-        r = self._clean_up_name(s.pop(0))
+        r = self._clean_up_key(s.pop(0))
 
-        # search for the root name
+        # search for the root key
         result = self._widget.findItems(r, _g.QtCore.Qt.MatchCaseSensitive | _g.QtCore.Qt.MatchFixedString)
 
         # if it pooped and we're not supposed to create it, quit
@@ -1915,22 +1923,22 @@ class TreeDictionary(BaseObject):
         # otherwise use the first value
         elif len(result): x = result[0].param
 
-        # otherwise, if there are more names in the list,
+        # otherwise, if there are more keys in the list,
         # create the branch and keep going
         else:
             x = _g.parametertree.Parameter.create(name=r, type='group', children=[])
             self._widget.addParameters(x)
 
-        # loop over the remaining names, and use a different search method
+        # loop over the remaining keys, and use a different search method
         for n in s:
 
             # first clean up
-            n = self._clean_up_name(n)
+            n = self._clean_up_key(n)
 
-            # try to search for the name
+            # try to search for the key
             try: x = x.param(n)
 
-            # name doesn't exist
+            # key doesn't exist
             except:
 
                 # if we're supposed to, create the new branch
@@ -1944,33 +1952,40 @@ class TreeDictionary(BaseObject):
         # return the last one we found / created.
         return x
 
-
-
-    def _clean_up_name(self, name):
+    def _strip(self, key):
         """
-        Cleans up the name according to the rules specified in this exact
+        Strips '/'+self.name+'/' from the specified key.
+        """
+        if self.name is not None:
+            s = '/'+self.name+'/'
+            if key[0:len(s)] == s: return key[len(s):]
+        return key
+    
+    def _clean_up_key(self, key):
+        """
+        Cleans up the key according to the rules specified in this exact
         function. Uses self.naughty, a list of naughty characters.
         """
-        for n in self.naughty: name = name.replace(n, '_')
-        return name
+        for n in self.naughty: key = key.replace(n, '_')
+        return key
 
-    def add_button(self, name, checkable=False, checked=False):
+    def add_button(self, key, checkable=False, checked=False):
         """
         Adds (and returns) a button at the specified location. 
         """
 
-        # first clean up the name
-        name = self._clean_up_name(name)
+        # first clean up the key
+        key = self._clean_up_key(key)
 
         # split into (presumably existing) branches and parameter
-        s = name.split('/')
+        s = key.split('/')
 
         # make sure it doesn't already exist
         if not self._find_parameter(s, quiet=True) == None:
-            self.print_message("Error: '"+name+"' already exists.")
+            self.print_message("Error: '"+key+"' already exists.")
             return None
 
-        # get the leaf name off the list.
+        # get the leaf key off the list.
         p = s.pop(-1)
 
         # create / get the branch on which to add the leaf
@@ -1990,23 +2005,23 @@ class TreeDictionary(BaseObject):
         ap.signal_clicked = ap.sigActivated
 
         # Now set the default value if any
-        if name in self._lazy_load:
-            v = self._lazy_load.pop(name)
-            self._set_value_safe(name, v, True, True)
+        if key in self._lazy_load:
+            v = self._lazy_load.pop(key)
+            self._set_value_safe(key, v, True, True)
         
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
         
-        return Button(name, checkable, checked, list(ap.items.keys())[0].button)
+        return Button(key, checkable, checked, list(ap.items.keys())[0].button)
 
-    def add_parameter(self, name='test', value=42.0, **kwargs):
+    def add_parameter(self, key='test', value=42.0, **kwargs):
         """
         Adds a parameter "leaf" to the tree. 
         
         Parameters
         ----------
-        name='test'
-            The name of the leaf. It should be a string of the form
+        key='test'
+            The key of the leaf. It should be a string of the form
             "branch1/branch2/parametername" and will be nested as indicated.
         value=42.0
             Value of the leaf.
@@ -2053,14 +2068,14 @@ class TreeDictionary(BaseObject):
                 other_kwargs['values'][n] = str(other_kwargs['values'][n])
 
         # split into (presumably existing) branches and parameter
-        s = name.split('/')
+        s = key.split('/')
 
         # make sure it doesn't already exist
         if not self._find_parameter(s, quiet=True) == None:
-            self.print_message("Error: '"+name+"' already exists.")
+            self.print_message("Error: '"+key+"' already exists.")
             return self
 
-        # get the leaf name off the list.
+        # get the leaf key off the list.
         p = s.pop(-1)
 
         # create / get the branch on which to add the leaf
@@ -2077,24 +2092,24 @@ class TreeDictionary(BaseObject):
         else:                 b.addChild(leaf)
         
         # Now set the default value if any
-        if name in self._lazy_load:
-            v = self._lazy_load.pop(name)
-            self._set_value_safe(name, v, True, True)
+        if key in self._lazy_load:
+            v = self._lazy_load.pop(key)
+            self._set_value_safe(key, v, True, True)
         
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
         return self
 
 
-    def _get_parameter_dictionary(self, base_name, dictionary, sorted_keys, parameter):
+    def _get_parameter_dictionary(self, base_key, dictionary, sorted_keys, parameter):
         """
         Recursively loops over the parameter's children, adding
-        keys (starting with base_name) and values to the supplied dictionary
+        keys (starting with base_key) and values to the supplied dictionary
         (provided they do not have a value of None).
         """
 
         # assemble the key for this parameter
-        k = base_name + "/" + parameter.name()
+        k = base_key + "/" + parameter.name()
 
         # first add this parameter (if it has a value)
         if not parameter.value()==None:
@@ -2114,10 +2129,17 @@ class TreeDictionary(BaseObject):
         k, d = self.get_dictionary()
         destination_databox.update_headers(d,k)
 
-    def get_dictionary(self):
+    def get_dictionary(self, strip_key=False):
         """
         Returns the list of parameters and a dictionary of values
         (good for writing to a databox header!)
+        
+        If self.name is a string, prepends '/'+self.name+'/' to all keys.
+        
+        Parameters
+        ----------
+        strip_key=False
+            If True, will not return keys with '/'+self.name+'/' prepended.
 
         Return format is sorted_keys, dictionary
         """
@@ -2132,45 +2154,62 @@ class TreeDictionary(BaseObject):
             # grab the parameter item, and start building the name
             x = self._widget.topLevelItem(i).param
 
-            # now start the recursive loop
+            # now start the recursive loop. Too complicated to do the name/ stuff
+            # here...
             self._get_parameter_dictionary('', d, k, x)
 
+        # If we have a name, prepend it to all keys
+        if self.name is not None and not strip_key:
+            
+            # loop over all the keys
+            for n in range(len(k)):
+                
+                # Assemble the new key
+                k_new = '/'+self.name+'/' + k[n]
+                
+                # Replace the dictionary key
+                d[k_new] = d.pop(k[n])
+                
+                # Update the list value
+                k[n] = k_new
+                
         return k, d
 
-    def hide_parameter(self, name):
+    def hide_parameter(self, key):
         """
         Hides the specified parameter.
         """
-        self._find_parameter(name.split('/')).hide()
+        self._find_parameter(key.split('/')).hide()
 
-    def show_parameter(self, name):
+    def show_parameter(self, key):
         """
         Hides the specified parameter.
         """
-        self._find_parameter(name.split('/')).show()        
+        self._find_parameter(key.split('/')).show()        
         
 
-    def get_widget(self, name):
+    def get_widget(self, key):
         """
         Returns the Qt widget associated with the parameter.
         """
-        return self._find_parameter(name.split('/'))
+        return self._find_parameter(key.split('/'))
 
-    def get_type(self, name):
+    def get_type(self, key):
         """
         Returns the type string of the specified parameter.
         """
-        return str(self.get_widget(name).opts['type'])
+        return str(self.get_widget(key).opts['type'])
 
-    def get_value(self, name):
+    def get_value(self, key):
         """
-        Returns the value of the parameter with the specified name.
+        Returns the value of the parameter with the specified key. If self.name
+        is a string, removes '/'+self.name+'/' from the key.
         """
         # first clean up the name
-        name = self._clean_up_name(name)
+        key = self._clean_up_key(self._strip(key))
 
         # now get the parameter object
-        x = self._find_parameter(name.split('/'))
+        x = self._find_parameter(key.split('/'))
 
         # quit if it pooped.
         if x == None: return None
@@ -2190,7 +2229,7 @@ class TreeDictionary(BaseObject):
                 
                 # Only choose a default if there exists one                
                 if len(x.opts('values')):                              
-                    self.set_value(name, x.opts['values'][0])                
+                    self.set_value(key, x.opts['values'][0])                
                     return x.opts['values'][0]
                 
                 # Otherwise, just return None and do nothing                
@@ -2213,33 +2252,33 @@ class TreeDictionary(BaseObject):
 
     __getitem__ = get_value
 
-    def get_list_values(self, name):
+    def get_list_values(self, key):
         """
-        Returns the values for a list item of the specified name.
+        Returns the values for a list item of the specified key.
         """
         # Make sure it's a list
-        if not self.get_type(name) in ['list']: 
-            self.print_message('ERROR: "'+name+'" is not a list.')
+        if not self.get_type(key) in ['list']: 
+            self.print_message('ERROR: "'+key+'" is not a list.')
             return
         
         # Return a copy of the list values
-        return list(self.get_widget(name).opts['values'])
+        return list(self.get_widget(key).opts['values'])
 
-    def set_value(self, name, value, ignore_error=False, block_user_signals=False):
+    def set_value(self, key, value, ignore_error=False, block_user_signals=False):
         """
-        Sets the variable of the supplied name to the supplied value.
+        Sets the variable of the supplied key to the supplied value.
 
         Setting block_user_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        # first clean up the name
-        name = self._clean_up_name(name)
+        # first clean up the key
+        key = self._clean_up_key(self._strip(key))
 
         # If we're supposed to, block the user signals for this parameter
-        if block_user_signals: self.block_user_signals(name, ignore_error)        
+        if block_user_signals: self.block_user_signals(key, ignore_error)        
 
         # now get the parameter object
-        x = self._find_parameter(name.split('/'), quiet=ignore_error)
+        x = self._find_parameter(key.split('/'), quiet=ignore_error)
 
         # quit if it pooped.
         if x == None: return None
@@ -2257,7 +2296,7 @@ class TreeDictionary(BaseObject):
         else: x.setValue(eval(x.opts['type'])(value))
 
         # If we're supposed to unblock the user signals for this parameter
-        if block_user_signals: self.unblock_user_signals(name, ignore_error)
+        if block_user_signals: self.unblock_user_signals(key, ignore_error)
 
         return self
 
@@ -2364,8 +2403,15 @@ class TreeDictionary(BaseObject):
         This will store non-existent key-value pairs in the dictionary 
         self._lazy_load. When you add settings in the future,
         these will be checked for the default values.
+        
+        If self.name is a string (not None), '/'+self.name+'/' will be stripped
+        from the keys if present.
         """
+        # Make sure d is a dictionary.
         if not type(d) == dict: d = d.headers
+
+        # Strip the name from each key if present
+        for k in list(d.keys()): d[self._strip(k)] = d.pop(k)
 
         # Update the lazy load
         self._lazy_load.update(d)

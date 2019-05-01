@@ -4,6 +4,8 @@ import spinmob  as _s
 import unittest as _ut
 import shutil   as _sh
 
+x = None
+
 class Test_egg(_ut.TestCase):
     """
     Test class for databox.
@@ -117,6 +119,30 @@ class Test_egg(_ut.TestCase):
         self.e.add_parameter('stringy', 'test')
         self.assertEqual(self.e['stringy'],'47.2')
         
+        # Crash test; also tests self.e.get_dictionary(strip_name=True)
+        repr(self.e)
+        
+        # Test get_dictionary with a name
+        
+        # Set the name
+        self.e.name = 'testname'
+        ks, d = self.e.get_dictionary()
+        self.assertEqual(ks[0], '/testname/floaty')
+        
+        # Test update
+        d['/testname/floaty'] = 77
+        self.e.update(d)
+        self.assertEqual(self.e['floaty'], 77)
+        self.assertEqual(self.e['/testname/floaty'], 77)
+        
+        # Output to a databox header
+        d = _s.data.databox()
+        self.e.send_to_databox_header(d)
+        self.assertEqual(d.hkeys[0],'/testname/floaty')
+        
+        # Test load
+        self.e.load()
+        self.assertEqual(self.e['/testname/floaty'], 77)
         
 
 if __name__ == "__main__":
