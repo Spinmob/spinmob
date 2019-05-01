@@ -2491,8 +2491,8 @@ class DataboxPlot(_d.databox, GridLayout):
         self._label_path     = self.place_object(Label(""))
 
         self.place_object(Label("")) # spacer
-        self.button_script     = self.place_object(Button  ("Show Script", checkable=True)).set_checked(False)
-        self.combo_autoscript  = self.place_object(ComboBox(['Manual Script', 'Autoscript 1', 'Autoscript 2', 'Autoscript 3', 'Custom'])).set_value(autoscript) 
+        self.button_script     = self.place_object(Button  ("Script", checkable=True)).set_checked(False).set_width(50)
+        self.combo_autoscript  = self.place_object(ComboBox(['Manual', 'Shared d[0]', 'Groups of 2', 'Groups of 3', 'Shared d[0], ey', 'Your Function'])).set_value(autoscript) 
         self.button_multi      = self.place_object(Button  ("Multi",       checkable=True).set_width(50)).set_checked(True) 
         self.button_link_x     = self.place_object(Button  ("Link X",      checkable=True).set_width(50)).set_checked(autoscript==1)
         self.button_enabled    = self.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
@@ -2725,7 +2725,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         self.plot()
 
-    def _autoscript(self):
+    def _generate_autoscript(self):
         """
         Automatically generates a python script for plotting. 
         """
@@ -2798,7 +2798,27 @@ class DataboxPlot(_d.databox, GridLayout):
                 sylabels += ", '"+self.ckeys[3*n+1]+"', '"+self.ckeys[3*n+2]+"'"
 
             return sx+" ]\n"+sy+" ]\n\n"+sxlabels+" ]\n"+sylabels+" ]\n"
+        
+        # Shared d[0] and pairs of y, ey
+        elif self.combo_autoscript.get_index() == 4:
             
+            # hard code the first columns
+            sx  = "x = [ d[0]"
+            sy  = "y = [ d[1]"
+            sey = "ey = [ d[2]"
+
+            # hard code the first labels
+            sxlabels = "xlabels = '"  +self.ckeys[0]+"'"
+            sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
+
+            # loop over any remaining columns and append.
+            for n in range(1,int((len(self)-1)/2)):
+                sy  += ", d["+str(2*n+1)  +"]"
+                sey += ", d["+str(2*n+2)+"]"
+                sylabels += ", '"+self.ckeys[n]+"'"
+
+            return sx+" ]\n"+sy+" ]\n\n"+sey+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
+        
         else: return self.autoscript_custom()
 
     def autoscript_custom(self):
@@ -2821,7 +2841,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # if there is no script, create a default
         if not self.combo_autoscript.get_index()==0:
-            self.script.set_text(self._autoscript())
+            self.script.set_text(self._generate_autoscript())
 
         ##### Try the script and make the curves / plots match
 
