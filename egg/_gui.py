@@ -2839,7 +2839,7 @@ class DataboxPlot(_d.databox, GridLayout):
             x = g['x']
             y = g['y']
             ex = g['ex']
-            ey = g['ey']
+            ey = g['ey'] # Use spinmob._plotting_mess
 
             # make it the right shape
             if x == None: x = [None]

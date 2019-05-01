@@ -67,6 +67,8 @@ def _match_error_to_data_set(x, ex):
     """
     Inflates ex to match the dimensionality of x, "intelligently". 
     x is assumed to be a 2D array.
+    
+    Doesn't handle x = [[1,2,3],[1,1,1]], x = [3] or [None]
     """
     # Simplest case, ex is None or a number
     if not _fun.is_iterable(ex):
@@ -81,15 +83,18 @@ def _match_error_to_data_set(x, ex):
             for n in range(len(x)): 
                 ex.append([value]*len(x[n]))
     
-    # Otherwise, ex is iterable
+    # At this point, ex is iterable
     
     # Default behavior: If the elements are all numbers and the length matches
     # that of the first x-array, assume this is meant to match all the x
     # data sets
     if _fun.elements_are_numbers(ex) and len(ex) == len(x[0]): ex = [ex]*len(x)
 
-    # The user may specify a list of some iterable and some not. Assume
-    # in this case that at least the lists are the same length    
+    # The user may specify a list of some iterable and some not. 
+    # The list length may not match
+    while len(ex) < len(x): ex.append(ex[-1])
+    
+    # Now they are the same length
     for n in range(len(x)):
         # do nothing to the None's
         # Inflate single numbers to match

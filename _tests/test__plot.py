@@ -65,6 +65,10 @@ class Test_plot_functions(_ut.TestCase):
         
         self.assertEqual(_s._plotting_mess._match_error_to_data_set([[1,2,3],[1,2]], [None, 22]),
                         [None, [22, 22]])
+        
+        self.assertEqual(_s._plotting_mess._match_error_to_data_set([[1,2,3],[1,2]], [3]), [[3,3,3],[3,3]])
+        
+        self.assertEqual(_s._plotting_mess._match_error_to_data_set([[1,2,3],[1,2]], [None]), [None,None])
     
     def test_auto_zoom(self):
         global a
