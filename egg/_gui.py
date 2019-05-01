@@ -2829,7 +2829,7 @@ class DataboxPlot(_d.databox, GridLayout):
             # get globals for sin, cos etc
             g = _n.__dict__
             g.update(_scipy_special.__dict__)
-            g.update(dict(d=self))
+            g.update(dict(d=self, ex=None, ey=None))
             g.update(dict(xlabels='x', ylabels='y'))
 
             # run the script.
@@ -2838,6 +2838,8 @@ class DataboxPlot(_d.databox, GridLayout):
             # x & y should now be data arrays, lists of data arrays or Nones
             x = g['x']
             y = g['y']
+            ex = g['ex']
+            ey = g['ey']
 
             # make it the right shape
             if x == None: x = [None]
