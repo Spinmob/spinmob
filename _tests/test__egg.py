@@ -30,11 +30,16 @@ class Test_egg(_ut.TestCase):
         """
         Just opens a full-featured example and lets the user play with it
         """
-        import spinmob.egg.example_sweeper as sweeper
         if _os.path.exists('egg_settings'): _sh.rmtree('egg_settings')
         
-        sweeper.d_sweep.load_file(_os.path.join(self.data_path, 'difficult.binary'))
+#        import spinmob.egg as _e
+#        d = _e.gui.DataboxPlot()
+#        d['x'] = [1,2,3]
+#        d['y'] = [1,2,1]
+#        d.plot()
         
+        import spinmob.egg.example_sweeper as sweeper
+        sweeper.d_sweep.load_file(_os.path.join(self.data_path, 'difficult.binary'))
         sweeper.w.show(True)
         
         

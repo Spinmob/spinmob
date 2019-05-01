@@ -2826,8 +2826,9 @@ class DataboxPlot(_d.databox, GridLayout):
         ##### Try the script and make the curves / plots match
 
         try:
+            
             # get globals for sin, cos etc
-            g = _n.__dict__
+            g = dict(_n.__dict__)
             g.update(_scipy_special.__dict__)
             g.update(dict(d=self, ex=None, ey=None))
             g.update(dict(xlabels='x', ylabels='y'))
@@ -2891,7 +2892,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
             # unpink the script, since it seems to have worked
             self.script.set_colors('black','white')
-
+            
         # otherwise, look angry and don't autosave
         except: self.script.set_colors('black','pink')
 
