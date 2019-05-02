@@ -2876,7 +2876,7 @@ class DataboxPlot(_d.databox, GridLayout):
             self._update_linked_axes()
 
             # return if there is nothing.
-            if len(y) is 0: return
+            if len(y) == 0: return
 
             # now plot everything
             for n in range(len(y)):
@@ -2965,7 +2965,7 @@ class DataboxPlot(_d.databox, GridLayout):
         if self.button_multi.is_checked() and len(y) is not len(self.plot_widgets): return False
         
         # If we're in single plot mode and the number of plots is not 1
-        if not self.button_multi.is_checked() and len(self.plot_widgets) is not 1: return False
+        if not self.button_multi.is_checked() and not len(self.plot_widgets) == 1: return False
         
         # Now we know the lengths and number of plots match. Loop over the curves to make sure they match.
         for n in range(len(y)):
