@@ -3,6 +3,7 @@ import os       as _os
 import numpy    as _n
 import scipy.special as _scipy_special
 from sys import platform as _platform
+import traceback as _traceback
 
 import spinmob as _spinmob
 _d = _spinmob.data
@@ -2817,7 +2818,7 @@ class DataboxPlot(_d.databox, GridLayout):
                 sey += ", d["+str(2*n+2)+"]"
                 sylabels += ", '"+self.ckeys[n]+"'"
 
-            return sx+" ]\n"+sy+" ]\n\n"+sey+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
+            return sx+" ]\n"+sy+" ]\n"+sey+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
         
         else: return self.autoscript_custom()
 
@@ -2836,7 +2837,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # if we're disabled or have no data columns, clear everything!
         if not self.button_enabled.is_checked() or len(self) == 0:
-            self._set_number_of_plots(0)
+            self._set_number_of_plots([],[])
             return self
 
         # if there is no script, create a default
@@ -2859,37 +2860,31 @@ class DataboxPlot(_d.databox, GridLayout):
             # x & y should now be data arrays, lists of data arrays or Nones
             x = g['x']
             y = g['y']
-            ex = g['ex']
+            #ex = g['ex']
             ey = g['ey'] # Use spinmob._plotting_mess
 
-            # make it the right shape
-            if x == None: x = [None]
-            if y == None: y = [None]
-            if not _spinmob.fun.is_iterable(x[0]) and not x[0] == None: x = [x]
-            if not _spinmob.fun.is_iterable(y[0]) and not y[0] == None: y = [y]
-            if len(x) == 1 and not len(y) == 1: x = x*len(y)
-            if len(y) == 1 and not len(x) == 1: y = y*len(x)
-
+            # make everything the right shape
+            x, y = _spinmob._plotting_mess._match_data_sets(x,y)
+            ey   = _spinmob._plotting_mess._match_error_to_data_set(y,ey)
 
             # xlabels and ylabels should be strings or lists of strings
             xlabels = g['xlabels']
             ylabels = g['ylabels']
 
             # make sure we have exactly the right number of plots
-            self._set_number_of_plots(len(x))
+            self._set_number_of_plots(y, ey)
             self._update_linked_axes()
 
             # return if there is nothing.
-            if len(x) == 0: return
+            if len(y) is 0: return
 
             # now plot everything
-            for n in range(max(len(x),len(y))-1,-1,-1):
+            for n in range(len(y)):
 
-                # Create data for "None" cases.
-                if x[n] is None: x[n] = list(range(len(y[n])))
-                if y[n] is None: y[n] = list(range(len(x[n])))
+                # Set the curve data
                 self._curves[n].setData(x[n],y[n])
-
+                
+                
                 # get the labels for the curves
 
                 # if it's a string, use the same label for all axes
@@ -2914,7 +2909,9 @@ class DataboxPlot(_d.databox, GridLayout):
             self.script.set_colors('black','white')
             
         # otherwise, look angry and don't autosave
-        except: self.script.set_colors('black','pink')
+        except: 
+            _traceback.print_exc()
+            self.script.set_colors('black','pink')
 
         return self
 
@@ -2955,50 +2952,77 @@ class DataboxPlot(_d.databox, GridLayout):
         else:                                        self.script.enable()
 
 
-    def _set_number_of_plots(self, n):
+    def _plots_already_match_data(self, y, ey):
         """
-        Adjusts number of plots & curves to the desired value the gui.
+        Checks if curves and plots all match the data and error.
         """
+        # Length mismatches
+        
+        # If we have N data sets and not N curves
+        if len(y) is not len(self._curves): return False
+        
+        # If we're in multiplots and the number of plots doesn't match the number of data sets
+        if self.button_multi.is_checked() and len(y) is not len(self.plot_widgets): return False
+        
+        # If we're in single plot mode and the number of plots is not 1
+        if not self.button_multi.is_checked() and len(self.plot_widgets) is not 1: return False
+        
+        # Now we know the lengths and number of plots match. Loop over the curves to make sure they match.
+        for n in range(len(y)):
+            
+            # If we have error bars, we better have an ErrorBarItem
+            if ey[n]         and type(self._curves[n]) is not _g.ErrorBarItem: return False
+            
+            # If we don't have error bars, we better have a PlotCurveItem
+            if ey[n] is None and type(self._curves[n]) is not _g.PlotCurveItem: return False
+        
+        # All good!
+        return True
 
-        # multi plot, right number of plots and curves = great!
-        if self.button_multi.is_checked()               \
-        and len(self._curves) == len(self.plot_widgets) \
-        and len(self._curves) == n: return
+    def _set_number_of_plots(self, y, ey):
+        """
+        Adjusts number of plots & curves to the desired value the gui, populating
+        self._curves list as needed based on y and ey.
+        
+        y and ey must be equal-shaped 2D arrays.
+        """
+        # If we match, we're done!
+        if self._plots_already_match_data(y,ey): return
+        
+        # Otherwise, we rebuild from scratch. Too difficult to track everything...
 
-        # single plot, right number of curves = great!
-        if not self.button_multi.is_checked() \
-        and len(self.plot_widgets) == 1       \
-        and len(self._curves) == n: return
-
-        # time to rebuild!
-
-        # don't show the plots as they are built
+        # don't update anything until we're done
         self.grid_plot.block_events()
-
-        # make sure the number of curves is on target
-        while len(self._curves) > n: self._curves.pop(-1)
-        while len(self._curves) < n: self._curves.append(_g.PlotCurveItem(pen = (len(self._curves), n)))
-
-        # figure out the target number of plots
-        if self.button_multi.is_checked(): n_plots = n
-        else:                              n_plots = min(n,1)
-
+        
         # clear the plots
         while len(self.plot_widgets):
 
             # pop the last plot widget and remove all items
-            p = self.plot_widgets.pop(-1)
+            p = self.plot_widgets.pop()
             p.clear()
 
-            # remove it from the grid
+            # remove it from the grid so nothing is tracking it
             self.grid_plot.remove_object(p)
-
+        
+        # Delete the curves, too
+        while len(self._curves): 
+            self._curves.pop()
+        
+        # Create the new curves, depending on whether we have error bars or not
+        for i in range(len(y)): 
+            if ey[i] is None: self._curves.append(_g.PlotCurveItem(pen=(i, len(y))))
+            else:             self._curves.append(_g.PlotCurveItem(pen=(i, len(y)))) #_g.ErrorBarItem(x=[0,1], y=[0,0], top=[1,1], bottom=[1,1], beam=0.2, pen=(i, len(y))))
+            
+        # figure out the target number of plots
+        if self.button_multi.is_checked(): n_plots = len(y)        # one plot per data set
+        else:                              n_plots = min(len(y),1) # 0 or 1 plot
+        
         # add new plots
         for i in range(n_plots):
             self.plot_widgets.append(self.grid_plot.place_object(_g.PlotWidget(), 0, i, alignment=0))
 
         # loop over the curves and add them to the plots
-        for i in range(n):
+        for i in range(len(y)):
             self.plot_widgets[min(i,len(self.plot_widgets)-1)].addItem(self._curves[i])
 
         # loop over the ROI's and add them

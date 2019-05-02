@@ -2,12 +2,13 @@
 """
 Module for testing _data.py
 """
-import spinmob as _s
+import spinmob  as _s
+import numpy    as _n
 import unittest as _ut
-import os as _os
+import os       as _os
 
 
-a = None
+a = x = y = None
 
 class Test_plot_functions(_ut.TestCase):
     """
@@ -51,6 +52,11 @@ class Test_plot_functions(_ut.TestCase):
                         ([[1, 2, 3], [1, 2, 3]], [[1, 2, 1], [1, 3, 1]]))
         self.assertEqual(_s._plotting_mess._match_data_sets([[1,2,1],[1,3,1]], [1,2,3]),
                         ([[1, 2, 1], [1, 3, 1]], [[1, 2, 3], [1, 2, 3]]))
+        
+        # Numpy arrays
+        x = [_n.array([1,2,3])]
+        y = [_n.array([1,2,1]), _n.array([2,1,2])]
+        self.assertEqual(len(_s._plotting_mess._match_data_sets(x,y)[0]), 2)
 
     def test_match_error_to_data_set(self):
         # ex matching

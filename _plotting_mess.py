@@ -38,7 +38,7 @@ def _match_data_sets(x,y):
         else: x = list(range(len(y)))
     
     if y is None: 
-        # If x is none, y can be either [1,2] or [[1,2],[1,2]]
+        # If y is none, x can be either [1,2] or [[1,2],[1,2]]
         if _fun.is_iterable(x[0]):
             # make an array of arrays to match
             y = []
@@ -48,10 +48,13 @@ def _match_data_sets(x,y):
     
     # At this point they should be matched, but may still be 1D
     # Default behavior: if all elements are numbers in both, assume they match
-    if _fun.elements_are_numbers(x) and _fun.elements_are_numbers(y):
-        x = [x]
-        y = [y]
-           
+    if _fun.elements_are_numbers(x): x=[x]
+    if _fun.elements_are_numbers(y): y=[y]
+
+    # Make sure they're the same length
+    while len(x) > len(y): y.append(y[-1])
+    while len(y) > len(x): x.append(x[-1])
+
     # Second default behavior: shared array [1,2,3], [[1,2,1],[1,2,1]] or vis versa
     if _fun.elements_are_numbers(x) and not _fun.elements_are_numbers(y): x = [x]*len(y)
     if _fun.elements_are_numbers(y) and not _fun.elements_are_numbers(x): y = [y]*len(x)
@@ -67,8 +70,6 @@ def _match_error_to_data_set(x, ex):
     """
     Inflates ex to match the dimensionality of x, "intelligently". 
     x is assumed to be a 2D array.
-    
-    Doesn't handle x = [[1,2,3],[1,1,1]], x = [3] or [None]
     """
     # Simplest case, ex is None or a number
     if not _fun.is_iterable(ex):
