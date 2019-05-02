@@ -2531,6 +2531,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # holds the curves and plot widgets for the data, and the buttons
         self._curves      = []
+        self._errors      = []
         self.plot_widgets = []
         self.ROIs         = []
 
@@ -2565,7 +2566,9 @@ class DataboxPlot(_d.databox, GridLayout):
         self._synchronize_controls()
         
         
-
+    def __repr__(self):
+        s = "<DataboxPlot instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
+        return s
 
 
     def _button_enabled_clicked(self, *a):  self.save_gui_settings()
@@ -2883,7 +2886,8 @@ class DataboxPlot(_d.databox, GridLayout):
 
                 # Set the curve data
                 self._curves[n].setData(x[n],y[n])
-                
+                if ey[n] is not None: 
+                    self._errors[n].setData(x=x[n], y=y[n], top=ey[n], bottom=ey[n])
                 
                 # get the labels for the curves
 
@@ -2956,25 +2960,21 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         Checks if curves and plots all match the data and error.
         """
-        # Length mismatches
+        N = len(y)
         
-        # If we have N data sets and not N curves
-        if len(y) is not len(self._curves): return False
+        # We should always have a curve and an error bar for each data set.
+        if N != len(self._curves) or N != len(self._errors): return False
         
         # If we're in multiplots and the number of plots doesn't match the number of data sets
-        if self.button_multi.is_checked() and len(y) is not len(self.plot_widgets): return False
+        if self.button_multi.is_checked() and N != len(self.plot_widgets): return False
         
         # If we're in single plot mode and the number of plots is not 1
         if not self.button_multi.is_checked() and not len(self.plot_widgets) == 1: return False
-        
-        # Now we know the lengths and number of plots match. Loop over the curves to make sure they match.
-        for n in range(len(y)):
-            
-            # If we have error bars, we better have an ErrorBarItem
-            if ey[n]         and type(self._curves[n]) is not _g.ErrorBarItem: return False
-            
-            # If we don't have error bars, we better have a PlotCurveItem
-            if ey[n] is None and type(self._curves[n]) is not _g.PlotCurveItem: return False
+    
+        # Make sure all the None's line up
+        for n in range(N):
+            if ey[n] is     None and self._errors[n] is not None: return False
+            if ey[n] is not None and self._errors[n] is     None: return False
         
         # All good!
         return True
@@ -2984,12 +2984,12 @@ class DataboxPlot(_d.databox, GridLayout):
         Adjusts number of plots & curves to the desired value the gui, populating
         self._curves list as needed based on y and ey.
         
-        y and ey must be equal-shaped 2D arrays.
+        y and ey must be equal-length lists, but ey can have None elements.
         """
         # If we match, we're done!
         if self._plots_already_match_data(y,ey): return
         
-        # Otherwise, we rebuild from scratch. Too difficult to track everything...
+        # Otherwise, we rebuild from scratch (too difficult to track everything)
 
         # don't update anything until we're done
         self.grid_plot.block_events()
@@ -3005,13 +3005,16 @@ class DataboxPlot(_d.databox, GridLayout):
             self.grid_plot.remove_object(p)
         
         # Delete the curves, too
-        while len(self._curves): 
-            self._curves.pop()
+        while len(self._curves): self._curves.pop()
+        while len(self._errors): self._errors.pop()
         
-        # Create the new curves, depending on whether we have error bars or not
+        # Create the new curves and errors
         for i in range(len(y)): 
-            if ey[i] is None: self._curves.append(_g.PlotCurveItem(pen=(i, len(y))))
-            else:             self._curves.append(_g.PlotCurveItem(pen=(i, len(y)))) #_g.ErrorBarItem(x=[0,1], y=[0,0], top=[1,1], bottom=[1,1], beam=0.2, pen=(i, len(y))))
+            self._curves.append(_g.PlotCurveItem(pen=(i,len(y))))
+            if ey[i] is None: 
+                self._errors.append(None)
+            else:             
+                self._errors.append(_g.ErrorBarItem(x=_n.array([0,1]), y=_n.array([0,0]), pen=(i,len(y))))
             
         # figure out the target number of plots
         if self.button_multi.is_checked(): n_plots = len(y)        # one plot per data set
@@ -3023,7 +3026,16 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # loop over the curves and add them to the plots
         for i in range(len(y)):
-            self.plot_widgets[min(i,len(self.plot_widgets)-1)].addItem(self._curves[i])
+            
+            # Ceilinged plot_widget index (paranoid I suppose)
+            l = min(i,len(self.plot_widgets)-1)
+            
+            # Always add a curve
+            self.plot_widgets[l].addItem(self._curves[i])
+            
+            # Sometimes add an error bar
+            if ey[i] is not None: 
+                self.plot_widgets[l].addItem(self._errors[i])
 
         # loop over the ROI's and add them
         if self.ROIs is not None:
