@@ -2480,32 +2480,33 @@ class DataboxPlot(_d.databox, GridLayout):
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
         _d.databox.__init__(self, **kwargs)
-
+        
         # top row is main controls
-        self.place_object(Label("Raw Data:"), alignment=1)
-        self.button_clear    = self.place_object(Button("Clear")                 .set_width(50), alignment=1)
-        self.button_load     = self.place_object(Button("Load")                  .set_width(50), alignment=1)
-        self.button_save     = self.place_object(Button("Save")                  .set_width(50), alignment=1)
-        self.combo_binary    = self.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
-        self.button_autosave = self.place_object(Button("Auto",   checkable=True).set_width(50), alignment=1)
-        self.number_file     = self.place_object(NumberBox(int=True, limits=(0,None)))
-        self._label_path     = self.place_object(Label(""))
+        self.grid_controls   = self.place_object(GridLayout(margins=False), alignment=0)
+        self.grid_controls.place_object(Label("Raw Data:"), alignment=1)
+        self.button_clear    = self.grid_controls.place_object(Button("Clear")                 .set_width(50), alignment=1)
+        self.button_load     = self.grid_controls.place_object(Button("Load")                  .set_width(50), alignment=1)
+        self.button_save     = self.grid_controls.place_object(Button("Save")                  .set_width(50), alignment=1)
+        self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
+        self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(50), alignment=1)
+        self.number_file     = self.grid_controls.place_object(NumberBox(int=True, limits=(0,None)))
+        self._label_path     = self.grid_controls.place_object(Label(""))
 
-        self.place_object(Label("")) # spacer
-        self.button_script     = self.place_object(Button  ("Script", checkable=True)).set_checked(False).set_width(50)
-        self.combo_autoscript  = self.place_object(ComboBox(['Manual', 'Shared d[0]', 'Groups of 2', 'Groups of 3', 'Shared d[0], ey', 'Your Function'])).set_value(autoscript) 
-        self.button_multi      = self.place_object(Button  ("Multi",       checkable=True).set_width(50)).set_checked(True) 
-        self.button_link_x     = self.place_object(Button  ("Link X",      checkable=True).set_width(50)).set_checked(autoscript==1)
-        self.button_enabled    = self.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
+        self.grid_controls.place_object(Label("")) # spacer
+        self.button_script     = self.grid_controls.place_object(Button  ("Script", checkable=True)).set_checked(False).set_width(50)
+        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'Shared d[0]', 'Groups of 2', 'Groups of 3', 'Shared d[0], ey', 'Your Function'])).set_value(autoscript) 
+        self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(50)).set_checked(True) 
+        self.button_link_x     = self.grid_controls.place_object(Button  ("Link X",      checkable=True).set_width(50)).set_checked(autoscript==1)
+        self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
 
         # keep the buttons shaclackied together
-        self.set_column_stretch(5)
+        self.grid_controls.set_column_stretch(7)
 
         # second rows is the script
         self.new_autorow()
 
         # grid for the script
-        self.grid_script = self.place_object(GridLayout(margins=False), 0,1, column_span=self.get_column_count(), alignment=0)
+        self.grid_script = self.place_object(GridLayout(margins=False), 0,1, alignment=0)
 
         # script grid
         self.button_plot  = self.grid_script.place_object(Button("Try it!").set_width(50), 2,3)
@@ -2616,7 +2617,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         if checked:
             # get the path from the user
-            path = _spinmob.dialogs.save(filters=self.file_type)
+            path = _spinmob.dialogs.save(filters=self.file_type, force_extension=self.file_type)
 
             # abort if necessary
             if not path:
