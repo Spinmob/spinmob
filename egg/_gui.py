@@ -69,6 +69,7 @@ class BaseObject(object):
         Sets the colors of the text area.
         """
         self._widget.setStyleSheet(self._widget.__class__.__name__ + " {background-color: "+str(background)+"; color: "+str(text)+"}")
+        return self
 
     def set_width(self, width):
         """

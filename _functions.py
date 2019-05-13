@@ -801,12 +801,14 @@ def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, include_er
     
     Parameters
     ----------
-    f:
+    f='2*x-5':
         Underlying "reality" function or mean behavior. This can be any
         python-evaluable string, and will have access to all the numpy
         functions (e.g., cos), scipy's special functions (e.g., erf), and
         any other variables defined by keyword arguments
-    ex, ey:
+    x=numpy.linspace(-5,5,11):
+        x-values to evaluate.
+    ey=1, ex=0:
         Uncertainty "strength" for x and y data. This can be a constant or an 
         array of values. If the distributions (below) are normal, this 
         corresponds to the standard deviation.
@@ -1113,7 +1115,8 @@ def fft(t, y, pow2=False, window=None, rescale=False):
 
     window = None
         Can be set to any of the windowing functions in numpy that require only
-        the number of points as the argument, e.g. window='hanning'. 
+        the number of points as the argument, e.g. window='hanning'. Also accepts
+        'None', False, 'False', 0, '0'
         
     rescale = False
         If True, the FFT will be rescaled by the square root of the ratio of 
@@ -1133,7 +1136,7 @@ def fft(t, y, pow2=False, window=None, rescale=False):
         t.resize(keep)
 
     # Window the data
-    if not window in [None, False, 0]:
+    if not window in [None, 'None', False, 'False', 0, '0']:
         try:
             # Get the windowing array
             w = eval("_n."+window, dict(_n=_n))(len(y))
@@ -1188,7 +1191,8 @@ def psd(t, y, pow2=False, window=None, rescale=False):
 
     window = None
         can be set to any of the windowing functions in numpy,
-        e.g. window='hanning'. 
+        e.g. window='hanning'. Also accepts
+        'None', False, 'False', 0, '0'
         
     rescale = False
         If True, the FFT will be rescaled by the square root of the ratio of 
@@ -1197,7 +1201,6 @@ def psd(t, y, pow2=False, window=None, rescale=False):
 
     returns frequencies, psd (y^2/Hz)
     """
-
     # do the actual fft
     f, Y = fft(t,y,pow2,window,rescale)
     
