@@ -1090,7 +1090,7 @@ class databox:
         ckey        
             Name of the column; if an integer is supplied, uses self.ckeys[ckey]
         index       
-            Where to insert this column. None => append to end.
+            Before which index to insert this column. None => append to end.
         """
 
         # if it's an integer, use the ckey from the list

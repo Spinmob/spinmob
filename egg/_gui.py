@@ -63,6 +63,12 @@ class BaseObject(object):
         
         # common signals
         return
+    
+    def set_colors(self, text='black', background=None):
+        """
+        Sets the colors of the text area.
+        """
+        self._widget.setStyleSheet(self._widget.__class__.__name__ + " {background-color: "+str(background)+"; color: "+str(text)+"}")
 
     def set_width(self, width):
         """
@@ -1665,13 +1671,7 @@ class TextBox(BaseObject):
         if not s == self.get_text(): self._widget.setText(str(text))
         return self
 
-    def set_colors(self, text='black', background='white'):
-        """
-        Sets the colors of the text area.
-        """
-        if self._multiline: self._widget.setStyleSheet("QTextEdit {background-color: "+str(background)+"; color: "+str(text)+"}")
-        else:               self._widget.setStyleSheet("QLineEdit {background-color: "+str(background)+"; color: "+str(text)+"}")
-
+        
 
 class Timer():
 
@@ -2469,14 +2469,18 @@ class DataboxPlot(_d.databox, GridLayout):
         manual script, and 4 for the custom autoscript, which can be 
         defined by overwriting the function self.autoscript_custom, which 
         needs only return a valid script string.
+    name=None
+        Stored in self.name for your purposes.
 
     Note checking the "Auto-Save" button does not result in the data being automatically
     saved until you explicitly call self.autosave() (which does nothing
     unless auto-saving is enabled).
     """
     
-    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, **kwargs):
+    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, name=None, **kwargs):
 
+        self.name = name
+        
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
         _d.databox.__init__(self, **kwargs)
@@ -2820,7 +2824,7 @@ class DataboxPlot(_d.databox, GridLayout):
             for n in range(1,int((len(self)-1)/2)):
                 sy  += ", d["+str(2*n+1)  +"]"
                 sey += ", d["+str(2*n+2)+"]"
-                sylabels += ", '"+self.ckeys[n]+"'"
+                sylabels += ", '"+self.ckeys[2*n+1]+"'"
 
             return sx+" ]\n"+sy+" ]\n"+sey+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
         
@@ -2911,13 +2915,15 @@ class DataboxPlot(_d.databox, GridLayout):
                 if ylabel == None: self.plot_widgets[i].getAxis('left')  .showLabel(False)
 
             # unpink the script, since it seems to have worked
-            self.script.set_colors('black','white')
+            self.script          .set_colors('black','white')
+            self.button_script   .set_colors('black', None)
             
         # otherwise, look angry and don't autosave
         except: 
             _traceback.print_exc()
             self.script.set_colors('black','pink')
-
+            self.button_script   .set_colors('black', 'pink')
+            
         return self
 
     def autosave(self):
