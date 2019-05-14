@@ -799,8 +799,9 @@ class Docker(Window):
         self._window.setWidget(self._widget)
         
         # set margins if necessary
-        if margins==False: self._layout.setContentsMargins(0,0,0,0)
-        else:              self._layout.setContentsMargins(*margins)
+        if margins==False:  self._layout.setContentsMargins(0,0,0,0)
+        elif margins==True: self._layout.setContentsMargins(10,10,10,10)
+        elif _spinmob.fun.is_iterable(margins): self._layout.setContentsMargins(*margins)
         
         # Set the initial geometry
         self.set_size(size)
@@ -1289,14 +1290,14 @@ class TabArea(BaseObject):
 
     def __getitem__(self, n): return self.tabs[n]
 
-    def add_tab(self, title="Yeah!", block_events=True):
+    def add_tab(self, title="Yeah!", block_events=True, margins=True):
         """
         Adds a tab to the area, and creates the layout for this tab.
         """
         self._widget.blockSignals(block_events)
 
         # create a widget to go in the tab
-        tab = GridLayout()
+        tab = GridLayout(margins=margins)
         self.tabs.append(tab)
         tab.set_parent(self)
 
@@ -2069,10 +2070,11 @@ class TreeDictionary(BaseObject):
         other_kwargs.update(kwargs)
         
         # Auto typing
-        if other_kwargs['type'] == None: other_kwargs['type'] = type(value).__name__
+        if 'values' in other_kwargs: other_kwargs['type'] = 'list'
+        elif other_kwargs['type'] == None: other_kwargs['type'] = type(value).__name__
         
         # Fix 'values' for list objects to be only strings
-        if other_kwargs['type'] == 'list':
+        if other_kwargs['type'] == 'list' or 'values' in other_kwargs:
             for n in range(len(other_kwargs['values'])):
                 other_kwargs['values'][n] = str(other_kwargs['values'][n])
 
