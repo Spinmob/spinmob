@@ -315,18 +315,21 @@ class GridLayout(BaseObject):
     Parameters
     ----------
     margins
-        Set to True or False to include the buffer around the layout's contents.
+        Set to True or False or to a length-4 tuple/list to define the space
+        around the widgets contained within.
     '''
     
     log = None
 
-    def __init__(self, margins=_defaults['margins']):
+    def __init__(self, margins=True):
         """
         This creates a grid layout that can contain other Elements
         (including other grid and docked layouts)
         """
-
         BaseObject.__init__(self)
+
+        if margins==True:  margins=(10,10,10,10)
+        if margins==False: margins=(0,0,0,0)
 
         # Qt widget to house the layout
         self._widget = _g.Qt.QtGui.QWidget()
@@ -508,13 +511,13 @@ class Window(GridLayout):
         if you resize or move it.) Previous settings will be automatically
         loaded when the program is next run.
     margins
-        Set to True or False to decide whether to include some buffer space 
-        around the widgets in the window.
+        Set to True or False or a length-4 tuple to include, exclude or define
+        the space around the widgets in the window.
     
     """
         
     
-    def __init__(self, title='Window', size=[700,500], autosettings_path=None, margins=_defaults['margins']):
+    def __init__(self, title='Window', size=[700,500], autosettings_path=None, margins=True):
         self._parent = self
 
         # initialize the grid layout
@@ -765,7 +768,7 @@ class Docker(Window):
 
     log = None
     
-    def __init__(self, name='Docker', size=[300,200], autosettings_path=None, margins=_defaults['margins']):
+    def __init__(self, name='Docker', size=[300,200], autosettings_path=None, margins=True):
         """
         This creates a docked layout that can contain other object.
         

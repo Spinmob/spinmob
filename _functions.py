@@ -17,7 +17,7 @@ def coarsen_array(a, level=2, method='mean'):
     """
     if a is None: return None    
     
-    # make sure it's a numpy array
+    # make sure it's a numpy array, and that we don't destroy the original.
     a = _n.array(a)
     
     # Make sure it's an integer!
