@@ -2928,7 +2928,8 @@ class DataboxPlot(_d.databox, GridLayout):
         except: 
             _traceback.print_exc()
             self.script.set_colors('black','pink')
-            self.button_script   .set_colors('black', 'pink')
+            self.button_script.set_colors('black', 'pink')
+            self.button_script.set_checked()
             
         return self
 
