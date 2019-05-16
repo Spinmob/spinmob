@@ -55,6 +55,8 @@ class BaseObject(object):
         # Parent object (to be set)
         self._parent = None
 
+        self._style = ''
+
         # for remembering settings; for child objects, overwrite both, and
         # add a load_gui_settings() to the init!
         self._autosettings_path     = autosettings_path
@@ -67,9 +69,33 @@ class BaseObject(object):
     def set_colors(self, text='black', background=None):
         """
         Sets the colors of the text area.
+        
+        Parameters
+        ----------
+        text='black'
+            Color of the main text.
+        background=None
+            Color of the background. None means transparent.
         """
-        self._widget.setStyleSheet(self._widget.__class__.__name__ + " {background-color: "+str(background)+"; color: "+str(text)+"}")
+        self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+self._style+" background-color: "+str(background)+"; color: "+str(text)+"}")
         return self
+
+    def set_style(self, style=''):
+        """
+        Sets the style for the object. Updates self._style for future calls
+        to self.set_colors() etc.
+        
+        Parameters
+        ----------
+        style=''
+            Can be any css style elements or a list of them, e.g., 
+            'font-family:monospace; background-color:pink;'
+        """
+        self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+style+"}")
+        self._style = style
+        return self
+        
+        
 
     def set_width(self, width):
         """
@@ -2525,6 +2551,9 @@ class DataboxPlot(_d.databox, GridLayout):
         self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
 
+        # Format the script font
+        self.script.set_style('font-family:monospace; font-size:12;')
+
         # make sure the plot fills up the most space
         self.set_row_stretch(2)
 
@@ -2785,31 +2814,31 @@ class DataboxPlot(_d.databox, GridLayout):
         elif self.combo_autoscript.get_index() == 1:
         
             # hard code the first columns
-            sx = "x = [ d[0]"
-            sy = "y = [ d[1]"
+            sx = "x = ( d[0]"
+            sy = "y = ( d[1]"
 
             # hard code the first labels
             sxlabels = "xlabels = '" +self.ckeys[0]+"'"
-            sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
+            sylabels = "ylabels = ( '"+self.ckeys[1]+"'"
 
             # loop over any remaining columns and append.
             for n in range(2,len(self)):
                 sy += ", d["+str(n)+"]"
                 sylabels += ", '"+self.ckeys[n]+"'"
 
-            return sx+" ]\n"+sy+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
+            return sx+" )\n"+sy+" )\n\n"+sxlabels+"\n"+sylabels+" )\n"
             
         
         # Column pairs
         elif self.combo_autoscript.get_index() == 2:
             
             # hard code the first columns
-            sx = "x = [ d[0]"
-            sy = "y = [ d[1]"
+            sx = "x = ( d[0]"
+            sy = "y = ( d[1]"
             
             # hard code the first labels
-            sxlabels = "xlabels = [ '"+self.ckeys[0]+"'"
-            sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
+            sxlabels = "xlabels = ( '"+self.ckeys[0]+"'"
+            sylabels = "ylabels = ( '"+self.ckeys[1]+"'"
             
             # Loop over the remaining columns and append
             for n in range(1,int(len(self)/2)):
@@ -2818,19 +2847,19 @@ class DataboxPlot(_d.databox, GridLayout):
                 sxlabels += ", '"+self.ckeys[2*n  ]+"'"
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
             
-            return sx+" ]\n"+sy+" ]\n\n"+sxlabels+" ]\n"+sylabels+" ]\n"
+            return sx+" )\n"+sy+" )\n\n"+sxlabels+" )\n"+sylabels+" )\n"
             print("test")
             
         # Column triples
         elif self.combo_autoscript.get_index() == 3:
             
             # hard code the first columns
-            sx = "x = [ d[0], d[0]"
-            sy = "y = [ d[1], d[2]"
+            sx = "x = ( d[0], d[0]"
+            sy = "y = ( d[1], d[2]"
 
             # hard code the first labels
-            sxlabels = "xlabels = [ '"+self.ckeys[0]+"', '"+self.ckeys[0]+"'"
-            sylabels = "ylabels = [ '"+self.ckeys[1]+"', '"+self.ckeys[2]+"'"
+            sxlabels = "xlabels = ( '"+self.ckeys[0]+"', '"+self.ckeys[0]+"'"
+            sylabels = "ylabels = ( '"+self.ckeys[1]+"', '"+self.ckeys[2]+"'"
 
             # Loop over the remaining columns and append
             for n in range(1,int(len(self)/3)):
@@ -2840,19 +2869,19 @@ class DataboxPlot(_d.databox, GridLayout):
                 sxlabels += ", '"+self.ckeys[3*n  ]+"', '"+self.ckeys[3*n  ]+"'"
                 sylabels += ", '"+self.ckeys[3*n+1]+"', '"+self.ckeys[3*n+2]+"'"
 
-            return sx+" ]\n"+sy+" ]\n\n"+sxlabels+" ]\n"+sylabels+" ]\n"
+            return sx+" )\n"+sy+" )\n\n"+sxlabels+" )\n"+sylabels+" )\n"
         
         # Shared d[0] and pairs of y, ey
         elif self.combo_autoscript.get_index() == 4:
             
             # hard code the first columns
-            sx  = "x = [ d[0]"
-            sy  = "y = [ d[1]"
-            sey = "ey = [ d[2]"
+            sx  = "x  = ( d[0]"
+            sy  = "y  = ( d[1]"
+            sey = "ey = ( d[2]"
 
             # hard code the first labels
             sxlabels = "xlabels = '"  +self.ckeys[0]+"'"
-            sylabels = "ylabels = [ '"+self.ckeys[1]+"'"
+            sylabels = "ylabels = ( '"+self.ckeys[1]+"'"
 
             # loop over any remaining columns and append.
             for n in range(1,int((len(self)-1)/2)):
@@ -2860,7 +2889,7 @@ class DataboxPlot(_d.databox, GridLayout):
                 sey += ", d["+str(2*n+2)+"]"
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
 
-            return sx+" ]\n"+sy+" ]\n"+sey+" ]\n\n"+sxlabels+"\n"+sylabels+" ]\n"
+            return sx+" )\n"+sy+" )\n"+sey+" )\n\n"+sxlabels+"\n"+sylabels+" )\n"
         
         else: return self.autoscript_custom()
 
