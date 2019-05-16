@@ -2494,19 +2494,19 @@ class DataboxPlot(_d.databox, GridLayout):
         # top row is main controls
         self.grid_controls   = self.place_object(GridLayout(margins=False), alignment=0)
         self.grid_controls.place_object(Label("Raw Data:"), alignment=1)
-        self.button_clear    = self.grid_controls.place_object(Button("Clear")                 .set_width(50), alignment=1)
-        self.button_load     = self.grid_controls.place_object(Button("Load")                  .set_width(50), alignment=1)
-        self.button_save     = self.grid_controls.place_object(Button("Save")                  .set_width(50), alignment=1)
+        self.button_clear    = self.grid_controls.place_object(Button("Clear")                 .set_width(40), alignment=1)
+        self.button_load     = self.grid_controls.place_object(Button("Load")                  .set_width(40), alignment=1)
+        self.button_save     = self.grid_controls.place_object(Button("Save")                  .set_width(40), alignment=1)
         self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
-        self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(50), alignment=1)
+        self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(40), alignment=1)
         self.number_file     = self.grid_controls.place_object(NumberBox(int=True, limits=(0,None)))
         self._label_path     = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
-        self.button_script     = self.grid_controls.place_object(Button  ("Script", checkable=True)).set_checked(False).set_width(50)
-        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'Shared d[0]', 'Groups of 2', 'Groups of 3', 'Shared d[0], ey', 'Your Function'])).set_value(autoscript) 
-        self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(50)).set_checked(True) 
-        self.button_link_x     = self.grid_controls.place_object(Button  ("Link X",      checkable=True).set_width(50)).set_checked(autoscript==1)
+        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True).set_width(50)).set_checked(False)
+        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'User'])).set_value(autoscript) 
+        self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(40)).set_checked(True) 
+        self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True).set_width(40)).set_checked(autoscript==1)
         self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
 
         # keep the buttons shaclackied together
@@ -2519,7 +2519,9 @@ class DataboxPlot(_d.databox, GridLayout):
         self.grid_script = self.place_object(GridLayout(margins=False), 0,1, alignment=0)
 
         # script grid
-        self.button_plot  = self.grid_script.place_object(Button("Try it!").set_width(50), 2,3)
+        self.button_save_script = self.grid_script.place_object(Button("Save").set_width(40), 2,1)
+        self.button_load_script = self.grid_script.place_object(Button("Load").set_width(40), 2,2)
+        self.button_plot  = self.grid_script.place_object(Button("Try it!").set_width(40), 2,3)
         self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
 
@@ -2548,19 +2550,21 @@ class DataboxPlot(_d.databox, GridLayout):
 
         ##### Functionality of buttons etc...
 
-        self.button_plot      .signal_clicked.connect(self._button_plot_clicked)
-        self.button_save      .signal_clicked.connect(self._button_save_clicked)
-        self.button_load      .signal_clicked.connect(self._button_load_clicked)
-        self.button_clear     .signal_clicked.connect(self._button_clear_clicked)
-        self.button_autosave  .signal_toggled.connect(self._button_autosave_clicked)
-        self.button_script    .signal_toggled.connect(self._button_script_clicked)
-        self.combo_binary     .signal_changed.connect(self._combo_binary_changed)
-        self.combo_autoscript .signal_changed.connect(self._combo_autoscript_clicked)
-        self.button_multi     .signal_toggled.connect(self._button_multi_clicked)
-        self.button_link_x    .signal_toggled.connect(self._button_link_x_clicked)
-        self.button_enabled   .signal_toggled.connect(self._button_enabled_clicked)
-        self.number_file      .signal_changed.connect(self._number_file_changed)
-        self.script           .signal_changed.connect(self._script_changed)
+        self.button_plot       .signal_clicked.connect(self._button_plot_clicked)
+        self.button_save       .signal_clicked.connect(self._button_save_clicked)
+        self.button_save_script.signal_clicked.connect(self._button_save_script_clicked)
+        self.button_load       .signal_clicked.connect(self._button_load_clicked)
+        self.button_load_script.signal_clicked.connect(self._button_load_script_clicked)
+        self.button_clear      .signal_clicked.connect(self._button_clear_clicked)
+        self.button_autosave   .signal_toggled.connect(self._button_autosave_clicked)
+        self.button_script     .signal_toggled.connect(self._button_script_clicked)
+        self.combo_binary      .signal_changed.connect(self._combo_binary_changed)
+        self.combo_autoscript  .signal_changed.connect(self._combo_autoscript_clicked)
+        self.button_multi      .signal_toggled.connect(self._button_multi_clicked)
+        self.button_link_x     .signal_toggled.connect(self._button_link_x_clicked)
+        self.button_enabled    .signal_toggled.connect(self._button_enabled_clicked)
+        self.number_file       .signal_changed.connect(self._number_file_changed)
+        self.script            .signal_changed.connect(self._script_changed)
 
         # list of controls we should auto-save / load
         self._autosettings_controls = ["self.combo_binary",
@@ -2585,6 +2589,30 @@ class DataboxPlot(_d.databox, GridLayout):
     def _button_enabled_clicked(self, *a):  self.save_gui_settings()
     def _number_file_changed(self, *a):     self.save_gui_settings()
     def _script_changed(self, *a):          self.save_gui_settings()
+
+    def _button_save_script_clicked(self, *a):
+        """
+        When someone wants to save their script.
+        """
+        path = _spinmob.dialogs.save('*.py', text='Save script to...', force_extension='*.py', default_directory='DataboxPlot_scripts')
+        if not path: return
+        
+        f = open(path, 'w')
+        f.write(self.script.get_text())
+        f.close()
+        
+    def _button_load_script_clicked(self, *a):
+        """
+        When someone wants to load their script.
+        """
+        path = _spinmob.dialogs.load('*.py', default_directory='DataboxPlot_scripts')
+        if not path: return
+        
+        f = open(path, 'r')
+        s = f.read()
+        f.close()
+
+        self.script.set_text(s)
 
     def _button_multi_clicked(self, *a):
         """
