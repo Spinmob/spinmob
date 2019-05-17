@@ -2642,6 +2642,7 @@ class DataboxPlot(_d.databox, GridLayout):
         f.close()
 
         self.script.set_text(s)
+        self.combo_autoscript.set_value(0)
 
     def _button_multi_clicked(self, *a):
         """
@@ -2920,10 +2921,11 @@ class DataboxPlot(_d.databox, GridLayout):
         try:
             
             # get globals for sin, cos etc
-            g = dict(_n.__dict__)
-            g.update(_scipy_special.__dict__)
+            g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
+            g.update(_scipy_special.__dict__, special=_scipy_special)
             g.update(dict(d=self, ex=None, ey=None))
             g.update(dict(xlabels='x', ylabels='y'))
+            g.update(dict(spinmob=_spinmob, sm=_spinmob, _s=_spinmob))
 
             # run the script.
             exec(self.script.get_text(), g)
