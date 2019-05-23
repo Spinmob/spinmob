@@ -28,7 +28,7 @@ def _match_data_sets(x,y):
     Makes sure everything is the same shape. "Intelligently".
     """
     # Handle the None for x or y
-    if x is None: 
+    if x is None or len(x) == 0: 
         # If x is none, y can be either [1,2] or [[1,2],[1,2]]
         if _fun.is_iterable(y[0]):
             # make an array of arrays to match
@@ -37,7 +37,7 @@ def _match_data_sets(x,y):
                 x.append(list(range(len(y[n]))))
         else: x = list(range(len(y)))
     
-    if y is None: 
+    if y is None or len(y) == 0: 
         # If y is none, x can be either [1,2] or [[1,2],[1,2]]
         if _fun.is_iterable(x[0]):
             # make an array of arrays to match
@@ -50,6 +50,10 @@ def _match_data_sets(x,y):
     # Default behavior: if all elements are numbers in both, assume they match
     if _fun.elements_are_numbers(x): x=[x]
     if _fun.elements_are_numbers(y): y=[y]
+
+    # Make sure they are both lists (so append works!)
+    if not type(x) == list: x = list(x)
+    if not type(y) == list: y = list(y)
 
     # Make sure they're the same length
     while len(x) > len(y): y.append(y[-1])
@@ -90,6 +94,9 @@ def _match_error_to_data_set(x, ex):
     # that of the first x-array, assume this is meant to match all the x
     # data sets
     if _fun.elements_are_numbers(ex) and len(ex) == len(x[0]): ex = [ex]*len(x)
+
+    # Make sure it's a list (for appending)
+    if not type(ex) == list: ex = list(ex)
 
     # The user may specify a list of some iterable and some not. 
     # The list length may not match
