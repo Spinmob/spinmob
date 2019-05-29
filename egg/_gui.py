@@ -3004,6 +3004,8 @@ class DataboxPlot(_d.databox, GridLayout):
 
             # increment the counter
             self.number_file.increment()
+            
+        return self
 
     def autozoom(self, n=None):
         """
