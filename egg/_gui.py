@@ -2637,12 +2637,26 @@ class DataboxPlot(_d.databox, GridLayout):
         path = _spinmob.dialogs.load('*.py', default_directory='DataboxPlot_scripts')
         if not path: return
         
-        f = open(path, 'r')
-        s = f.read()
-        f.close()
+        self.load_script()
+    
+    def load_script(self, path=None):
+        """
+        Loads a script at the specified path. 
+        
+        Parameters
+        ----------
+        path=None
+            String path of script file. Setting this to None will bring up a
+            load dialog.
+        """
+        if path == None: self._button_load_script_clicked()
+        else:
+            f = open(path, 'r')
+            s = f.read()
+            f.close()
 
-        self.script.set_text(s)
-        self.combo_autoscript.set_value(0)
+            self.script.set_text(s)
+            self.combo_autoscript.set_value(0)
 
     def _button_multi_clicked(self, *a):
         """

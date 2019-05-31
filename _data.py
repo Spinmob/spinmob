@@ -652,7 +652,7 @@ class databox:
 
         return popped
 
-    def insert_data_point(self, new_data, index=None):
+    def insert_data_point(self, new_data, index=None, ckeys=None):
         """
         Inserts a data point at index n.
         
@@ -660,13 +660,27 @@ class databox:
         ----------
         new_data    
             A list or array of new data points, one for each column.
-        index       
+        index=None
             Where to insert the point(s) in each column. None => append.
+        ckeys=None
+            An optional list (of the same size as new_data) of ckeys. If this
+            list does not match the existing ckeys, it will clear the columns
+            and rebuild them, rather than overwriting.
         """
+        # Optional ckeys supplied
+        if not ckeys == None:
+
+            # Make sure they are a list for comparing with self.ckeys
+            ckeys = list(ckeys)
+            
+            # If the ckeys do not match, rebuild the columns
+            if not self.ckeys == ckeys:
+                self.clear_columns()
+                for k in ckeys: self[k] = []
 
         if not len(new_data) == len(self.columns) and not len(self.columns)==0:
             print("ERROR: new_data must have as many elements as there are columns.")
-            return
+            return self
 
         # otherwise, we just auto-add this data point as new columns
         elif len(self.columns)==0:
@@ -688,7 +702,7 @@ class databox:
         
         return self
 
-    def append_data_point(self, new_data):
+    def append_data_point(self, new_data, ckeys=None):
         """
         Appends the supplied data point to the column(s).
 
@@ -696,8 +710,12 @@ class databox:
         ----------
         new_data    
             A list or array of new data points, one for each column.
+        ckeys=None
+            An optional list (of the same size as new_data) of ckeys. If this
+            list does not match the existing ckeys, it will clear the columns
+            and rebuild them, rather than overwriting.
         """
-        return self.insert_data_point(new_data)
+        return self.insert_data_point(new_data, None, ckeys)
 
     def execute_script(self, script, g=None):
         """
@@ -2064,6 +2082,14 @@ class fitter():
 
         # return it
         return xdata, ydata, eydata
+
+    def get_fit_parameters(self):
+        """
+        If there are fit results, returns values, errors.
+        """
+        if self.results    is None: return None
+        if self.results[1] is None: return self.results[0], None
+        return self.results[0], _n.sqrt(_n.diagonal(self.results[1]))
 
     def get_pnames(self):
         """
