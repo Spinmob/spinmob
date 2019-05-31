@@ -744,7 +744,7 @@ def fit_linear(xdata, ydata):
         
         y = a*x + b
     
-    through the supplied data.
+    through the supplied data. Returns a,b.
     
     Parameters
     ----------
