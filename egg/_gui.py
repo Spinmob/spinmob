@@ -2637,7 +2637,7 @@ class DataboxPlot(_d.databox, GridLayout):
         path = _spinmob.dialogs.load('*.py', default_directory='DataboxPlot_scripts')
         if not path: return
         
-        self.load_script()
+        self.load_script(path)
     
     def load_script(self, path=None):
         """
@@ -3143,7 +3143,7 @@ class DataboxPlot(_d.databox, GridLayout):
                     m = min(i, len(self.plot_widgets)-1)
 
                     # add the ROI to the appropriate plot
-                    if m>=0: self.plot_widgets[m].addItem(ROI)
+                    if m>=0 and not ROI == None: self.plot_widgets[m].addItem(ROI)
 
         # show the plots
         self.grid_plot.unblock_events()
