@@ -58,6 +58,12 @@ class Test_plot_functions(_ut.TestCase):
         y = [_n.array([1,2,1]), _n.array([2,1,2])]
         self.assertEqual(len(_s._plotting_mess._match_data_sets(x,y)[0]), 2)
 
+        # Empty arrays
+        x = _n.array([])
+        y = _n.array([])
+        self.assertEqual(_s._plotting_mess._match_data_sets(x,y), ([],[]))
+        
+
     def test_match_error_to_data_set(self):
         # ex matching
         self.assertEqual(_s._plotting_mess._match_error_to_data_set([[1,2,3],[1,2]], None),

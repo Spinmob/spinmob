@@ -29,8 +29,10 @@ def _match_data_sets(x,y):
     """
     # Handle the None for x or y
     if x is None or len(x) == 0: 
-        # If x is none, y can be either [1,2] or [[1,2],[1,2]]
-        if _fun.is_iterable(y[0]):
+        # If x is none, y can be either [1,2] or [[1,2],[1,2]] or []
+        if len(y) == 0: x = []
+    
+        elif _fun.is_iterable(y[0]):
             # make an array of arrays to match
             x = []
             for n in range(len(y)):
@@ -38,8 +40,10 @@ def _match_data_sets(x,y):
         else: x = list(range(len(y)))
     
     if y is None or len(y) == 0: 
-        # If y is none, x can be either [1,2] or [[1,2],[1,2]]
-        if _fun.is_iterable(x[0]):
+        # If y is none, x can be either [1,2] or [[1,2],[1,2]] or []
+        if len(x) == 0: y = []
+        
+        elif _fun.is_iterable(x[0]):
             # make an array of arrays to match
             y = []
             for n in range(len(x)):
