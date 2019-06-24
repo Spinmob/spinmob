@@ -2552,7 +2552,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.script.set_height(120)
 
         # Format the script font
-        self.script.set_style('font-family:monospace; font-size:12;')
+        self.script.set_style('font-family:courier; font-size:12;')
 
         # make sure the plot fills up the most space
         self.set_row_stretch(2)

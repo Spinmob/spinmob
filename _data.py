@@ -702,7 +702,7 @@ class databox:
         
         return self
 
-    def append_data_point(self, new_data, ckeys=None):
+    def append_data_point(self, new_data, ckeys=None, history=0):
         """
         Appends the supplied data point to the column(s).
 
@@ -714,8 +714,17 @@ class databox:
             An optional list (of the same size as new_data) of ckeys. If this
             list does not match the existing ckeys, it will clear the columns
             and rebuild them, rather than overwriting.
+        history=None
+            If a positive integer is specified, after appending the data point,
+            it will pop the first data points off until the length of the 
+            0th column is equal to the specified value.
         """
-        return self.insert_data_point(new_data, None, ckeys)
+        self.insert_data_point(new_data, None, ckeys)
+
+        if history > 0:
+            while len(self[0]) > history: self.pop_data_point(0)
+
+        return self
 
     def execute_script(self, script, g=None):
         """
