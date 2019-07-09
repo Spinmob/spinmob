@@ -4,6 +4,7 @@ import numpy    as _n
 import scipy.special as _scipy_special
 from sys import platform as _platform
 import traceback as _traceback
+_p = _traceback.print_last
 
 import spinmob as _spinmob
 _d = _spinmob.data
@@ -29,8 +30,6 @@ _defaults = dict(margins=(10,10,10,10))
 
 # Get the current working directory and keep it! Dialogs change this on the fly
 _cwd = _os.getcwd()
-
-
 
 # HACK FOR WEIRD BEHAVIOR WITH hasattr AND PYQTGRAPH OBJECTS. NO IDEA.
 def hasattr_safe(x,a):
@@ -354,9 +353,6 @@ class GridLayout(BaseObject):
         """
         BaseObject.__init__(self)
 
-        if margins==True:  margins=(10,10,10,10)
-        if margins==False: margins=(0,0,0,0)
-
         # Qt widget to house the layout
         self._widget = _g.Qt.QtGui.QWidget()
 
@@ -377,9 +373,8 @@ class GridLayout(BaseObject):
         self.get_row_count    = self._layout.rowCount
         self.get_column_count = self._layout.columnCount
 
-        # remove margins if necessary
-        if margins==False: self._layout.setContentsMargins(0,0,0,0)
-        else:              self._layout.setContentsMargins(*margins)
+        # Set the margins
+        self.set_margins(margins)
         
         # Expose the show and hide functions
         # The attr check ensures classes inheriting this object's methods
@@ -428,7 +423,7 @@ class GridLayout(BaseObject):
         # create the object
         self.objects.append(object)
 
-        # add the widget to the layout
+        # Figure out whether the widget is egg or "standard"
         try:
             object._widget
             widget = object._widget
@@ -493,6 +488,26 @@ class GridLayout(BaseObject):
         """
         self._layout.setRowStretch(row, stretch)
         return self
+
+    def set_margins(self, margins=True):
+        """
+        Sets the grid margins.
+        
+        Parameters
+        ----------
+        margins=True
+            True sets them to (10,10,10,10), False sets them to (0,0,0,0). You
+            may also manually specify a 4-element tuple or a single integer.
+        """
+        # Handle the possibilities
+        if   margins==True:  margins=[10,10,10,10]
+        elif margins==False: margins=[0,0,0,0]
+        elif type(margins) == int: margins = [margins]*4
+        
+        # Set the margins
+        self._layout.setContentsMargins(*margins)
+        return self
+
 
     def new_autorow(self, row=None):
         """
@@ -1125,6 +1140,7 @@ class NumberBox(BaseObject):
         if block_events: self.block_events()
         self._widget.setValue(value)
         if block_events: self.unblock_events()
+        return self
 
     def set_step(self, value, block_events=False):
         """
@@ -1136,20 +1152,22 @@ class NumberBox(BaseObject):
         if block_events: self.block_events()
         self._widget.setSingleStep(value)
         if block_events: self.unblock_events()
-
+        
+        return self
 
     def increment(self, n=1):
         """
         Increments the value by n.
         """
-        self.set_value(self.get_value()+n)
+        return self.set_value(self.get_value()+n)
 
     def set_colors(self, text='black', background='white'):
         """
         Sets the colors of the text area.
         """
         self._widget.setStyleSheet("SpinBox {background-color: "+background+"; color: "+text+"}")
-
+        
+        return self
 
 class CheckBox(BaseObject):
     
@@ -1323,11 +1341,13 @@ class TabArea(BaseObject):
         self._widget.blockSignals(block_events)
 
         # create a widget to go in the tab
-        tab = GridLayout(margins=margins)
+        tab = GridLayout(margins=False)
         self.tabs.append(tab)
         tab.set_parent(self)
 
         # create and append the tab to the list
+        # Note this makes _widget no longer able to be added to a QGridLayout
+        # for some unknown reason. This is why we nest the grids
         self._widget.addTab(tab._widget, title)
 
         # try to lazy set the current tab
@@ -1337,7 +1357,7 @@ class TabArea(BaseObject):
 
         self._widget.blockSignals(False)
 
-        return tab
+        return tab.place_object(GridLayout(margins=margins))
 
     def remove_tab(self, tab=0):
         """
@@ -3271,12 +3291,18 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 
 if __name__ == '__main__':
-    w = Window(autosettings_path = 'pants')
-    p = w.place_object(DataboxPlot())
+    w = Window(autosettings_path='pants')
+    a = w.place_object(TabArea())
+    t = a.add_tab()
+    b = t.place_object(Button())
     w.show()
     
-    d = Docker(autosettings_path = 'shoes')
-    d.show()
+    w2 = Window('Window2', autosettings_path='pants2')
+    g = w2.add(GridLayout())
+    w2.place_object(t)
+    w2.show()
+    
+   
     
 
 
