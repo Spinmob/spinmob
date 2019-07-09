@@ -1357,7 +1357,7 @@ class TabArea(BaseObject):
 
         self._widget.blockSignals(False)
 
-        return tab.place_object(GridLayout(margins=margins))
+        return tab.place_object(GridLayout(margins=margins), alignment=0)
 
     def remove_tab(self, tab=0):
         """
