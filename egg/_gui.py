@@ -229,7 +229,7 @@ class BaseObject(object):
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
             
             # for saving header info
-            d = _d.databox()
+            d = _d.databox(delimiter=',')
 
             # add all the controls settings
             for x in self._autosettings_controls: self._store_gui_setting(d, x)
@@ -261,7 +261,7 @@ class BaseObject(object):
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
 
             # databox just for loading a cfg file
-            d = _d.databox()
+            d = _d.databox(delimiter=',')
 
             # if the settings path exists
             if _os.path.exists(path):
