@@ -1249,11 +1249,13 @@ class ComboBox(BaseObject):
         """
         return self._widget.currentIndex()
         
-    def set_index(self,index=0):
+    def set_index(self,index=0, block_events=False):
         """
         Sets current index.
         """
+        if block_events: self.block_events()
         self._widget.setCurrentIndex(index)
+        if block_events: self.unblock_events()
         return self
         
     def get_text(self, index=None):
