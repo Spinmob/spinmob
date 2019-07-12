@@ -2548,7 +2548,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
         self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(40), alignment=1)
         self.number_file     = self.grid_controls.place_object(NumberBox(int=True, limits=(0,None)))
-        self._label_path     = self.grid_controls.place_object(Label(""))
+        self.label_path     = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
         self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True).set_width(50)).set_checked(False)
@@ -2730,7 +2730,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
             # otherwise, save the info!
             self._autosave_directory, filename = _os.path.split(path)
-            self._label_path.set_text(filename)
+            self.label_path.set_text(filename)
 
         self.save_gui_settings()
 
@@ -3036,7 +3036,7 @@ class DataboxPlot(_d.databox, GridLayout):
         if self.button_autosave.is_checked():
 
             # save the file
-            self.save_file(_os.path.join(self._autosave_directory, "%04d " % (self.number_file.get_value()) + self._label_path.get_text()))
+            self.save_file(_os.path.join(self._autosave_directory, "%04d " % (self.number_file.get_value()) + self.label_path.get_text()))
 
             # increment the counter
             self.number_file.increment()
