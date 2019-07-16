@@ -2939,8 +2939,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
     def plot(self):
         """
-        Sets the internal databox to the supplied value and plots it.
-        If databox=None, this will plot the internal databox.
+        Updates the plot according to the script and internal data.
         """
 
         # if we're disabled or have no data columns, clear everything!
@@ -2953,7 +2952,6 @@ class DataboxPlot(_d.databox, GridLayout):
             self.script.set_text(self._generate_autoscript())
 
         ##### Try the script and make the curves / plots match
-
         try:
             
             # get globals for sin, cos etc
