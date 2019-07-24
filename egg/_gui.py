@@ -2454,10 +2454,10 @@ class TreeDictionary(BaseObject):
         self.update(d, ignore_errors=ignore_errors, block_user_signals=block_user_signals)
         return self
 
-    def update(self, d, ignore_errors=True, block_user_signals=False):
+    def update(self, source_d, ignore_errors=True, block_user_signals=False):
         """
         Supply a dictionary or databox with a header of the same format
-        and see what happens! (Hint: it updates the existing values.)
+        and this will update this TreeDictionary's settings accordingly.
         
         This will store non-existent key-value pairs in the dictionary 
         self._lazy_load. When you add settings in the future,
@@ -2466,16 +2466,19 @@ class TreeDictionary(BaseObject):
         If self.name is a string (not None), '/'+self.name+'/' will be stripped
         from the keys if present.
         """
-        # Make sure d is a dictionary.
-        if not type(d) == dict: d = d.headers
+        # Make sure d is a dictionary
+        if not type(source_d) == dict: source_d = source_d.headers
+
+        # Make a copy!
+        source_d = dict(source_d)
 
         # Strip the name from each key if present
-        for k in list(d.keys()): d[self._strip(k)] = d.pop(k)
+        for k in list(source_d.keys()): source_d[self._strip(k)] = source_d.pop(k)
 
         # Update the lazy load
-        self._lazy_load.update(d)
+        self._lazy_load.update(source_d)
 
-        # loop over the dictionary and update
+        # loop over the lazy load dictionary and update
         for k in list(self._lazy_load.keys()):
 
             # Only proceed if the parameter exists
