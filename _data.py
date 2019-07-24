@@ -2129,14 +2129,14 @@ class fitter():
             
             # Stuff it in the dictionary
             d[pname]        = value
-            d[pname+'_std'] = error
+            d[pname+'.std'] = error
             
         # Include some other stuff
         d['covariance']         = self.results[1]
         d['chi2']               = self.chi_squared()
         d['chi2s']              = self.chi_squareds()
         d['reduced_chi2']       = self.reduced_chi_squared()
-        d['reduced_chi2_std']   = _n.sqrt(2.0/self.degrees_of_freedom())
+        d['reduced_chi2.std']   = _n.sqrt(2.0/self.degrees_of_freedom())
         d['reduced_chi2s']      = self.reduced_chi_squareds()
         d['degrees_of_freedom'] = self.degrees_of_freedom()
         
