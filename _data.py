@@ -2096,9 +2096,51 @@ class fitter():
         """
         If there are fit results, returns values, errors.
         """
+        # No fit
         if self.results    is None: return None
+        
+        # Fit that didn't converge
         if self.results[1] is None: return self.results[0], None
+        
+        # Fit worked
         return self.results[0], _n.sqrt(_n.diagonal(self.results[1]))
+
+    def get_fit_results(self):
+        """
+        If there are fit results, returns a dictionary with all the fit
+        results.
+        """
+        # No fit
+        if self.results is None: return None
+        
+        # Fit may have not converged, evidenced by results[1] == None
+        
+        # Dictionary of all the stuff
+        d = dict()
+        
+        # Loop over pnames
+        for n in range(len(self._pnames)):
+            
+            # Get the pname, fit value, and fit error
+            pname = self._pnames[n]
+            value = self.results[0][n]
+            error = None
+            if self.results[1] is not None: error = self.results[1][n][n]**0.5
+            
+            # Stuff it in the dictionary
+            d[pname]     = value
+            d['e'+pname] = error
+            
+        # Include some other stuff
+        d['covariance']         = self.results[1]
+        d['chi2']               = self.chi_squared()
+        d['chi2s']              = self.chi_squareds()
+        d['reduced_chi2']       = self.reduced_chi_squared()
+        d['reduced_chi2_std']   = _n.sqrt(2.0/self.degrees_of_freedom())
+        d['reduced_chi2s']      = self.reduced_chi_squareds()
+        d['degrees_of_freedom'] = self.degrees_of_freedom()
+        
+        return d
 
     def get_pnames(self):
         """

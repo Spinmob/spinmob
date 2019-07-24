@@ -2959,7 +2959,7 @@ class DataboxPlot(_d.databox, GridLayout):
             g.update(_scipy_special.__dict__, special=_scipy_special)
             g.update(dict(d=self, ex=None, ey=None))
             g.update(dict(xlabels='x', ylabels='y'))
-            g.update(dict(spinmob=_spinmob, sm=_spinmob, _s=_spinmob))
+            g.update(dict(spinmob=_spinmob, sm=_spinmob, s=_spinmob, _s=_spinmob))
 
             # run the script.
             exec(self.script.get_text(), g)
