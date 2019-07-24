@@ -1555,38 +1555,65 @@ def yscale(scale='log'):
     _pylab.draw()
 
 def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial', font_size=12, font_weight='normal',
-             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005, window_size=[550,400],
-             keep_axis_labels=False, axis_label_font_size=14, axis_label_font_weight='normal', keep_legend=True):
+             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005, 
+             window_size=[550,400], window_position=[0,0],
+             keep_title=False, title_font_size=14, title_font_weight='normal',
+             keep_axis_labels=True, axis_label_font_size=14, axis_label_font_weight='normal', 
+             keep_legend=True, grid=False):
     """
 
     This guy performs the ubertidy, which some of us use to prep a figure
     for talks or papers.
 
-    figure="gcf"                    Which figure to tidy.
-    zoom=True                       Whether to auto-zoom on the data
-    width=None                      Width of the axes (relative to window)
-    height=None                     Height of the axes (relative to window)
-    font_name='Arial'               Must be installed on system
-    font_size=12                    Font size for all but axis labels
-    font_weight='normal'            Could be 'bold'
-    border_width=1.2                Thickness of the axes border
-    tick_width=1                    Thickness of ticks
-    ticks_point="in"                Whether ticks point "in" or "out" of axis
-    xtick_label_pad=0.010           Padding on x-tick labels
-    ytick_label_pad=0.008           Padding on y-tick labels
-    window_size=[550,400]           Size of window in pixels
-    keep_axis_labels=False          Whether to keep the axis labels
-    axis_label_font_size=14         Font size for axis labels
-    axis_label_font_weight='normal' Could be 'bold'
-    keep_legend=False               Whether to keep the legend
-
+    Parameters
+    ----------
+    figure="gcf"                    
+        Which figure to tidy.
+    zoom=True                       
+        Whether to auto-zoom on the data
+    width=None                      
+        Width of the axes (relative to window)
+    height=None                     
+        Height of the axes (relative to window)
+    font_name='Arial'               
+        Must be installed on system
+    font_size=12                    
+        Font size for all but axis labels
+    font_weight='normal'            
+        Could be 'bold'
+    border_width=1.2                
+        Thickness of the axes border
+    tick_width=1                    
+        Thickness of ticks
+    ticks_point="in"                
+        Whether ticks point "in" or "out" of axis
+    xtick_label_pad=0.010           
+        Padding on x-tick labels
+    ytick_label_pad=0.008           
+        Padding on y-tick labels
+    window_size=[550,400]           
+        Size of window in pixels
+    window_position=[0,0]
+        Coordinates of the upper left corner.
+    keep_axis_labels=True          
+        Whether to keep the axis labels
+    keep_title=False
+        Whether to keep the title
+    axis_label_font_size=14         
+        Font size for axis labels
+    axis_label_font_weight='normal' 
+        Could be 'bold'
+    keep_legend=False               
+        Whether to keep the legend
+    grid=False
+        Whether to add a grid.
     """
 
     if figure=="gcf": f = _pylab.gcf()
     else:             f = figure
 
     # set the window to a standard size
-    set_figure_window_geometry(fig=f, size=window_size)
+    set_figure_window_geometry(fig=f, position=window_position, size=window_size)
 
     for n in range(len(f.axes)):
 
@@ -1644,7 +1671,13 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial'
         if height: a.set_position([p[0],0.17,p[2],0.17+height*0.5])
 
         # set the axis labels to empty (so we can add them with a drawing program)
-        a.set_title('')
+        if not keep_title: 
+            a.set_title('')
+        else:
+            title = a.get_title()
+            a.set_title('')
+            _pylab.title(title, fontsize=title_font_size, fontweight=title_font_weight, fontname=font_name, horizontalalignment='right')
+        
         if not keep_axis_labels:
             a.set_xlabel('')
             a.set_ylabel('')
@@ -1654,6 +1687,9 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial'
 
         # kill the legend
         if not keep_legend: a.legend_ = None
+
+        # Grid
+        if grid: a.grid(ls='--', color=(0.9,0.9,0.9))
 
         # zoom!
         if zoom: auto_zoom(axes=a)
