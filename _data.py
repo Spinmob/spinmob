@@ -2128,8 +2128,8 @@ class fitter():
             if self.results[1] is not None: error = self.results[1][n][n]**0.5
             
             # Stuff it in the dictionary
-            d[pname]     = value
-            d['e'+pname] = error
+            d[pname]        = value
+            d[pname+'_std'] = error
             
         # Include some other stuff
         d['covariance']         = self.results[1]
