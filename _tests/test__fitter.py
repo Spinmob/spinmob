@@ -95,7 +95,6 @@ class Test_fitter(_ut.TestCase):
         Also includes
          - trim, zoom, etc
         """
-        global f
         f = _s.data.fitter(first_figure=10)
         f.__repr__()
         
@@ -136,7 +135,6 @@ class Test_fitter(_ut.TestCase):
         """
         Test self.get_processed_data().
         """
-        global f
         
         f = _s.data.fitter(first_figure=7, autoplot=False)
         f.__repr__()
@@ -154,12 +152,31 @@ class Test_fitter(_ut.TestCase):
         self.assertAlmostEqual(f.get_processed_data(do_trim=False   )[0][1][3], 6.5)
         self.assertAlmostEqual(f.get_processed_data(do_coarsen=False)[2][0][3], 1.7)
     
+    def test_dtype(self):
+        """
+        Ensures that the dtype is set.
+        """
+        
+        global f
+        
+        f = _s.data.fitter(first_figure=7, autoplot=False)
+        f.set_data(_n.array([1,2,3,4], dtype=_n.float16), 
+                   _n.array([1,2,3,4], dtype=_n.float128), 
+                   _n.array([1,2,3,4], dtype=_n.float32))
+        self.assertEqual(f.get_processed_data()[0][0].dtype, _n.float64)
+        
+        f.set_data(_n.array([1,2,3,4], dtype=_n.float16), 
+                   _n.array([1,2,3,4], dtype=_n.float128), 
+                   _n.array([1,2,3,4], dtype=_n.float32),
+                   dtype=_n.float128)
+        self.assertEqual(f.get_processed_data()[1][0].dtype, _n.float128)
+        
+    
     def test_fix_free_and_function_globals(self):
         """
         Tests whether we can specify globals for the functions and do a fix()
         and free() call.
         """
-        global f
         
         def my_fun(x,a,b): return a*x+b
         
