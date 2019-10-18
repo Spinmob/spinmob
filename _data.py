@@ -1688,7 +1688,7 @@ class fitter():
             s = s + "\nWARNING: eydata was not specified for at least one data set."
 
         # Check if there are any zero error bars.
-        if (_n.array(self.get_data()[2]) == 0).any():
+        if (_n.array(self.get_processed_data()[2]) == 0).any():
             s = s + "\nWARNING: At least one error bar is zero."
 
         return s
