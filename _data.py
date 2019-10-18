@@ -1866,7 +1866,7 @@ class fitter():
         self.clear_results()
 
 
-    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, **kwargs):
+    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, dtype=_n.float64, **kwargs):
         """
         This will handle the different types of supplied data and put everything
         in a standard format for processing.
@@ -1878,6 +1878,8 @@ class fitter():
         eydata=None      
             Error bars for ydata. These can be None (for guessed error) or data 
             / numbers matching the dimensionality of xdata and ydata
+        dtype=numpy.float64
+            When converting the data to arrays, use this conversion function.
 
         Notes
         -----
@@ -1972,6 +1974,7 @@ class fitter():
         self._set_xdata  = xdata
         self._set_ydata  = ydata
         self._set_eydata = eydata
+        self._dtype = dtype
         #self._set_exdata = exdata
         self._set_data_globals.update(kwargs)
 
@@ -2090,7 +2093,9 @@ class fitter():
 #                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
 
         # return it
-        return xdata, ydata, eydata
+        return (_n.array(xdata, dtype=self._dtype), 
+                _n.array(ydata, dtype=self._dtype), 
+                _n.array(eydata, dtype=self._dtype))
 
     def get_fit_parameters(self):
         """
