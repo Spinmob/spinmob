@@ -147,6 +147,7 @@ class Test_fitter(_ut.TestCase):
         f(xmin=1.5, ymax=3, coarsen=2)
         f.__repr__()
         
+        
         # Levels of process
         self.assertAlmostEqual(f.get_processed_data(                )[0][1][1], 6.5)
         self.assertAlmostEqual(f.get_processed_data(do_trim=False   )[0][1][3], 6.5)

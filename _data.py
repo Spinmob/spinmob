@@ -1688,8 +1688,15 @@ class fitter():
             s = s + "\nWARNING: eydata was not specified for at least one data set."
 
         # Check if there are any zero error bars.
-        if (_n.array(self.get_processed_data()[2]) == 0).any():
-            s = s + "\nWARNING: At least one error bar is zero."
+        eys = self.get_processed_data()[2]
+        
+        # Could be irregularly shaped, so can't just use (eydata==0).any()
+        any_zeros = False
+        for ey in eys: 
+            if _n.any(ey==0): 
+                any_zeros = True
+                break
+        if any_zeros: s = s + "\nWARNING: At least one error bar is zero."
 
         return s
 
