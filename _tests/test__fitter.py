@@ -135,12 +135,15 @@ class Test_fitter(_ut.TestCase):
 #        f.fit()
 #        f.__repr__()
         
-        # Two data sets with different x-datas
-        f.set_data([self.x1, self.x1, self.x3], [self.y1,self.y2,self.y3], [self.ey,self.ey,45])
+        # Two data sets with different x-datas, different lengths, and different bit depth
+        f.set_data([self.x1, self.x1, self.x3], [self.y1,self.y2,self.y3], [self.ey,self.ey,45], dtype=_n.float32)
         f.__repr__()
         
         f.set_functions(['a*x+b', 'a*cos(b*x)+c', 'a*x**2'], 'a=-1,b,c')
         f.__repr__()
+        
+        # Fit it.
+        f.fit()
         
     
     def test_get_processed_data(self):

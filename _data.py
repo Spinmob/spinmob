@@ -2099,10 +2099,16 @@ class fitter():
 #            if not exdata[n] == None:
 #                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
 
-        # return it
-        return (_n.array(xdata, dtype=self._dtype), 
-                _n.array(ydata, dtype=self._dtype), 
-                _n.array(eydata, dtype=self._dtype))
+        # Make sure everything is a nice array of the right type.
+        # Note we have to do this loop because not all sets are the same length.
+        for n in range(len(xdata)):
+            xdata[n]  = _n.array(xdata[n],  dtype=self._dtype)
+            ydata[n]  = _n.array(ydata[n],  dtype=self._dtype)
+            eydata[n] = _n.array(eydata[n], dtype=self._dtype)
+        
+        # Return it
+        return xdata, ydata, eydata
+
 
     def get_fit_parameters(self):
         """
@@ -3185,16 +3191,9 @@ if __name__ == '__main__':
 #    _s.tweaks.auto_zoom()
 #    a = _s.pylab.gca()
     
-    x1 = [0,1,2,3,4,5,6,7]
-    y1 = [10,1,2,1,3,4,5,3]
-    y2 = [2,1,2,4,5,2,1,5]
-    ey = [0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7]
-    
     # Load a test file and fit it, making sure "f" is defined at each step.
     f = fitter(plot_all_data=True, plot_guess_zoom=True)
-    f.set_functions('a', 'a=0.5')
-    f.set_data(x1, y1, 0.5)
-    f.set(xmin=1.5, xmax=6.5, coarsen=2)
+    f.set_data([[1,2,3,4],[1,2,3]], [[1,2,1,2],[2,3,2]], [[1,1,1,1],3], dtype=_n.float32)
+    f.set_functions(['a*x+b', 'a*cos(x)+c'], 'a,b,c')
     f.fit()
-    
                
