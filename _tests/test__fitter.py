@@ -24,6 +24,9 @@ class Test_fitter(_ut.TestCase):
         self.y1 = [10,1,2,1,3,4,5,3]
         self.y2 = [2,1,2,4,5,2,1,5]
         self.ey = [0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7]
+        
+        self.x3 = [1,     2, 4.2,   4]
+        self.y3 = [0.3, 0.5, 0.2, 0.7]
         self.plot_delay = 0.1
         
         return
@@ -88,48 +91,57 @@ class Test_fitter(_ut.TestCase):
         # Coarsen and untrim
 
     
-    def test_two_data_sets_data_first(self):
+    def test_multi_data_sets(self):
         """
         Two-data-set-fit.
         
         Also includes
          - trim, zoom, etc
         """
+        global f
         f = _s.data.fitter(first_figure=10)
+#        f.__repr__()
+#        
+#        # Set the data first
+#        f.set_data(self.x1, [self.y1,self.y2], self.ey)
+#        _s.tweaks.set_figure_window_geometry(10, position=[500,0])
+#        _s.tweaks.set_figure_window_geometry(11, position=[500,400])
+#        f.__repr__()
+#
+#        # Set the functions
+#        f.set_functions(['a*x+b', 'a*cos(b*x)+c'], 'a=-1,b,c')
+#        f.__repr__()
+#        
+#        # Fit
+#        f.fit()
+#        f.__repr__()
+#        
+#        # Trim
+#        f.trim()
+#        f.__repr__()
+#        
+#        # Zoom
+#        f.zoom()
+#        f.__repr__()
+#        
+#        # Untrim
+#        f.untrim()
+#        f.__repr__()
+#        
+#        # Make sure untrim worked
+#        self.assertEqual(f['xmin'][0], None)
+#        
+#        # Fit
+#        f.fit()
+#        f.__repr__()
+        
+        # Two data sets with different x-datas
+        f.set_data([self.x1, self.x1, self.x3], [self.y1,self.y2,self.y3], [self.ey,self.ey,45])
         f.__repr__()
         
-        # Set the data first
-        f.set_data(self.x1, [self.y1,self.y2], self.ey)
-        _s.tweaks.set_figure_window_geometry(10, position=[500,0])
-        _s.tweaks.set_figure_window_geometry(11, position=[500,400])
-        f.__repr__()
-
-        # Set the functions
-        f.set_functions(['a*x+b', 'a*cos(b*x)+c'], 'a=-1,b,c')
+        f.set_functions(['a*x+b', 'a*cos(b*x)+c', 'a*x**2'], 'a=-1,b,c')
         f.__repr__()
         
-        # Fit
-        f.fit()
-        f.__repr__()
-        
-        # Trim
-        f.trim()
-        f.__repr__()
-        
-        # Zoom
-        f.zoom()
-        f.__repr__()
-        
-        # Untrim
-        f.untrim()
-        f.__repr__()
-        
-        # Make sure untrim worked
-        self.assertEqual(f['xmin'][0], None)
-        
-        # Fit
-        f.fit()
-        f.__repr__()
     
     def test_get_processed_data(self):
         """
@@ -157,9 +169,7 @@ class Test_fitter(_ut.TestCase):
         """
         Ensures that the dtype is set.
         """
-        
-        global f
-        
+                
         f = _s.data.fitter(first_figure=7, autoplot=False)
         f.set_data(_n.array([1,2,3,4], dtype=_n.float16), 
                    _n.array([1,2,3,4], dtype=_n.float128), 
