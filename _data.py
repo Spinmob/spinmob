@@ -2433,7 +2433,8 @@ class fitter():
 
         output = []
         for n in range(len(self.f)):
-            output.append(self._evaluate_f(n, self._xdata_massaged[n], p) )
+            if len(self._xdata_massaged) > n:
+                output.append(self._evaluate_f(n, self._xdata_massaged[n], p) )
 
         return output
 
@@ -2869,8 +2870,9 @@ class fitter():
                 else:                    style = self['style_fit'  ][n]
 
                 # Main residuals plot
-                a1.errorbar (xt, rt[n], _n.ones(len(xt)), **self['style_data'][n])
-                a1.plot([min(xt), max(xt)], [0,0], **style)
+                if n < len(rt):
+                    a1.errorbar (xt, rt[n], _n.ones(len(xt)), **self['style_data'][n])
+                    a1.plot([min(xt), max(xt)], [0,0], **style)
                 
                 
             # Tidy up

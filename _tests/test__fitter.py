@@ -100,40 +100,40 @@ class Test_fitter(_ut.TestCase):
         """
         global f
         f = _s.data.fitter(first_figure=10)
-#        f.__repr__()
-#        
-#        # Set the data first
-#        f.set_data(self.x1, [self.y1,self.y2], self.ey)
-#        _s.tweaks.set_figure_window_geometry(10, position=[500,0])
-#        _s.tweaks.set_figure_window_geometry(11, position=[500,400])
-#        f.__repr__()
-#
-#        # Set the functions
-#        f.set_functions(['a*x+b', 'a*cos(b*x)+c'], 'a=-1,b,c')
-#        f.__repr__()
-#        
-#        # Fit
-#        f.fit()
-#        f.__repr__()
-#        
-#        # Trim
-#        f.trim()
-#        f.__repr__()
-#        
-#        # Zoom
-#        f.zoom()
-#        f.__repr__()
-#        
-#        # Untrim
-#        f.untrim()
-#        f.__repr__()
-#        
-#        # Make sure untrim worked
-#        self.assertEqual(f['xmin'][0], None)
-#        
-#        # Fit
-#        f.fit()
-#        f.__repr__()
+        f.__repr__()
+        
+        # Set the data first
+        f.set_data(self.x1, [self.y1,self.y2], self.ey)
+        _s.tweaks.set_figure_window_geometry(10, position=[500,0])
+        _s.tweaks.set_figure_window_geometry(11, position=[500,400])
+        f.__repr__()
+
+        # Set the functions
+        f.set_functions(['a*x+b', 'a*cos(b*x)+c'], 'a=-1,b,c')
+        f.__repr__()
+        
+        # Fit
+        f.fit()
+        f.__repr__()
+        
+        # Trim
+        f.trim()
+        f.__repr__()
+        
+        # Zoom
+        f.zoom()
+        f.__repr__()
+        
+        # Untrim
+        f.untrim()
+        f.__repr__()
+        
+        # Make sure untrim worked
+        self.assertEqual(f['xmin'][0], None)
+        
+        # Fit
+        f.fit()
+        f.__repr__()
         
         # Two data sets with different x-datas, different lengths, and different bit depth
         f.set_data([self.x1, self.x1, self.x3], [self.y1,self.y2,self.y3], [self.ey,self.ey,45], dtype=_n.float32)
@@ -144,6 +144,15 @@ class Test_fitter(_ut.TestCase):
         
         # Fit it.
         f.fit()
+        f.__repr__()
+        
+        # Set functions to have the wrong number
+        f.set_functions(['a*x+b', 'a*cos(b*x)+c'], 'a=-1,b,c')
+        f.__repr__()
+        
+        f.set_functions(['a*x+b', 'a*cos(b*x)+c', 'a*x**2', 'a*x'], 'a=-1,b,c')
+        f.__repr__()
+        
         
     
     def test_get_processed_data(self):
@@ -175,15 +184,15 @@ class Test_fitter(_ut.TestCase):
                 
         f = _s.data.fitter(first_figure=7, autoplot=False)
         f.set_data(_n.array([1,2,3,4], dtype=_n.float16), 
-                   _n.array([1,2,3,4], dtype=_n.float128), 
+                   _n.array([1,2,3,4], dtype=_n.float64), 
                    _n.array([1,2,3,4], dtype=_n.float32))
         self.assertEqual(f.get_processed_data()[0][0].dtype, _n.float64)
         
         f.set_data(_n.array([1,2,3,4], dtype=_n.float16), 
-                   _n.array([1,2,3,4], dtype=_n.float128), 
+                   _n.array([1,2,3,4], dtype=_n.float64), 
                    _n.array([1,2,3,4], dtype=_n.float32),
-                   dtype=_n.float128)
-        self.assertEqual(f.get_processed_data()[1][0].dtype, _n.float128)
+                   dtype=_n.float32)
+        self.assertEqual(f.get_processed_data()[1][0].dtype, _n.float32)
         
     
     def test_fix_free_and_function_globals(self):
