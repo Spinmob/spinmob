@@ -43,6 +43,7 @@ class Test_plot_functions(_ut.TestCase):
         self.assertEqual(_s._plotting_mess._match_data_sets([None, [2,3,4]], [[1,2,1],None]),
                         ([[0, 1, 2], [2, 3, 4]], [[1, 2, 1], [0, 1, 2]]))
         
+        
         # Normals
         self.assertEqual(_s._plotting_mess._match_data_sets([1,2,3], [1,2,1]),
                         ([[1, 2, 3]], [[1, 2, 1]]))

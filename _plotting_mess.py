@@ -27,18 +27,31 @@ def _match_data_sets(x,y):
     """
     Makes sure everything is the same shape. "Intelligently".
     """
+    
+    # If x is a value, use this for the step size.
+    dx = 1.0
+    if _fun.is_a_number(x): 
+        dx = x
+        x  = None
+        
     # Handle the None for x or y
     if x is None or len(x) == 0: 
-        # If x is none, y can be either [1,2] or [[1,2],[1,2]] or []
+        # If x is None, y can be either [1,2] or [[1,2],[1,2]] or []
         if len(y) == 0: x = []
     
         elif _fun.is_iterable(y[0]):
             # make an array of arrays to match
             x = []
             for n in range(len(y)):
-                x.append(list(range(len(y[n]))))
+                x.append(list(dx*_n.array(range(len(y[n])))))
         else: x = list(range(len(y)))
     
+    # If y is a value, use this for the step size.
+    dy = 1.0
+    if _fun.is_a_number(y): 
+        dy = y
+        y  = None
+
     if y is None or len(y) == 0: 
         # If y is none, x can be either [1,2] or [[1,2],[1,2]] or []
         if len(x) == 0: y = []
@@ -47,7 +60,7 @@ def _match_data_sets(x,y):
             # make an array of arrays to match
             y = []
             for n in range(len(x)):
-                y.append(list(range(len(x[n]))))
+                y.append(list(dy*_n.array(range(len(x[n])))))
         else: y = list(range(len(x)))
     
     # At this point they should be matched, but may still be 1D
@@ -633,7 +646,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     Parameters
     ----------
     xdata, ydata        
-        Arrays (or arrays of arrays) of data to plot
+        Arrays (or arrays of arrays) of data to plot. You can also
+        specify None for one of these, which will result in a plot 
+        versus the data point number (starting from zero). Or you can
+        specify a number (alone, generally not in a list) to set the 
+        scale of the auto-generated data.
     eydata=None, exdata=None     
         Arrays of x and y errorbar values
     label=None         
