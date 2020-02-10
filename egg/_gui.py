@@ -2357,9 +2357,24 @@ class TreeDictionary(BaseObject):
         # If we're supposed to unblock the user signals for this parameter
         if block_user_signals: self.unblock_user_signals(key, ignore_error)
 
+        # Do other stuff if needed.
+        self.after_set_value()
+
         return self
 
     __setitem__ = set_value
+
+    def after_set_value(self):
+        """
+        This (dummy) function is run immediately after self.set_value().
+        You can set this to a function of your own design.
+
+        Returns
+        -------
+        self
+        """
+        
+        return self
 
     def _signal_changed_handler(self, *args):
         """
