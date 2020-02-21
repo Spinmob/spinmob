@@ -2188,51 +2188,6 @@ class TreeDictionary(BaseObject):
         k, d = self.get_dictionary()
         destination_databox.update_headers(d,k)
 
-    def get_dictionary(self, strip_key=False):
-        """
-        Returns the list of parameters and a dictionary of values
-        (good for writing to a databox header!)
-        
-        If self.name is a string, prepends '/'+self.name+'/' to all keys.
-        
-        Parameters
-        ----------
-        strip_key=False
-            If True, will not return keys with '/'+self.name+'/' prepended.
-
-        Return format is sorted_keys, dictionary
-        """
-
-        # output
-        k = list()
-        d = dict()
-
-        # loop over the root items
-        for i in range(self._widget.topLevelItemCount()):
-
-            # grab the parameter item, and start building the name
-            x = self._widget.topLevelItem(i).param
-
-            # now start the recursive loop. Too complicated to do the name/ stuff
-            # here...
-            self._get_parameter_dictionary('', d, k, x)
-
-        # If we have a name, prepend it to all keys
-        if self.name is not None and not strip_key:
-            
-            # loop over all the keys
-            for n in range(len(k)):
-                
-                # Assemble the new key
-                k_new = '/'+self.name+'/' + k[n]
-                
-                # Replace the dictionary key
-                d[k_new] = d.pop(k[n])
-                
-                # Update the list value
-                k[n] = k_new
-                
-        return k, d
 
     def hide_parameter(self, key):
         """
@@ -2245,7 +2200,6 @@ class TreeDictionary(BaseObject):
         Hides the specified parameter.
         """
         self._find_parameter(key.split('/')).show()        
-        
 
     def get_widget(self, key):
         """
@@ -2322,6 +2276,58 @@ class TreeDictionary(BaseObject):
         
         # Return a copy of the list values
         return list(self.get_widget(key).opts['values'])
+
+    def get_dictionary(self, short_keys=False):
+        """
+        Returns the list of parameters and a dictionary of values
+        (good for writing to a databox header!)
+        
+        If self.name is a string, prepends '/'+self.name+'/' to all keys.
+        
+        Parameters
+        ----------
+        short_keys=False
+            If True, will not return keys with '/'+self.name+'/' prepended.
+
+        Return format is sorted_keys, dictionary
+        """
+
+        # output
+        k = list()
+        d = dict()
+
+        # loop over the root items
+        for i in range(self._widget.topLevelItemCount()):
+
+            # grab the parameter item, and start building the name
+            x = self._widget.topLevelItem(i).param
+
+            # now start the recursive loop. Too complicated to do the name/ stuff
+            # here...
+            self._get_parameter_dictionary('', d, k, x)
+
+        # If we have a name, prepend it to all keys
+        if self.name is not None and not short_keys:
+            
+            # loop over all the keys
+            for n in range(len(k)):
+                
+                # Assemble the new key
+                k_new = '/'+self.name+'/' + k[n]
+                
+                # Replace the dictionary key
+                d[k_new] = d.pop(k[n])
+                
+                # Update the list value
+                k[n] = k_new
+                
+        return k, d
+
+    def keys(self, short_keys=False):
+        """
+        Returns a list of the TreeDictionary keys.
+        """
+        return self.get_dictionary(short_keys=short_keys)[0]
 
     def set_value(self, key, value, ignore_error=False, block_user_signals=False):
         """
