@@ -1908,6 +1908,30 @@ class TreeDictionary(BaseObject):
 
         return self
 
+    def emit_signal_changed(self, key):
+        """
+        Emits a signal_changed for the specified key.
+        
+        Parameters
+        ----------
+        key : string
+            Dictionary string, e.g., 'a/parameter/stuff'. Must be a key that already exists.
+        
+        Returns
+        -------
+        None.
+        """
+        s = key.split('/')
+        
+        # Find the parameter itself
+        p = self._find_parameter(s)
+        
+        # Find the group parameter at the root.
+        r = self._find_parameter([s[0]])
+        
+        # Emit the signal the same way pyqtgraph does.
+        p.sigValueChanged.emit(r, self[key])
+
     def block_user_signals(self, key, ignore_error=False):
         """
         Temporarily disconnects the user-defined signals for the specified 
@@ -2329,13 +2353,47 @@ class TreeDictionary(BaseObject):
         """
         return self.get_dictionary(short_keys=short_keys)[0]
 
+    def before_set_value(self, key, value, ignore_error, block_user_signals):
+        """
+        Dummy function that you can overwrite, called before a value gets set.
+        Must return True to proceed with set_value(). False will abort the
+        process (if you want to intercept the data and do something else with it.)
+
+        Parameters
+        ----------
+        key : string
+            Dictionary key, e.g. 'a/b/parameter'
+        value
+            Value to set for this item.
+        ignore_error : bool
+            If True, will ignore the error, such as not finding the key.
+        block_user_signals : bool
+            If True, this will not trigger a signal_changed, etc.
+
+        Returns
+        -------
+        True by default, False if you want the value to not be set.
+
+        """
+        return True
+
     def set_value(self, key, value, ignore_error=False, block_user_signals=False):
         """
         Sets the variable of the supplied key to the supplied value.
 
-        Setting block_user_signals=True will temporarily block the widget from
-        sending any signals when setting the value.
+        Parameters
+        ----------
+        key : string
+            Dictionary key, e.g. 'a/b/parameter'
+        value
+            Value to set for this item.
+        ignore_error : bool
+            If True, will ignore the error, such as not finding the key.
+        block_user_signals : bool
+            If True, this will not trigger a signal_changed, etc.
         """
+        if not self.before_set_value(key,value,ignore_error,block_user_signals): return
+       
         # first clean up the key
         key = self._clean_up_key(self._strip(key))
 
@@ -2576,7 +2634,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         self.grid_controls.place_object(Label("")) # spacer
         self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True).set_width(50)).set_checked(False)
-        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'User'])).set_value(autoscript) 
+        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'])).set_value(autoscript) 
         self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(40)).set_checked(True) 
         self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True).set_width(40)).set_checked(autoscript==1)
         self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
@@ -2951,6 +3009,26 @@ class DataboxPlot(_d.databox, GridLayout):
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
 
             return sx+" )\n"+sy+" )\n"+sey+" )\n\n"+sxlabels+"\n"+sylabels+" )\n"
+        
+        # Shared x-axis (None)
+        elif self.combo_autoscript.get_index() == 5:
+        
+            # hard code the first columns
+            sx = "x = ( None"
+            sy = "y = ( d[0]"
+
+            # hard code the first labels
+            sxlabels = "xlabels = 'Array Index'"
+            sylabels = "ylabels = ( '"+self.ckeys[0]+"'"
+
+            # loop over any remaining columns and append.
+            for n in range(1,len(self)):
+                sy += ", d["+str(n)+"]"
+                sylabels += ", '"+self.ckeys[n]+"'"
+
+            return sx+" )\n"+sy+" )\n\n"+sxlabels+"\n"+sylabels+" )\n"
+            
+        
         
         else: return self.autoscript_custom()
 
