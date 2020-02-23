@@ -2353,30 +2353,6 @@ class TreeDictionary(BaseObject):
         """
         return self.get_dictionary(short_keys=short_keys)[0]
 
-    def before_set_value(self, key, value, ignore_error, block_user_signals):
-        """
-        Dummy function that you can overwrite, called before a value gets set.
-        Must return True to proceed with set_value(). False will abort the
-        process (if you want to intercept the data and do something else with it.)
-
-        Parameters
-        ----------
-        key : string
-            Dictionary key, e.g. 'a/b/parameter'
-        value
-            Value to set for this item.
-        ignore_error : bool
-            If True, will ignore the error, such as not finding the key.
-        block_user_signals : bool
-            If True, this will not trigger a signal_changed, etc.
-
-        Returns
-        -------
-        True by default, False if you want the value to not be set.
-
-        """
-        return True
-
     def set_value(self, key, value, ignore_error=False, block_user_signals=False):
         """
         Sets the variable of the supplied key to the supplied value.
@@ -2392,8 +2368,6 @@ class TreeDictionary(BaseObject):
         block_user_signals : bool
             If True, this will not trigger a signal_changed, etc.
         """
-        if not self.before_set_value(key,value,ignore_error,block_user_signals): return
-       
         # first clean up the key
         key = self._clean_up_key(self._strip(key))
 
@@ -2633,8 +2607,8 @@ class DataboxPlot(_d.databox, GridLayout):
         self.label_path     = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
-        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True).set_width(50)).set_checked(False)
-        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'])).set_value(autoscript) 
+        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True, checked=True).set_width(50)).set_checked(False)
+        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Edit', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'])).set_value(autoscript) 
         self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(40)).set_checked(True) 
         self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True).set_width(40)).set_checked(autoscript==1)
         self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
