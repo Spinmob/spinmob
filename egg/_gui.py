@@ -2376,13 +2376,11 @@ class TreeDictionary(BaseObject):
         
         return self
 
-    def _signal_changed_handler(self, *args):
+    def keys(self):
         """
-        If we're supposed to autosave when something changes,
-        do so.
+        Returns a lits of keys.
         """
-        self.print_message("signal change!")
-        #if self.autosave: self.save()
+        return self.get_dictionary()[0]
 
     def autosave(self, *a):
         """
