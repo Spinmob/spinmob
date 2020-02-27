@@ -1908,6 +1908,30 @@ class TreeDictionary(BaseObject):
 
         return self
 
+    def emit_signal_changed(self, key):
+        """
+        Emits a signal_changed for the specified key.
+        
+        Parameters
+        ----------
+        key : string
+            Dictionary string, e.g., 'a/parameter/stuff'. Must be a key that already exists.
+        
+        Returns
+        -------
+        None.
+        """
+        s = key.split('/')
+        
+        # Find the parameter itself
+        p = self._find_parameter(s)
+        
+        # Find the group parameter at the root.
+        r = self._find_parameter([s[0]])
+        
+        # Emit the signal the same way pyqtgraph does.
+        p.sigValueChanged.emit(r, self[key])
+
     def block_user_signals(self, key, ignore_error=False):
         """
         Temporarily disconnects the user-defined signals for the specified 
@@ -2188,51 +2212,6 @@ class TreeDictionary(BaseObject):
         k, d = self.get_dictionary()
         destination_databox.update_headers(d,k)
 
-    def get_dictionary(self, strip_key=False):
-        """
-        Returns the list of parameters and a dictionary of values
-        (good for writing to a databox header!)
-        
-        If self.name is a string, prepends '/'+self.name+'/' to all keys.
-        
-        Parameters
-        ----------
-        strip_key=False
-            If True, will not return keys with '/'+self.name+'/' prepended.
-
-        Return format is sorted_keys, dictionary
-        """
-
-        # output
-        k = list()
-        d = dict()
-
-        # loop over the root items
-        for i in range(self._widget.topLevelItemCount()):
-
-            # grab the parameter item, and start building the name
-            x = self._widget.topLevelItem(i).param
-
-            # now start the recursive loop. Too complicated to do the name/ stuff
-            # here...
-            self._get_parameter_dictionary('', d, k, x)
-
-        # If we have a name, prepend it to all keys
-        if self.name is not None and not strip_key:
-            
-            # loop over all the keys
-            for n in range(len(k)):
-                
-                # Assemble the new key
-                k_new = '/'+self.name+'/' + k[n]
-                
-                # Replace the dictionary key
-                d[k_new] = d.pop(k[n])
-                
-                # Update the list value
-                k[n] = k_new
-                
-        return k, d
 
     def hide_parameter(self, key):
         """
@@ -2245,7 +2224,6 @@ class TreeDictionary(BaseObject):
         Hides the specified parameter.
         """
         self._find_parameter(key.split('/')).show()        
-        
 
     def get_widget(self, key):
         """
@@ -2323,12 +2301,72 @@ class TreeDictionary(BaseObject):
         # Return a copy of the list values
         return list(self.get_widget(key).opts['values'])
 
+    def get_dictionary(self, short_keys=False):
+        """
+        Returns the list of parameters and a dictionary of values
+        (good for writing to a databox header!)
+        
+        If self.name is a string, prepends '/'+self.name+'/' to all keys.
+        
+        Parameters
+        ----------
+        short_keys=False
+            If True, will not return keys with '/'+self.name+'/' prepended.
+
+        Return format is sorted_keys, dictionary
+        """
+
+        # output
+        k = list()
+        d = dict()
+
+        # loop over the root items
+        for i in range(self._widget.topLevelItemCount()):
+
+            # grab the parameter item, and start building the name
+            x = self._widget.topLevelItem(i).param
+
+            # now start the recursive loop. Too complicated to do the name/ stuff
+            # here...
+            self._get_parameter_dictionary('', d, k, x)
+
+        # If we have a name, prepend it to all keys
+        if self.name is not None and not short_keys:
+            
+            # loop over all the keys
+            for n in range(len(k)):
+                
+                # Assemble the new key
+                k_new = '/'+self.name+'/' + k[n]
+                
+                # Replace the dictionary key
+                d[k_new] = d.pop(k[n])
+                
+                # Update the list value
+                k[n] = k_new
+                
+        return k, d
+
+    def keys(self, short_keys=False):
+        """
+        Returns a list of the TreeDictionary keys.
+        """
+        return self.get_dictionary(short_keys=short_keys)[0]
+
     def set_value(self, key, value, ignore_error=False, block_user_signals=False):
         """
         Sets the variable of the supplied key to the supplied value.
 
-        Setting block_user_signals=True will temporarily block the widget from
-        sending any signals when setting the value.
+        Parameters
+        ----------
+        key : string
+            Dictionary key, e.g. 'a/b/parameter'
+        value
+            Value to set for this item.
+        ignore_error : bool
+            If True, will ignore the error, such as not finding the key.
+        block_user_signals : bool
+            If True, this will not trigger a signal_changed, etc.
         """
         # first clean up the key
         key = self._clean_up_key(self._strip(key))
@@ -2567,8 +2605,8 @@ class DataboxPlot(_d.databox, GridLayout):
         self.label_path     = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
-        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True).set_width(50)).set_checked(False)
-        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Manual', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'User'])).set_value(autoscript) 
+        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True, checked=True).set_width(50)).set_checked(False)
+        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Edit', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'])).set_value(autoscript) 
         self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(40)).set_checked(True) 
         self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True).set_width(40)).set_checked(autoscript==1)
         self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
@@ -2943,6 +2981,26 @@ class DataboxPlot(_d.databox, GridLayout):
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
 
             return sx+" )\n"+sy+" )\n"+sey+" )\n\n"+sxlabels+"\n"+sylabels+" )\n"
+        
+        # Shared x-axis (None)
+        elif self.combo_autoscript.get_index() == 5:
+        
+            # hard code the first columns
+            sx = "x = ( None"
+            sy = "y = ( d[0]"
+
+            # hard code the first labels
+            sxlabels = "xlabels = 'Array Index'"
+            sylabels = "ylabels = ( '"+self.ckeys[0]+"'"
+
+            # loop over any remaining columns and append.
+            for n in range(1,len(self)):
+                sy += ", d["+str(n)+"]"
+                sylabels += ", '"+self.ckeys[n]+"'"
+
+            return sx+" )\n"+sy+" )\n\n"+sxlabels+"\n"+sylabels+" )\n"
+            
+        
         
         else: return self.autoscript_custom()
 
