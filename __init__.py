@@ -11,6 +11,8 @@ _sys.excepthook = _traceback.print_exception
 import warnings as _warnings
 _warnings.simplefilter("ignore")
 
+_qtapp = None
+
 try: 
     import pyqtgraph    as _pyqtgraph
     _qtc = _pyqtgraph.Qt.QtCore
@@ -27,7 +29,8 @@ except:
     _qtc = None
     _qt  = None
     _qtw = None
-    
+
+if _qtapp is not None: _qtapp.setStyle('Fusion')
 
 from . import _settings
 settings = _settings.settings()
