@@ -1075,36 +1075,37 @@ class Label(BaseObject):
 
 
 class NumberBox(BaseObject):
+    """
+    Simplified number box with spinners. This is pyqtgraph's SpinBox().
+    Extra keyword arguments are sent to the SpinBox.
 
+    Parameters
+    ----------
+    value=0
+        Initial value
+    step=1
+        Step size
+    bounds=(None,None)
+        Min and max values
+    int=False
+        Force the value to be an integer if True
+    
+    Some Common Keyword Arguments
+    -----------------------------
+    suffix=None    
+        String value for units to display
+    siPrefix=False
+        True to add a prefix on units
+    dec=False
+        True means increments grow with the size of the number.
+    minStep=None
+        Minimum step when dec is True
+    decimals    
+        Number of decimals to display
+    """
+    
     def __init__(self, value=0, step=1, bounds=(None,None), int=False, **kwargs):
-        """
-        Simplified number box with spinners. This is pyqtgraph's SpinBox().
-        Extra keyword arguments are sent to the SpinBox.
-
-        Parameters
-        ----------
-        value=0
-            Initial value
-        step=1
-            Step size
-        bounds=(None,None)
-            Min and max values
-        int=False
-            Force the value to be an integer if True
         
-        Some Common Keyword Arguments
-        -----------------------------
-        suffix=None    
-            String value for units to display
-        siPrefix=False
-            True to add a prefix on units
-        dec=False
-            True means increments grow with the size of the number.
-        minStep=None
-            Minimum step when dec is True
-        decimals    
-            Number of decimals to display
-        """
 
         # pyqtgraph spinbox
         self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds,
