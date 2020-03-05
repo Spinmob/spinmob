@@ -3012,13 +3012,16 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         return "To use the 'Custom Autoscript' option, you must overwrite the function 'self.autoscript_custom' with your own (which must return a valid python script string)."
 
+    # Globals to help execute the plot script
+    plot_script_globals = dict();
+
     def plot(self):
         """
         Updates the plot according to the script and internal data.
         """
-
+        
         # if we're disabled or have no data columns, clear everything!
-        if not self.button_enabled.is_checked() or len(self) == 0:
+        if not self.button_enabled.is_checked():
             self._set_number_of_plots([],[])
             return self
 
@@ -3035,10 +3038,11 @@ class DataboxPlot(_d.databox, GridLayout):
             g.update(dict(d=self, ex=None, ey=None))
             g.update(dict(xlabels='x', ylabels='y'))
             g.update(dict(spinmob=_spinmob, sm=_spinmob, s=_spinmob, _s=_spinmob))
-
+            g.update(self.plot_script_globals)
+            
             # run the script.
             exec(self.script.get_text(), g)
-
+            
             # x & y should now be data arrays, lists of data arrays or Nones
             x = g['x']
             y = g['y']
