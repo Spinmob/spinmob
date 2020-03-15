@@ -666,9 +666,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     xshift=0, yshift=0  
         Progressive shifts on the data, to make waterfall plots
     xshift_every=1      
-        Perform the progressive shift every 1 or n'th line.
+        Perform the progressive shift every 1 or n'th line. Set to 0 or False
+        to shift all the curves by the same amount.
     yshift_every=1      
-        perform the progressive shift every 1 or n'th line.
+        perform the progressive shift every 1 or n'th line. Set to 0 or False
+        to shift all the curves by the same amount.
     style=None            
         style cycle object.
     clear=True          
@@ -732,8 +734,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
             l = str(n)+": "+str(label[n])
         
         # calculate the x an y progressive shifts
-        dx = xshift*(n/xshift_every)
-        dy = yshift*(n/yshift_every)
+        if xshift_every: dx = xshift*(n/xshift_every)
+        else:            dx = xshift
+        
+        if yshift_every: dy = yshift*(n/yshift_every)
+        else:            dy = yshift
         
         # if we're supposed to coarsen the data, do so.
         x  = _fun.coarsen_array(xdata[n],  coarsen)
