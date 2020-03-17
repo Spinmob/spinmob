@@ -1083,7 +1083,7 @@ class databox:
     
                 
 
-    def pop_column(self, ckey):
+    def pop_column(self, ckey, ignore_error=False):
         """
         This will remove and return the data in the specified column.
 
@@ -1093,17 +1093,19 @@ class databox:
         # try the integer approach first to allow negative values
         if type(ckey) is not str:
             return self.columns.pop(self.ckeys.pop(ckey))
-        else:
+        
+        # Otherwise we assume it's a string
+        elif ckey in self.ckeys:
+            
             # find the key integer and pop it
             ckey = self.ckeys.index(ckey)
-
-            # if we didn't find the column, quit
-            if ckey < 0:
-                print("Column does not exist (yes, we looked).")
-                return
-
-            # pop it!
             return self.columns.pop(self.ckeys.pop(ckey))
+    
+        # Column doesn't exist!    
+        elif not ignore_error:
+        
+            print("Column does not exist (yes, we looked).")
+            return
 
     def insert_column(self, data_array, ckey='temp', index=None):
         """

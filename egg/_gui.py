@@ -2568,25 +2568,73 @@ class DataboxPlot(_d.databox, GridLayout):
     ----------
     file_type="*.dat"
         What type of file to use for dialogs and saving.
+    
     autosettings_path=None
         autosettings_path=None means do not automatically save the configuration
         of buttons / controls / script etc. Setting this to a path will cause
         DataboxPlot to automatically save / load the settings. Note you will
         need to specify a different path for each DataboxPlot instance.
+    
     autoscript=1
         Sets the default autoscript entry in the combobox. Set to 0 for the 
         manual script, and 4 for the custom autoscript, which can be 
         defined by overwriting the function self.autoscript_custom, which 
         needs only return a valid script string.
+    
     name=None
         Stored in self.name for your purposes.
+    
+    styles=[]
+        Optional list of dictionaries defining the styles, one for each plotted
+        data set. Stored as self.styles (which you can later set again), each 
+        dictionary is used to send keyword arguments as PlotDataItem(**styles[n]) 
+        for the n'th data set. Note these are the same keyword arguments one 
+        can supply to pyqtgraph's plot() function. See pyqtgraph examples, e.g.,
+          
+        import pyqtgraph.examples; pyqtgraph.examples.run()
+            
+        or http://www.pyqtgraph.org/documentation/plotting.html
+        
+        Typical example: styles = [dict(pen=(0,1)), dict(pen=None, symbol='o')]
+            
+    **kwargs are sent to the underlying databox
 
     Note checking the "Auto-Save" button does not result in the data being automatically
     saved until you explicitly call self.autosave() (which does nothing
     unless auto-saving is enabled).
+    
+    About Plot Scripts
+    ------------------
+    Between the top controls and the plot region is a text box in which you can
+    define an arbitrary python plot script (push the "Script" button to toggle 
+    its visibility). The job of this script is minimally to define x and y.
+    These can both be arrays of data or lists of arrays of data to plot. You may
+    also specify None for one of them. You can also similarly (optionally) 
+    define error bars with ex and ey, xlabels, and ylabels. Once you have 
+    stored some columns of data in this object, try selecting the different
+    options in the combo box to see example / common scripts, or select "Edit" 
+    to create your own.
+    
+    The script's namespace includes: all of numpy (sin, cos, sqrt, array, etc), 
+    all of scipy.special (erf, erfc, etc), d=self, styles=self.styles, 
+    sm=s=_s=spinmob, and everything in self.plot_script_globals. 
+    
+    Optional additional globals can be defined by setting
+    self.plot_script_globals to a dictionary of your choice. For example,
+    self.plot_script_globals = dict(d2=self.my_other_databox) will expose
+    self.my_other_databox to the script as d2.
+    
+    The script is executed by either self.plot() or when you click the
+    "Try it!" button. If there is an error, the script will turn pink and the 
+    error will be printed to the console, but this is a "safe" crash and will 
+    not affect the flow of the program otherwise. 
+    
+    Importantly, this script will NOT affect the underlying data unless you 
+    use it to actually modify the variable d, e.g., d[0] = d[0]+3.
+
     """
     
-    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, name=None, **kwargs):
+    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, name=None, styles=[], **kwargs):
 
         self.name = name
         
@@ -2651,6 +2699,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # holds the curves and plot widgets for the data, and the buttons
         self._curves      = []
         self._errors      = []
+        self.styles       = [] # List of dictionaries to send to PlotDataItem's
         self.plot_widgets = []
         self.ROIs         = []
 
@@ -3035,7 +3084,7 @@ class DataboxPlot(_d.databox, GridLayout):
             # get globals for sin, cos etc
             g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
             g.update(_scipy_special.__dict__, special=_scipy_special)
-            g.update(dict(d=self, ex=None, ey=None))
+            g.update(dict(d=self, ex=None, ey=None, styles=self.styles))
             g.update(dict(xlabels='x', ylabels='y'))
             g.update(dict(spinmob=_spinmob, sm=_spinmob, s=_spinmob, _s=_spinmob))
             g.update(self.plot_script_globals)
@@ -3197,8 +3246,14 @@ class DataboxPlot(_d.databox, GridLayout):
         while len(self._errors): self._errors.pop()
         
         # Create the new curves and errors
-        for i in range(len(y)): 
-            self._curves.append(_g.PlotCurveItem(pen=(i,len(y))))
+        for i in range(len(y)):
+            
+            # Default to the user-supplied self.styles, if they exist.
+            if self.styles and i < len(self.styles): kw = self.styles[i]
+            else:                                    kw = dict(pen=(i,len(y)))
+            
+            # Append the curve
+            self._curves.append(_g.PlotDataItem(**kw))
             if ey[i] is None: 
                 self._errors.append(None)
             else:             
