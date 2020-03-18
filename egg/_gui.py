@@ -2568,9 +2568,9 @@ class TreeDictionary(BaseObject):
 
 class DataboxPlot(_d.databox, GridLayout):
     """
-    A collection of common controls and functionality for plotting, saving, and
-    loading data. This object inherits all databox functionality and adds
-    a gui to the mix.
+    This object is a spinmob databox plus a collection of common controls and 
+    functionality for plotting, saving, loading, and manipulating data on the
+    fly.
 
     ROIs for each plot can be stored in self.ROIs as a list (sub-lists allowed)
 
@@ -2620,7 +2620,7 @@ class DataboxPlot(_d.databox, GridLayout):
     its visibility). The job of this script is minimally to define x and y.
     These can both be arrays of data or lists of arrays of data to plot. You may
     also specify None for one of them. You can also similarly (optionally) 
-    define error bars with ey, xlabels, and ylabels. Once you have 
+    define error bars with ey, xlabels, ylabels, and styles. Once you have 
     stored some columns of data in this object, try selecting the different
     options in the combo box to see example / common scripts, or select "Edit" 
     to create your own.
