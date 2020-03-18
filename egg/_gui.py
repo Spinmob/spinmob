@@ -2107,7 +2107,9 @@ class TreeDictionary(BaseObject):
             The key of the leaf. It should be a string of the form
             "branch1/branch2/parametername" and will be nested as indicated.
         value=42.0
-            Value of the leaf.
+            Value of the leaf. If nothing else is specified, the parameter
+            will be assumed to be the type of the value, so specifying 0 will
+            result in an int, 0.0 will be a float, [] will be a list, etc.
         
         Common Keyword Arguments
         ------------------------
@@ -2117,8 +2119,11 @@ class TreeDictionary(BaseObject):
             a nice shortcut for floats, ints, strings, etc. 
             If it doesn't work, just specify the type manually (see below).
         values
-            Not used by default. Only relevant for 'list' type, and should then
-            be a list of possible values.
+            Not used by default. Only relevant for type='list', or if you simply
+            specified a list for this keyword argument, and should then
+            be a list of possible values. If you go this route, you can use
+            the value argument above to specify which item is selected by
+            default.
         step=1         
             Step size of incrementing numbers
         dec=False
@@ -2139,9 +2144,14 @@ class TreeDictionary(BaseObject):
         """
 
         # update the default kwargs
-        other_kwargs = dict(type=None)
-        other_kwargs.update(kwargs)
+        other_kwargs = dict(type=None) # Set type=None by default
+        other_kwargs.update(kwargs)    # Slap on the ones we specified
         
+        # Special case: we send a list to value => list
+        if type(value)==list: 
+            other_kwargs['values'] = value
+            value = 0
+            
         # Auto typing
         if 'values' in other_kwargs: other_kwargs['type'] = 'list'
         elif other_kwargs['type'] == None: other_kwargs['type'] = type(value).__name__
@@ -2610,7 +2620,7 @@ class DataboxPlot(_d.databox, GridLayout):
     its visibility). The job of this script is minimally to define x and y.
     These can both be arrays of data or lists of arrays of data to plot. You may
     also specify None for one of them. You can also similarly (optionally) 
-    define error bars with ex and ey, xlabels, and ylabels. Once you have 
+    define error bars with ey, xlabels, and ylabels. Once you have 
     stored some columns of data in this object, try selecting the different
     options in the combo box to see example / common scripts, or select "Edit" 
     to create your own.
@@ -2672,7 +2682,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # script grid
         self.button_save_script = self.grid_script.place_object(Button("Save").set_width(40), 2,1)
         self.button_load_script = self.grid_script.place_object(Button("Load").set_width(40), 2,2)
-        self.button_plot  = self.grid_script.place_object(Button("Try it!").set_width(40), 2,3)
+        self.button_plot  = self.grid_script.place_object(Button("Plot!").set_width(40), 2,3)
         self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
 
@@ -2697,11 +2707,12 @@ class DataboxPlot(_d.databox, GridLayout):
         self._autosettings_path = autosettings_path
 
         # holds the curves and plot widgets for the data, and the buttons
-        self._curves      = []
-        self._errors      = []
-        self.styles       = [] # List of dictionaries to send to PlotDataItem's
-        self.plot_widgets = []
-        self.ROIs         = []
+        self._curves          = []
+        self._errors          = []
+        self.styles           = []   # List of dictionaries to send to PlotDataItem's
+        self._previous_styles = None # Used to determine if a rebuild is necessary
+        self.plot_widgets     = []
+        self.ROIs             = []
 
         ##### Functionality of buttons etc...
 
@@ -2735,11 +2746,9 @@ class DataboxPlot(_d.databox, GridLayout):
         self.load_gui_settings()
         self._synchronize_controls()
         
-        
     def __repr__(self):
         s = "<DataboxPlot instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
         return s
-
 
     def _button_enabled_clicked(self, *a):  self.save_gui_settings()
     def _number_file_changed(self, *a):     self.save_gui_settings()
@@ -3105,6 +3114,9 @@ class DataboxPlot(_d.databox, GridLayout):
             # xlabels and ylabels should be strings or lists of strings
             xlabels = g['xlabels']
             ylabels = g['ylabels']
+            
+            # Get the styles
+            self.styles = g['styles']
 
             # make sure we have exactly the right number of plots
             self._set_number_of_plots(y, ey)
@@ -3144,6 +3156,10 @@ class DataboxPlot(_d.databox, GridLayout):
             # unpink the script, since it seems to have worked
             self.script          .set_colors('black','white')
             self.button_script   .set_colors('black', None)
+            
+            # Remember the style of this plot
+            if self.styles: self._previous_styles = list(self.styles)
+            else:           self._previous_styles = self.styles
             
         # otherwise, look angry and don't autosave
         except: 
@@ -3197,6 +3213,9 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         Checks if curves and plots all match the data and error.
         """
+        # First check if the styles have changed
+        if self.styles != self._previous_styles: return False
+        
         N = len(y)
         
         # We should always have a curve and an error bar for each data set.
@@ -3249,8 +3268,10 @@ class DataboxPlot(_d.databox, GridLayout):
         for i in range(len(y)):
             
             # Default to the user-supplied self.styles, if they exist.
-            if self.styles and i < len(self.styles): kw = self.styles[i]
-            else:                                    kw = dict(pen=(i,len(y)))
+            if self.styles and i < len(self.styles) and self.styles[i]: 
+                kw = self.styles[i]
+            else: 
+                kw = dict(pen=(i,len(y)))
             
             # Append the curve
             self._curves.append(_g.PlotDataItem(**kw))
