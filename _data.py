@@ -1721,10 +1721,32 @@ class fitter():
 
         print(s)
 
-    def __getitem__(self, key):
-        if key in self._pnames: return self._pguess   [self._pnames.index(key)]
-        if key in self._cnames: return self._constants[self._cnames.index(key)]
+    def get(self, key):
+        """
+        Returns (in order of availability):
+            1. The fit parameter of the specified name (if it exists).
+            2. The guess parameter of the specified name (if it exists).
+            3. The constant parameter of the specified name (if it exists).
+            4. The setting of the specified key, e.g. 'xmin'.
+        
+        Parameters
+        ----------
+        key
+            String key, e.g. 'a' or 'coarsen'.
+        """
+        fit_parameters = self.get_fit_parameters()
+        if fit_parameters and key in self._pnames: 
+            return fit_parameters[0][self._pnames.index(key)]
+        
+        if key in self._pnames: 
+            return self._pguess   [self._pnames.index(key)]
+        
+        if key in self._cnames: 
+            return self._constants[self._cnames.index(key)]
+        
         return self._settings[key]
+
+    __getitem__ = get
 
     def _error(self, message): 
         raise BaseException(str(message))
