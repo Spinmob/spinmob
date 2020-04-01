@@ -7,6 +7,247 @@ import pickle  as _cPickle
 
 
 
+class averager:
+    """
+    This object will keep a running average of any "measured" quantity 
+    (i.e. a single value drawn from a fluctuating source) along with a running 
+    estimate of the standard deviation for individual measurements, and the
+    standard error on the mean, as estimated from the supplied measurements 
+    themselves.
+    
+    This object is particularly useful when averaging together large data sets, 
+    such as long traces from a triggered oscilloscope or a series of power 
+    spectral densities. The algorithm requires a fixed quantity of memory 
+    regardless of how many averages one takes. 
+    
+    As with any averaging technique, make sure each added measurement can be 
+    added to the running total without succumbing to round-off errors. This 
+    is especially important for low bit depths. For example, 16-bit floating 
+    point data runs into roundoff errors after only 3 decimal places (!), 
+    meaning you can only effectively include up to 1024 data sets in a 
+    calculation of the mean, with artifacts appearing significantly sooner 
+    than this. 
+    
+    This averager also has the option to calculate an exponential moving average
+    (i.e., a low-pass filter) by specifying lowpass_frames > 0. This also provides
+    an estimate of the moving variance, which is systematically underestimated
+    as lowpass_frames is made smaller. At 2, for example, the variance is
+    underestimated by ~10%, and at 1, the variance becomes zero.
+    
+    Arguments
+    ---------
+    name='a'
+        Name of the data set.
+    
+    lowpass_frames=0
+        If zero, averager will compute the average of all supplied data sets. 
+        If positive, averager will perform a DSP low-pass on the supplied data
+        sets with lowpass_frames as the time constant (units of data sets). 
+        Note this algorithm systematically underestimates the variance as
+        lowpass_frames approaches 1, and is within 10% of the true value for
+        lowpass_frames > 2.                                                               
+     
+    precision=numpy.float64
+        Numpy dtype used in internal calculations. numpy.float32 is usually 
+        sufficient, but numpy.float64 is safer if you are not strapped for 
+        memory. Major precision issues seem to first appear as numpy.nan's 
+        appearing in the calculation of self.variance_mean and 
+        self.variance_sample, due to round off error on the 
+        subtraction prior to the square root.
+    
+    ignore_nan=True
+        If True, sets all NaN's appearing in the calculation to zero.
+    
+    Internal Quantities
+    -------------------
+    self.lowpass_frames
+        Time constant for the DSP low-pass (see above).
+
+    self.ignore_nan
+        Whether to set NaN's appearing in calculations to zero.
+        
+    self.mean
+        Running mean value of all supplied measurements.
+        
+    self.mean_squared
+        Running mean^2 value of all supplied measurements.
+    
+    self.name
+        Name of the data set.
+    
+    self.N
+        Number of measurements that have been included thus far.
+    
+    self.precision
+        Numpy dtype used in internal calculations. 
+        
+    self.variance_mean
+        Variance about the mean estimated from the supplied measurements.
+        Assumes all measurements are independently drawn from the same statistical
+        distribution.
+        
+    self.variance_sample
+        Variance on individual measurements. 
+        Assumes all measurements are independently drawn from the same statistical
+        distribution.
+    
+    Methods
+    -------
+    add_measurement(y) 
+        Add a new measurement and update the above quantities.
+    
+    reset()
+        Reset the counter and all quantities to zero.
+    """
+    def __init__(self, name='a', lowpass_frames=0, precision=_n.float64, ignore_nan=True): 
+        
+        # Don't forget to update the _copy method!
+        self.ignore_nan      = ignore_nan
+        self.lowpass_frames  = lowpass_frames
+        self.name            = name
+        self.N               = 0  
+        self.mean            = 0  
+        self.mean_squared    = 0
+        self.precision       = precision
+        self.variance_mean   = 0  
+        self.variance_sample = 0
+        
+    def __repr__(self):
+        return '<tools.averager '+repr(self.name)+' N='+str(self.N)+'>'
+    
+    def _copy(self):
+        """
+        Creates and returns a copy of this instance.
+        """
+        # Make a new instance
+        a = type(self)()
+        a.ignore_nan      = self.ignore_nan
+        a.lowpass_frames  = self.lowpass_frames
+        a.name            = self.name
+        a.N               = self.N
+        a.mean            = self.mean
+        a.mean_squared    = self.mean_squared
+        a.precision       = self.precision
+        a.variance_mean   = self.variance_mean
+        a.variance_sample = self.variance_sample
+        return a
+    
+    def add(self, y):
+        """
+        Add a new measurement to the pool, updating the counter, means, and 
+        standard deviations. Note this modifies the instance and returns it.
+        
+        We use a modified Welford's online algorithm because it's more stable against
+        catastrophic cancellation.
+        
+        Parameters
+        ----------
+        y:
+            Number, numpy array, or other object (anything that can be summed
+            multiplied and divided in a meaningful way) representing a single 
+            measurement. This will be automatically converted to the format 
+            specified by self.precision.
+        """
+        
+        # Make sure the shape of y matches with the existing data, or reset
+        if not _n.shape(y) == _n.shape(self.mean): self.reset()
+
+        # Convert to the desired precision.
+        y = self.precision(y)
+
+        # Update the counter
+        self.N += 1
+        
+        # if it is our first data set, initialize.
+        if self.N == 1:
+            self.mean            = y
+            self.mean_squared    = y*y
+            
+            if _s.fun.is_iterable(y):
+                self.variance_mean   = _n.zeros_like(y)
+                self.variance_sample = _n.zeros_like(y)
+            else:
+                self.variance_mean   = 0
+                self.variance_sample = 0
+        
+        # If we're doing a cumulative mean and variance N>1
+        elif not self.lowpass_frames:
+            N = self.N
+            
+            # Remember the previous mean
+            old_mean         = self.mean
+            old_mean_squared = self.mean_squared
+            
+            # Get the new mean
+            self.mean         += (y   - self.mean        ) / N
+            self.mean_squared += (y*y - self.mean_squared) / N
+            
+            # Calculate the variances
+            self.variance_sample = (self.mean_squared - self.mean*self.mean)*self.N/(self.N-1)
+            #self.variance_sample = self.variance_sample*(N-2)/(N-1) + (y-old_mean)*(y-self.mean)/(N-1)
+            self.variance_mean   = self.variance_sample/self.N
+            
+        # Otherwise we're doing DSP low-pass N>1
+        else:
+            
+            # Time constant shorthand (with a hack to make the initial variance more responsive)
+            tau   = min(self.lowpass_frames, self.N)
+            kappa = 1.0/tau
+            
+            # Remember the previous value
+            old_mean = self.mean
+            
+            # Update the mean & variance_sample with DSP low-pass
+            self.mean         = kappa*y   + (1-kappa)*old_mean
+            self.mean_squared = kappa*y*y + (1-kappa)*self.mean_squared
+            
+            # Get the standard error on the mean
+            ek  = _n.exp(kappa)
+            emk = 1/ek
+            self.variance_sample = 0.5*(1+ek)*(self.mean_squared - self.mean*self.mean)
+            self.variance_mean = self.variance_sample * (1-_n.exp(-kappa))**2 / (1-_n.exp(-2*kappa))
+            
+        
+        # If we are ignoring the nan's, set them to zero.
+        if self.ignore_nan: 
+            if type(self.variance_sample) == _n.ndarray: _n.nan_to_num(self.variance_sample, copy=False)
+            else:   self.variance_sample = _n.nan_to_num(self.variance_sample)
+            
+            if type(self.variance_mean) == _n.ndarray: _n.nan_to_num(self.variance_mean, copy=False)
+            else:   self.variance_mean = _n.nan_to_num(self.variance_mean)
+            
+        # Otherwise, print a warning but keep moving.
+        elif _n.isnan(self.variance_sample).any() or _n.isnan(self.variance_mean).any(): 
+            print("WARNING: "+repr(self)+" Some elements of self.variance_mean or self.variance_sample are NaN.")
+        
+        return self
+    
+    def __add__(self, y):
+        """
+        Creates a copy of this instance, adds runs add(y) on the copy, and 
+        returns the copy.
+        
+        Parameters
+        ----------
+        y:
+            To be sent to the copy's add() function.
+        """
+        c = self._copy()
+        return c.add(y)
+    
+    def reset(self): 
+        """
+        Resets the average values and counter to zero.
+        """
+        self.__init__(name           = self.name,
+                      lowpass_frames = self.lowpass_frames,
+                      precision      = self.precision, 
+                      ignore_nan     = self.ignore_nan)
+        return self
+        
+
+
+
 def coarsen_array(a, level=2, method='mean'):
     """
     Returns a coarsened (binned) version of the data. Currently supports
@@ -1495,3 +1736,9 @@ def write_to_file(path, string):
     file = open(path, 'w')
     file.write(string)
     file.close()
+    
+    
+if __name__ == '__main__':  
+    import spinmob
+    runfile(spinmob.__path__[0] + '/_tests/test__functions.py')
+     

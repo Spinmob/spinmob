@@ -11,7 +11,9 @@ import textwrap       as _textwrap
 import spinmob        as _s
 import time           as _time
 
-
+# Things that belong here too
+from . import _functions
+averager = _functions.averager
 
 
 
@@ -64,6 +66,7 @@ class databox:
         # this keeps the dictionaries from getting all jumbled with each other
         self.clear_columns()
         self.clear_headers()
+        self.clear_averagers()
 
         self.debug     = debug
         self.delimiter = delimiter
@@ -1170,13 +1173,20 @@ class databox:
         self.hkeys    = []
         self.headers  = {}
         return self
+    
+    def clear_averagers(self):
+        """
+        Empties the dictionary self.averagers.
+        """
+        self.averagers = dict()
 
     def clear(self):
         """
-        Removes all headers and columns from the databox.
+        Removes all headers, columns, and averagers from the databox.
         """
         self.clear_columns()
         self.clear_headers()
+        self.clear_averagers()
         return self
 
     def rename_header(self, old_name, new_name):
@@ -1361,6 +1371,80 @@ class databox:
                 print()
                 return None
 
+    def add_to_column_average(self, ckey, data_array, std_mean=True, lowpass_frames=0, precision=_n.float64, ignore_nan=True):
+        """
+        Adds the supplied data_array to the averager data pool for column
+        'ckey'. Averagers (spinmob.fun.averager) used for these calculations 
+        will be stored in the dictionary self.averagers under the specified ckey. 
+        After pushing in the new data and recalculating, this function transfers
+        the averaged data to new columns, and sends all the other averager 
+        information to the header.
+        
+        Parameters
+        ----------
+        ckey
+            Destination column key or integer.
+        data_array
+            Array of data. Must match the shape of the existing column.
+        std_mean=True
+            Whether to include the std_mean column. If True, an additional 
+            column will be inserted after that of ckey, with the name ckey+'.std_mean'.
+        lowpass_frames=0
+            Time constant (number of frames) for the DSP low pass. See 
+            spinmob.fun.averager for details.
+        precision=numpy.float64
+            Numpy dtype used in internal calculations. 
+        ignore_nan=True
+            Whether to set NaN's appearing in calculations to zero.
+        """
+        # First get the ckey string
+        if not type(ckey) == str: ckey = self.ckeys[ckey]
+        
+        # If the averager does not exist
+        if ckey not in self.averagers:
+            self.averagers[ckey] = averager(name=ckey)
+        
+        # Update the averaging method
+        x = self.averagers[ckey]
+        x.lowpass_frames      = lowpass_frames
+        x.precision    = precision
+        x.ignore_nan   = ignore_nan
+
+        # Add the new data set
+        x.add(data_array)
+        
+        # Update (or create) the mean column
+        self[ckey] = x.mean
+        
+        # If we're including the std_mean
+        if std_mean:
+            
+            # Get the std_mean key
+            skey = ckey+'.std_mean'
+            
+            # Estimate the standard error on the mean
+            sigma = x.variance_mean**0.5
+            
+            # Make sure the column exists just after that of ckey
+            if skey in self.ckeys: self[skey] = sigma
+            else:                  self.insert_column(sigma, skey, self.ckeys.index(ckey)+1)
+        
+        # Update the header information
+        if self.name == None: name = ''
+        else:                 name = '/'+self.name+'/'
+        self.insert_header(name + ckey+'.ignore_nan',     self.averagers[ckey].ignore_nan)
+        self.insert_header(name + ckey+'.lowpass_frames', self.averagers[ckey].lowpass_frames)
+        self.insert_header(name + ckey+'.name',           self.averagers[ckey].name)
+        self.insert_header(name + ckey+'.N',              self.averagers[ckey].N)
+        self.insert_header(name + ckey+'.precision',      self.averagers[ckey].precision)
+        
+        return self
+    
+    def reset_all_averagers(self, *a, **k):
+        """
+        Resets all averagers. Arguments and keyword arguments are not used.
+        """
+        for ckey in self.averagers: self.averagers[ckey].reset()
 
 
 

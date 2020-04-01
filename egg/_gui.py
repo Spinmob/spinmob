@@ -2,12 +2,13 @@ import time     as _t
 import os       as _os
 import numpy    as _n
 import scipy.special as _scipy_special
-from sys import platform as _platform
+
+import sys as _sys
 import traceback as _traceback
 _p = _traceback.print_last
 
-import spinmob as _spinmob
-_d = _spinmob.data
+import spinmob as _s
+_d = _s.data
 
 # import pyqtgraph and create the App.
 import pyqtgraph as _g
@@ -23,7 +24,7 @@ except: import _temporary_fixes
 _a = _g.mkQApp()
 
 # set the font if we're in linux
-if _platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
+if _sys.platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
 
 _defaults = dict(margins=(10,10,10,10))
 
@@ -65,6 +66,40 @@ class BaseObject(object):
         # common signals
         return
     
+    def hide(self, opposite=False):
+        """
+        Hides the widget.
+        
+        Parameters
+        ----------
+        opposite=False
+            If True, do the opposite (show the widget).
+        """
+        self._widget.hide()
+        
+    def show(self, opposite=False):
+        """
+        Shows the widget.
+        
+        Parameters
+        ----------
+        opposite=False
+            If True, do the opposite (show the widget).
+        """
+        self._widget.show()
+    
+    def set_hidden(self, hidden=True):
+        """
+        Hides or shows the widget.
+        
+        Parameters
+        ----------
+        hidden=True
+            Whether it should be hidden.
+        """
+        if hidden: self.hide()
+        else:      self.show()
+        
     def set_colors(self, text='black', background=None):
         """
         Sets the colors of the text area.
@@ -93,8 +128,6 @@ class BaseObject(object):
         self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+style+"}")
         self._style = style
         return self
-        
-        
 
     def set_width(self, width):
         """
@@ -842,7 +875,7 @@ class Docker(Window):
         # set margins if necessary
         if margins==False:  self._layout.setContentsMargins(0,0,0,0)
         elif margins==True: self._layout.setContentsMargins(10,10,10,10)
-        elif _spinmob.fun.is_iterable(margins): self._layout.setContentsMargins(*margins)
+        elif _s.fun.is_iterable(margins): self._layout.setContentsMargins(*margins)
         
         # Set the initial geometry
         self.set_size(size)
@@ -2682,12 +2715,14 @@ class DataboxPlot(_d.databox, GridLayout):
         # script grid
         self.button_save_script = self.grid_script.place_object(Button("Save").set_width(40), 2,1)
         self.button_load_script = self.grid_script.place_object(Button("Load").set_width(40), 2,2)
-        self.button_plot  = self.grid_script.place_object(Button("Plot!").set_width(40), 2,3)
-        self.script       = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
+        self.button_plot        = self.grid_script.place_object(Button("Plot!").set_width(40), 2,3)
+        
+        self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
-
-        # Format the script font
         self.script.set_style('font-family:courier; font-size:12;')
+        self._label_script_error = self.grid_script.place_object(Label('ERRORS GO HERE'), 1,4, column_span=2, alignment=0)
+        self._label_script_error.hide()
+
 
         # make sure the plot fills up the most space
         self.set_row_stretch(2)
@@ -2758,7 +2793,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         When someone wants to save their script.
         """
-        path = _spinmob.dialogs.save('*.py', text='Save script to...', force_extension='*.py', default_directory='DataboxPlot_scripts')
+        path = _s.dialogs.save('*.py', text='Save script to...', force_extension='*.py', default_directory='DataboxPlot_scripts')
         if not path: return
         
         f = open(path, 'w')
@@ -2769,7 +2804,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         When someone wants to load their script.
         """
-        path = _spinmob.dialogs.load('*.py', default_directory='DataboxPlot_scripts')
+        path = _s.dialogs.load('*.py', default_directory='DataboxPlot_scripts')
         if not path: return
         
         self.load_script(path)
@@ -2834,7 +2869,7 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         if checked:
             # get the path from the user
-            path = _spinmob.dialogs.save(filters=self.file_type, force_extension=self.file_type)
+            path = _s.dialogs.save(filters=self.file_type, force_extension=self.file_type)
 
             # abort if necessary
             if not path:
@@ -3095,7 +3130,7 @@ class DataboxPlot(_d.databox, GridLayout):
             g.update(_scipy_special.__dict__, special=_scipy_special)
             g.update(dict(d=self, ex=None, ey=None, styles=self.styles))
             g.update(dict(xlabels='x', ylabels='y'))
-            g.update(dict(spinmob=_spinmob, sm=_spinmob, s=_spinmob, _s=_spinmob))
+            g.update(dict(spinmob=_s, sm=_s, s=_s, _s=_s))
             g.update(self.plot_script_globals)
             
             # run the script.
@@ -3108,8 +3143,8 @@ class DataboxPlot(_d.databox, GridLayout):
             ey = g['ey'] # Use spinmob._plotting_mess
 
             # make everything the right shape
-            x, y = _spinmob._plotting_mess._match_data_sets(x,y)
-            ey   = _spinmob._plotting_mess._match_error_to_data_set(y,ey)
+            x, y = _s._plotting_mess._match_data_sets(x,y)
+            ey   = _s._plotting_mess._match_error_to_data_set(y,ey)
 
             # xlabels and ylabels should be strings or lists of strings
             xlabels = g['xlabels']
@@ -3161,12 +3196,19 @@ class DataboxPlot(_d.databox, GridLayout):
             if self.styles: self._previous_styles = list(self.styles)
             else:           self._previous_styles = self.styles
             
+            # Clear the error if present
+            self._label_script_error.hide()
+            
         # otherwise, look angry and don't autosave
-        except: 
-            _traceback.print_exc()
+        except Exception as e:
+            self._e = e
             self.script.set_colors('black','pink')
             self.button_script.set_colors('black', 'pink')
             self.button_script.set_checked()
+            
+            # Show the error
+            self._label_script_error.show()
+            self._label_script_error.set_text('OOP! '+ type(e).__name__ + ": '" + str(e.args[0]) + "'")
             
         return self
 
@@ -3309,7 +3351,7 @@ class DataboxPlot(_d.databox, GridLayout):
                 # get the ROIs for this plot
                 ROIs = self.ROIs[i]
 
-                if not _spinmob.fun.is_iterable(ROIs): ROIs = [ROIs]
+                if not _s.fun.is_iterable(ROIs): ROIs = [ROIs]
 
                 # loop over the ROIs for this plot
                 for ROI in ROIs:
@@ -3348,6 +3390,338 @@ class DataboxPlot(_d.databox, GridLayout):
             elif not self.button_link_x.is_checked() and not b.linkedView(b.XAxis) == None:
                 b.linkView(b.XAxis, None)
 
+
+class DataboxProcessor(Window):
+    """
+    Object for performing common processes on data from a databox or DataboxPlot 
+    object (or any other source). Includes a GUI for taking power spectral 
+    densities, running averages, error bar estimates, and more.
+    
+    Parameters
+    ----------
+    name='processor'
+        Unique identifier used for settings and stuff. This takes the place of
+        autosettings_path because this object comprises several egg objects.
+    databox_source
+        Databox (or DataboxPlot) serving as the default source when calling
+        self.run().
+    margins=False
+        Margins around the window's inside edges. Can be True, False, or a 4-length tuple.
+    """
+    
+    def __init__(self, name='processor', databox_source=None, file_type='*.dp', margins=False):
+        
+        # Run the window init
+        Window.__init__(self, 'Databox Processor', autosettings_path=name+'.window', margins=margins)
+        
+        # Store variables and create the window.
+        self.name        = name
+        self._clear_dump = False
+        self.t0          = _t.time()
+        
+        # Source databox for the "do it" button.
+        self.databox_source = databox_source
+        
+        # Add the rows.
+        self.grid_top = self.add(GridLayout(margins=False), alignment=1)
+        self.new_autorow()
+        self.grid_bottom = self.add(GridLayout(margins=False), alignment=0)
+        
+        # Top controls
+        self.button_go    = self.grid_top.add(Button('Run')).set_width(50)
+        self.number_count = self.grid_top.add(NumberBox(int=True))
+        self.button_reset = self.grid_top.add(Button('Reset')).set_width(50)
+        self.label_info   = self.grid_top.add(Label('')).set_colors('red',None)
+        self.label_dump   = self.grid_top.add(Label(''))
+        
+        # Add settings and plotter
+        self.settings   = self.grid_bottom.add(TreeDictionary(name+'.settings', name), 0,0).set_width(210)
+        self.plot       = self.grid_bottom.add(DataboxPlot(file_type, name+'.plot', name=name), 1,0, alignment=0)
+        
+        # Add the PSD settings
+        self.settings.add_parameter('Enabled',      False)
+        self.settings.add_parameter('Coarsen',          0, limits=(0,None))
+        self.settings.add_parameter('PSD',          False)
+        self.settings.add_parameter('PSD/pow2',     False)
+        self.settings.add_parameter('PSD/Window', 'None', values=['hanning', 'None'])
+        self.settings.add_parameter('PSD/Rescale',   True, tip='Whether to rescale the PSD after windowing so that the integrated value is the RMS in the time-domain.')
+        self.settings.add_parameter('PSD/Coarsen',      0, limits=(0,None))
+        self.settings.add_parameter('Average',      False)
+        self.settings.add_parameter('Average/Frames',   0, step=2, tip='Exponential moving average time constant. Set to 0 to include all data in average.')
+        self.settings.add_parameter('Average/Error', False, tip='Whether to estimate the error (.std)')
+        self.settings.add_parameter('Stream',       False)
+        self.settings.add_parameter('Stream/Method', 'mean', values=['max','min','mean','mean+e','std','hkeys'])
+        self.settings.add_parameter('Stream/hkeys', "a, a_std")
+        self.settings.add_parameter('Stream/History', 200, dec=True, limits=(2, None))
+        self.settings.add_parameter('Stream/Dump',  False)
+        
+        # Connect signals
+        self.settings.connect_any_signal_changed(self._reset)
+        self.settings.connect_signal_changed('Stream/Dump', self._stream_dump_changed)
+        self.settings.connect_signal_changed('Stream', self._stream_changed)
+        self.settings.connect_signal_changed('Stream/Method', self._stream_method_changed)
+        self.button_go.signal_clicked.connect(self._button_go_clicked)
+        self.plot.button_clear.signal_clicked.connect(self._reset)
+        self.button_reset.signal_clicked.connect(self._button_reset_clicked)
+        
+        # After loading
+        self.plot.after_load_file = self._after_load_file
+    
+        # Update the visibility of hkeys
+        self._stream_method_changed()
+    
+    def _button_go_clicked(self, *a):
+        self.go()
+    
+    def _button_reset_clicked(self, *a):
+        """
+        This one just resets the counter and kills the averagers, which doesn't 
+        affect the plot zoom.
+        """
+        self.number_count.set_value(0)
+        self.plot.clear_averagers()
+        
+    def _reset(self, *a):
+        
+        # In stream mode, only the clear button should reset it.
+        if not self.settings['Stream']:
+            self.plot.clear()
+            self.plot.averagers = dict()
+            self.number_count.set_value(0)
+            self.t0 = _t.time()
+    
+    def _stream_changed(self, *a):
+        if self.settings['Stream']: self.label_dump.enable()
+        else:                       self.label_dump.disable()
+    
+    def _stream_method_changed(self, *a):
+        """
+        Toggles the visibility of hkeys
+        """
+        if self.settings['Stream/Method'] == 'hkeys':
+            self.settings.show_parameter('Stream/hkeys')
+        else:
+            self.settings.hide_parameter('Stream/hkeys')
+    
+    def _stream_dump_changed(self, *a):
+        """
+        If enabled, bring up a dialog. If disabled, remove the dump file info.
+        """
+        if self.settings['Stream/Dump']:
+            
+            # Get the path
+            path = _s.dialogs.save(
+                    self.plot.file_type, 
+                    'Where should we dump the stream? (WILL DELETE!)', 
+                    force_extension=self.plot.file_type)
+            
+            # Cancel
+            if not type(path) == str: 
+                self.settings['Stream/Dump'] = False
+                return
+            
+            # Remember this is our first time
+            self._clear_dump = True
+            
+            # Store the path
+            self.label_dump.set_text('>>> '+path)
+        
+        else: self.label_dump.set_text('')
+    
+    def _after_load_file(self, d): self.settings.update(d.headers, ignore_errors=True)
+    
+    def run(self, d=None):
+        """
+        Performs the analysis on the data in the supplied (if enabled).
+        
+        Parameters
+        ----------
+        d=None
+            If None, processes self.databox_source. Otherwise must be a databox.
+            If self.databox_source is defined, d temporarily overrides this.
+        """
+        if not self.settings['Enabled']: 
+            self.label_info.set_text('(Disabled)')
+            return self
+        
+        # Get the databox
+        if d == None: d = self.databox_source
+        if d == None:
+            self.label_info.set_text('No databox source to process.')
+            return self
+        
+        self.label_info.set_text('')
+        
+        # FIRST we do all the calculations without touching the plot data
+        
+        # Get the default list of ckeys
+        ckeys = list(d.ckeys)
+        
+        # Coarsen
+        cs = []
+        for n in range(len(d)): cs.append(_s.fun.coarsen_array(d[n], self.settings['Coarsen']))
+        
+        # If we have no columns, quit
+        if len(cs) == 0: 
+            self.label_info.set_text('(no source data)')
+            return self
+        
+        # Now perform the PSD
+        if self.settings['PSD']:
+            
+            # Temporary storage for the power spectral densities (for coding ease)
+            ps = []
+            
+            # Assume the 0th column is time.
+            for n in range(1, len(cs)):
+                f, p = _s.fun.psd(cs[0], cs[n], 
+                                  pow2    = self.settings['PSD/pow2'],
+                                  window  = self.settings['PSD/Window'],
+                                  rescale = self.settings['PSD/Rescale'])
+                if n==1: ps.append(f)
+                ps.append(p)
+            
+            # Coarsen & overwrite the previous result
+            for n in range(len(ps)): cs[n] = _s.fun.coarsen_array(ps[n], self.settings['PSD/Coarsen'])
+            
+            # Update the ckeys, too!
+            for n in range(len(ckeys)): ckeys[n] = 'P'+ckeys[n]
+        
+        # Now we have valid ckeys and column list cs
+        
+        # First transfer the header contents from the source databox
+        self.plot.copy_headers(d)
+        self.settings.send_to_databox_header(self.plot)            
+        
+        # Streaming mode
+        if self.settings['Stream']:
+
+            # If we're dumping, make sure the file exists with the header
+            if self.settings['Stream/Dump']:
+                
+                # Get the path
+                path = self.label_dump.get_text()
+                
+                # If we don't yet have a path for some reason, cancel the dump
+                if len(path) < 5: self.settings['Stream/Dump'] = False
+                
+                # Strip the '>>> '
+                path = path[4:]
+                
+                # If the path does not already exist or we're supposed to clear it
+                # create / overwrite it.
+                if not _os.path.exists(path) or self._clear_dump: 
+    
+                    # This will save all the header info + ckeys
+                    self.plot.save_file(path, force_overwrite=True)
+                    
+                    # Don't do this next time!
+                    self._clear_dump = False
+            
+            # First column is time
+            new_data  = [_t.time()-self.t0]
+            
+            # If we're doing an hkey stream
+            if self.settings['Stream/Method'] == 'hkeys':
+                
+                # We build our own new ckeys because they're not related
+                # to the old column ckeys
+                ckeys = ['t']
+                
+                # Get the new data
+                for hkey in self.settings['Stream/hkeys'].split(','): 
+                    ckeys.append(hkey.strip())
+                    new_data.append(self.plot.h(hkey.strip()))
+                
+            # Some column operation stream method
+            else:
+                
+                # We modify the old column ckeys
+                # Prepend an S for "Stream"
+                for n in range(len(ckeys)): ckeys[n] = 'S'+ckeys[n]
+                
+                # If we also want the standard error on the mean
+                if self.settings['Stream/Method'] == 'mean+e':
+                    for n in range(len(ckeys)): 
+                        ckeys.insert(2*n+1, ckeys[2*n]+'.std_mean')
+                    
+                # Keep the iterator
+                ckeys = ['t'] + ckeys
+                
+                # Standard methods that can be evaluated with numpy's dictionary
+                if self.settings['Stream/Method'] in ['min','max','mean','std']:
+                    for c in cs: 
+                        new_data.append(eval('_n.'+self.settings['Stream/Method']+'(c)', dict(_n=_n, c=c)))
+                
+                # Mean + standard error on the mean
+                elif self.settings['Stream/Method'] == 'mean+e':
+                    for c in cs:
+                        new_data.append(_n.mean(c))
+                        new_data.append(_n.std(c, ddof=1)/_n.sqrt(len(c)))
+                        
+            # Now append this line to the plotter
+            self.plot.append_data_point(new_data, ckeys)
+        
+            # If we're keeping fixed history
+            history = self.settings['Stream/History']
+            if history > 0:
+                while(len(self.plot[0]))>history: self.plot.pop_data_point(0)
+            
+            # Now write it to the file if necessary
+            if self.settings['Stream/Dump']:
+                
+                # Get the delimiter
+                delimiter = self.plot.delimiter
+                if delimiter == None: delimiter = '\t'
+                
+                # Assemble the line
+                line = delimiter.join([str(x) for x in new_data])
+                
+                # Append
+                f = open(path, 'a')
+                f.write(line + '\n')
+                f.close()
+            
+            # Increment the counter
+            self.number_count.increment()
+            
+        # Non-streaming (update columns / averagers) mode.  
+        else:
+            
+            # Explicitly pop all the columns, but don't clear the averagers
+            while len(self.plot): self.plot.pop_column(0)
+        
+            # Always write the first column
+            self.plot[ckeys[0]] = cs[0]
+            
+            # Add the rest of the columns to the pool.
+            for n in range(1, len(cs)):
+                
+                # If we're averaging.
+                if self.settings['Average']:
+                    self.plot.add_to_column_average(
+                            ckeys[n], cs[n], 
+                            std_mean       = self.settings['Average/Error'],
+                            lowpass_frames = self.settings['Average/Frames'],
+                            precision      = _n.float64,
+                            ignore_nan     = True)
+    
+                    # Update the counter on the last step (averagers are defined here)
+                    if n==len(cs)-1: self.number_count.set_value(self.plot.averagers[ckeys[-1]].N)
+            
+                # Not averaging
+                else: 
+                    self.plot[ckeys[n]] = cs[n]
+                    self.number_count.set_value(0)
+
+        # Now dump the updated counter value to the header
+        self.plot.insert_header('/'+self.name+'/Count', self.number_count.get_value())
+        
+        # Plot it, process events
+        self.plot.plot()
+        self.process_events()        
+
+        return self
 
 class DataboxSaveLoad(_d.databox, GridLayout):
 
@@ -3444,18 +3818,11 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 
 
+if __name__ == '__main__': 
+    import spinmob
+    runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
 
-if __name__ == '__main__':
-    w = Window(autosettings_path='pants')
-    a = w.place_object(TabArea())
-    t = a.add_tab()
-    b = t.place_object(Button())
-    w.show()
-    
-    w2 = Window('Window2', autosettings_path='pants2')
-    g = w2.add(GridLayout())
-    w2.place_object(t)
-    w2.show()
+ 
     
    
     

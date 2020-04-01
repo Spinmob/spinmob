@@ -5,6 +5,7 @@ import unittest as _ut
 import shutil   as _sh
 
 import spinmob.egg as _e
+import numpy as _n
 _g = _e.gui
         
 
@@ -39,7 +40,6 @@ class Test_egg(_ut.TestCase):
         import spinmob.egg.example_sweeper as sweeper
         sweeper.d_sweep.load_file(_os.path.join(self.data_path, 'difficult.binary'))
         sweeper.w.show(True)
-        
         
     def test_TreeDictionary(self):
         """
@@ -146,19 +146,54 @@ class Test_egg(_ut.TestCase):
         self.e.load()
         self.assertEqual(self.e['/testname/floaty'], 77)
         
-    def test_DataboxPlot(self):
+    def test_DataboxPlot_DataboxProcessor(self):
         
+        # Create window
         w = _g.Window(autosettings_path='w')
-        p = w.add(_g.DataboxPlot('*.dat','p', autoscript=4), alignment=0)
+        
+        # Create buttons
+        b = w.add(_g.Button('Get Fake Data'))
+        l = w.add(_g.Button('Loop', checkable=True))
+        
+        # Create tab area
+        w.new_autorow()
+        ts = w.add(_g.TabArea(), alignment=0, column_span=10)
+        w.set_column_stretch(4)
+        
+        # Create plotter and processor
+        p = ts.add_tab('Data').add(_g.DataboxPlot('*.dat','p', autoscript=4), alignment=0)
+        a = ts.add_tab('Processor').add(_g.DataboxProcessor(databox_source=p), alignment=0)
+        
+        # Initial data
         p[0] = [1,2,3,4]
         p[1] = [1,2,1,2]
         p[2] = [0.5,0.5,0.5,0.5]
         p[3] = [2,1,2,1]
         p[4] = [0.3,0.1,20,0.3]
         p.plot()
+        
+        # New Data
+        def get_fake_data():
+            p.clear()
+            p['t']  = _n.linspace(0,10,1000)
+            p['V1'] = 0.01*_n.random.normal(size=1000)
+            p['V2'] = _n.random.normal(size=1000)
+            p.plot()
+            a.run()
+        b.signal_clicked.connect(get_fake_data)
+        
+        # Loop
+        def loop():
+            while l.is_checked():
+                get_fake_data()
+                w.sleep(0.25)
+        l.signal_clicked.connect(loop)
+        
         w.show(True)
         global x
         x = p
+        
+      
 
 if __name__ == "__main__":
     _ut.main()

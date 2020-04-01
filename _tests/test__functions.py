@@ -134,7 +134,94 @@ class Test_functions(_ut.TestCase):
         self.assertEqual(_n.shape(a), (4,16))
         self.assertAlmostEqual(a[3][5], 2.1213203435596424)
         
+    def test_averager_normal(self):
         
-    
+        import spinmob as sm
+        
+        points = 1000
+        
+        # When to record information
+        print_me  = [4,8,16,32,64,128,256]
+        vs      = []
+        sigma2s = []
+        ns      = []
+        a       = sm.fun.averager()
+        y_sum   = 0
+        y2_sum  = 0
+        for n in range(1,1000):
+            
+            # Get the new measurement. Best to think of this as a
+            # single number, and the array you get out is the 
+            # result of repeating the same measurement many times 
+            # independently.
+            y = _n.random.normal(size=points) + 7
+            
+            # Do the calculation by hand
+            y_sum  += y
+            y2_sum += y*y
+            
+            if(n<2): sigma2 = 0
+            else:    sigma2 = (y2_sum - y_sum**2/n)/(n-1)
+            
+            # Let the averager do it
+            a.add(y)
+        
+            # Calculate the reduced chi2s
+            if(n>2):
+                vs     .append(_n.mean(a.variance_sample))
+                sigma2s.append(_n.mean(sigma2))
+                ns.append(n)
+                
+            # Update the user
+            if n in print_me: print('Regular variance', n, vs[-1])
+        
+        sm.pylab.figure(77)
+        sm.plot.xy.data(ns, [vs, sigma2s], 
+                        label = ['vs   Reg mean %.3f' % _n.mean(vs),
+                                 'sigma2s by hand'],
+                        xlabel='N', 
+                        xscale='log', title='Regular', clear=0,
+                        style=sm.plot.style(ls=['-','--']))
+        
+        
+        
+    def test_averager_dsp(self):
+        
+        import spinmob as sm
+        
+        points = 10000
+        
+        # Try a bunch of different frames.
+        taus = sm.fun.erange(1, 32, 20) #_n.array([1.5,2,4,8,16,32,64,128])
+        vs   = []
+        c2s  = []
+        for tau in taus:
+                        
+            # Create a new averager
+            a = sm.fun.averager(lowpass_frames=tau)
+
+            # Steady state index
+            N = int(tau*10)
+
+            # Iterate until steady state
+            for n in range(N):
+                
+                # New data set
+                y = _n.random.normal(size=points) + 7
+                
+                # Add it to the averager
+                a.add(y)
+                
+            # Get the variance and chi^2 after having settled
+            vs.append(_n.mean(a.variance_sample))
+            print('DSP variance', tau, vs[-1])
+
+        sm.pylab.figure(77)
+        sm.plot.xy.data(taus, [vs], 
+                        label = ['vs DSP'],
+                        xlabel='tau', ylabel='chi2', 
+                        xscale='log', title='DSP', clear=0)
+            
+            
 
 if __name__ == "__main__": _ut.main()
