@@ -351,7 +351,7 @@ class BaseObject(object):
                 if pop_value: d.pop(key)
            
             except: 
-                print("ERROR: Could not load gui setting "+repr(key))
+                print("ERROR: Could not load gui setting "+repr(key)+'\n'+str(self))
 
     def _store_gui_setting(self, databox, name):
         """
@@ -360,7 +360,7 @@ class BaseObject(object):
         "self.controlname"
         """
         try:    databox.insert_header(name, eval(name + ".get_value()"))
-        except: print("ERROR: Could not store gui setting "+repr(name))
+        except: print("ERROR: Could not store gui setting "+repr(name)+'\n'+str(self))
 
 
 
@@ -1622,7 +1622,7 @@ class TableDictionary(Table):
 
         # make sure it exists
         if not key in keys:
-            self.print_message("ERROR: '"+str(key)+"' not found.")
+            self.print_message("ERROR: '"+str(key)+"' not found."+'\n'+str(self))
             return None
 
         try:
@@ -1630,7 +1630,7 @@ class TableDictionary(Table):
             return x
 
         except:
-            self.print_message("ERROR: '"+str(self.get_value(1,keys.index(key)))+"' cannot be evaluated.")
+            self.print_message("ERROR: '"+str(self.get_value(1,keys.index(key)))+"' cannot be evaluated.\n"+str(self))
             return None
 
     def __getitem__(self, key): return self.get_item(key)
@@ -2033,7 +2033,7 @@ class TreeDictionary(BaseObject):
 
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
-            if not quiet: self.print_message("ERROR: Could not find '"+r+"'")
+            if not quiet: self.print_message("ERROR: Could not find '"+r+"' in "+str(self))
             return None
 
         # otherwise use the first value
@@ -2062,7 +2062,7 @@ class TreeDictionary(BaseObject):
 
                 # otherwise poop out
                 else:
-                    if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'")
+                    if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'.\n"+str(self))
                     return None
 
         # return the last one we found / created.
@@ -2098,7 +2098,7 @@ class TreeDictionary(BaseObject):
 
         # make sure it doesn't already exist
         if not self._find_parameter(s, quiet=True) == None:
-            self.print_message("Error: '"+key+"' already exists.")
+            self.print_message("ERROR: '"+key+"' already exists.\n"+str(self))
             return None
 
         # get the leaf key off the list.
@@ -2199,7 +2199,7 @@ class TreeDictionary(BaseObject):
 
         # make sure it doesn't already exist
         if not self._find_parameter(s, quiet=True) == None:
-            self.print_message("Error: '"+key+"' already exists.")
+            self.print_message("Error: '"+key+"' already exists.\n"+str(self))
             return self
 
         # get the leaf key off the list.
@@ -2339,7 +2339,7 @@ class TreeDictionary(BaseObject):
         """
         # Make sure it's a list
         if not self.get_type(key) in ['list']: 
-            self.print_message('ERROR: "'+key+'" is not a list.')
+            self.print_message('ERROR: "'+key+'" is not a list.\n'+str(self))
             return
         
         # Return a copy of the list values
@@ -2595,7 +2595,7 @@ class TreeDictionary(BaseObject):
                                  block_user_signals = block_user_signals)
 
         except:
-            print("TreeDictionary ERROR: Could not set '"+k+"' to '"+v+"'")
+            print("ERROR: Could not set '"+k+"' to '"+v+"'"+'\n'+str(self))
 
 
 
@@ -3419,6 +3419,10 @@ class DataboxProcessor(Window):
         self._clear_dump = False
         self.t0          = _t.time()
         
+        # Remembers when user edits it
+        self._histogram_script    = None
+        self._prehistogram_script = None
+        
         # Source databox for the "do it" button.
         self.databox_source = databox_source
         
@@ -3440,24 +3444,31 @@ class DataboxProcessor(Window):
         
         # Add the PSD settings
         self.settings.add_parameter('Enabled',      False)
-        self.settings.add_parameter('Coarsen',          0, limits=(0,None))
-        self.settings.add_parameter('PSD',          False)
-        self.settings.add_parameter('PSD/pow2',     False)
-        self.settings.add_parameter('PSD/Window', 'None', values=['hanning', 'None'])
-        self.settings.add_parameter('PSD/Rescale',   True, tip='Whether to rescale the PSD after windowing so that the integrated value is the RMS in the time-domain.')
-        self.settings.add_parameter('PSD/Coarsen',      0, limits=(0,None))
-        self.settings.add_parameter('Average',      False)
+        self.settings.add_parameter('Coarsen',          0, limits=(0,None), tip='Break the data into groups of this many, and average each group into a single data point. 0 to disable.')
+        
+        self.settings.add_parameter('PSD',          False, tip='Calculate the power spectral density')
+        self.settings.add_parameter('PSD/pow2',     False, tip='Truncate the data into the nearest 2^N data points, to speed up the PSD.')
+        self.settings.add_parameter('PSD/Window',  'None', values=['hanning', 'None'], tip='Apply this windowing function to the time domain prior to PSD.')
+        self.settings.add_parameter('PSD/Rescale',  False, tip='Whether to rescale the PSD after windowing so that the integrated value is the RMS in the time-domain.')
+        self.settings.add_parameter('PSD/Coarsen',      0, limits=(0,None), tip='Break the PSD data into groups of this many, and average each group into a single data point. 0 to disable.')
+        
+        self.settings.add_parameter('Histogram',    False, tip='Perform a histogram on the data.')
+        self.settings.add_parameter('Histogram/Bins', 100, limits=(2,None), tip='How many bins to use for the histogram.')
+        
+        self.settings.add_parameter('Average',      False, tip='Calculate a running average of the data.')
         self.settings.add_parameter('Average/Frames',   0, step=2, tip='Exponential moving average time constant. Set to 0 to include all data in average.')
-        self.settings.add_parameter('Average/Error', False, tip='Whether to estimate the error (.std)')
-        self.settings.add_parameter('Stream',       False)
+        self.settings.add_parameter('Average/Error',False, tip='Estimate the standard error on the mean (sent to column "<name>.std_mean")')
+        self.settings.add_parameter('Stream',       False, tip='Stream some single quantity associated with the data.')
         self.settings.add_parameter('Stream/Method', 'mean', values=['max','min','mean','mean+e','std','hkeys'])
-        self.settings.add_parameter('Stream/hkeys', "a, a_std")
-        self.settings.add_parameter('Stream/History', 200, dec=True, limits=(2, None))
-        self.settings.add_parameter('Stream/Dump',  False)
+        self.settings.add_parameter('Stream/hkeys',  '',   tip='Comma-separated list of hkeys used to stream header elements as well.')
+        self.settings.add_parameter('Stream/History', 200, dec=True, limits=(2, None), tip='How many points to keep in the stream.')
+        self.settings.add_parameter('Stream/File_Dump',  False, tip='Enable to dump the whole stream to a file of your choice.')
         
         # Connect signals
         self.settings.connect_any_signal_changed(self._reset)
-        self.settings.connect_signal_changed('Stream/Dump', self._stream_dump_changed)
+        self.settings.connect_signal_changed('Histogram', self._histogram_changed)
+        
+        self.settings.connect_signal_changed('Stream/File_Dump', self._stream_dump_changed)
         self.settings.connect_signal_changed('Stream', self._stream_changed)
         self.settings.connect_signal_changed('Stream/Method', self._stream_method_changed)
         self.button_go.signal_clicked.connect(self._button_go_clicked)
@@ -3490,6 +3501,39 @@ class DataboxProcessor(Window):
             self.number_count.set_value(0)
             self.t0 = _t.time()
     
+    def _histogram_changed(self, *a):
+        """
+        Sets up the plot for histograms.
+        """
+        if self.settings['Histogram']:
+            
+            # Remeber the previous script
+            self._prehistogram_script = self.plot.script.get_text()
+            
+            # Set the script to edit and show it.
+            self.plot.combo_autoscript.set_index(0)
+            self.plot.button_script.set_checked(True)
+            
+            # Unlink the axes
+            self.plot.button_link_x.set_checked(False)
+            
+            # Load the script or use the previous one
+            if self._histogram_script is None:
+                self.plot.load_script(_os.path.join(
+                    _s.__path__[0], 'egg', 'DataboxProcessor', 
+                    'histogram_plot_script.py'))
+            else:
+                self.plot.script.set_text(self._histogram_script)
+        
+        # If we're unchecking
+        else:
+            # Remember this histogram script
+            self._histogram_script = self.plot.script.get_text()
+            
+            # Input the previous one.
+            if self._prehistogram_script is not None:
+                self.plot.script.set_text(self._prehistogram_script)
+            
     def _stream_changed(self, *a):
         if self.settings['Stream']: self.label_dump.enable()
         else:                       self.label_dump.disable()
@@ -3507,7 +3551,7 @@ class DataboxProcessor(Window):
         """
         If enabled, bring up a dialog. If disabled, remove the dump file info.
         """
-        if self.settings['Stream/Dump']:
+        if self.settings['Stream/File_Dump']:
             
             # Get the path
             path = _s.dialogs.save(
@@ -3517,7 +3561,7 @@ class DataboxProcessor(Window):
             
             # Cancel
             if not type(path) == str: 
-                self.settings['Stream/Dump'] = False
+                self.settings['Stream/File_Dump'] = False
                 return
             
             # Remember this is our first time
@@ -3544,21 +3588,23 @@ class DataboxProcessor(Window):
             self.label_info.set_text('(Disabled)')
             return self
         
-        # Get the databox
+        # Get the databox source as d for easy coding.
         if d == None: d = self.databox_source
         if d == None:
             self.label_info.set_text('No databox source to process.')
             return self
         
+        # Reset the label.
         self.label_info.set_text('')
         
-        # FIRST we do all the calculations without touching the plot data
+        # FIRST we do all the calculations, generating a list of ckeys and 
+        # arrays of data, without touching the original or plot data
         
         # Get the default list of ckeys
         ckeys = list(d.ckeys)
         
-        # Coarsen
-        cs = []
+        # Coarsen. This also creates a copy of the array.
+        cs = [] # Columns
         for n in range(len(d)): cs.append(_s.fun.coarsen_array(d[n], self.settings['Coarsen']))
         
         # If we have no columns, quit
@@ -3587,6 +3633,58 @@ class DataboxProcessor(Window):
             # Update the ckeys, too!
             for n in range(len(ckeys)): ckeys[n] = 'P'+ckeys[n]
         
+        
+        # Histogram
+        if self.settings['Histogram']:
+            
+            # For this we will histogram and then discard every column we 
+            # have created up to this point, creating a pair of columns for 
+            # each. This step is different, however, because we want the 
+            # bins to match any existing bins, to facilitate averaging.
+            
+            # Let's put together the ckeys first, then we can see if the 
+            # bin columns already exist in the plotter.
+            
+            # Loop over the existing ckeys and make a bin and counts version
+            new_ckeys = []
+            new_cs    = []
+            for n in range(len(ckeys)): 
+                ckey = ckeys[n]
+                c    = cs[n]
+                
+                # Create the new ckeys
+                new_ckeys.append(ckey+'.values')
+                new_ckeys.append(ckey+'.counts')
+                
+                # See if there already exists a .values column
+                if ckey+'.values' in self.plot.ckeys:
+                    
+                    # start with these (center) values
+                    bins = _n.array(self.plot[ckey+'.values'])
+                    
+                    # Shift by half a bin width to get the lower edges
+                    dv = bins[1]-bins[0]
+                    bins -= dv*0.5
+                    
+                    # Add the extra upper bin edge
+                    bins = _n.concatenate([bins, [bins[-1]+dv]])
+                
+                # Otherwise we define our own bins
+                else: bins = self.settings['Histogram/Bins']
+            
+                # Do the histogram on the new data
+                counts, bins = _n.histogram(c, bins)
+                
+                # Convert bins (currently edges) back to centers
+                dv = bins[1]-bins[0]
+                bins = (bins - 0.5*dv)[1:]
+                new_cs.append(bins)
+                new_cs.append(counts)
+            
+            # Overwrite the old data
+            cs    = new_cs
+            ckeys = new_ckeys
+                
         # Now we have valid ckeys and column list cs
         
         # First transfer the header contents from the source databox
@@ -3597,13 +3695,13 @@ class DataboxProcessor(Window):
         if self.settings['Stream']:
 
             # If we're dumping, make sure the file exists with the header
-            if self.settings['Stream/Dump']:
+            if self.settings['Stream/File_Dump']:
                 
                 # Get the path
                 path = self.label_dump.get_text()
                 
                 # If we don't yet have a path for some reason, cancel the dump
-                if len(path) < 5: self.settings['Stream/Dump'] = False
+                if len(path) < 5: self.settings['Stream/File_Dump'] = False
                 
                 # Strip the '>>> '
                 path = path[4:]
@@ -3668,7 +3766,7 @@ class DataboxProcessor(Window):
                 while(len(self.plot[0]))>history: self.plot.pop_data_point(0)
             
             # Now write it to the file if necessary
-            if self.settings['Stream/Dump']:
+            if self.settings['Stream/File_Dump']:
                 
                 # Get the delimiter
                 delimiter = self.plot.delimiter

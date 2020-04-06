@@ -164,6 +164,10 @@ class Test_egg(_ut.TestCase):
         p = ts.add_tab('Data').add(_g.DataboxPlot('*.dat','p', autoscript=4), alignment=0)
         a = ts.add_tab('Processor').add(_g.DataboxProcessor(databox_source=p), alignment=0)
         
+        # Window close stops acquisition
+        def close(): l.set_checked(False)
+        w.event_close = close
+        
         # Initial data
         p[0] = [1,2,3,4]
         p[1] = [1,2,1,2]

@@ -1158,6 +1158,12 @@ class databox:
 
         return self.insert_column(data_array, ckey)
 
+    def append_empty_columns(self, ckeys):
+        """
+        Creates an empty column for each ckey.
+        """
+        for ckey in ckeys: self[ckey] = []
+
     def clear_columns(self):
         """
         This will remove all the ckeys and columns.
