@@ -3482,7 +3482,7 @@ class DataboxProcessor(Window):
         self._stream_method_changed()
     
     def _button_go_clicked(self, *a):
-        self.go()
+        self.run()
     
     def _button_reset_clicked(self, *a):
         """
