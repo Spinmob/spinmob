@@ -2900,6 +2900,15 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         self.clear()
         self.plot()
+        
+        self.after_clear()
+
+    def after_clear(self): 
+        """
+        Dummy function you can overwrite to run code after the clear button
+        is done.
+        """
+        return
 
     def save_file(self, path=None, force_overwrite=False, just_settings=False, **kwargs):
         """
