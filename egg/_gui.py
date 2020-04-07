@@ -2694,7 +2694,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
         self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(40), alignment=1)
         self.number_file     = self.grid_controls.place_object(NumberBox(int=True, limits=(0,None)))
-        self.label_path     = self.grid_controls.place_object(Label(""))
+        self.label_path      = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
         self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True, checked=True).set_width(50)).set_checked(False)
