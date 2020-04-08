@@ -3499,6 +3499,7 @@ class DataboxProcessor(Window):
         affect the plot zoom.
         """
         self.number_count.set_value(0)
+        self.plot.clear()
         self.plot.clear_averagers()
         
     def _reset(self, *a):
@@ -3506,7 +3507,7 @@ class DataboxProcessor(Window):
         # In stream mode, only the clear button should reset it.
         if not self.settings['Stream']:
             self.plot.clear()
-            self.plot.averagers = dict()
+            self.plot.clear_averagers()
             self.number_count.set_value(0)
             self.t0 = _t.time()
     
