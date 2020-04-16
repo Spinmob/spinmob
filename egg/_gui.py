@@ -1,3 +1,20 @@
+import pyqtgraph as _pg
+
+# PYQTGRAPH FIXES
+if _pg.__version__ == '0.10.0':
+    
+    # My replacement function. Should be fixed in 0.11.0.
+    def _ParameterItem_optsChanged(self, param, opts):
+        if 'visible'  in opts: self.setHidden(not opts['visible'])
+        if 'expanded' in opts: self.setExpanded(opts['expanded'])
+        if 'enabled'  in opts: self.setDisabled(not opts['enabled'])
+        if 'addList'  in opts: self.updateAddList()
+    
+    # Replace the function!
+    _pg.parametertree.ParameterItem.optsChanged                     = _ParameterItem_optsChanged
+    _pg.parametertree.parameterTypes.GroupParameterItem.optsChanged = _ParameterItem_optsChanged
+
+# Regular imports
 import time     as _t
 import os       as _os
 import numpy    as _n
@@ -11,8 +28,8 @@ import spinmob as _s
 _d = _s.data
 
 # import pyqtgraph and create the App.
-import pyqtgraph as _g
-_e = _g.QtCore.QEvent
+import pyqtgraph as _pg
+_e = _pg.QtCore.QEvent
 
 # If imported by spinmob
 try:    from . import _temporary_fixes
@@ -21,10 +38,10 @@ try:    from . import _temporary_fixes
 except: import _temporary_fixes
 
 
-_a = _g.mkQApp()
+_a = _pg.mkQApp()
 
 # set the font if we're in linux
-if _sys.platform in ['linux', 'linux2']: _a.setFont(_g.QtGui.QFont('Arial', 8))
+if _sys.platform in ['linux', 'linux2']: _a.setFont(_pg.QtGui.QFont('Arial', 8))
 
 _defaults = dict(margins=(10,10,10,10))
 
@@ -379,7 +396,7 @@ class GridLayout(BaseObject):
     
     log = None
 
-    def __init__(self, margins=True):
+    def __init__(self, margins=True, scroll=False):
         """
         This creates a grid layout that can contain other Elements
         (including other grid and docked layouts)
@@ -387,10 +404,10 @@ class GridLayout(BaseObject):
         BaseObject.__init__(self)
 
         # Qt widget to house the layout
-        self._widget = _g.Qt.QtGui.QWidget()
+        self._widget = _pg.Qt.QtGui.QWidget()
 
         # Qt layout object
-        self._layout = _g.Qt.QtGui.QGridLayout()
+        self._layout = _pg.Qt.QtGui.QGridLayout()
 
         # stick the layout into the widget
         self._widget.setLayout(self._layout)
@@ -466,7 +483,7 @@ class GridLayout(BaseObject):
 
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
-                               _g.Qt.QtCore.Qt.Alignment(alignment))
+                               _pg.Qt.QtCore.Qt.Alignment(alignment))
 
         # try to store the parent object (self) in the placed object
         try:    object.set_parent(self)
@@ -598,14 +615,14 @@ class Window(GridLayout):
         GridLayout.__init__(self, margins=margins)
         
         # create the QtMainWindow,
-        self._window = _g.Qt.QtGui.QMainWindow()
+        self._window = _pg.Qt.QtGui.QMainWindow()
         self.set_size(size)
         self.set_title(title)
         
         #Set some docking options
-        self._window.setDockOptions(_g.Qt.QtGui.QMainWindow.AnimatedDocks    | 
-                                    _g.Qt.QtGui.QMainWindow.AllowNestedDocks | 
-                                    _g.Qt.QtGui.QMainWindow.AllowTabbedDocks )
+        self._window.setDockOptions(_pg.Qt.QtGui.QMainWindow.AnimatedDocks    | 
+                                    _pg.Qt.QtGui.QMainWindow.AllowNestedDocks | 
+                                    _pg.Qt.QtGui.QMainWindow.AllowTabbedDocks )
 
         # set the central widget to that created by GridLayout.__init__
         self._window.setCentralWidget(self._widget)
@@ -631,10 +648,10 @@ class Window(GridLayout):
         'left', 'right', or None)
         """
         # map of options
-        m = dict(top    = _g.QtCore.Qt.TopDockWidgetArea,
-                 bottom = _g.QtCore.Qt.BottomDockWidgetArea,
-                 left   = _g.QtCore.Qt.LeftDockWidgetArea,
-                 right  = _g.QtCore.Qt.RightDockWidgetArea)
+        m = dict(top    = _pg.QtCore.Qt.TopDockWidgetArea,
+                 bottom = _pg.QtCore.Qt.BottomDockWidgetArea,
+                 left   = _pg.QtCore.Qt.LeftDockWidgetArea,
+                 right  = _pg.QtCore.Qt.RightDockWidgetArea)
         
         
         # set the parent
@@ -709,7 +726,7 @@ class Window(GridLayout):
         path = _os.path.join(gui_settings_dir, self._autosettings_path)
         
         # Create a Qt settings object
-        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
+        settings = _pg.QtCore.QSettings(path, _pg.QtCore.QSettings.IniFormat)
         settings.clear()
         
         # Save values
@@ -734,7 +751,7 @@ class Window(GridLayout):
         if not _os.path.exists(path): return
         
         # Create a Qt settings object
-        settings = _g.QtCore.QSettings(path, _g.QtCore.QSettings.IniFormat)
+        settings = _pg.QtCore.QSettings(path, _pg.QtCore.QSettings.IniFormat)
         
         # Load it up! (Extra steps required for windows command line execution)
         if settings.contains('State') and hasattr_safe(self._window, "restoreState"):    
@@ -852,7 +869,7 @@ class Docker(Window):
         Window.__init__(self)
         
         # create the docker widget        
-        self._window = _g.Qt.QtGui.QDockWidget(name, None)
+        self._window = _pg.Qt.QtGui.QDockWidget(name, None)
         self._window.setFeatures(self._window.DockWidgetFloatable |
                                  self._window.DockWidgetMovable   |
                                  self._window.DockWidgetClosable)
@@ -861,10 +878,10 @@ class Docker(Window):
         self._window.setObjectName(name)
                       
         # Qt widget to house the layout
-        self._widget = _g.Qt.QtGui.QWidget()
+        self._widget = _pg.Qt.QtGui.QWidget()
 
         # Qt layout object
-        self._layout = _g.Qt.QtGui.QGridLayout()
+        self._layout = _pg.Qt.QtGui.QGridLayout()
 
         # stick the layout into the widget
         self._widget.setLayout(self._layout)
@@ -965,7 +982,7 @@ class Button(BaseObject):
     def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None):
         
         # Qt button instance
-        if QPushButton is None: self._widget = _g.Qt.QtGui.QPushButton(text)
+        if QPushButton is None: self._widget = _pg.Qt.QtGui.QPushButton(text)
         else:                   self._widget = QPushButton
     
         # signals
@@ -1063,7 +1080,7 @@ class Label(BaseObject):
         """
 
         # Create the widget
-        self._widget = _g.Qt.QtGui.QLabel(text)
+        self._widget = _pg.Qt.QtGui.QLabel(text)
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -1210,7 +1227,7 @@ class CheckBox(BaseObject):
         Simplified QCheckBox.
         """      
         # pyqt objects
-        self._widget = _g.QtGui.QCheckBox()
+        self._widget = _pg.QtGui.QCheckBox()
         
         # signals
         self.signal_changed = self._widget.stateChanged
@@ -1242,7 +1259,7 @@ class ComboBox(BaseObject):
         """
         
         # pyqt objects
-        self._widget = _g.QtGui.QComboBox()
+        self._widget = _pg.QtGui.QComboBox()
         
         # Populate it.
         for item in items: self.add_item(item)        
@@ -1334,7 +1351,7 @@ class TabArea(BaseObject):
     def __init__(self, autosettings_path=None, tabs_closable=False):
         
         # tab widget
-        self._widget = _g.Qt.QtGui.QTabWidget()
+        self._widget = _pg.Qt.QtGui.QTabWidget()
         self._widget.setTabsClosable(tabs_closable)
 
         # tab widgets
@@ -1433,7 +1450,7 @@ class Table(BaseObject):
         """
 
         # create the widget
-        self._widget = _g.Qt.QtGui.QTableWidget(rows, columns)
+        self._widget = _pg.Qt.QtGui.QTableWidget(rows, columns)
 
         # default behavior
         self.set_row_heights(18)
@@ -1495,7 +1512,7 @@ class Table(BaseObject):
         while row    > self._widget.rowCount()   -1: self._widget.insertRow(   self._widget.rowCount())
 
         # set the value
-        self._widget.setItem(row, column, _g.Qt.QtGui.QTableWidgetItem(str(value)))
+        self._widget.setItem(row, column, _pg.Qt.QtGui.QTableWidgetItem(str(value)))
 
         if block_events: self.unblock_events()
 
@@ -1607,9 +1624,9 @@ class TableDictionary(Table):
                 # now make sure the value is python-able
                 try:
                     eval(value)
-                    self._widget.item(n,1).setData(_g.QtCore.Qt.BackgroundRole, _g.Qt.QtGui.QColor('white'))
+                    self._widget.item(n,1).setData(_pg.QtCore.Qt.BackgroundRole, _pg.Qt.QtGui.QColor('white'))
                 except:
-                    self._widget.item(n,1).setData(_g.QtCore.Qt.BackgroundRole, _g.Qt.QtGui.QColor('pink'))
+                    self._widget.item(n,1).setData(_pg.QtCore.Qt.BackgroundRole, _pg.Qt.QtGui.QColor('pink'))
 
         # unblock all signals
         self.unblock_events()
@@ -1683,7 +1700,7 @@ class TextLog(BaseObject):
         Tired of print statements to the command line? Try this for dumping
         your log info.
         """
-        self._widget = _g.QtGui.QTextEdit()
+        self._widget = _pg.QtGui.QTextEdit()
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -1721,8 +1738,8 @@ class TextBox(BaseObject):
         self._multiline = multiline
 
         # pyqt objects
-        if multiline:   self._widget = _g.QtGui.QTextEdit()
-        else:           self._widget = _g.QtGui.QLineEdit(); self.signal_return_pressed = self._widget.returnPressed
+        if multiline:   self._widget = _pg.QtGui.QTextEdit()
+        else:           self._widget = _pg.QtGui.QLineEdit(); self.signal_return_pressed = self._widget.returnPressed
         self.set_text(str(text))
 
         # signals
@@ -1771,7 +1788,7 @@ class Timer():
         """
 
         # pyqt objects
-        self._widget     = _g.QtCore.QTimer(); 
+        self._widget     = _pg.QtCore.QTimer(); 
         self.signal_tick = self._widget.timeout
         
         # aliases
@@ -1841,7 +1858,7 @@ class TreeDictionary(BaseObject):
         # Other stuff common to all objects
         BaseObject.__init__(self)
         
-        self._widget             = _g.parametertree.ParameterTree(showHeader=show_header)
+        self._widget             = _pg.parametertree.ParameterTree(showHeader=show_header)
         self.naughty             = [' ', '\t', '\n', '\r', ',', ';']
         self._autosettings_path  = autosettings_path
         self._connection_lists   = dict()
@@ -1863,14 +1880,14 @@ class TreeDictionary(BaseObject):
         """
         How do display this object.
         """
-        s = "\nTreeDictionary() -> "+str(self._autosettings_path)+"\n"
+        s = "TreeDictionary() -> "+str(self._autosettings_path)
 
-        for k in self.get_dictionary(True)[0]:
+        # for k in self.get_dictionary(True)[0]:
             
-            if not self.get_type(k) in ['list']:
-                s = s + "  "+k+" = "+repr(self[k])+"\n"
-            else:
-                s = s + "  "+k+" = "+repr(self[k])+" from "+repr(self.get_list_values(k)) + "\n"
+        #     if not self.get_type(k) in ['list']:
+        #         s = s + "  "+k+" = "+repr(self[k])+"\n"
+        #     else:
+        #         s = s + "  "+k+" = "+repr(self[k])+" from "+repr(self.get_list_values(k)) + "\n"
         return s
 
     def block_events(self):
@@ -1917,7 +1934,7 @@ class TreeDictionary(BaseObject):
             # make sure there is only one connection!
             try:
                 self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(
-                                  function, type=_g.QtCore.Qt.UniqueConnection)
+                                  function, type=_pg.QtCore.Qt.UniqueConnection)
             except:
                 pass
             
@@ -2029,7 +2046,7 @@ class TreeDictionary(BaseObject):
         r = self._clean_up_key(s.pop(0))
 
         # search for the root key
-        result = self._widget.findItems(r, _g.QtCore.Qt.MatchCaseSensitive | _g.QtCore.Qt.MatchFixedString)
+        result = self._widget.findItems(r, _pg.QtCore.Qt.MatchCaseSensitive | _pg.QtCore.Qt.MatchFixedString)
 
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
@@ -2042,7 +2059,7 @@ class TreeDictionary(BaseObject):
         # otherwise, if there are more keys in the list,
         # create the branch and keep going
         else:
-            x = _g.parametertree.Parameter.create(name=r, type='group', children=[])
+            x = _pg.parametertree.Parameter.create(name=r, type='group', children=[])
             self._widget.addParameters(x)
 
         # loop over the remaining keys, and use a different search method
@@ -2058,11 +2075,11 @@ class TreeDictionary(BaseObject):
             except:
 
                 # if we're supposed to, create the new branch
-                if create_missing: x = x.addChild(_g.parametertree.Parameter.create(name=n, type='group', children=[]))
+                if create_missing: x = x.addChild(_pg.parametertree.Parameter.create(name=n, type='group', children=[]))
 
                 # otherwise poop out
                 else:
-                    if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'.\n"+str(self))
+                    if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'."+str(self))
                     return None
 
         # return the last one we found / created.
@@ -2111,7 +2128,7 @@ class TreeDictionary(BaseObject):
         if b == None: return None
 
         # create the leaf object
-        ap = _g.parametertree.Parameter.create(name=p, type='action')
+        ap = _pg.parametertree.Parameter.create(name=p, type='action')
 
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(ap)
@@ -2212,7 +2229,7 @@ class TreeDictionary(BaseObject):
         if b == None: return self
 
         # create the leaf object
-        leaf = _g.parametertree.Parameter.create(name=p, value=value, **other_kwargs)
+        leaf = _pg.parametertree.Parameter.create(name=p, value=value, **other_kwargs)
         
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(leaf)
@@ -3137,7 +3154,7 @@ class DataboxPlot(_d.databox, GridLayout):
             # get globals for sin, cos etc
             g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
             g.update(_scipy_special.__dict__, special=_scipy_special)
-            g.update(dict(d=self, ex=None, ey=None, styles=self.styles))
+            g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self.styles))
             g.update(dict(xlabels='x', ylabels='y'))
             g.update(dict(spinmob=_s, sm=_s, s=_s, _s=_s))
             g.update(self.plot_script_globals)
@@ -3325,11 +3342,11 @@ class DataboxPlot(_d.databox, GridLayout):
                 kw = dict(pen=(i,len(y)))
             
             # Append the curve
-            self._curves.append(_g.PlotDataItem(**kw))
+            self._curves.append(_pg.PlotDataItem(**kw))
             if ey[i] is None: 
                 self._errors.append(None)
             else:             
-                self._errors.append(_g.ErrorBarItem(x=_n.array([0,1]), y=_n.array([0,0]), pen=(i,len(y))))
+                self._errors.append(_pg.ErrorBarItem(x=_n.array([0,1]), y=_n.array([0,0]), pen=(i,len(y))))
             
         # figure out the target number of plots
         if self.button_multi.is_checked(): n_plots = len(y)        # one plot per data set
@@ -3337,7 +3354,7 @@ class DataboxPlot(_d.databox, GridLayout):
         
         # add new plots
         for i in range(n_plots):
-            self.plot_widgets.append(self.grid_plot.place_object(_g.PlotWidget(), 0, i, alignment=0))
+            self.plot_widgets.append(self.grid_plot.place_object(_pg.PlotWidget(), 0, i, alignment=0))
 
         # loop over the curves and add them to the plots
         for i in range(len(y)):
@@ -3582,8 +3599,13 @@ class DataboxProcessor(Window):
         
         else: self.label_dump.set_text('')
     
-    def _after_load_file(self, d): self.settings.update(d.headers, ignore_errors=True)
-    
+    def _after_load_file(self, d): 
+        """
+        By default, this sends the header to the settings. You can overwrite
+        this function to do your own thing.
+        """
+        self.settings.update(d.headers, ignore_errors=True)
+        
     def run(self, d=None):
         """
         Performs the analysis on the data in the supplied (if enabled).
@@ -3829,7 +3851,17 @@ class DataboxProcessor(Window):
         self.plot.plot()
         self.process_events()        
 
+        # Do other stuff if the user wishes it.
+        self.after_run()
+        
         return self
+    
+    def after_run(self):
+        """
+        Dummy function you can overwrite. Executed after self.run().
+        """
+        return
+    
 
 class DataboxSaveLoad(_d.databox, GridLayout):
 
