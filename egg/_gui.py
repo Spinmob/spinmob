@@ -41,7 +41,7 @@ except: import _temporary_fixes
 _a = _pg.mkQApp()
 
 # set the font if we're in linux
-if _sys.platform in ['linux', 'linux2']: _a.setFont(_pg.QtGui.QFont('Arial', 8))
+#if _sys.platform in ['linux', 'linux2']: _a.setFont(_pg.QtGui.QFont('Arial', 8))
 
 _defaults = dict(margins=(10,10,10,10))
 
