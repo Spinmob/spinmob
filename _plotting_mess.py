@@ -1017,6 +1017,7 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
         if k not in g: g[k] = globals()[k]
 
     # if the x-axis is a log scale, use erange
+    steps = int(steps)
     if erange: x = _fun.erange(xmin, xmax, steps)
     else:      x = _n.linspace(xmin, xmax, steps)
 
