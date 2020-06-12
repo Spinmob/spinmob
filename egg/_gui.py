@@ -3658,7 +3658,7 @@ class DataboxProcessor(Window):
                                   rescale = self.settings['PSD/Rescale'])
                 if n==1: ps.append(f)
                 ps.append(p)
-            
+                
             # Coarsen & overwrite the previous result
             for n in range(len(ps)): cs[n] = _s.fun.coarsen_array(ps[n], self.settings['PSD/Coarsen'])
             
@@ -3821,11 +3821,8 @@ class DataboxProcessor(Window):
             # Explicitly pop all the columns, but don't clear the averagers
             while len(self.plot): self.plot.pop_column(0)
         
-            # Always write the first column
-            self.plot[ckeys[0]] = cs[0]
-            
             # Add the rest of the columns to the pool.
-            for n in range(1, len(cs)):
+            for n in range(0, len(cs)):
                 
                 # If we're averaging.
                 if self.settings['Average']:
