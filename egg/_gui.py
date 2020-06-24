@@ -2353,6 +2353,11 @@ class TreeDictionary(BaseObject):
     def get_list_values(self, key):
         """
         Returns the values for a list item of the specified key.
+        
+        Parameters
+        ----------
+        key : string
+            Dictionary key to query.
         """
         # Make sure it's a list
         if not self.get_type(key) in ['list']: 
@@ -2362,6 +2367,18 @@ class TreeDictionary(BaseObject):
         # Return a copy of the list values
         return list(self.get_widget(key).opts['values'])
 
+    def get_list_index(self, key):
+        """
+        Returns the index of the currently selected list item of the specified
+        key.
+        
+        Parameters
+        ----------
+        key : string
+            Dictionary key to query.
+        """
+        return self.get_list_values(key).index(self.get_value(key))
+        
     def get_dictionary(self, short_keys=False):
         """
         Returns the list of parameters and a dictionary of values
