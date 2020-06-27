@@ -10,8 +10,18 @@ _sys.excepthook = _traceback.print_exception
 # ignore warnings by default
 import warnings as _warnings
 _warnings.simplefilter("ignore")
-
 _qtapp = None
+
+from . import _settings
+settings = _settings.settings()
+
+def _warn(*args):
+    args = list(args)
+    if not settings['ignore_warnings']:
+        print('Warning:', args.pop(0))
+        for a in args: print('  ', a)
+        print("To disable warnings, set spinmob.settings['ignore_warnings']=True")
+
 
 try: 
     import pyqtgraph    as _pyqtgraph
@@ -24,7 +34,7 @@ try:
     if not _qtapp: _qtapp = _qtw.QApplication([])
     
 except:
-    print("Warning: pyqtgraph version 0.10 or higher is required (use a conda or pip install).")
+    _warn("pyqtgraph version 0.10 or higher is required (use a conda or pip install).")
     
     _qtc = None
     _qt  = None
@@ -32,15 +42,12 @@ except:
 
 if _qtapp is not None: _qtapp.setStyle('Fusion')
 
-from . import _settings
-settings = _settings.settings()
-
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'
 
 
 if _sys.version[0] == '2':
-    print("WARNING: Spinmob no longer supports Python 2.7 or below (which itself will not be maintained after Jan 1, 2020). USE AT YOUR OWN RISK!")
+    _warn("Spinmob no longer supports Python 2.7 or below (which itself will not be maintained after Jan 1, 2020). USE AT YOUR OWN RISK!")
 
 
 from . import _plot           as plot        ; plot._settings    = settings
