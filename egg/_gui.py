@@ -1551,6 +1551,9 @@ class TabArea(BaseObject):
         tab.show()
         self.popped_tabs[tab.index].show()
         
+        # If we have no tabs, hide it.
+        if self.get_tab_count() == 0: self.hide()
+        
         # Return it
         return self.popped_tabs[tab.index]
     
@@ -1585,6 +1588,8 @@ class TabArea(BaseObject):
         
         # Re-add them in order
         for t in self.docked_tabs: self._widget.addTab(t._widget, t.title)
+        
+        self.show()
         
         self._widget.blockSignals(False)
 
