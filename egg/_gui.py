@@ -1416,14 +1416,16 @@ class TabArea(BaseObject):
 
     
     
-    def __init__(self, autosettings_path=None, tabs_closable=False):
+    def __init__(self, autosettings_path=None):
         
         # tab widget
         self._widget = _pg.Qt.QtGui.QTabWidget()
-        self._widget.setTabsClosable(tabs_closable)
+        self._widget.setTabsClosable(True)
 
-        # tab widgets
-        self.tabs = []
+        # tab widgets by index
+        self.docked_tabs = []
+        self.all_tabs    = []
+        self.popped_tabs = {}
 
         # signals
         self.signal_switched             = self._widget.currentChanged
@@ -1431,6 +1433,7 @@ class TabArea(BaseObject):
 
         # connect signals
         self.signal_switched.connect(self._tab_changed)
+        self.signal_tab_close_requested.connect(self._tab_closed)
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -1451,26 +1454,47 @@ class TabArea(BaseObject):
         self.load_gui_settings(lazy_only=True)
                
 
+    def _tab_closed(self, *a): 
+        """
+        Pops it out.
+        """
+        # This is the index of the requested closed tab. Pop it out
+        self.pop_tab(a[0])
+
+
     def _tab_changed(self, *a): self.save_gui_settings()
 
-    def __getitem__(self, n): return self.tabs[n]
+    def __getitem__(self, n): return self.all_tabs[n]
 
     def add_tab(self, title="Yeah!", block_events=True, margins=True):
         """
         Adds a tab to the area, and creates the layout for this tab.
+        
+        Parameters
+        ----------
+        title : string
+            Title of the tab.
+        block_events=True : bool
+            Whether to block events when adding the tab. This is useful for
+            auto-loading sequences.
+        margins=True: bool
+            Whether the tab should include margins.
         """
         self._widget.blockSignals(block_events)
 
         # create a widget to go in the tab
         tab = GridLayout(margins=False)
-        self.tabs.append(tab)
         tab.set_parent(self)
-
+        tab.title = title
+        
         # create and append the tab to the list
         # Note this makes _widget no longer able to be added to a QGridLayout
         # for some unknown reason. This is why we nest the grids
         self._widget.addTab(tab._widget, title)
-
+        
+        # Remember the tab index
+        tab.index = self.get_tab_count()-1
+       
         # try to lazy set the current tab
         if 'self' in self._lazy_load and self.get_tab_count() > self._lazy_load['self']:
             v = self._lazy_load.pop('self')
@@ -1478,21 +1502,94 @@ class TabArea(BaseObject):
 
         self._widget.blockSignals(False)
 
+        # Add this tab to the lists
+        self.docked_tabs.append(tab)
+        self.all_tabs.append(tab)
+
         return tab.place_object(GridLayout(margins=margins), alignment=0)
 
-    def remove_tab(self, tab=0):
+    def remove_tab(self, n=0):
         """
-        Removes the tab by index.
+        Removes the tab by visible index.
         """
 
         # pop it from the list
-        t = self.tabs.pop(tab)
+        tab = self.docked_tabs.pop(n)
 
         # remove it from the gui
-        self._widget.removeTab(tab)
+        self._widget.removeTab(n)
 
         # return it in case someone cares
-        return t
+        return tab
+
+    def pop_tab(self, n=0):
+        """
+        Removes the tab by visible index, but 
+        puts its contents into a visible window.
+        
+        Returns the popped tab, but these also live in self.popped_tabs.
+        """
+        tab = self.remove_tab(n)
+        
+        # Get the autosettings path.
+        if self._autosettings_path: path = self._autosettings_path+'_tab'+str(tab.index)
+        else: path = None                 
+        
+        # Window to house the grid from the popped tab. If this changes
+        # structure, you may need to adjust unpop_tab()
+        self.popped_tabs[tab.index] = Window(tab.title, 
+            autosettings_path = path,
+            size=[self._widget.size().width(), self._widget.size().height()],
+            margins = False)
+        
+        # Bind the close to the function
+        def close(*a): self.unpop_tab(tab.index)
+        self.popped_tabs[tab.index].event_close = close
+        
+        # Add the contents of the removed tab.
+        self.popped_tabs[tab.index].add(tab, alignment=0)
+        tab.show()
+        self.popped_tabs[tab.index].show()
+        
+        # Return it
+        return self.popped_tabs[tab.index]
+    
+    def unpop_tab(self, index):
+        """
+        Reinserts the popped tab.
+        
+        Parameters
+        ----------
+        index : int
+            Index of said popped tab.
+        """
+        self._widget.blockSignals(True)
+
+        # Take the object out of the popped dictionary
+        tab = self.popped_tabs.pop(index).objects[0]
+        
+        # Insert this at the appropriate place in the docked list
+        for n in range(len(self.docked_tabs)):
+            
+            # If this tab's index is less than the next one in the list, 
+            # This is where we should insert it.
+            if tab.index < self.docked_tabs[n].index:
+                self.docked_tabs.insert(n,tab)
+                break
+        
+        # Put it at the end
+        if not tab in self.docked_tabs: self.docked_tabs.append(tab)
+        
+        # Remove all the widgets
+        while self.get_tab_count(): self._widget.removeTab(0)
+        
+        # Re-add them in order
+        for t in self.docked_tabs: self._widget.addTab(t._widget, t.title)
+        
+        self._widget.blockSignals(False)
+
+
+        
 
     def get_current_tab(self):
         """
