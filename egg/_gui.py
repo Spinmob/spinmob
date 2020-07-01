@@ -1,9 +1,10 @@
 import pyqtgraph as _pg
 
-# PYQTGRAPH FIXES
+# PYQTGRAPH v0.10.0 PATCHWORK Will be fixed in v0.11.0
 if _pg.__version__ == '0.10.0':
     
-    # My replacement function. Should be fixed in 0.11.0.
+    
+    
     def _ParameterItem_optsChanged(self, param, opts):
         if 'visible'  in opts: self.setHidden(not opts['visible'])
         if 'expanded' in opts: self.setExpanded(opts['expanded'])
@@ -14,6 +15,73 @@ if _pg.__version__ == '0.10.0':
     _pg.parametertree.ParameterItem.optsChanged                     = _ParameterItem_optsChanged
     _pg.parametertree.parameterTypes.GroupParameterItem.optsChanged = _ParameterItem_optsChanged
 
+
+    
+    # Spinbox hiding in parameter trees
+    from decimal import Decimal as _D  ## Use decimal to avoid accumulating floating-point errors
+    from pyqtgraph.python2_3 import asUnicode as _asUnicode
+    def _SpinBox_setOpts(self, **opts):
+        """
+        Changes the behavior of the SpinBox. Accepts most of the arguments 
+        allowed in :func:`__init__ <pyqtgraph.SpinBox.__init__>`.
+        
+        """
+        #print opts
+        for k in opts:
+            if k == 'bounds':
+                self.setMinimum(opts[k][0], update=False)
+                self.setMaximum(opts[k][1], update=False)
+            elif k == 'min':
+                self.setMinimum(opts[k], update=False)
+            elif k == 'max':
+                self.setMaximum(opts[k], update=False)
+            elif k in ['step', 'minStep']:
+                self.opts[k] = _D(_asUnicode(opts[k]))
+            
+            # Jack Start
+            elif k in ['visible']:
+                self.opts[k] = opts[k]
+            # Jack End
+            
+            elif k == 'value':
+                pass   ## don't set value until bounds have been set
+            elif k in self.opts:
+                self.opts[k] = opts[k]
+            else:
+                raise TypeError("Invalid keyword argument '%s'." % k)
+        if 'value' in opts:
+            self.setValue(opts['value'])
+            
+        ## If bounds have changed, update value to match
+        if 'bounds' in opts and 'value' not in opts:
+            self.setValue()   
+            
+        ## sanity checks:
+        if self.opts['int']:
+            if 'step' in opts:
+                step = opts['step']
+                ## not necessary..
+                #if int(step) != step:
+                    #raise Exception('Integer SpinBox must have integer step size.')
+            else:
+                self.opts['step'] = int(self.opts['step'])
+            
+            if 'minStep' in opts:
+                step = opts['minStep']
+                if int(step) != step:
+                    raise Exception('Integer SpinBox must have integer minStep size.')
+            else:
+                ms = int(self.opts.get('minStep', 1))
+                if ms < 1:
+                    ms = 1
+                self.opts['minStep'] = ms
+        
+        if 'delay' in opts:
+            self.proxy.setDelay(opts['delay'])
+        
+        self.updateText()
+    _pg.SpinBox.setOpts = _SpinBox_setOpts
+    
 # Regular imports
 import time     as _t
 import os       as _os
@@ -2187,6 +2255,8 @@ class TreeDictionary(BaseObject):
             Set to True to display units on numbers
         suffix
             Not used by default. Used to add unit labels to elements.
+        readonly=False
+            Whether the user can edit the values.
         
 
         See pyqtgraph ParameterTree for more options. Particularly useful is the
@@ -2274,17 +2344,31 @@ class TreeDictionary(BaseObject):
         destination_databox.update_headers(d,k)
 
 
-    def hide_parameter(self, key):
+    def hide_parameter(self, key, opposite=False):
         """
         Hides the specified parameter.
         """
-        self._find_parameter(key.split('/')).hide()
+        self.block_events()
+        try:
+            if opposite: self._find_parameter(key.split('/')).show()
+            else:        self._find_parameter(key.split('/')).hide()
+        except: 
+            print('issue')
+            pass
+        self.unblock_events()
 
-    def show_parameter(self, key):
+    def show_parameter(self, key, opposite=False):
         """
         Hides the specified parameter.
         """
-        self._find_parameter(key.split('/')).show()        
+        self.block_events()
+        try:
+            if opposite: self._find_parameter(key.split('/')).hide()    
+            else:        self._find_parameter(key.split('/')).show()
+        except: 
+            print('issue')
+            pass
+        self.unblock_events()
 
     def get_widget(self, key):
         """
@@ -2431,6 +2515,19 @@ class TreeDictionary(BaseObject):
         """
         return self.get_dictionary(short_keys=short_keys)[0]
 
+    def set_list_index(self, key, n):
+        """
+        Sets the selected index of a list (combo box) in the tree.
+        
+        Parameters
+        ----------
+        key : string
+            Key to a list item / combo box in the tree.
+        n : integer
+            Index to select.
+        """
+        self.set_value(key, self.get_widget(key).opts['values'][n])
+
     def set_value(self, key, value, ignore_error=False, block_user_signals=False):
         """
         Sets the variable of the supplied key to the supplied value.
@@ -2450,7 +2547,7 @@ class TreeDictionary(BaseObject):
         key = self._clean_up_key(self._strip(key))
 
         # If we're supposed to, block the user signals for this parameter
-        if block_user_signals: self.block_user_signals(key, ignore_error)        
+        if block_user_signals: self.block_events()
 
         # now get the parameter object
         x = self._find_parameter(key.split('/'), quiet=ignore_error)
@@ -2471,7 +2568,7 @@ class TreeDictionary(BaseObject):
         else: x.setValue(eval(x.opts['type'])(value))
 
         # If we're supposed to unblock the user signals for this parameter
-        if block_user_signals: self.unblock_user_signals(key, ignore_error)
+        if block_user_signals: self.unblock_events()
 
         # Do other stuff if needed.
         self.after_set_value()
@@ -2619,6 +2716,8 @@ class TreeDictionary(BaseObject):
 
         return self
 
+    load_from_databox_header = update
+
     def _set_value_safe(self, k, v, ignore_errors=False, block_user_signals=False):
         """
         Actually sets the value, first by trying it directly, then by 
@@ -2754,15 +2853,16 @@ class DataboxPlot(_d.databox, GridLayout):
         self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
         self.script.set_style('font-family:courier; font-size:12;')
-        self._label_script_error = self.grid_script.place_object(Label('ERRORS GO HERE'), 1,4, column_span=2, alignment=0)
+        
+        self._label_script_error = self.place_object(Label('ERRORS GO HERE'), 0,2, column_span=2, alignment=0)
         self._label_script_error.hide()
 
 
         # make sure the plot fills up the most space
-        self.set_row_stretch(2)
+        self.set_row_stretch(3)
 
         # plot area
-        self.grid_plot = self.place_object(GridLayout(margins=False), 0,2, column_span=self.get_column_count(), alignment=0)
+        self.grid_plot = self.place_object(GridLayout(margins=False), 0,3, column_span=self.get_column_count(), alignment=0)
 
         ##### set up the internal variables
 
@@ -3252,6 +3352,7 @@ class DataboxPlot(_d.databox, GridLayout):
             # Show the error
             self._label_script_error.show()
             self._label_script_error.set_text('OOP! '+ type(e).__name__ + ": '" + str(e.args[0]) + "'")
+            self._label_script_error.set_colors('red', None)
             
         return self
 

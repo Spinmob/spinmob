@@ -33,6 +33,9 @@ try:
     _qtapp = _qtc.QCoreApplication.instance()
     if not _qtapp: _qtapp = _qtw.QApplication([])
     
+    # Set the dpi scaling
+    _qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
+    
 except:
     _warn("pyqtgraph version 0.10 or higher is required (use a conda or pip install).")
     

@@ -146,6 +146,19 @@ class Test_egg(_ut.TestCase):
         self.e.load()
         self.assertEqual(self.e['/testname/floaty'], 77)
         
+        
+        
+        # Test blocking connect_signal_changed
+        self.d.add_parameter('a', 0)
+        self.d.add_parameter('b', 0)
+        def f(*a): self.d['a'] += 1
+        self.d.connect_any_signal_changed(f)
+        self.d.connect_signal_changed('a', f)
+        self.d.set_value('a', 1, block_user_signals=True)
+        self.assertEqual(self.d['a'], 1)
+        
+        
+        
     def test_DataboxPlot_DataboxProcessor(self):
         
         # Create window

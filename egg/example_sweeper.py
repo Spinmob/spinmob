@@ -144,7 +144,6 @@ b_sweep.signal_clicked.connect(acquire_button_clicked)
 def d_sweep_after_load():
 
     # dump the header into the settings
-    print(d_sweep)
     settings.update(d_sweep, ignore_errors=True)
 
     # update the roi_sweep region
@@ -162,7 +161,8 @@ d_sweep.after_load_file = d_sweep_after_load
 
 # overwrite the existing shutdown / destroy sequence
 def shutdown():
-    print("\nStopping acquisition and closing window. Use w.show() to show again.")
+    
+    # Stops the sweep before closing
     b_sweep.set_checked(False)
     return
 w.event_close = shutdown
