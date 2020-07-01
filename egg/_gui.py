@@ -2153,7 +2153,7 @@ class TreeDictionary(BaseObject):
         # Emit the signal the same way pyqtgraph does.
         p.sigValueChanged.emit(r, self[key])
 
-    def block_user_signals(self, key, ignore_error=False):
+    def block_key_signals(self, key, ignore_error=False):
         """
         Temporarily disconnects the user-defined signals for the specified 
         parameter key. 
@@ -2173,7 +2173,7 @@ class TreeDictionary(BaseObject):
         
         return self
 
-    def unblock_user_signals(self, key, ignore_error=False):
+    def unblock_key_signals(self, key, ignore_error=False):
         """
         Reconnects the user-defined signals for the specified 
         parameter key (blocked with "block_user_signal_changed")
@@ -2630,7 +2630,7 @@ class TreeDictionary(BaseObject):
         """
         self.set_value(key, self.get_widget(key).opts['values'][n])
 
-    def set_value(self, key, value, ignore_error=False, block_user_signals=False):
+    def set_value(self, key, value, ignore_error=False, block_key_signals=False, block_all_signals=False):
         """
         Sets the variable of the supplied key to the supplied value.
 
@@ -2642,14 +2642,16 @@ class TreeDictionary(BaseObject):
             Value to set for this item.
         ignore_error : bool
             If True, will ignore the error, such as not finding the key.
-        block_user_signals : bool
+        block_key_signals : bool
             If True, this will not trigger a signal_changed, etc.
         """
+        
         # first clean up the key
         key = self._clean_up_key(self._strip(key))
 
         # If we're supposed to, block the user signals for this parameter
-        if block_user_signals: self.block_events()
+        if block_all_signals: self.block_events()
+        if block_key_signals: self.block_key_signals(key, ignore_error)
 
         # now get the parameter object
         x = self._find_parameter(key.split('/'), quiet=ignore_error)
@@ -2670,7 +2672,8 @@ class TreeDictionary(BaseObject):
         else: x.setValue(eval(x.opts['type'])(value))
 
         # If we're supposed to unblock the user signals for this parameter
-        if block_user_signals: self.unblock_events()
+        if block_key_signals: self.unblock_key_signals(key, ignore_error)
+        if block_all_signals: self.unblock_events()
 
         # Do other stuff if needed.
         self.after_set_value()
@@ -2743,7 +2746,7 @@ class TreeDictionary(BaseObject):
         
         return self
 
-    def load(self, path=None, ignore_errors=True, block_user_signals=False):
+    def load(self, path=None, ignore_errors=True, block_key_signals=False):
         """
         Loads all the parameters from a databox text file. If path=None,
         loads from self._autosettings_path (provided this is not None).
@@ -2757,7 +2760,7 @@ class TreeDictionary(BaseObject):
             Whether we should raise a stink when a setting doesn't exist.
             When settings do not exist, they are stuffed into the dictionary
             self._lazy_load.
-        block_user_signals=False
+        block_key_signals=False
             If True, the load will not trigger any signals.
         """
         if path==None: 
@@ -2779,10 +2782,10 @@ class TreeDictionary(BaseObject):
         else:                     return None
 
         # update the settings
-        self.update(d, ignore_errors=ignore_errors, block_user_signals=block_user_signals)
+        self.update(d, ignore_errors=ignore_errors, block_key_signals=block_key_signals)
         return self
 
-    def update(self, source_d, ignore_errors=True, block_user_signals=False):
+    def update(self, source_d, ignore_errors=True, block_key_signals=False):
         """
         Supply a dictionary or databox with a header of the same format
         and this will update this TreeDictionary's settings accordingly.
@@ -2814,20 +2817,20 @@ class TreeDictionary(BaseObject):
 
                 # Pop the value so it's not set again in the future
                 v = self._lazy_load.pop(k)
-                self._set_value_safe(k, v, ignore_errors, block_user_signals)
+                self._set_value_safe(k, v, ignore_errors, block_key_signals)
 
         return self
 
     load_from_databox_header = update
 
-    def _set_value_safe(self, k, v, ignore_errors=False, block_user_signals=False):
+    def _set_value_safe(self, k, v, ignore_errors=False, block_key_signals=False):
         """
         Actually sets the value, first by trying it directly, then by 
         """
         # for safety: by default assume it's a repr() with python code
         try:
             self.set_value(k, v, ignore_error       = ignore_errors, 
-                                 block_user_signals = block_user_signals)
+                                 block_key_signals = block_key_signals)
 
         except:
             print("ERROR: Could not set '"+k+"' to '"+v+"'"+'\n'+str(self))
@@ -3449,7 +3452,6 @@ class DataboxPlot(_d.databox, GridLayout):
             self._e = e
             self.script.set_colors('black','pink')
             self.button_script.set_colors('black', 'pink')
-            self.button_script.set_checked()
             
             # Show the error
             self._label_script_error.show()
