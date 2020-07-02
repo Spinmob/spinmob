@@ -1472,8 +1472,7 @@ class TabArea(BaseObject):
         
         # try to lazy set the current tab
         if 'self' in self._lazy_load and self.get_total_tab_count() > self._lazy_load['self']:
-            v = self._lazy_load.pop('self')
-            self.set_current_tab(v)
+            self.set_current_tab(self._lazy_load['self'])
 
         # Unblock signals
         self._widget.blockSignals(False)
