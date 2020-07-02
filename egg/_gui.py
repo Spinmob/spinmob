@@ -1470,12 +1470,12 @@ class TabArea(BaseObject):
         # Remember the unique tab id (total tab index)
         tab.index = self.get_total_tab_count()-1
         
+        # Unblock signals
+        self._widget.blockSignals(False)
+        
         # try to lazy set the current tab
         if 'self' in self._lazy_load and self.get_total_tab_count() > self._lazy_load['self']:
             self.set_current_tab(self._lazy_load['self'])
-
-        # Unblock signals
-        self._widget.blockSignals(False)
 
         # Add this tab to the lists and put the grid layout on it.
         self.docked_tabs.append(tab)
