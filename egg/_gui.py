@@ -995,10 +995,15 @@ class Button(BaseObject):
         self.get_value = self.is_checked
         self.set_value = self.set_checked
 
+        # Store self as autosettings
+        self._autosettings_controls.append('self')
+        
         # Load any previous settings
         self.load_gui_settings()
-       
         
+        # Bind to save gui settings when changed
+        self.signal_toggled.connect(self.save_gui_settings)
+
 
     def is_checked(self):
         """
@@ -1168,8 +1173,14 @@ class NumberBox(BaseObject):
         # set a less ridiculous width
         self.set_width(70)
         
+        # Store self as autosettings
+        self._autosettings_controls.append('self')
+        
         # Load any previous settings
         self.load_gui_settings()
+        
+        # Bind to save gui settings when changed
+        self.signal_changed.connect(self.save_gui_settings)
 
     def get_value(self):
         """
@@ -1237,9 +1248,15 @@ class CheckBox(BaseObject):
         # signals
         self.signal_changed = self._widget.stateChanged
         
+        # Store self as autosettings
+        self._autosettings_controls.append('self')
+        
         # Load any previous settings
         self.load_gui_settings()
-       
+        
+        # Bind to save gui settings when changed
+        self.signal_changed.connect(self.save_gui_settings)
+
 
         
     def is_checked(self):
@@ -1284,8 +1301,15 @@ class ComboBox(BaseObject):
         self.signal_activated = self._widget.activated       
         self.signal_changed   = self._widget.currentIndexChanged
         
+        # Store self as autosettings
+        self._autosettings_controls.append('self')
+        
         # Load any previous settings
         self.load_gui_settings()
+        
+        # Bind to save gui settings when changed
+        self.signal_changed.connect(self.save_gui_settings)
+
         
     def add_item(self, text="ploop"):
         """
@@ -1509,8 +1533,12 @@ class TabArea(BaseObject):
         tab.show()
         self.popped_tabs[tab.index].show()
         
-        # If we have no tabs, hide it.
-        if self.get_docked_tab_count() == 0: self.hide()
+        # If we have no tabs after popping
+        # AND we either have no lazy_load information or we already have the expected number of tabs
+        # Hide it.
+        if self.get_docked_tab_count() == 0 \
+        and ((not 'total_tabs' in self._lazy_load.keys()) \
+              or len(self.all_tabs) == self._lazy_load['total_tabs']): self.hide()
         
         # Save the gui settings
         self.save_gui_settings()
@@ -1553,9 +1581,11 @@ class TabArea(BaseObject):
         self.show()
         
         self._widget.blockSignals(False)
-
-
         
+        # Save the gui settings
+        self.save_gui_settings()
+        
+        return tab
 
     def get_current_tab(self):
         """
@@ -1578,6 +1608,7 @@ class TabArea(BaseObject):
         Adds to the gui settings databox (d) header some additional information.
         """
         d.h(popped_tabs=list(self.popped_tabs.keys()))
+        d.h(total_tabs =len(self.all_tabs))
     
 class Table(BaseObject):
 
@@ -2403,12 +2434,14 @@ class TreeDictionary(BaseObject):
         for p in parameter.children():
             self._get_parameter_dictionary(k, dictionary, sorted_keys, p)
 
-    def send_to_databox_header(self, destination_databox):
+    def send_to_databox_header(self, destination_databox=None):
         """
         Sends all the information currently in the tree to the supplied
         databox's header, in alphabetical order. If the entries already
-        exists, just updates them.
+        exists, just updates them. If destination_databox=None, returns a
+        new databox.
         """
+        if destination_databox == None: destination_databox = _s.data.databox()
         k, d = self.get_dictionary()
         destination_databox.update_headers(d,k)
 
