@@ -1481,6 +1481,11 @@ class TabArea(BaseObject):
         # Add this tab to the lists and put the grid layout on it.
         self.docked_tabs.append(tab)
         
+        # Make sure it's visible (in case lazy popping happened.)
+        self.show();
+        
+        # At this point it's been added normally, but may have some before it missing.
+        
         # If this tab's index is in the popped list, pop it.
         if 'popped_tabs' in self._lazy_load \
         and tab.index    in self._lazy_load['popped_tabs']: self.pop_tab(-1)
@@ -1533,12 +1538,8 @@ class TabArea(BaseObject):
         tab.show()
         self.popped_tabs[tab.index].show()
         
-        # If we have no tabs after popping
-        # AND we either have no lazy_load information or we already have the expected number of tabs
-        # Hide it.
-        if self.get_docked_tab_count() == 0 \
-        and ((not 'total_tabs' in self._lazy_load.keys()) \
-              or len(self.all_tabs) == self._lazy_load['total_tabs']): self.hide()
+        # If we have no tabs after popping, hide it.
+        if self.get_docked_tab_count() == 0 : self.hide()
         
         # Save the gui settings
         self.save_gui_settings()
@@ -1608,8 +1609,7 @@ class TabArea(BaseObject):
         Adds to the gui settings databox (d) header some additional information.
         """
         d.h(popped_tabs=list(self.popped_tabs.keys()))
-        d.h(total_tabs =len(self.all_tabs))
-    
+        
 class Table(BaseObject):
 
     def __init__(self, columns=2, rows=1):
