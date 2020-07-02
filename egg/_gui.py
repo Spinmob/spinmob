@@ -146,7 +146,7 @@ class BaseObject(object):
         # add a load_gui_settings() to the init!
         self._autosettings_path     = autosettings_path
         self._autosettings_controls = []
-        self._lazy_load    = dict()
+        self._lazy_load             = dict()
         
         # common signals
         return
@@ -348,13 +348,24 @@ class BaseObject(object):
             
             # for saving header info
             d = _d.databox(delimiter=',')
-
+            
             # add all the controls settings
             for x in self._autosettings_controls: self._store_gui_setting(d, x)
+            
+            # Summary of standard set_value items
+            d.h(_autosettings_standard_items=list(d.hkeys))
+            
+            # Add any additional special information specified by derived objects.
+            self._additional_save_gui_settings(d)
 
             # save the file
             d.save_file(path, force_overwrite=True)
 
+    def _additional_save_gui_settings(self, d):
+        """
+        Overload me to store additional gui information.
+        """
+        return
 
     def load_gui_settings(self, lazy_only=False):
         """
@@ -386,6 +397,10 @@ class BaseObject(object):
                 
                 # Load the settings
                 d.load_file(path, header_only=True, quiet=True)
+                
+                # List of "Standard" items that can be loaded with self.set_value()
+                self._autosettings_standard_items = d.pop_header('_autosettings_standard_items', ignore_error=True)
+                if not self._autosettings_standard_items: self._autosettings_standard_items = list(d.hkeys)
 
                 # Store the settings in the lazy dictionary
                 self._lazy_load.update(d.headers)
@@ -422,18 +437,22 @@ class BaseObject(object):
         # If we have a databox, take the header dictionary
         if not type(d) == dict: d = d.headers
         
+        # Here d is a dictionary of settings, and we know which ones should
+        # be set_value()'d because they're in self._autosettings_standard_items
+        
         # only do this if the key exists
         if key in d:
             
             try:
                 # Try to set the value
-                eval(key).set_value(d[key])
+                if key in self._autosettings_standard_items: 
+                    eval(key).set_value(d[key])
 
-                # If this fails, perhaps the element does not yet exist
-                # For example, TabArea may not have all the tabs created
-                # and cannot set the active tab until later.
-                # If it's here, it worked, so pop if necessary
-                if pop_value: d.pop(key)
+                    # If this fails, perhaps the element does not yet exist
+                    # For example, TabArea may not have all the tabs created
+                    # and cannot set the active tab until later.
+                    # If we're here, it worked, so pop if necessary
+                    if pop_value: d.pop(key)
            
             except: 
                 print("ERROR: Could not load gui setting "+repr(key)+'\n'+str(self))
@@ -923,101 +942,6 @@ class Window(GridLayout):
         self._window.hide()
         return self
 
-class Docker(Window):
-
-    log = None
-    
-    def __init__(self, name='Docker', size=[300,200], autosettings_path=None, margins=True):
-        """
-        This creates a docked layout that can contain other object.
-        
-        All names must be unique within one project!
-        """
-        # This sets _widget and _layout
-        Window.__init__(self)
-        
-        # create the docker widget        
-        self._window = _pg.Qt.QtGui.QDockWidget(name, None)
-        self._window.setFeatures(self._window.DockWidgetFloatable |
-                                 self._window.DockWidgetMovable   |
-                                 self._window.DockWidgetClosable)
-        
-        # set unique name of dock
-        self._window.setObjectName(name)
-                      
-        # Qt widget to house the layout
-        self._widget = _pg.Qt.QtGui.QWidget()
-
-        # Qt layout object
-        self._layout = _pg.Qt.QtGui.QGridLayout()
-
-        # stick the layout into the widget
-        self._widget.setLayout(self._layout)
-
-        # put all that widget junk in the docker
-        self._window.setWidget(self._widget)
-        
-        # set margins if necessary
-        if margins==False:  self._layout.setContentsMargins(0,0,0,0)
-        elif margins==True: self._layout.setContentsMargins(10,10,10,10)
-        elif _s.fun.is_iterable(margins): self._layout.setContentsMargins(*margins)
-        
-        # Set the initial geometry
-        self.set_size(size)
-    
-        # autosettings path, to remember the window's position and size
-        self._autosettings_path = autosettings_path
-        
-        # Load the previous settings
-        self._load_settings()
-        
-        # events for moving, resizing and closing
-        self._last_event_type = None
-        self._window.eventFilter = self._event_filter
-        self._window.installEventFilter(self._window)
-        self._window.closeEvent  = self._event_close
-        
-        # other useful functions to wrap
-        self.get_row_count    = self._layout.rowCount
-        self.get_column_count = self._layout.columnCount        
-        
-        # Remove non-functional window stuff
-        self.place_docker = self._disabled
-         
-    def _disabled(self):
-        """
-        This function is disabled for Docker object.
-        """
-        self.print_message("This function is disabled for Docker object.")
-        return
-        
-    def show(self, block_command_line=False, block_timing=0.05):
-        """
-        Shows the window and raises it.
-
-        If block_command_line is 0, this will start the window up and allow you
-        to monkey with the command line at the same time. Otherwise, the
-        window will block the command line and process events every
-        block_timing seconds.
-        """
-
-        self._is_open = True
-        self._window.show()
-        self._window.raise_()
-
-        # start the blocking loop
-        if block_command_line:
-            
-            # stop when the window closes
-            while self._is_open:
-                _a.processEvents()
-                _t.sleep(block_timing)
-
-            # wait a moment in case there is some shutdown stuff.
-            _t.sleep(0.5)
-
-        return self
-
     
 
 class Button(BaseObject):
@@ -1037,6 +961,9 @@ class Button(BaseObject):
     QPushButton=None
         Optionally, you can specify a QPushButton instance that it will use
         instead of creating a new one.
+    autosettings_path=None
+        If you want this object to remember its state from run to run, specify
+        a unique identifier string, e.g. 'my_button_no'.
     
     Signals
     -------
@@ -1047,18 +974,18 @@ class Button(BaseObject):
     """
 
     
-    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None):
+    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None, autosettings_path=None):
         
         # Qt button instance
         if QPushButton is None: self._widget = _pg.Qt.QtGui.QPushButton(text)
         else:                   self._widget = QPushButton
     
+        # Other stuff common to all objects
+        BaseObject.__init__(self, autosettings_path)
+
         # signals
         self.signal_clicked = self._widget.clicked
         self.signal_toggled = self._widget.toggled
-
-        # Other stuff common to all objects
-        BaseObject.__init__(self)
 
         # set checkable
         self.set_checkable(checkable)
@@ -1068,9 +995,9 @@ class Button(BaseObject):
         self.get_value = self.is_checked
         self.set_value = self.set_checked
 
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
+        # Load any previous settings
+        self.load_gui_settings()
+       
         
 
     def is_checked(self):
@@ -1207,6 +1134,9 @@ class NumberBox(BaseObject):
         Min and max values
     int=False
         Force the value to be an integer if True
+    autosettings_path=None
+        If you want this object to remember its value from run to run, specify
+        a unique identifier, e.g. 'my_numberbox'.
     
     Some Common Keyword Arguments
     -----------------------------
@@ -1222,26 +1152,24 @@ class NumberBox(BaseObject):
         Number of decimals to display
     """
     
-    def __init__(self, value=0, step=1, bounds=(None,None), int=False, **kwargs):
+    def __init__(self, value=0, step=1, bounds=(None,None), int=False, autosettings_path=None, **kwargs):
         
 
         # pyqtgraph spinbox
         self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds,
                                   int=int, **kwargs)
 
+        # Other stuff common to all objects
+        BaseObject.__init__(self, autosettings_path)
+
         # signals
         self.signal_changed = self._widget.sigValueChanging
-
-        # Other stuff common to all objects
-        BaseObject.__init__(self)
 
         # set a less ridiculous width
         self.set_width(70)
         
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-        
+        # Load any previous settings
+        self.load_gui_settings()
 
     def get_value(self):
         """
@@ -1290,20 +1218,29 @@ class NumberBox(BaseObject):
 
 class CheckBox(BaseObject):
     
-    def __init__(self):
+    def __init__(self, autosettings_path=None):
         """
         Simplified QCheckBox.
+        
+        Parameters
+        ----------
+        autosettings_path=None
+            If you wish for this object to remember its state from run to run,
+            specify a unique identifier string, e.g. 'my_checkbox'
         """      
         # pyqt objects
         self._widget = _pg.QtGui.QCheckBox()
         
+        # Other stuff common to all objects
+        BaseObject.__init__(self, autosettings_path)
+
         # signals
         self.signal_changed = self._widget.stateChanged
         
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-        
+        # Load any previous settings
+        self.load_gui_settings()
+       
+
         
     def is_checked(self):
         """
@@ -1321,14 +1258,25 @@ class CheckBox(BaseObject):
 
 class ComboBox(BaseObject):
     
-    def __init__(self, items=['test','me']):
+    def __init__(self, items=['test','me'], autosettings_path=None):
         """
         Simplified QComboBox.
+        
+        Parameters
+        ----------
+        items=['test','me']
+            List of items for the combobox.
+        autosettings_path=None
+            If you want this object to remember its settings from run to run,
+            give it a unique identifier string, e.g. 'my_combobox'
         """
         
         # pyqt objects
         self._widget = _pg.QtGui.QComboBox()
         
+        # Other stuff common to all objects
+        BaseObject.__init__(self, autosettings_path)
+
         # Populate it.
         for item in items: self.add_item(item)        
         
@@ -1336,10 +1284,8 @@ class ComboBox(BaseObject):
         self.signal_activated = self._widget.activated       
         self.signal_changed   = self._widget.currentIndexChanged
         
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-        
+        # Load any previous settings
+        self.load_gui_settings()
         
     def add_item(self, text="ploop"):
         """
@@ -1422,6 +1368,9 @@ class TabArea(BaseObject):
         self._widget = _pg.Qt.QtGui.QTabWidget()
         self._widget.setTabsClosable(True)
 
+        # Other stuff common to all objects
+        BaseObject.__init__(self)
+
         # tab widgets by index
         self.docked_tabs = []
         self.all_tabs    = []
@@ -1435,24 +1384,23 @@ class TabArea(BaseObject):
         self.signal_switched.connect(self._tab_changed)
         self.signal_tab_close_requested.connect(self._tab_closed)
 
-        # Other stuff common to all objects
-        BaseObject.__init__(self)
-
         # list of controls we should auto-save / load
         self._autosettings_path = autosettings_path
         self._autosettings_controls = ["self"]
 
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-        
         # Expose the count function
-        self.get_tab_count = self._widget.count
+        self.get_docked_tab_count = self._widget.count
         
         # Load the previous settings. Of course, we cannot set the tab
         # yet (no tabs added!), so only load into self._lazy_load
         self.load_gui_settings(lazy_only=True)
-               
+    
+
+    def get_total_tab_count(self):
+        """
+        Returns the total tab count (integer).
+        """          
+        return len(self.all_tabs)
 
     def _tab_closed(self, *a): 
         """
@@ -1483,39 +1431,47 @@ class TabArea(BaseObject):
         self._widget.blockSignals(block_events)
 
         # create a widget to go in the tab
-        tab = GridLayout(margins=False)
+        tab = GridLayout(margins=margins)
         tab.set_parent(self)
         tab.title = title
         
+        # Remember this tab.
+        self.all_tabs.append(tab)
+
         # create and append the tab to the list
         # Note this makes _widget no longer able to be added to a QGridLayout
         # for some unknown reason. This is why we nest the grids
         self._widget.addTab(tab._widget, title)
         
-        # Remember the tab index
-        tab.index = self.get_tab_count()-1
-       
+        # Remember the unique tab id (total tab index)
+        tab.index = self.get_total_tab_count()-1
+        
         # try to lazy set the current tab
-        if 'self' in self._lazy_load and self.get_tab_count() > self._lazy_load['self']:
+        if 'self' in self._lazy_load and self.get_total_tab_count() > self._lazy_load['self']:
             v = self._lazy_load.pop('self')
             self.set_current_tab(v)
 
+        # Unblock signals
         self._widget.blockSignals(False)
 
-        # Add this tab to the lists
+        # Add this tab to the lists and put the grid layout on it.
         self.docked_tabs.append(tab)
-        self.all_tabs.append(tab)
+        
+        # If this tab's index is in the popped list, pop it.
+        if 'popped_tabs' in self._lazy_load \
+        and tab.index    in self._lazy_load['popped_tabs']: self.pop_tab(-1)
+            
+        return tab
 
-        return tab.place_object(GridLayout(margins=margins), alignment=0)
-
-    def remove_tab(self, n=0):
+    def _remove_tab(self, n=0):
         """
         Removes the tab by visible index.
         """
-
-        # pop it from the list
+        if n<0: n = self.get_docked_tab_count()+n
+        
+        # pop it from the internal "visible" list
         tab = self.docked_tabs.pop(n)
-
+        
         # remove it from the gui
         self._widget.removeTab(n)
 
@@ -1529,7 +1485,9 @@ class TabArea(BaseObject):
         
         Returns the popped tab, but these also live in self.popped_tabs.
         """
-        tab = self.remove_tab(n)
+        if n<0: n = self.get_docked_tab_count()+n
+        
+        tab = self._remove_tab(n)
         
         # Get the autosettings path.
         if self._autosettings_path: path = self._autosettings_path+'_tab'+str(tab.index)
@@ -1552,7 +1510,10 @@ class TabArea(BaseObject):
         self.popped_tabs[tab.index].show()
         
         # If we have no tabs, hide it.
-        if self.get_tab_count() == 0: self.hide()
+        if self.get_docked_tab_count() == 0: self.hide()
+        
+        # Save the gui settings
+        self.save_gui_settings()
         
         # Return it
         return self.popped_tabs[tab.index]
@@ -1584,7 +1545,7 @@ class TabArea(BaseObject):
         if not tab in self.docked_tabs: self.docked_tabs.append(tab)
         
         # Remove all the widgets
-        while self.get_tab_count(): self._widget.removeTab(0)
+        while self.get_docked_tab_count(): self._widget.removeTab(0)
         
         # Re-add them in order
         for t in self.docked_tabs: self._widget.addTab(t._widget, t.title)
@@ -1611,7 +1572,13 @@ class TabArea(BaseObject):
         return self._widget.setCurrentIndex(n)
 
     set_value = set_current_tab
-
+    
+    def _additional_save_gui_settings(self, d):
+        """
+        Adds to the gui settings databox (d) header some additional information.
+        """
+        d.h(popped_tabs=list(self.popped_tabs.keys()))
+    
 class Table(BaseObject):
 
     def __init__(self, columns=2, rows=1):
