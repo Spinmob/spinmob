@@ -914,6 +914,7 @@ class databox:
         for k in source_databox.hkeys: self.insert_header(k, source_databox.h(k))
 
         return self
+    copy_headers_from = copy_headers
 
     def copy_columns(self, source_databox):
         """
@@ -922,14 +923,34 @@ class databox:
         for k in source_databox.ckeys: self.insert_column(source_databox[k], k)
 
         return self
+    copy_columns_from = copy_columns
     
     def copy_all(self, source_databox):
         """
-        Copies the header and columns from source_databox to this databox.
+        Copies the headers and columns from source_databox to this databox.
         """
         self.copy_headers(source_databox)
         self.copy_columns(source_databox)
         return self
+    copy_all_from = copy_all
+    
+    def copy_headers_to(self, destination_databox):
+        """
+        Copies the headers from this databox to the supplied destination databox.
+        """
+        destination_databox.copy_headers_from(self)
+    
+    def copy_columns_to(self, destination_databox):
+        """
+        Copies the columns from this databox to the supplied destination databox.
+        """
+        destination_databox.copy_columns_from(self)
+    
+    def copy_all_to(self, destination_databox):
+        """
+        Copies everything from this databox to the supplied destination databox.
+        """
+        destination_databox.copy_all_from(self)
     
     def insert_globals(self, *args, **kwargs):
         """

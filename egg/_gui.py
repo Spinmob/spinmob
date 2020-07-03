@@ -2314,7 +2314,7 @@ class TreeDictionary(BaseObject):
         
         return Button(key, checkable, checked, list(ap.items.keys())[0].button)
 
-    def add_parameter(self, key='test', value=42.0, **kwargs):
+    def add_parameter(self, key='test', value=42.0, default_list_index=0, **kwargs):
         """
         Adds a parameter "leaf" to the tree. 
         
@@ -2327,6 +2327,10 @@ class TreeDictionary(BaseObject):
             Value of the leaf. If nothing else is specified, the parameter
             will be assumed to be the type of the value, so specifying 0 will
             result in an int, 0.0 will be a float, [] will be a list, etc.
+        default_list_index=0
+            When setting value=[], use this to specify the default selected
+            list index.
+        
         
         Common Keyword Arguments
         ------------------------
@@ -2367,12 +2371,14 @@ class TreeDictionary(BaseObject):
         other_kwargs.update(kwargs)    # Slap on the ones we specified
         
         # Special case: we send a list to value => list
-        if type(value)==list: 
-            other_kwargs['values'] = value
-            value = 0
+        if type(value)==list: other_kwargs['values'] = value
             
-        # Auto typing
-        if 'values' in other_kwargs: other_kwargs['type'] = 'list'
+        # Auto typing for lists specified by either method
+        if 'values' in other_kwargs: 
+            other_kwargs['type'] = 'list'
+            value = other_kwargs['values'][default_list_index]
+        
+        # Normal autotyping
         elif other_kwargs['type'] == None: other_kwargs['type'] = type(value).__name__
         
         # Fix 'values' for list objects to be only strings
@@ -3360,8 +3366,9 @@ class DataboxPlot(_d.databox, GridLayout):
         Updates the plot according to the script and internal data.
         """
         
-        # if we're disabled or have no data columns, clear everything!
-        if not self.button_enabled.is_checked():
+        # If we're disabled or have no data, clear
+        if not self.button_enabled.is_checked() \
+        or len(self)==0:
             self._set_number_of_plots([],[])
             return self
 
@@ -3414,7 +3421,7 @@ class DataboxPlot(_d.databox, GridLayout):
                 self._curves[n].setData(x[n],y[n])
                 if ey[n] is not None: 
                     self._errors[n].setData(x=x[n], y=y[n], top=ey[n], bottom=ey[n])
-                
+                    
                 # get the labels for the curves
 
                 # if it's a string, use the same label for all axes
