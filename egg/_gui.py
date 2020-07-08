@@ -1177,8 +1177,7 @@ class NumberBox(BaseObject):
 
 
         # pyqtgraph spinbox
-        self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds,
-                                  int=int, **kwargs)
+        self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
 
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path)
@@ -1383,6 +1382,109 @@ class ComboBox(BaseObject):
         return [self._widget.itemText(k) for k in range(self._widget.count())]
 
 
+class Slider(GridLayout):
+    """
+    Slider with editable bounds.
+    
+    Parameters
+    ----------
+    autosettings_path=None
+        Unique identifier string that also works as a file name for saving settings.
+    bounds=(0,1)
+        Default bounds on the slider value.
+    
+    Keyword arguments are sent to the pyqtgraph number boxes.
+    
+    Common Keyword Arguments
+    ------------------------
+    suffix : string
+        Units label.
+    siPrefix : bool
+        Whether to use SI prefixes on the label.
+    bounds=None : tuple or list
+        2-long tuple or list specifying the allowed values.
+    """
+    def __init__(self, bounds=(0,1), autosettings_path=None, **kwargs):
+        
+        # Do all the parent class initialization; this sets _widget and _layout
+        GridLayout.__init__(self, margins=False)
+        
+        # autosave settings path
+        self._autosettings_path = autosettings_path
+        
+        # Tick count
+        self._steps = 10000000
+        
+        # Add all the components to the GUI
+        self.number_lower_bound = self.add(NumberBox(bounds[0], **kwargs))
+        self.number_value       = self.add(NumberBox(**kwargs), alignment=0)
+        self.number_upper_bound = self.add(NumberBox(bounds[1], **kwargs))
+        self.number_lower_bound._widget.setMaximumWidth(16777215)
+        self.number_value      ._widget.setMaximumWidth(16777215)
+        self.number_upper_bound._widget.setMaximumWidth(16777215)
+        
+        self.new_autorow()
+        self._widget_slider     = self.add(_pg.QtGui.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
+        self._widget_slider.setMinimum(0)
+        self._widget_slider.setMaximum(self._steps)
+        self._widget_slider.setTickInterval(self._steps/10)
+        self.set_row_stretch(3)
+        
+        # Signals
+        self._widget_slider.valueChanged      .connect(self._event_changed)
+        self.number_lower_bound.signal_changed.connect(self._event_changed)
+        self.number_upper_bound.signal_changed.connect(self._event_changed)
+        
+        # list of controls we should auto-save / load
+        self._autosettings_controls = [
+            "self.number_upper_bound",
+            "self.number_lower_bound",
+            "self"]
+
+        # load settings if a settings file exists and initialize
+        self.load_gui_settings()
+        
+        # Update the value
+        self._event_changed()
+
+    def _event_changed(self, *a):
+        """
+        Raw call that updates gui and calls event_changed(value)
+        """
+        self.save_gui_settings()
+        v = self.get_value()
+        self.number_value.set_value(v)
+        self.event_changed(v)
+
+    def event_changed(self, value):
+        """
+        Dummy function to overload. Triggered whenever something changes.
+        """
+        return
+
+    def set_value(self, value):
+        """
+        Sets the value, respecting bounds.
+        """
+        # Convert it to the nearest integer.
+        l = self.number_lower_bound.get_value()
+        u = self.number_upper_bound.get_value()
+        N = int(_n.round(self._steps*(value-l)/(u-l)))
+        
+        # Slider imposes the boundaries
+        self._widget_slider.setValue(N)
+        
+        return self
+    
+    def get_value(self):
+        """
+        Returns the current value with respect to the bounds.
+        """
+        l = self.number_lower_bound.get_value()
+        u = self.number_upper_bound.get_value()
+        
+        return l + (self._widget_slider.value()/self._steps)*(u-l)
+    
 
 
 class TabArea(BaseObject):
@@ -2365,7 +2467,7 @@ class TreeDictionary(BaseObject):
             Step size of incrementing numbers
         dec=False
             Set to True to enable decade increments.
-        limits
+        bounds
             Not used by default. Should be a 2-element tuple or list used to
             bound numerical values.
         default
@@ -2382,6 +2484,11 @@ class TreeDictionary(BaseObject):
         tip='insert your text' option, which supplies a tooltip!
         """
 
+        # Check for limits (should be bounds)
+        if 'limits' in kwargs: 
+            print('ParameterTree.add_parameter() WARNING: Please specify bounds rather than limits moving forward, to match changes in pyqtgraph API.')
+            kwargs['bounds'] = kwargs.pop('limits')
+            
         # update the default kwargs
         other_kwargs = dict(type=None) # Set type=None by default
         other_kwargs.update(kwargs)    # Slap on the ones we specified
@@ -2969,7 +3076,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_save     = self.grid_controls.place_object(Button("Save")                  .set_width(40), alignment=1)
         self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
         self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(40), alignment=1)
-        self.number_file     = self.grid_controls.place_object(NumberBox(int=True, limits=(0,None)))
+        self.number_file     = self.grid_controls.place_object(NumberBox(int=True, bounds=(0,None)))
         self.label_path      = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
@@ -3731,16 +3838,16 @@ class DataboxProcessor(Window):
 
         # Add the PSD settings
         self.settings.add_parameter('Enabled',      False)
-        self.settings.add_parameter('Coarsen',          0, limits=(0,None), tip='Break the data into groups of this many, and average each group into a single data point. 0 to disable.')
+        self.settings.add_parameter('Coarsen',          0, bounds=(0,None), tip='Break the data into groups of this many, and average each group into a single data point. 0 to disable.')
 
         self.settings.add_parameter('PSD',          False, tip='Calculate the power spectral density')
         self.settings.add_parameter('PSD/pow2',     False, tip='Truncate the data into the nearest 2^N data points, to speed up the PSD.')
         self.settings.add_parameter('PSD/Window',  'None', values=['hanning', 'None'], tip='Apply this windowing function to the time domain prior to PSD.')
         self.settings.add_parameter('PSD/Rescale',  False, tip='Whether to rescale the PSD after windowing so that the integrated value is the RMS in the time-domain.')
-        self.settings.add_parameter('PSD/Coarsen',      0, limits=(0,None), tip='Break the PSD data into groups of this many, and average each group into a single data point. 0 to disable.')
+        self.settings.add_parameter('PSD/Coarsen',      0, bounds=(0,None), tip='Break the PSD data into groups of this many, and average each group into a single data point. 0 to disable.')
 
         self.settings.add_parameter('Histogram',    False, tip='Perform a histogram on the data.')
-        self.settings.add_parameter('Histogram/Bins', 100, limits=(2,None), tip='How many bins to use for the histogram.')
+        self.settings.add_parameter('Histogram/Bins', 100, bounds=(2,None), tip='How many bins to use for the histogram.')
 
         self.settings.add_parameter('Average',      False, tip='Calculate a running average of the data.')
         self.settings.add_parameter('Average/Frames',   0, step=2, tip='Exponential moving average time constant. Set to 0 to include all data in average.')
@@ -3748,7 +3855,7 @@ class DataboxProcessor(Window):
         self.settings.add_parameter('Stream',       False, tip='Stream some single quantity associated with the data.')
         self.settings.add_parameter('Stream/Method', 'mean', values=['max','min','mean','mean+e','std','hkeys'])
         self.settings.add_parameter('Stream/hkeys',  '',   tip='Comma-separated list of hkeys used to stream header elements as well.')
-        self.settings.add_parameter('Stream/History', 200, dec=True, limits=(2, None), tip='How many points to keep in the stream.')
+        self.settings.add_parameter('Stream/History', 200, dec=True, bounds=(2, None), tip='How many points to keep in the stream.')
         self.settings.add_parameter('Stream/File_Dump',  False, tip='Enable to dump the whole stream to a file of your choice.')
 
         # Connect signals
