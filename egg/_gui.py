@@ -503,19 +503,24 @@ class GridLayout(BaseObject):
 
     Parameters
     ----------
-    margins
+    margins=True
         Set to True or False or to a length-4 tuple/list to define the space
         around the widgets contained within.
+    scroll=False
+        Whether it should be allowed to scroll.
+    autosettings_path=None
+        Sent to BaseObject. If self._autosettings_controls is properly set up
+        it will remember settings from run to run.
     '''
 
     log = None
 
-    def __init__(self, margins=True, scroll=False):
+    def __init__(self, margins=True, scroll=False, autosettings_path=None):
         """
         This creates a grid layout that can contain other Elements
         (including other grid and docked layouts)
         """
-        BaseObject.__init__(self)
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
 
         # Qt widget to house the layout
         self._widget = _pg.Qt.QtGui.QWidget()
@@ -1008,7 +1013,7 @@ class Button(BaseObject):
         else:                   self._widget = QPushButton
 
         # Other stuff common to all objects
-        BaseObject.__init__(self, autosettings_path)
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
 
         # signals
         self.signal_clicked = self._widget.clicked
@@ -1101,30 +1106,42 @@ class Button(BaseObject):
 
 class Label(BaseObject):
 
-    def __init__(self, text="My Label. NO!"):
-        """
-        Simplified QLabel. Good for putting text somewhere.
-        """
+    """
+    Parameters
+    ----------
+    text="My Label! No!"
+        Text to appear on the button.
+    autosettings_path=None
+        If you want this object to remember its state from run to run, specify
+        a unique identifier string, e.g. 'my_button_no'.
+    """    
+    def __init__(self, text="My Label. NO!", autosettings_path=None):
 
         # Create the widget
         self._widget = _pg.Qt.QtGui.QLabel(text)
 
         # Other stuff common to all objects
-        BaseObject.__init__(self)
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
+        
+        self._autosettings_controls = ['self']
+        
+        self.load_gui_settings()
 
     def get_text(self):
         """
         Gets the current value of the text.
         """
         return str(self._widget.text())
+    get_value=get_text
 
     def set_text(self, text="I said NO."):
         """
         Sets the text.
         """
         self._widget.setText(str(text))
+        self.save_gui_settings()
         return self
-
+    set_value=set_text
 
 
     def set_style(self, *args, **kwargs):
@@ -1191,7 +1208,7 @@ class NumberBox(BaseObject):
         self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
 
         # Other stuff common to all objects
-        BaseObject.__init__(self, autosettings_path)
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
 
         # signals
         self.signal_changed = self._widget.sigValueChanging
@@ -1253,51 +1270,87 @@ class NumberBox(BaseObject):
 
         return self
 
-class CheckBox(BaseObject):
+class CheckBox(GridLayout):
+    """
+    Simplified QCheckBox.
 
-    def __init__(self, autosettings_path=None):
-        """
-        Simplified QCheckBox.
-
-        Parameters
-        ----------
-        autosettings_path=None
-            If you wish for this object to remember its state from run to run,
-            specify a unique identifier string, e.g. 'my_checkbox'
-        """
+    Parameters
+    ----------
+    text=None
+        None means no label. A string will set the label next to the box.
+    label_editable=False
+        If True, self.text will be a TextBox. If False, it will be a Label.
+    label_position='right'
+        Can be 'right', 'left', 'top', 'bottom'
+    autosettings_path=None
+        If you wish for this object to remember its state from run to run,
+        specify a unique identifier string, e.g. 'my_checkbox'
+        
+    **kwargs are sent to the label item.
+        
+    """
+        
+    def __init__(self, text=None, text_editable=False, text_position='right', autosettings_path=None, **kwargs):
+        
         # pyqt objects
-        self._widget = _pg.QtGui.QCheckBox()
+        self._widget_checkbox = _pg.QtGui.QCheckBox()
 
         # Other stuff common to all objects
-        BaseObject.__init__(self, autosettings_path)
+        GridLayout.__init__(self, margins=False, scroll=False, autosettings_path=autosettings_path)
+
+        # Add the widget to the grid
+        self.add(self._widget_checkbox, 1,1)
+        
+        # Add the text
+        if text:
+            if text_editable: self.text = TextBox(text=text, **kwargs)
+            else:             self.text = Label  (text=text, **kwargs)
+            
+            # Position the text
+            if   text_position == 'right': self.add(self.text, 2,1, alignment=0)
+            elif text_position == 'left' : self.add(self.text, 0,1, alignment=0)
+            elif text_position == 'top'  : self.add(self.text, 1,0, alignment=0)
+            else:                          self.add(self.text, 1,2, alignment=0)
+        else: self.text = None
 
         # signals
-        self.signal_changed = self._widget.stateChanged
+        self.signal_changed = self._widget_checkbox.stateChanged
 
         # Store self as autosettings
-        self._autosettings_controls.append('self')
+        self._autosettings_controls = ['self', 'self.text']
 
         # Load any previous settings
         self.load_gui_settings()
 
         # Bind to save gui settings when changed
         self.signal_changed.connect(self.save_gui_settings)
-
-
+        if text and text_editable: self.text.signal_changed.connect(self.save_gui_settings)
 
     def is_checked(self):
         """
         Check if checked.
         """
-        return self._widget.checkState()
+        return self._widget_checkbox.checkState()
+    get_value = is_checked
+
+    def set_text(self, text='Nooooooo!'):
+        """
+        Sets the text.
+        """
+        self.text.set_value(text)
+        self.save_gui_settings()
+    
+    def get_text(self): return self.text.get_text()
 
     def set_checked(self, value=True):
         """
         Set checkbox state.
         """
-        self._widget.setCheckState(value)
+        self._widget_checkbox.setCheckState(value)
         return self
-
+    set_value = set_checked
+    
+    
 
 class ComboBox(BaseObject):
 
@@ -1318,7 +1371,7 @@ class ComboBox(BaseObject):
         self._widget = _pg.QtGui.QComboBox()
 
         # Other stuff common to all objects
-        BaseObject.__init__(self, autosettings_path)
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
 
         # Populate it.
         for item in items: self.add_item(item)
@@ -4421,8 +4474,15 @@ if __name__ == '__main__':
     w = Window()
     s = Slider(steps=7, autosettings_path='test')
     t = TextBox('pants', False, 'oskdlf')
+    c = CheckBox('pants', True, 'top', autosettings_path='check')
     w.add(s)
     w.add(t)
+    w.new_autorow()
+    w.add(c)
+    w.add(CheckBox())
+    w.add(CheckBox())
+    w.add(CheckBox())
+    w.add(CheckBox('tool'))
     w.show()
     
 
