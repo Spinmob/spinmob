@@ -161,6 +161,7 @@ class BaseObject(object):
             If True, do the opposite (show the widget).
         """
         self._widget.hide()
+        return self
 
     def show(self, opposite=False):
         """
@@ -172,6 +173,7 @@ class BaseObject(object):
             If True, do the opposite (show the widget).
         """
         self._widget.show()
+        return self
 
     def set_hidden(self, hidden=True):
         """
@@ -184,6 +186,7 @@ class BaseObject(object):
         """
         if hidden: self.hide()
         else:      self.show()
+        return self
 
     def set_colors(self, text='black', background=None):
         """
