@@ -1395,14 +1395,16 @@ class ComboBox(BaseObject):
 
 class Slider(GridLayout):
     """
-    Slider with editable bounds.
+    Slider with editable bounds. Note that sliders are limited to integer steps.
     
     Parameters
     ----------
-    autosettings_path=None
-        Unique identifier string that also works as a file name for saving settings.
     bounds=(0,1)
         Default bounds on the slider value.
+    steps=1000
+        Number of 
+    autosettings_path=None
+        Unique identifier string that also works as a file name for saving settings.
     hide_numbers=False
         If True, numbers will be hidden.
     
@@ -1417,16 +1419,13 @@ class Slider(GridLayout):
     bounds=None : tuple or list
         2-long tuple or list specifying the allowed values.
     """
-    def __init__(self, bounds=(0,1), autosettings_path=None, hide_numbers=False, **kwargs):
+    def __init__(self, bounds=(0,1), steps=1000, autosettings_path=None, hide_numbers=False, **kwargs):
         
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
         
         # autosave settings path
         self._autosettings_path = autosettings_path
-        
-        # Tick count
-        self._steps = 10000000
         
         # Add all the components to the GUI
         self.number_lower_bound = self.add(NumberBox(bounds[0], **kwargs))  .show(hide_numbers)
@@ -1439,14 +1438,8 @@ class Slider(GridLayout):
         self.new_autorow()
         self._widget_slider     = self.add(_pg.QtGui.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
         self._widget_slider.setMinimum(0)
-        self._widget_slider.setMaximum(self._steps)
-        self._widget_slider.setTickInterval(self._steps/10)
+        self.set_steps(steps)
         self.set_row_stretch(3)
-        
-        # Signals
-        self._widget_slider.valueChanged      .connect(self._event_changed)
-        self.number_lower_bound.signal_changed.connect(self._event_changed)
-        self.number_upper_bound.signal_changed.connect(self._event_changed)
         
         # list of controls we should auto-save / load
         self._autosettings_controls = [
@@ -1457,46 +1450,121 @@ class Slider(GridLayout):
         # load settings if a settings file exists and initialize
         self.load_gui_settings()
         
+        # Signals
+        self._widget_slider.valueChanged      .connect(self._slider_changed)
+        self.number_lower_bound.signal_changed.connect(self._number_bound_changed)
+        self.number_upper_bound.signal_changed.connect(self._number_bound_changed)
+        self.number_value      .signal_changed.connect(self._number_value_changed)
+        
         # Update the value
-        self._event_changed()
+        self._slider_changed()
 
-    def _event_changed(self, *a):
+    def _slider_changed(self, *a):
         """
         Raw call that updates gui and calls event_changed(value)
         """
-        self.save_gui_settings()
         v = self.get_value()
-        self.number_value.set_value(v)
+        self.number_value.set_value(v, block_events=True)
+        self.save_gui_settings()
         self.event_changed(v)
 
+    def _number_bound_changed(self, *a):
+        """
+        Called when a bound changes. Defers to value and updates slider.
+        """
+        # Get values based on the slider and bounds
+        v = self.number_value.get_value()
+        u = self.number_upper_bound.get_value()
+        l = self.number_lower_bound.get_value()
+        
+        if v < l: v = l
+        if v > u: v = u
+        
+        # Set the value, triggering the update event.
+        self.set_value(v)
+        
+
+    def _number_value_changed(self, *a):
+        """
+        Raw call when the number_value changes.
+        """
+        # Get values
+        v = self.number_value.get_value()
+        l = self.number_lower_bound.get_value()
+        u = self.number_upper_bound.get_value()
+        
+        if v < l: v = l
+        if v > u: v = u
+        
+        self.set_value(v)
+        
+    def get_steps(self):
+        """
+        Returns the number of slider steps.
+        """
+        return self._widget_slider.maximum()
+    
+    def set_steps(self, steps):
+        """
+        Sets the number of steps for the slider.
+        """
+        self._widget_slider.setMaximum(int(steps))
+        self._widget_slider.setTickInterval(int(steps/10))
+        return self
+    
     def event_changed(self, value):
         """
         Dummy function to overload. Triggered whenever something changes.
         """
         return
 
-    def set_value(self, value):
+    def set_value(self, value, block_events=False):
         """
-        Sets the value, respecting bounds.
+        Sets the value, respecting bounds and the slider steps.
         """
         # Convert it to the nearest integer.
         l = self.number_lower_bound.get_value()
         u = self.number_upper_bound.get_value()
-        N = int(_n.round(self._steps*(value-l)/(u-l)))
+        if u-l == 0: N = int(self.get_steps()/2)
+        else:        N = int(_n.round(self.get_steps()*(value-l)/(u-l)))
+        
+        if block_events: self.block_events()
+        
+        # See if the slider will change
+        slider_stayed = (N == self._widget_slider.value())
         
         # Slider imposes the boundaries
-        self._widget_slider.setValue(N)
+        self._widget_slider.setValue(N) # Only sends a signal change if it changes.
+        
+        # If the slider didn't change position, still update the number box.
+        if slider_stayed: 
+            
+            # Get the value based on slider and bounds
+            v = self.get_value()
+            
+            if not v == self.number_value.get_value():
+                
+                # This will route us back to this function to impose the discrete slider steps.
+                self.number_value.set_value(v)
+                
+                # Next time we won't arrive here because they'll be the same. Run the user event change
+                self.event_changed(v)
+        
+        if block_events: self.unblock_events()
+        
+        self.save_gui_settings()
         
         return self
     
     def get_value(self):
         """
-        Returns the current value with respect to the bounds.
+        Returns the current value with respect to the bounds, based on the
+        slider position.
         """
         l = self.number_lower_bound.get_value()
         u = self.number_upper_bound.get_value()
         
-        return l + (self._widget_slider.value()/self._steps)*(u-l)
+        return l + (self._widget_slider.value()/self.get_steps())*(u-l)
     
 
 
@@ -4337,10 +4405,14 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 
 if __name__ == '__main__':
-    import spinmob
-    runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
+    # import spinmob
+    # runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
 
-
+    w = Window()
+    s = Slider(steps=7, autosettings_path='test')
+    w.add(s)
+    w.show()
+    
 
 
 

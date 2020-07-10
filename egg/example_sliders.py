@@ -15,13 +15,13 @@ grid_left = window.add(gui.GridLayout(margins=False))
 plot = window.add(gui.DataboxPlot(autosettings_path='plot'))
 
 # Create sliders
-slider1 = gui.Slider(bounds=[1,10], autosettings_path='slider1')
-slider2 = gui.Slider(bounds=[1,10], suffix='V', siPrefix=True, autosettings_path='slider2')
+slider1 = gui.Slider(bounds=[1,10], suffix='V', siPrefix=True, autosettings_path='slider1')
+slider2 = gui.Slider(bounds=[1,10], autosettings_path='slider2', hide_numbers=True)
 
 # Add the sliders
 grid_left.add(slider1)
 grid_left.new_autorow()
-grid_left.add(slider2)
+grid_left.add(slider2, alignment=0)
 
 # Set the 3rd row to stretch so they are pushed to the top
 grid_left.set_row_stretch(2)
