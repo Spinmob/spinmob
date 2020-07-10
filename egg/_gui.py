@@ -1392,6 +1392,8 @@ class Slider(GridLayout):
         Unique identifier string that also works as a file name for saving settings.
     bounds=(0,1)
         Default bounds on the slider value.
+    hide_numbers=False
+        If True, numbers will be hidden.
     
     Keyword arguments are sent to the pyqtgraph number boxes.
     
@@ -1404,7 +1406,7 @@ class Slider(GridLayout):
     bounds=None : tuple or list
         2-long tuple or list specifying the allowed values.
     """
-    def __init__(self, bounds=(0,1), autosettings_path=None, **kwargs):
+    def __init__(self, bounds=(0,1), autosettings_path=None, hide_numbers=False, **kwargs):
         
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
@@ -1416,9 +1418,9 @@ class Slider(GridLayout):
         self._steps = 10000000
         
         # Add all the components to the GUI
-        self.number_lower_bound = self.add(NumberBox(bounds[0], **kwargs))
-        self.number_value       = self.add(NumberBox(**kwargs), alignment=0)
-        self.number_upper_bound = self.add(NumberBox(bounds[1], **kwargs))
+        self.number_lower_bound = self.add(NumberBox(bounds[0], **kwargs))  .show(hide_numbers)
+        self.number_value       = self.add(NumberBox(**kwargs), alignment=0).show(hide_numbers)
+        self.number_upper_bound = self.add(NumberBox(bounds[1], **kwargs))  .show(hide_numbers)
         self.number_lower_bound._widget.setMaximumWidth(16777215)
         self.number_value      ._widget.setMaximumWidth(16777215)
         self.number_upper_bound._widget.setMaximumWidth(16777215)
