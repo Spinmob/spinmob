@@ -2097,7 +2097,7 @@ class TextLog(BaseObject):
 
 class TextBox(BaseObject):
 
-    def __init__(self, text="", multiline=False):
+    def __init__(self, text="", multiline=False, autosettings_path=None):
         """
         Simplified QLineEdit.
         """
@@ -2113,7 +2113,7 @@ class TextBox(BaseObject):
         #self.signal_return_pressed = self._widget.returnPressed
 
         # Other stuff common to all objects
-        BaseObject.__init__(self)
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
 
         # aliases
         self.get_value = self.get_text
@@ -2122,6 +2122,15 @@ class TextBox(BaseObject):
         # Expose the show and hide functions
         self.show = self._widget.show
         self.hide = self._widget.hide
+        
+        # Store self as autosettings
+        self._autosettings_controls.append('self')
+
+        # Load any previous settings
+        self.load_gui_settings()
+
+        # Bind to save gui settings when changed
+        self.signal_changed.connect(self.save_gui_settings)
 
 
     def get_text(self):
@@ -2130,6 +2139,7 @@ class TextBox(BaseObject):
         """
         if self._multiline: return str(self._widget.toPlainText())
         else:               return str(self._widget.text())
+    get_value = get_text
 
     def set_text(self, text="YEAH."):
         """
@@ -2140,7 +2150,7 @@ class TextBox(BaseObject):
         s = str(text)
         if not s == self.get_text(): self._widget.setText(str(text))
         return self
-
+    set_value = set_text
 
 
 class Timer():
@@ -4410,7 +4420,9 @@ if __name__ == '__main__':
 
     w = Window()
     s = Slider(steps=7, autosettings_path='test')
+    t = TextBox('pants', False, 'oskdlf')
     w.add(s)
+    w.add(t)
     w.show()
     
 
