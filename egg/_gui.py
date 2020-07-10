@@ -151,6 +151,12 @@ class BaseObject(object):
         # common signals
         return
 
+    def set_hiddent(self, hidden=True):
+        """
+        Sets whether the object is hidden.
+        """
+        return self.show(hidden)
+
     def hide(self, opposite=False):
         """
         Hides the widget.
@@ -160,7 +166,8 @@ class BaseObject(object):
         opposite=False
             If True, do the opposite (show the widget).
         """
-        self._widget.hide()
+        if opposite: self._widget.show()
+        else:        self._widget.hide()
         return self
 
     def show(self, opposite=False):
@@ -172,7 +179,8 @@ class BaseObject(object):
         opposite=False
             If True, do the opposite (show the widget).
         """
-        self._widget.show()
+        if opposite: self._widget.hide()
+        else:        self._widget.show()
         return self
 
     def set_hidden(self, hidden=True):
