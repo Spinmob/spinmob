@@ -344,7 +344,7 @@ class databox:
                 # Get the data!
                 start = stop+1
                 stop  = start+size*length
-                self[ckey] = _n.fromstring(s[start:stop], binary)
+                self[ckey] = _n.frombuffer(s[start:stop], binary)
                 
                 # Go to next ckey
                 start = stop+1        

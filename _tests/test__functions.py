@@ -173,7 +173,7 @@ class Test_functions(_ut.TestCase):
                 ns.append(n)
                 
             # Update the user
-            if n in print_me: print('Regular variance', n, vs[-1])
+            if n in print_me: print('Regular variance', n, ' should = 1 =', vs[-1])
         
         sm.pylab.figure(77)
         sm.plot.xy.data(ns, [vs, sigma2s], 
@@ -214,7 +214,7 @@ class Test_functions(_ut.TestCase):
                 
             # Get the variance and chi^2 after having settled
             vs.append(_n.mean(a.variance_sample))
-            print('DSP variance', tau, vs[-1])
+            print('Tau =', tau, 'Variance should = 1 =', vs[-1])
 
         sm.pylab.figure(77)
         sm.plot.xy.data(taus, [vs], 

@@ -9,3 +9,4 @@ Spinmob.egg*/
 *.cfg
 egg_settings/
 *ipython.html
+*.ipynb_checkpoints/
