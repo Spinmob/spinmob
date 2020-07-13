@@ -1,3 +1,7 @@
+# Try to run the qt magic first
+try:    get_ipython().run_line_magic('matplotlib', 'qt')
+except: pass
+
 import os           as _os
 import sys          as _sys
 import matplotlib   as _mpl
