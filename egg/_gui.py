@@ -3,8 +3,6 @@ import pyqtgraph as _pg
 # PYQTGRAPH v0.10.0 PATCHWORK Will be fixed in v0.11.0
 if _pg.__version__ == '0.10.0':
 
-
-
     def _ParameterItem_optsChanged(self, param, opts):
         if 'visible'  in opts: self.setHidden(not opts['visible'])
         if 'expanded' in opts: self.setExpanded(opts['expanded'])
@@ -14,8 +12,6 @@ if _pg.__version__ == '0.10.0':
     # Replace the function!
     _pg.parametertree.ParameterItem.optsChanged                     = _ParameterItem_optsChanged
     _pg.parametertree.parameterTypes.GroupParameterItem.optsChanged = _ParameterItem_optsChanged
-
-
 
     # Spinbox hiding in parameter trees
     from decimal import Decimal as _D  ## Use decimal to avoid accumulating floating-point errors
@@ -82,13 +78,21 @@ if _pg.__version__ == '0.10.0':
         self.updateText()
     _pg.SpinBox.setOpts = _SpinBox_setOpts
 
+    # If imported by spinmob
+    try:    from . import _temporary_fixes
+    
+    # If running the file directly
+    except: import _temporary_fixes
+
+# For tweaks associated with version 0.11.0+
+_pyqtgraph_v11 = int(_pg.__version__.split('.')[0]) == 0 and int(_pg.__version__.split('.')[1]) >= 11
+
 # Regular imports
 import time     as _t
 import os       as _os
 import numpy    as _n
 import scipy.special as _scipy_special
 
-import sys as _sys
 import traceback as _traceback
 _p = _traceback.print_last
 
@@ -98,12 +102,6 @@ _d = _s.data
 # import pyqtgraph and create the App.
 import pyqtgraph as _pg
 _e = _pg.QtCore.QEvent
-
-# If imported by spinmob
-try:    from . import _temporary_fixes
-
-# If running the file directly
-except: import _temporary_fixes
 
 
 _a = _pg.mkQApp()
@@ -1192,6 +1190,8 @@ class NumberBox(BaseObject):
     autosettings_path=None
         If you want this object to remember its value from run to run, specify
         a unique identifier, e.g. 'my_numberbox'.
+    tip=None
+        If set to a string, sets the tool tip (text that pops up when hovering).
 
     Some Common Keyword Arguments
     -----------------------------
@@ -1207,14 +1207,19 @@ class NumberBox(BaseObject):
         Number of decimals to display
     """
 
-    def __init__(self, value=0, step=1, bounds=(None,None), int=False, autosettings_path=None, **kwargs):
+    def __init__(self, value=0, step=1, bounds=(None,None), int=False, autosettings_path=None, tip=None, **kwargs):
 
+        # Fix
+        if _pyqtgraph_v11: kwargs['compactHeight'] = False
 
         # pyqtgraph spinbox
-        self._widget = _temporary_fixes.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
+        self._widget = _pg.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
 
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path=autosettings_path)
+
+        # If there is a tip
+        if tip: self._widget.setToolTip(tip)
 
         # signals
         self.signal_changed = self._widget.sigValueChanging
@@ -2658,6 +2663,11 @@ class TreeDictionary(BaseObject):
         if other_kwargs['type'] == 'list' or 'values' in other_kwargs:
             for n in range(len(other_kwargs['values'])):
                 other_kwargs['values'][n] = str(other_kwargs['values'][n])
+
+        # Now that the type is determined, set up other options
+        if _pyqtgraph_v11 and other_kwargs['type'] in ['int', 'float']:
+            other_kwargs['compactHeight'] = False
+
 
         # split into (presumably existing) branches and parameter
         s = key.split('/')
