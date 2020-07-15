@@ -85,7 +85,7 @@ if _pg.__version__ == '0.10.0':
     except: import _temporary_fixes
 
 # For tweaks associated with version 0.11.0+
-_pyqtgraph_v11 = int(_pg.__version__.split('.')[0]) == 0 and int(_pg.__version__.split('.')[1]) >= 11
+_pyqtgraph_v11 = int(_pg.__version__.split('.')[0]) == 0 and not int(_pg.__version__.split('.')[1]) == 10
 
 # Regular imports
 import time     as _t
@@ -2299,10 +2299,11 @@ class TreeDictionary(BaseObject):
         BaseObject.__init__(self)
 
         self._widget             = _pg.parametertree.ParameterTree(showHeader=show_header)
-        self.naughty             = [' ', '\t', '\n', '\r', ',', ';']
+        self.naughty             = [' ', '\t', '\n', '\r', ',', ';', '|'] # disallowed characters for keys
         self._autosettings_path  = autosettings_path
         self._connection_lists   = dict()
-        self._lazy_load = dict()
+        self._lazy_load          = dict()
+        self._tree_widgets       = dict() # list of all tree widgets, including non-parameters. 
         self.name = name
 
         # Load the previous settings (if any)
@@ -2465,7 +2466,7 @@ class TreeDictionary(BaseObject):
 
     def _find_parameter(self, key_list, create_missing=False, quiet=False):
         """
-        Tries to find and return the parameter of the specified key. The key
+        Recursively tries to find and return the parameter of the specified key. The key
         should be of the form
 
         ['branch1','branch2', 'parametername']
@@ -2477,7 +2478,7 @@ class TreeDictionary(BaseObject):
         """
         # make a copy so this isn't destructive to the supplied list
         s = list(key_list)
-
+        
         # if the length is zero, return the root widget
         if len(s)==0: return self._widget
 
@@ -2487,7 +2488,7 @@ class TreeDictionary(BaseObject):
 
         # search for the root key
         result = self._widget.findItems(r, _pg.QtCore.Qt.MatchCaseSensitive | _pg.QtCore.Qt.MatchFixedString)
-
+        
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
             if not quiet: self.print_message("ERROR: Could not find '"+r+"' in "+str(self))
@@ -2499,8 +2500,15 @@ class TreeDictionary(BaseObject):
         # otherwise, if there are more keys in the list,
         # create the branch and keep going
         else:
-            x = _pg.parametertree.Parameter.create(name=r, type='group', children=[])
+            key = '/'.join(key_list)
+            x = _pg.parametertree.Parameter.create(name=r, type='group', children=[], syncExpanded=True)
+            self._tree_widgets[self._unstrip(key)] = x
             self._widget.addParameters(x)
+
+            # Load the expanded state
+            if key+'|expanded' in self._lazy_load:
+                expanded = self._lazy_load.pop(key+'|expanded')
+                self._tree_widgets[self._unstrip(key)].setOpts(expanded=expanded)
 
         # loop over the remaining keys, and use a different search method
         for n in s:
@@ -2515,8 +2523,11 @@ class TreeDictionary(BaseObject):
             except:
 
                 # if we're supposed to, create the new branch
-                if create_missing: x = x.addChild(_pg.parametertree.Parameter.create(name=n, type='group', children=[]))
-
+                if create_missing: 
+                    x = x.addChild(_pg.parametertree.Parameter.create(name=n, type='group', children=[], syncExpanded=True))
+                    if self.name: self._tree_widgets['/'+self.name+'/'+'/'.join(key_list)] = x
+                    else:         self._tree_widgets[                  '/'.join(key_list)] = x 
+            
                 # otherwise poop out
                 else:
                     if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'."+str(self))
@@ -2524,6 +2535,13 @@ class TreeDictionary(BaseObject):
 
         # return the last one we found / created.
         return x
+
+    def _unstrip(self, key):
+        """
+        Prepends '/'+self.name+'/' to the key if available.
+        """
+        if self.name: return '/'+self.name+'/'+key
+        else:         return key
 
     def _strip(self, key):
         """
@@ -2568,8 +2586,9 @@ class TreeDictionary(BaseObject):
         if b == None: return None
 
         # create the leaf object
-        ap = _pg.parametertree.Parameter.create(name=p, type='action')
-
+        ap = _pg.parametertree.Parameter.create(name=p, type='action', syncExpanded=True)
+        self._tree_widgets[self._unstrip(key)] = ap
+        
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(ap)
         else:                 b.addChild(ap)
@@ -2687,8 +2706,10 @@ class TreeDictionary(BaseObject):
         if b == None: return self
 
         # create the leaf object
-        leaf = _pg.parametertree.Parameter.create(name=p, value=value, **other_kwargs)
-
+        leaf = _pg.parametertree.Parameter.create(name=p, value=value, syncExpanded=True, **other_kwargs)
+        if self.name: self._tree_widgets['/'+self.name+'/'+key] = leaf
+        else:         self._tree_widgets[                  key] = leaf
+        
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(leaf)
         else:                 b.addChild(leaf)
@@ -2697,6 +2718,12 @@ class TreeDictionary(BaseObject):
         if key in self._lazy_load:
             v = self._lazy_load.pop(key)
             self._set_value_safe(key, v, True, True)
+            
+        # And the expanded state
+        if key+'|expanded' in self._lazy_load:
+            expanded = self._lazy_load.pop(key+'|expanded')
+            self.get_widget(key).setOpts(expanded=expanded)
+            
 
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
@@ -2780,8 +2807,15 @@ class TreeDictionary(BaseObject):
     def get_widget(self, key):
         """
         Returns the Qt widget associated with the parameter.
+        
+        Parameters
+        ----------
+        key : string
+            Tree key. Can include self.name.
         """
-        return self._find_parameter(key.split('/'))
+        s = self._strip(key).split('/')
+        if s[0] == '': s.pop(0)
+        return self._find_parameter(s)
 
     def get_type(self, key):
         """
@@ -2921,6 +2955,7 @@ class TreeDictionary(BaseObject):
         Returns a list of the TreeDictionary keys.
         """
         return self.get_dictionary(short_keys=short_keys)[0]
+    get_keys = keys
 
     def set_list_index(self, key, n):
         """
@@ -2999,12 +3034,6 @@ class TreeDictionary(BaseObject):
 
         return self
 
-    def keys(self):
-        """
-        Returns a lits of keys.
-        """
-        return self.get_dictionary()[0]
-
     def autosave(self, *a):
         """
         Runs self.save() with no arguments. This is a convenience function;
@@ -3038,11 +3067,17 @@ class TreeDictionary(BaseObject):
 
         # get the keys and dictionary
         keys, dictionary = self.get_dictionary()
-
+        
         # loop over the keys and add them to the databox header
-        for k in keys:
-            d.insert_header(k, dictionary[k])
-
+        for k in self._tree_widgets: 
+            
+            # Add the value if there is one
+            if type(self._tree_widgets[k]).__name__ not in ['GroupParameter', 'ActionParameter']:
+                d.insert_header(self._unstrip(k), dictionary[self._unstrip(k)])
+            
+            # Add the expanded value
+            d.insert_header(k+'|expanded', self._tree_widgets[k].opts['expanded'])
+        
         # save it
         try:
             d.save_file(path, force_overwrite=True, header_only=True)
@@ -4487,19 +4522,19 @@ if __name__ == '__main__':
     # import spinmob
     # runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
 
-    w = Window()
-    s = Slider(steps=7, autosettings_path='test')
-    t = TextBox('pants', False, 'oskdlf')
-    c = CheckBox('pants', True, 'top', autosettings_path='check')
-    w.add(s)
-    w.add(t)
-    w.new_autorow()
-    w.add(c)
-    w.add(CheckBox())
-    w.add(CheckBox())
-    w.add(CheckBox())
-    w.add(CheckBox('tool'))
-    w.show()
+    # Create the TreeDictionary
+    s = TreeDictionary('pants.txt')
+    
+    # Create some different value types
+    s.add_button('button')
+    s.add_parameter('booly',   value=False)
+    s.add_parameter('inty',    value=42)
+    
+    ks, d = s.get_dictionary()
+    d['inty'] = 32
+    s.update(d)
+    
+    s.show()
     
 
 

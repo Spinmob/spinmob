@@ -66,7 +66,7 @@ class Test_egg(_ut.TestCase):
         self.d.add_parameter('floaty',  value=42.0)
         self.d.add_parameter('stringy', value=574,    type='str')
         self.d.add_parameter('listy',   value='test', type='list', values=test_list_values)
-    
+        
         # Make sure the get-value returns the right types
         
         # Bool stuff
@@ -85,7 +85,7 @@ class Test_egg(_ut.TestCase):
         self.assertEqual(type(self.d['floaty']), float)
         self.d['floaty'] = '45.5555'
         self.assertEqual(self.d['floaty'], 45.5555)
-
+        
         # See if it's autosaving
         self.assertTrue(_os.path.exists('egg_settings/pants.txt'))
         
