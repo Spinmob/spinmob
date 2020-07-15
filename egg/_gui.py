@@ -996,6 +996,9 @@ class Button(BaseObject):
     autosettings_path=None
         If you want this object to remember its state from run to run, specify
         a unique identifier string, e.g. 'my_button_no'.
+    tip=None
+        If set to a string, assigns a tool tip to the button (text that pops up
+        when hovering)
 
     Signals
     -------
@@ -1006,7 +1009,7 @@ class Button(BaseObject):
     """
 
 
-    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None, autosettings_path=None):
+    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None, autosettings_path=None, tip=None):
 
         # Qt button instance
         if QPushButton is None: self._widget = _pg.Qt.QtGui.QPushButton(text)
@@ -1014,6 +1017,9 @@ class Button(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path=autosettings_path)
+
+        # if there is a tip
+        if type(tip)==str: self._widget.setToolTip(tip)
 
         # signals
         self.signal_clicked = self._widget.clicked
