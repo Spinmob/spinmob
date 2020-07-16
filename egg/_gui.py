@@ -3068,12 +3068,21 @@ class TreeDictionary(BaseObject):
         # get the keys and dictionary
         keys, dictionary = self.get_dictionary()
         
+        # In case someone modified self.name, rebuild _tree_widgets.
+        ws = dict()
+        for k in self._tree_widgets:
+            w = self._tree_widgets[k]
+            k = self._strip(k)
+            k = self._unstrip(k)
+            ws[k] = w
+        self._tree_widgets = ws
+        
         # loop over the keys and add them to the databox header
         for k in self._tree_widgets: 
             
             # Add the value if there is one
             if type(self._tree_widgets[k]).__name__ not in ['GroupParameter', 'ActionParameter']:
-                d.insert_header(self._unstrip(k), dictionary[self._unstrip(k)])
+                d.insert_header(k, dictionary[k])
             
             # Add the expanded value
             d.insert_header(k+'|expanded', self._tree_widgets[k].opts['expanded'])
@@ -4519,22 +4528,27 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 
 if __name__ == '__main__':
-    # import spinmob
-    # runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
+    import spinmob
+    #runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
+
+    e = TreeDictionary(autosettings_path='pants.txt')
+    e.add_parameter('floaty', 42.0)
+    e.name = 'testname'
+    e.save()
 
     # Create the TreeDictionary
-    s = TreeDictionary('pants.txt')
+    # s = TreeDictionary('pants.txt')
     
-    # Create some different value types
-    s.add_button('button')
-    s.add_parameter('booly',   value=False)
-    s.add_parameter('inty',    value=42)
+    # # Create some different value types
+    # s.add_button('button')
+    # s.add_parameter('booly',   value=False)
+    # s.add_parameter('inty',    value=42)
     
-    ks, d = s.get_dictionary()
-    d['inty'] = 32
-    s.update(d)
+    # ks, d = s.get_dictionary()
+    # d['inty'] = 32
+    # s.update(d)
     
-    s.show()
+    # s.show()
     
 
 
