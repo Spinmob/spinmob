@@ -4,7 +4,7 @@ import matplotlib   as _mpl
 import pylab
 
 # Try to run the qt magic first
-try: 
+try:
     if not pylab.get_backend()[0:2] == 'Qt':
         get_ipython().run_line_magic('matplotlib', 'qt')
 except: pass
@@ -24,12 +24,12 @@ settings = _settings.settings()
 def _warn(*args):
     args = list(args)
     if not settings['ignore_warnings']:
-        print('Warning:', args.pop(0))
+        print('\nWarning:', args.pop(0))
         for a in args: print('  ', a)
         print("To disable warnings, set spinmob.settings['ignore_warnings']=True")
 
 
-try: 
+try:
     import pyqtgraph    as _pyqtgraph
     _qtc = _pyqtgraph.Qt.QtCore
     _qt  = _pyqtgraph.Qt
@@ -38,13 +38,13 @@ try:
     # make sure we have a valid qt application for dialogs etc...
     _qtapp = _qtc.QCoreApplication.instance()
     if not _qtapp: _qtapp = _qtw.QApplication([])
-    
+
     # Set the dpi scaling
     _qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
-    
+
 except:
     _warn("pyqtgraph version 0.10 or higher is required (use a conda or pip install).")
-    
+
     _qtc = None
     _qt  = None
     _qtw = None

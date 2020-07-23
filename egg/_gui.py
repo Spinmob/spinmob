@@ -80,7 +80,7 @@ if _pg.__version__ == '0.10.0':
 
     # If imported by spinmob
     try:    from . import _temporary_fixes
-    
+
     # If running the file directly
     except: import _temporary_fixes
 
@@ -148,12 +148,6 @@ class BaseObject(object):
 
         # common signals
         return
-
-    def set_hiddent(self, hidden=True):
-        """
-        Sets whether the object is hidden.
-        """
-        return self.show(hidden)
 
     def hide(self, opposite=False):
         """
@@ -1118,7 +1112,7 @@ class Label(BaseObject):
     autosettings_path=None
         If you want this object to remember its state from run to run, specify
         a unique identifier string, e.g. 'my_button_no'.
-    """    
+    """
     def __init__(self, text="My Label. NO!", autosettings_path=None):
 
         # Create the widget
@@ -1126,9 +1120,9 @@ class Label(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path=autosettings_path)
-        
+
         self._autosettings_controls = ['self']
-        
+
         self.load_gui_settings()
 
     def get_text(self):
@@ -1296,13 +1290,13 @@ class CheckBox(GridLayout):
     autosettings_path=None
         If you wish for this object to remember its state from run to run,
         specify a unique identifier string, e.g. 'my_checkbox'
-        
+
     **kwargs are sent to the label item.
-        
+
     """
-        
+
     def __init__(self, text=None, text_editable=False, text_position='right', autosettings_path=None, **kwargs):
-        
+
         # pyqt objects
         self._widget_checkbox = _pg.QtGui.QCheckBox()
 
@@ -1311,12 +1305,16 @@ class CheckBox(GridLayout):
 
         # Add the widget to the grid
         self.add(self._widget_checkbox, 1,1)
-        
+
         # Add the text
         if text:
-            if text_editable: self.text = TextBox(text=text, **kwargs)
-            else:             self.text = Label  (text=text, **kwargs)
-            
+            if text_editable:
+                self.text = TextBox(text=text, **kwargs)
+                self._autosettings_controls = ['self', 'self.text']
+            else:
+                self.text = Label  (text=text, **kwargs)
+                self._autosettings_controls = ['self']
+
             # Position the text
             if   text_position == 'right': self.add(self.text, 2,1, alignment=0)
             elif text_position == 'left' : self.add(self.text, 0,1, alignment=0)
@@ -1326,9 +1324,11 @@ class CheckBox(GridLayout):
 
         # signals
         self.signal_changed = self._widget_checkbox.stateChanged
+        self.signal_toggled = self._widget_checkbox.toggled
+        self.signal_clicked = self._widget_checkbox.clicked
 
         # Store self as autosettings
-        self._autosettings_controls = ['self', 'self.text']
+
 
         # Load any previous settings
         self.load_gui_settings()
@@ -1350,18 +1350,18 @@ class CheckBox(GridLayout):
         """
         self.text.set_value(text)
         self.save_gui_settings()
-    
+
     def get_text(self): return self.text.get_text()
 
     def set_checked(self, value=True):
         """
         Set checkbox state.
         """
-        self._widget_checkbox.setCheckState(value)
+        self._widget_checkbox.setChecked(value)
         return self
     set_value = set_checked
-    
-    
+
+
 
 class ComboBox(BaseObject):
 
@@ -1460,20 +1460,20 @@ class ComboBox(BaseObject):
 class Slider(GridLayout):
     """
     Slider with editable bounds. Note that sliders are limited to integer steps.
-    
+
     Parameters
     ----------
     bounds=(0,1)
         Default bounds on the slider value.
     steps=1000
-        Number of 
+        Number of
     autosettings_path=None
         Unique identifier string that also works as a file name for saving settings.
     hide_numbers=False
         If True, numbers will be hidden.
-    
+
     Keyword arguments are sent to the pyqtgraph number boxes.
-    
+
     Common Keyword Arguments
     ------------------------
     suffix : string
@@ -1484,13 +1484,13 @@ class Slider(GridLayout):
         2-long tuple or list specifying the allowed values.
     """
     def __init__(self, bounds=(0,1), steps=1000, autosettings_path=None, hide_numbers=False, **kwargs):
-        
+
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
-        
+
         # autosave settings path
         self._autosettings_path = autosettings_path
-        
+
         # Add all the components to the GUI
         self.number_lower_bound = self.add(NumberBox(bounds[0], **kwargs))  .show(hide_numbers)
         self.number_value       = self.add(NumberBox(**kwargs), alignment=0).show(hide_numbers)
@@ -1498,13 +1498,13 @@ class Slider(GridLayout):
         self.number_lower_bound._widget.setMaximumWidth(16777215)
         self.number_value      ._widget.setMaximumWidth(16777215)
         self.number_upper_bound._widget.setMaximumWidth(16777215)
-        
+
         self.new_autorow()
         self._widget_slider     = self.add(_pg.QtGui.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
         self._widget_slider.setMinimum(0)
         self.set_steps(steps)
         self.set_row_stretch(3)
-        
+
         # list of controls we should auto-save / load
         self._autosettings_controls = [
             "self.number_upper_bound",
@@ -1513,13 +1513,13 @@ class Slider(GridLayout):
 
         # load settings if a settings file exists and initialize
         self.load_gui_settings()
-        
+
         # Signals
         self._widget_slider.valueChanged      .connect(self._slider_changed)
         self.number_lower_bound.signal_changed.connect(self._number_bound_changed)
         self.number_upper_bound.signal_changed.connect(self._number_bound_changed)
         self.number_value      .signal_changed.connect(self._number_value_changed)
-        
+
         # Update the value
         self._slider_changed()
 
@@ -1540,13 +1540,13 @@ class Slider(GridLayout):
         v = self.number_value.get_value()
         u = self.number_upper_bound.get_value()
         l = self.number_lower_bound.get_value()
-        
+
         if v < l: v = l
         if v > u: v = u
-        
+
         # Set the value, triggering the update event.
         self.set_value(v)
-        
+
 
     def _number_value_changed(self, *a):
         """
@@ -1556,18 +1556,18 @@ class Slider(GridLayout):
         v = self.number_value.get_value()
         l = self.number_lower_bound.get_value()
         u = self.number_upper_bound.get_value()
-        
+
         if v < l: v = l
         if v > u: v = u
-        
+
         self.set_value(v)
-        
+
     def get_steps(self):
         """
         Returns the number of slider steps.
         """
         return self._widget_slider.maximum()
-    
+
     def set_steps(self, steps):
         """
         Sets the number of steps for the slider.
@@ -1575,7 +1575,7 @@ class Slider(GridLayout):
         self._widget_slider.setMaximum(int(steps))
         self._widget_slider.setTickInterval(int(steps/10))
         return self
-    
+
     def event_changed(self, value):
         """
         Dummy function to overload. Triggered whenever something changes.
@@ -1591,35 +1591,35 @@ class Slider(GridLayout):
         u = self.number_upper_bound.get_value()
         if u-l == 0: N = int(self.get_steps()/2)
         else:        N = int(_n.round(self.get_steps()*(value-l)/(u-l)))
-        
+
         if block_events: self.block_events()
-        
+
         # See if the slider will change
         slider_stayed = (N == self._widget_slider.value())
-        
+
         # Slider imposes the boundaries
         self._widget_slider.setValue(N) # Only sends a signal change if it changes.
-        
+
         # If the slider didn't change position, still update the number box.
-        if slider_stayed: 
-            
+        if slider_stayed:
+
             # Get the value based on slider and bounds
             v = self.get_value()
-            
+
             if not v == self.number_value.get_value():
-                
+
                 # This will route us back to this function to impose the discrete slider steps.
                 self.number_value.set_value(v)
-                
+
                 # Next time we won't arrive here because they'll be the same. Run the user event change
                 self.event_changed(v)
-        
+
         if block_events: self.unblock_events()
-        
+
         self.save_gui_settings()
-        
+
         return self
-    
+
     def get_value(self):
         """
         Returns the current value with respect to the bounds, based on the
@@ -1627,9 +1627,9 @@ class Slider(GridLayout):
         """
         l = self.number_lower_bound.get_value()
         u = self.number_upper_bound.get_value()
-        
+
         return l + (self._widget_slider.value()/self.get_steps())*(u-l)
-    
+
 
 
 class TabArea(BaseObject):
@@ -2186,7 +2186,7 @@ class TextBox(BaseObject):
         # Expose the show and hide functions
         self.show = self._widget.show
         self.hide = self._widget.hide
-        
+
         # Store self as autosettings
         self._autosettings_controls.append('self')
 
@@ -2303,7 +2303,7 @@ class TreeDictionary(BaseObject):
         self._autosettings_path  = autosettings_path
         self._connection_lists   = dict()
         self._lazy_load          = dict()
-        self._tree_widgets       = dict() # list of all tree widgets, including non-parameters. 
+        self._tree_widgets       = dict() # list of all tree widgets, including non-parameters.
         self.name = name
 
         # Load the previous settings (if any)
@@ -2478,7 +2478,7 @@ class TreeDictionary(BaseObject):
         """
         # make a copy so this isn't destructive to the supplied list
         s = list(key_list)
-        
+
         # if the length is zero, return the root widget
         if len(s)==0: return self._widget
 
@@ -2488,7 +2488,7 @@ class TreeDictionary(BaseObject):
 
         # search for the root key
         result = self._widget.findItems(r, _pg.QtCore.Qt.MatchCaseSensitive | _pg.QtCore.Qt.MatchFixedString)
-        
+
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
             if not quiet: self.print_message("ERROR: Could not find '"+r+"' in "+str(self))
@@ -2523,11 +2523,11 @@ class TreeDictionary(BaseObject):
             except:
 
                 # if we're supposed to, create the new branch
-                if create_missing: 
+                if create_missing:
                     x = x.addChild(_pg.parametertree.Parameter.create(name=n, type='group', children=[], syncExpanded=True))
                     if self.name: self._tree_widgets['/'+self.name+'/'+'/'.join(key_list)] = x
-                    else:         self._tree_widgets[                  '/'.join(key_list)] = x 
-            
+                    else:         self._tree_widgets[                  '/'.join(key_list)] = x
+
                 # otherwise poop out
                 else:
                     if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'."+str(self))
@@ -2588,7 +2588,7 @@ class TreeDictionary(BaseObject):
         # create the leaf object
         ap = _pg.parametertree.Parameter.create(name=p, type='action', syncExpanded=True)
         self._tree_widgets[self._unstrip(key)] = ap
-        
+
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(ap)
         else:                 b.addChild(ap)
@@ -2659,10 +2659,10 @@ class TreeDictionary(BaseObject):
         """
 
         # Check for limits (should be bounds)
-        if 'limits' in kwargs: 
+        if 'limits' in kwargs:
             print('ParameterTree.add_parameter() WARNING: Please specify bounds rather than limits moving forward, to match changes in pyqtgraph API.')
             kwargs['bounds'] = kwargs.pop('limits')
-            
+
         # update the default kwargs
         other_kwargs = dict(type=None) # Set type=None by default
         other_kwargs.update(kwargs)    # Slap on the ones we specified
@@ -2709,7 +2709,7 @@ class TreeDictionary(BaseObject):
         leaf = _pg.parametertree.Parameter.create(name=p, value=value, syncExpanded=True, **other_kwargs)
         if self.name: self._tree_widgets['/'+self.name+'/'+key] = leaf
         else:         self._tree_widgets[                  key] = leaf
-        
+
         # add it to the tree (different methods for root)
         if b == self._widget: b.addParameters(leaf)
         else:                 b.addChild(leaf)
@@ -2718,12 +2718,12 @@ class TreeDictionary(BaseObject):
         if key in self._lazy_load:
             v = self._lazy_load.pop(key)
             self._set_value_safe(key, v, True, True)
-            
+
         # And the expanded state
         if key+'|expanded' in self._lazy_load:
             expanded = self._lazy_load.pop(key+'|expanded')
             self.get_widget(key).setOpts(expanded=expanded)
-            
+
 
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
@@ -2807,7 +2807,7 @@ class TreeDictionary(BaseObject):
     def get_widget(self, key):
         """
         Returns the Qt widget associated with the parameter.
-        
+
         Parameters
         ----------
         key : string
@@ -3067,7 +3067,7 @@ class TreeDictionary(BaseObject):
 
         # get the keys and dictionary
         keys, dictionary = self.get_dictionary()
-        
+
         # In case someone modified self.name, rebuild _tree_widgets.
         ws = dict()
         for k in self._tree_widgets:
@@ -3076,17 +3076,17 @@ class TreeDictionary(BaseObject):
             k = self._unstrip(k)
             ws[k] = w
         self._tree_widgets = ws
-        
+
         # loop over the keys and add them to the databox header
-        for k in self._tree_widgets: 
-            
+        for k in self._tree_widgets:
+
             # Add the value if there is one
             if type(self._tree_widgets[k]).__name__ not in ['GroupParameter', 'ActionParameter']:
                 d.insert_header(k, dictionary[k])
-            
+
             # Add the expanded value
             d.insert_header(k+'|expanded', self._tree_widgets[k].opts['expanded'])
-        
+
         # save it
         try:
             d.save_file(path, force_overwrite=True, header_only=True)
@@ -4538,18 +4538,18 @@ if __name__ == '__main__':
 
     # Create the TreeDictionary
     # s = TreeDictionary('pants.txt')
-    
+
     # # Create some different value types
     # s.add_button('button')
     # s.add_parameter('booly',   value=False)
     # s.add_parameter('inty',    value=42)
-    
+
     # ks, d = s.get_dictionary()
     # d['inty'] = 32
     # s.update(d)
-    
+
     # s.show()
-    
+
 
 
 
