@@ -27,4 +27,5 @@ setup.py
 ./egg/example_from_wiki_2.py
 ./egg/example_other_widgets.py
 ./egg/example_really_basic.py
+./egg/example_sliders.py
 ./egg/example_sweeper.py
