@@ -28,17 +28,17 @@ averager = _functions.averager
 class databox:
     """
     An object to hold, save, and load columns of data and header information.
-    
+
     Parameters
     ----------
-    delimiter    
+    delimiter
         The delimiter the file uses. None (default) means "Try to figure it out" (reasonably smart)
-    debug        
+    debug
         Displays some partial debug information while running
 
     Additional optional keyword arguments are sent to self.h()
     """
-    
+
     # this is used by the load_file to rename some of the annoying
     # column names that aren't consistent between different types of data files (and older data files)
     # or to just rename columns with difficult-to-remember ckeys.
@@ -62,7 +62,7 @@ class databox:
 
 
     def __init__(self, delimiter=None, debug=False, **kwargs):
-        
+
         # this keeps the dictionaries from getting all jumbled with each other
         self.clear_columns()
         self.clear_headers()
@@ -87,7 +87,7 @@ class databox:
     def __len__(self):
         return len(self.ckeys)
 
- 
+
     def __repr__(self):
 
         s = "<databox instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
@@ -95,11 +95,11 @@ class databox:
 
 
     def __eq__(self, other):
-        
+
         return self.is_same_as(other)
-        
-        
-          
+
+
+
 
     def more_info(self):
         """
@@ -132,42 +132,42 @@ class databox:
 
     def load_file(self, path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False):
         """
-        This will clear the databox, load a file, storing the header info in 
+        This will clear the databox, load a file, storing the header info in
         self.headers, and the data in self.columns
 
-        If first_data_line="auto", then the first data line is assumed to be 
+        If first_data_line="auto", then the first data line is assumed to be
         the first line where all the elements are numbers.
 
-        If you specify a first_data_line (index, starting at 0), the columns 
-        need not be numbers. Everything above will be considered header 
+        If you specify a first_data_line (index, starting at 0), the columns
+        need not be numbers. Everything above will be considered header
         information and below will be data columns.
 
-        In both cases, the line used to label the columns will always be the 
-        last header line with the same (or more) number of elements as the 
+        In both cases, the line used to label the columns will always be the
+        last header line with the same (or more) number of elements as the
         first data line.
-        
+
         Parameters
         ----------
         path=None
             Path to the file. Using None will bring up a dialog.
-        filters='*.*'            
+        filters='*.*'
             Filter for the file dialog (if path isn't specified)
-        text='Select a file, FACEPANTS.'               
+        text='Select a file, FACEPANTS.'
             Prompt on file dialog
         default_directory=None
-            Which spinmob.settings key to use for the dialog's default 
+            Which spinmob.settings key to use for the dialog's default
             directory. Will create one if it doesn't already exist.
-        header_only=False        
+        header_only=False
             Only load the header
-        quiet=False              
+        quiet=False
             Don't print anything while loading.
         """
-        
+
         # Set the default directory
         if default_directory is None: default_directory = self.directory
 
         # Ask user for a file to open
-        if path == None:
+        if path is None:
             path = _s.dialogs.load(filters=filters,
                                         default_directory=self.directory,
                                         text=text)
@@ -191,39 +191,39 @@ class databox:
 
         # If this file is in SPINMOB_BINARY mode!
         if f.read(14).decode('utf-8') == 'SPINMOB_BINARY':
-            
+
             # Next character is the delimiter
             self.delimiter = f.read(1).decode('utf-8')
-            
+
             # Find the newline and get the data type
             s = ' '
             while not s[-1] == '\n': s = s+f.read(1).decode('utf-8')
-            
+
             # Rest of the line is the binary dtype
             self.h(SPINMOB_BINARY = s.strip())
 
-            # Now manually assemble the header lines to use in the analysis 
+            # Now manually assemble the header lines to use in the analysis
             # below. If I try readline() on the binary file, it will crash.
             lines = ['\n']
-            
+
             # The end of the header is specified by 'SPINMOB_BINARY' on its own line.
             while not lines[-1] == 'SPINMOB_BINARY':
-                
+
                 # Get the next line, one character at a time.
                 s = ' '
                 while not s[-1] == '\n': s = s+f.read(1).decode('utf-8')
-                
+
                 # Okay we have it
                 lines.append(s.strip())
-            
+
             # Pop that last line, which should be 'SPINMOB_BINARY'
             lines.pop(-1)
-            
+
             # We've reached the end of the header.
-        
+
         # Close the binary read.
         f.close()
-        
+
 
 
         # If we're not in binary mode, we can read all the lines and find
@@ -234,30 +234,30 @@ class databox:
             f = open(path, 'r')
             lines = f.readlines()
             f.close()
-    
+
             # Determine the delimiter
             if self.delimiter is None:
-    
+
                 # loop from the end of the file until we get something other than white space
                 for n in range(len(lines)):
-    
+
                     # strip away the white space
                     s = lines[-n-1].strip()
-    
+
                     # if this line has any content
                     if len(s) > 0:
-    
+
                         # try the different delimiter schemes until we find one
                         # that produces a number. Otherwise it's ambiguous.
                         if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
                         elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
                         elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
-    
+
                         # quit the loop!
                         break
-        
+
         # Done reading lines and auto-determining delimiter.
-            
+
 
 
         ##### Pares the header from lines
@@ -300,57 +300,57 @@ class databox:
         # now we have a valid set of column ckeys one way or another, and we know first_data_line.
         if header_only: return self
 
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
         # Deal with the binary mode
         if 'SPINMOB_BINARY' in self.hkeys:
-            
+
             # Read the binary file
             f = open(path, 'rb')
             s = f.read()
             f.close()
-            
+
             # Get the delimiter for easier coding
             delimiter = self.delimiter.encode('utf-8')
-            
+
             # Get the binary mode, e.g., 'float32'
             binary = self.h('SPINMOB_BINARY')
-            
+
             # Number of bytes per element
             size = eval('_n.'+binary+'().itemsize', dict(_n=_n))
-            
+
             # Location of first ckey
             start = s.find(b'SPINMOB_BINARY',14) + 15
-            
+
             # Continue until we reach the last character.
             while not start >= len(s):
-                
+
                 # Get the location of the end of the ckey
                 stop  = s.find(delimiter, start)
-                
+
                 # Woa, Nelly! We're at the end of the file.
                 if stop == -1: break
                 ckey  = s[start:stop].decode('utf-8').strip()
-                
+
                 # Get the array length
                 start = stop+1
                 stop  = s.find(b'\n', start)
                 length = int(s[start:stop].strip())
-                
+
                 # Get the data!
                 start = stop+1
                 stop  = start+size*length
                 self[ckey] = _n.frombuffer(s[start:stop], binary)
-                
+
                 # Go to next ckey
-                start = stop+1        
-        
-        
-        
+                start = stop+1
+
+
+
         # Otherwise we have a text file to load.
         else:
             # Make sure first_data_line isn't still 'auto'
@@ -358,21 +358,21 @@ class databox:
             if first_data_line == "auto" and not 'SPINMOB_BINARY' in self.hkeys:
                 if not quiet: print("\ndatabox.load_file(): Could not find a line of pure data! Perhaps check the delimiter?")
                 return self
-    
-    
+
+
             ##### at this point we've found the first_data_line,
-    
+
             # look for the ckeys
-    
+
             # special case: no header
             if first_data_line == 0: ckeys = []
-    
+
             # start by assuming it's the previous line
             else: ckeys = lines[first_data_line-1].strip().split(self.delimiter)
-    
+
             # count the number of actual data columns for comparison
             column_count = len(lines[first_data_line].strip().split(self.delimiter))
-    
+
             # check to see if ckeys is equal in length to the
             # number of data columns. If it isn't, it's a false ckeys line
             if len(ckeys) >= column_count:
@@ -381,19 +381,19 @@ class databox:
                 while len(ckeys) > column_count:
                     extra = ckeys.pop(-1)
                     if not quiet: print("Extra ckey: "+extra)
-    
+
             else:
                 # it is an invalid ckeys line. Generate our own!
                 ckeys = []
                 for m in range(0, column_count): ckeys.append("c"+str(m))
-    
+
             # last step with ckeys: make sure they're all different!
             self.ckeys = []
             while len(ckeys):
-    
+
                 # remove the key
                 ckey = ckeys.pop(0)
-    
+
                 # if there is a duplicate
                 if (ckey in ckeys) or (ckey in self.ckeys):
                     # increase the label index until it's unique
@@ -401,37 +401,37 @@ class databox:
                     while (ckey+"_"+str(n) in ckeys) or (ckey+"_"+str(n) in self.ckeys): n+=1
                     ckey = ckey+"_"+str(n)
                 self.ckeys.append(ckey)
-    
+
             # initialize the columns arrays
             # I did benchmarks and there's not much improvement by using numpy-arrays here.
             for label in self.ckeys: self.columns[label] = []
-    
-            
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
+
+
             # Python 2 format
             #if _sys.version_info[0] == 2:
             try:
                 def fix(x): return str(x.replace('i','j'))
-                
+
                 # loop over the remaining data lines, converting to numbers
                 z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
                                   delimiter=self.delimiter,
                                   dtype=_n.complex)
-            
+
             # Python 3 format
             except:
-                def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')        
-    
+                def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')
+
                 # loop over the remaining data lines, converting to numbers
                 z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
                                   delimiter=self.delimiter,
                                   dtype=_n.complex)
-            
+
             # genfromtxt returns a 1D array if there is only one data line.
             # highly confusing behavior, numpy!
             if len(_n.shape(z)) == 1:
@@ -439,22 +439,22 @@ class databox:
                 rows_of_data = len(lines) - first_data_line
                 if rows_of_data == 1: z = _n.array([z])
                 else: z = _n.array(z)
-    
+
             # fix for different behavior of genfromtxt on single columns
             if len(z.shape) == 2: z = z.transpose()
             else:                 z = [z]
-    
+
             # Add all the columns
             for n in range(len(self.ckeys)):
-    
+
                 # if any of the imaginary components are non-zero, use complex
                 if _n.any(_n.imag(z[n])): self[n] = z[n]
                 else:                     self[n] = _n.real(z[n])
 
         # Done with loading in the columns of data
 
-        
-        
+
+
         # now, as an added bonus, rename some of the obnoxious headers
         for k in self.obnoxious_ckeys:
             if k in self.columns:
@@ -472,28 +472,28 @@ class databox:
         path=None
             Path for saving the data. If None, this will bring up
             a save file dialog.
-        filters='*.dat'         
+        filters='*.dat'
             File filter for the file dialog (for path=None)
         force_extension=None
             If set to a string, e.g., 'txt', it will enforce that the chosen
             filename will have this extension.
-        force_overwrite=False   
+        force_overwrite=False
             Normally, if the file * exists, this will copy that
             to *.backup. If the backup already exists, this
             function will abort. Setting this to True will
             force overwriting the backup file.
-        header_only=False       
+        header_only=False
             Only output the header?
-        delimiter='use current' 
+        delimiter='use current'
             This will set the delimiter of the output file
             'use current' means use self.delimiter
         binary=None
-            Set to one of the allowed numpy dtypes, e.g., float32, float64, 
+            Set to one of the allowed numpy dtypes, e.g., float32, float64,
             complex64, int32, etc. Setting binary=True defaults to float64.
             Note if the header contains the key SPINMOB_BINARY and binary=None,
             it will save as binary using the header specification.
         """
-        
+
         # Make sure there isn't a problem later with no-column databoxes
         if len(self)==0: header_only=True
 
@@ -504,14 +504,14 @@ class databox:
         if path in ["", None]:
             print("Aborted.")
             return False
-        
+
         # Force the extension (we do this here redundantly, because the user may have also
         # specified a path explicitly)
-        if  not force_extension == None:
-            
+        if  not force_extension is None:
+
             # In case the user put "*.txt" instead of just "txt"
             force_extension = force_extension.replace('*','').replace('.','')
-            
+
             # If the file doesn't end with the extension, add it
             if not _os.path.splitext(path)[-1][1:] == force_extension:
                 path = path + '.' + force_extension
@@ -533,46 +533,46 @@ class databox:
 
         # open the temporary file
         f = open(temporary_path, 'w')
-        
-        
-        
+
+
+
         # Override any existing binary if we're supposed to
         if binary in [False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
             self.pop_header('SPINMOB_BINARY', True)
             binary = None
-            
+
         # If the binary flag is any kind of binary format, add the key
-        if not binary in [None, False, 'text', 'Text', 'ASCII', 'csv', 'CSV']: 
+        if not binary in [None, False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
             self.h(SPINMOB_BINARY=binary)
-        
+
         # Now use the header element to determine the binary mode
         if 'SPINMOB_BINARY' in self.hkeys:
-            
+
             # Get the binary mode (we'll use this later)
             binary = self.pop_header('SPINMOB_BINARY')
-            
+
             # If it's "True", default to float32
             if binary in ['True', True, 1]: binary = 'float32'
-            
+
             # Write the special first key.
             f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
-            
+
         # Write the usual header
         for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
         f.write('\n')
 
         # if we're not just supposed to write the header
-        if not header_only: 
-            
+        if not header_only:
+
             # Normal ascii saving mode.
             if binary in [None, 'None', False, 'False']:
-                
+
                 # write the ckeys
                 elements = []
-                for ckey in self.ckeys: 
+                for ckey in self.ckeys:
                     elements.append(str(ckey).replace(delimiter,'_'))
                 f.write(delimiter.join(elements) + "\n")
-        
+
                 # now loop over the data
                 for n in range(0, len(self[0])):
                     # loop over each column
@@ -589,16 +589,16 @@ class databox:
             else:
                 # Announce that we're done with the header. It's binary time
                 f.write('SPINMOB_BINARY\n')
-                
+
                 # Loop over the ckeys
                 for n in range(len(self.ckeys)):
-                    
+
                     # Get the binary data string
                     data_string = _n.array(self[n]).astype(binary).tostring()
-                    
+
                     # Write the column
                     #  ckey + delimiter + count + \n + datastring + \n
-                    f.write(str(self.ckeys[n]).replace(delimiter,'_') 
+                    f.write(str(self.ckeys[n]).replace(delimiter,'_')
                            + delimiter + str(len(self[n])) + '\n')
                     f.close()
                     f = open(temporary_path, 'ab')
@@ -620,7 +620,7 @@ class databox:
 
         Parameters
         ----------
-        n       
+        n
             Index of data point to return.
         """
         # loop over the columns and pop the data
@@ -636,7 +636,7 @@ class databox:
 
         Parameters
         ----------
-        n       
+        n
             Index of data point to pop.
         """
 
@@ -658,10 +658,10 @@ class databox:
     def insert_data_point(self, new_data, index=None, ckeys=None):
         """
         Inserts a data point at index n.
-        
+
         Parameters
         ----------
-        new_data    
+        new_data
             A list or array of new data points, one for each column.
         index=None
             Where to insert the point(s) in each column. None => append.
@@ -671,11 +671,11 @@ class databox:
             and rebuild them, rather than overwriting.
         """
         # Optional ckeys supplied
-        if not ckeys == None:
+        if not ckeys is None:
 
             # Make sure they are a list for comparing with self.ckeys
             ckeys = list(ckeys)
-            
+
             # If the ckeys do not match, rebuild the columns
             if not self.ckeys == ckeys:
                 self.clear_columns()
@@ -702,7 +702,7 @@ class databox:
 
                 # reconvert to an array
                 self[i] = _n.array(data)
-        
+
         return self
 
     def append_data_point(self, new_data, ckeys=None, history=0):
@@ -711,7 +711,7 @@ class databox:
 
         Parameters
         ----------
-        new_data    
+        new_data
             A list or array of new data points, one for each column.
         ckeys=None
             An optional list (of the same size as new_data) of ckeys. If this
@@ -719,7 +719,7 @@ class databox:
             and rebuild them, rather than overwriting.
         history=None
             If a positive integer is specified, after appending the data point,
-            it will pop the first data points off until the length of the 
+            it will pop the first data points off until the length of the
             0th column is equal to the specified value.
         """
         self.insert_data_point(new_data, None, ckeys)
@@ -747,26 +747,26 @@ class databox:
 
         "3.0 + x/y - d[0] where x=3.0*c('my_column')+h('setting'); y=d[1]"
 
-        By default, "d" refers to the databox object itself, giving access to 
-        everything and enabling complete control over the universe. Meanwhile, 
-        c() and h() give quick reference to d.c() and d.h() to get columns and 
-        header lines. Additionally, these scripts can see all of the numpy 
+        By default, "d" refers to the databox object itself, giving access to
+        everything and enabling complete control over the universe. Meanwhile,
+        c() and h() give quick reference to d.c() and d.h() to get columns and
+        header lines. Additionally, these scripts can see all of the numpy
         functions like sin, cos, sqrt, etc.
 
         If you would like access to additional globals in a script,
-        there are a few options in addition to specifying the g parametres. 
-        You can set self.extra_globals to the appropriate globals dictionary 
-        or add globals using self.insert_global(). Setting g=globals() will 
-        automatically insert all of your current globals into this databox 
+        there are a few options in addition to specifying the g parametres.
+        You can set self.extra_globals to the appropriate globals dictionary
+        or add globals using self.insert_global(). Setting g=globals() will
+        automatically insert all of your current globals into this databox
         instance.
 
         There are a few shorthand scripts available as well. You can simply type
         a column name such as 'my_column' or a column number like 2. However, I
         only added this functionality as a shortcut, and something like
         "2.0*a where a=my_column" will not work unless 'my_column is otherwise
-        defined. I figure since you're already writing a complicated script in 
-        that case, you don't want to accidentally shortcut your way into using 
-        a column instead of a constant! Use "2.0*a where a=c('my_column')" 
+        defined. I figure since you're already writing a complicated script in
+        that case, you don't want to accidentally shortcut your way into using
+        a column instead of a constant! Use "2.0*a where a=c('my_column')"
         instead.
         """
 
@@ -924,7 +924,7 @@ class databox:
 
         return self
     copy_columns_from = copy_columns
-    
+
     def copy_all(self, source_databox):
         """
         Copies the headers and columns from source_databox to this databox.
@@ -933,25 +933,25 @@ class databox:
         self.copy_columns(source_databox)
         return self
     copy_all_from = copy_all
-    
+
     def copy_headers_to(self, destination_databox):
         """
         Copies the headers from this databox to the supplied destination databox.
         """
         destination_databox.copy_headers_from(self)
-    
+
     def copy_columns_to(self, destination_databox):
         """
         Copies the columns from this databox to the supplied destination databox.
         """
         destination_databox.copy_columns_from(self)
-    
+
     def copy_all_to(self, destination_databox):
         """
         Copies everything from this databox to the supplied destination databox.
         """
         destination_databox.copy_all_from(self)
-    
+
     def insert_globals(self, *args, **kwargs):
         """
         Appends or overwrites the supplied object in the self.extra_globals.
@@ -960,7 +960,7 @@ class databox:
         objects and functions.
 
         Regular arguments are assumed to have a __name__ attribute (as is the
-        case for functions) to use as the key, and keyword arguments will just 
+        case for functions) to use as the key, and keyword arguments will just
         be added as dictionary elements.
         """
         for a in args: kwargs[a.__name__] = a
@@ -973,15 +973,15 @@ class databox:
         Parameters
         ----------
         hkey
-            Header key. Will be appended to self.hkeys if non existent, or 
-            inserted at the specified index. 
+            Header key. Will be appended to self.hkeys if non existent, or
+            inserted at the specified index.
             If hkey is an integer, uses self.hkeys[hkey].
         value
             Value of the header.
         index=None
-            If specified (integer), hkey will be inserted at this location in 
+            If specified (integer), hkey will be inserted at this location in
             self.hkeys.
-            
+
         """
         #if hkey is '': return
 
@@ -1000,7 +1000,7 @@ class databox:
         """
         Tests that the important (i.e. savable) information in this databox
         is the same as that of the other_databox.
-        
+
         Parameters
         ----------
         other_databox
@@ -1012,63 +1012,63 @@ class databox:
         header_order=True
             Whether the order of the header elements must match.
         column_order=True
-            Whether the order of the columns must match. This is only a sensible 
+            Whether the order of the columns must match. This is only a sensible
             concern if ckeys=True.
         ckeys=True
             Whether the actual ckeys matter, or just the ordered columns of data.
-        
-        
+
+
         Note the == symbol runs this function with everything True.
         """
         d = other_databox
-        
+
         if not hasattr(other_databox, '_is_spinmob_databox'): return False
-        
+
         # Proceed by testing things one at a time, returning false if one fails
         if headers:
-            
+
             # Same number of elements
             if not len(self.hkeys) == len(d.hkeys): return False
-            
+
             # Elements
             if header_order and not self.hkeys == d.hkeys: return False
-            
+
             # Each value
             for k in self.hkeys:
                 # Make sure the key exists
                 if not k in d.hkeys: return False
-                
+
                 # Make sure it's the same.
                 if not self.h(k) == d.h(k): return False
-                
+
         if columns:
-            
+
             # Same number of columns
             if not len(self.ckeys) == len(d.ckeys): return False
-            
+
             # If we're checking columns by ckeys
             if ckeys:
-            
+
                 # Columns
                 if column_order and not self.ckeys == d.ckeys: return False
-                
+
                 # Each value of each array
                 for k in self.ckeys:
                     # Make sure the key exists
                     if not k in d.ckeys: return False
-                    
+
                     # Check the values
                     if not (_n.array(self[k]) == _n.array(d[k])).all(): return False
-        
+
             # Otherwise we're ignoring ckeys
             else:
                 for n in range(len(self.ckeys)):
                     if not (_n.array(self[n]) == _n.array(d[n])).all(): return False
-        
+
         # Passes all tests
         return True
-                
-      
+
+
 
     def pop_header(self, hkey, ignore_error=False):
         """
@@ -1077,7 +1077,7 @@ class databox:
         Parameters
         ----------
         hkey
-            Header key you wish to pop. 
+            Header key you wish to pop.
             You can specify either a key string or an index.
         ignore_error=False
             Whether to quietly ignore any errors (i.e., hkey not found).
@@ -1085,18 +1085,18 @@ class databox:
 
         # try the integer approach first to allow negative values
         if type(hkey) is not str:
-            try:    
+            try:
                 return self.headers.pop(self.hkeys.pop(hkey))
-            except: 
+            except:
                 if not ignore_error:
                     print("ERROR: pop_header() could not find hkey "+str(hkey))
                 return None
         else:
-            
+
             try:
                 # find the key integer and pop it
                 hkey = self.hkeys.index(hkey)
-    
+
                 # pop it!
                 return self.headers.pop(self.hkeys.pop(hkey))
 
@@ -1104,8 +1104,8 @@ class databox:
                 if not ignore_error:
                     print("ERROR: pop_header() could not find hkey "+str(hkey))
                 return
-    
-                
+
+
 
     def pop_column(self, ckey, ignore_error=False):
         """
@@ -1117,17 +1117,17 @@ class databox:
         # try the integer approach first to allow negative values
         if type(ckey) is not str:
             return self.columns.pop(self.ckeys.pop(ckey))
-        
+
         # Otherwise we assume it's a string
         elif ckey in self.ckeys:
-            
+
             # find the key integer and pop it
             ckey = self.ckeys.index(ckey)
             return self.columns.pop(self.ckeys.pop(ckey))
-    
-        # Column doesn't exist!    
+
+        # Column doesn't exist!
         elif not ignore_error:
-        
+
             print("Column does not exist (yes, we looked).")
             return
 
@@ -1135,14 +1135,14 @@ class databox:
         """
         This will insert/overwrite a new column and fill it with the data from the
         the supplied array.
-        
+
         Parameters
         ----------
-        data_array  
+        data_array
             Data; can be a list, but will be converted to numpy array
-        ckey        
+        ckey
             Name of the column; if an integer is supplied, uses self.ckeys[ckey]
-        index       
+        index
             Before which index to insert this column. None => append to end.
         """
 
@@ -1154,19 +1154,19 @@ class databox:
         if not ckey in self.ckeys:
             if index is None: self.ckeys.append(ckey)
             else:             self.ckeys.insert(index, ckey)
-        
+
         return self
 
     def append_column(self, data_array, ckey='temp'):
         """
         This will append a new column and fill it with the data from the
         the supplied array.
-        
+
         Parameters
         ----------
-        data_array  
+        data_array
             Data; can be a list, but will be converted to numpy array
-        ckey        
+        ckey
             Name of the column.
         """
         if not type(ckey) is str:
@@ -1200,7 +1200,7 @@ class databox:
         self.hkeys    = []
         self.headers  = {}
         return self
-    
+
     def clear_averagers(self):
         """
         Empties the dictionary self.averagers.
@@ -1268,21 +1268,21 @@ class databox:
     def transpose(self):
         """
         Returns a copy of this databox with the columns as rows.
-        
+
         Currently requires that the databox has equal-length columns.
         """
         # Create an empty databox with the same headers and delimiter.
         d = databox(delimter=self.delimiter)
         self.copy_headers(d)
-        
+
         # Get the transpose
         z = _n.array(self[:]).transpose()
-        
+
         # Build the columns of the new databox
         for n in range(len(z)): d['c'+str(n)] = z[n]
-        
+
         return d
-        
+
 
     def update_headers(self, dictionary, keys=None):
         """
@@ -1299,31 +1299,31 @@ class databox:
 
     def c(self, *args, **kwargs):
         """
-        Takes a single argument or keyword argument, and returns the specified 
-        column. If the argument (or keyword argument) is an integer, return the 
+        Takes a single argument or keyword argument, and returns the specified
+        column. If the argument (or keyword argument) is an integer, return the
         n'th column, otherwise return the column based on key.
-        
+
         If no arguments are supplied, simply print the column information.
         """
         # If not arguments, print everything
         if len(args) + len(kwargs) == 0:
-            
+
             print("Columns")
             if len(self.ckeys)==0: print ('  No columns of data yet.')
-            
+
             # Loop over the ckeys and display their information
             for n in range(len(self.ckeys)):
                 print('  '+str(n)+': '+str(self.ckeys[n])+' '+str(_n.shape(self[n])))
             return
 
-        # Otherwise, find n        
+        # Otherwise, find n
         elif len(args):   n = args[0]
-        elif len(kwargs): 
+        elif len(kwargs):
             for k in kwargs: n = kwargs[k]
-        
+
         # Nothing to do here.
         if len(self.columns) == 0:   return None
-        
+
         # if it's a string, use it as a key for the dictionary
         if type(n)   is str: return self.columns[n]
 
@@ -1340,13 +1340,13 @@ class databox:
             step  = n.step
 
             # Fix up the unspecifieds
-            if start == None: start = 0
-            if stop  == None or stop>len(self): stop  = len(self)
-            if step  == None: step  = 1
-            
+            if start is None: start = 0
+            if stop  is None or stop>len(self): stop  = len(self)
+            if step  is None: step  = 1
+
             # Return what was asked for
             return self[range(start, stop, step)]
-            
+
         # Otherwise assume it's an integer
         return self.columns[self.ckeys[n]]
 
@@ -1360,8 +1360,8 @@ class databox:
         Also can take integers, returning the key'th header value.
 
         kwargs can be specified to set header elements.
-        
-        Finally, if called with no arguments or keyword arguments, this 
+
+        Finally, if called with no arguments or keyword arguments, this
         simply prints the header information.
         """
         # If not arguments, print everything
@@ -1401,12 +1401,12 @@ class databox:
     def add_to_column_average(self, ckey, data_array, std_mean=True, lowpass_frames=0, precision=_n.float64, ignore_nan=True):
         """
         Adds the supplied data_array to the averager data pool for column
-        'ckey'. Averagers (spinmob.fun.averager) used for these calculations 
-        will be stored in the dictionary self.averagers under the specified ckey. 
+        'ckey'. Averagers (spinmob.fun.averager) used for these calculations
+        will be stored in the dictionary self.averagers under the specified ckey.
         After pushing in the new data and recalculating, this function transfers
-        the averaged data to new columns, and sends all the other averager 
+        the averaged data to new columns, and sends all the other averager
         information to the header.
-        
+
         Parameters
         ----------
         ckey
@@ -1414,23 +1414,23 @@ class databox:
         data_array
             Array of data. Must match the shape of the existing column.
         std_mean=True
-            Whether to include the std_mean column. If True, an additional 
+            Whether to include the std_mean column. If True, an additional
             column will be inserted after that of ckey, with the name ckey+'.std_mean'.
         lowpass_frames=0
-            Time constant (number of frames) for the DSP low pass. See 
+            Time constant (number of frames) for the DSP low pass. See
             spinmob.fun.averager for details.
         precision=numpy.float64
-            Numpy dtype used in internal calculations. 
+            Numpy dtype used in internal calculations.
         ignore_nan=True
             Whether to set NaN's appearing in calculations to zero.
         """
         # First get the ckey string
         if not type(ckey) == str: ckey = self.ckeys[ckey]
-        
+
         # If the averager does not exist
         if ckey not in self.averagers:
             self.averagers[ckey] = averager(name=ckey)
-        
+
         # Update the averaging method
         x = self.averagers[ckey]
         x.lowpass_frames      = lowpass_frames
@@ -1439,34 +1439,34 @@ class databox:
 
         # Add the new data set
         x.add(data_array)
-        
+
         # Update (or create) the mean column
         self[ckey] = x.mean
-        
+
         # If we're including the std_mean
         if std_mean:
-            
+
             # Get the std_mean key
             skey = ckey+'.std_mean'
-            
+
             # Estimate the standard error on the mean
             sigma = x.variance_mean**0.5
-            
+
             # Make sure the column exists just after that of ckey
             if skey in self.ckeys: self[skey] = sigma
             else:                  self.insert_column(sigma, skey, self.ckeys.index(ckey)+1)
-        
+
         # Update the header information
-        if self.name == None: name = ''
+        if self.name is None: name = ''
         else:                 name = '/'+self.name+'/'
         self.insert_header(name + ckey+'.ignore_nan',     self.averagers[ckey].ignore_nan)
         self.insert_header(name + ckey+'.lowpass_frames', self.averagers[ckey].lowpass_frames)
         self.insert_header(name + ckey+'.name',           self.averagers[ckey].name)
         self.insert_header(name + ckey+'.N',              self.averagers[ckey].N)
         self.insert_header(name + ckey+'.precision',      self.averagers[ckey].precision)
-        
+
         return self
-    
+
     def reset_all_averagers(self, *a, **k):
         """
         Resets all averagers. Arguments and keyword arguments are not used.
@@ -1487,43 +1487,43 @@ class fitter():
     ----------
     Keyword arguments are sent to self.set(). Arguments that apply to a data
     set can be specified as a single element or list of elements. For example:
-    
+
     xmin = 42
-    
+
     will specify that all figures not include data with x-values below 42.
     Meanwhile,
-    
+
     xmin = [42,27]
-    
+
     will specify that the first data set will include x>42, and the second
     will include x>27.
-    
+
     Behavior Options
     ----------------
     silent = False
         Ignore warnings and non-crash errors (don't print anything).
-    autoplot      = True     
+    autoplot      = True
         Automatically (re)plot when changing stuff?
-    
+
     Figure Options
     --------------
     first_figure  = 0
         First figure number to use. This can prevent overwriting an existing
         figure when calling self.plot().
-    fpoints       = 1000     
+    fpoints       = 1000
         Number of points to use when plotting the fit, guess, and background.
         Set fpoints = None to use the xdata points.
     plot_fit      = True
         Include fit curve in plot(s)?
-    plot_bg       = True,     
+    plot_bg       = True,
         Include background curve(s) in plots?
     plot_all_data = False,
         Continue to plot the trimmed data?
     plot_errors   = True
         Include error bars in plot(s)?
-    plot_guess    = True,     
+    plot_guess    = True,
         Include the guess(es)?
-    plot_guess_zoom = False,  
+    plot_guess_zoom = False,
         Zoom to include guess(es)?
     style_data   = dict(marker='o', color='b', ls='')
         Style for data curve(s).
@@ -1531,9 +1531,9 @@ class fitter():
         Style for fit curve(s).
     style_guess  = dict(marker='',  color='0.25', ls='-')
         Style for guess curve(s).
-    
 
-    
+
+
     Data Options
     ------------
     subtract_bg   = False
@@ -1544,7 +1544,7 @@ class fitter():
         Maximum x-value(s) for trimming.
     ymin          = None
         Minmium y-value(s) for trimming.
-    ymax          = 
+    ymax          =
         Maximum y-value(s) for trimming.
     xlabel        = None
         Optional override for x-axis label(s)
@@ -1557,13 +1557,13 @@ class fitter():
     scale_eydata  = 1.0
         Optional scale factor(s) for the eydata.
     coarsen       = 1
-        How much to coarsen the data, i.e., averaging each group of the 
+        How much to coarsen the data, i.e., averaging each group of the
         specified number of points into a single point (and propagating errors).
 
-    
+
     Typical workflow
     ----------------
-    my_fitter = fitter()    
+    my_fitter = fitter()
         Creates the fitter object
 
     my_fitter.set_functions('a*x+b', 'a,b')
@@ -1572,37 +1572,37 @@ class fitter():
     my_fitter.set_data([1,2,3],[1,2,1])
         Sets the data to be fit.
 
-    my_fitter.fit()                       
+    my_fitter.fit()
         Does the fitting.
 
-    my_fitter.results 
+    my_fitter.results
         Contains the output of scipy.leastsq.optimize (see scipy docs)
-        
+
 
     Tips
     ----
     Usage
         All methods starting without an underscore are meant to be used
-        by a "typical" user. For example, do not set data directly; 
-        use set_data(), which clears the fit results. Otherwise the fit 
+        by a "typical" user. For example, do not set data directly;
+        use set_data(), which clears the fit results. Otherwise the fit
         results will not match the existing data.
-    self.figures 
-        Setting this to a figure instance or list of figures will force the 
+    self.figures
+        Setting this to a figure instance or list of figures will force the
         plot command to use these, rather than creating new figures.
-        
+
     See the spinmob wiki on github, or use IPython's autocomplete to play around!
     """
-    
+
     figures = None
 
     def __init__(self, **kwargs):
-        
+
         self.f  = []    # list of functions
         self.bg = []    # list of background functions (for subtracting etc)
-    
+
         self._f_raw  = None # raw argument passed to set_functions()
         self._bg_raw = None # raw argument passed to set_functions()
-    
+
         self._set_xdata  = [] # definitions from which data is derived during fits
         self._set_ydata  = []
         self._set_eydata = []
@@ -1617,9 +1617,9 @@ class fitter():
         #self._exdata_massaged = None
 
         self._settings = dict()   # dictionary containing all the fitter settings
-    
+
         self.results = None  # full output from the fitter.
-        
+
         # make sure all the awesome stuff from numpy is visible.
         self._globals  = dict(_n.__dict__)
         self._globals.update(_special.__dict__)
@@ -1629,7 +1629,7 @@ class fitter():
         self._bgnames   = []
         self._pguess    = []
         self._constants = []
-        
+
         # Silence warnings
         self._settings['silent'] = False
 
@@ -1685,10 +1685,10 @@ class fitter():
         change individual parameters with self['parameter'] = value
         """
         if len(kwargs)==0: return self
-        
+
         # Set settings
         for k in list(kwargs.keys()): self[k] = kwargs[k]
-        
+
         # Plot if we're supposed to.
         if self['autoplot'] and not self._initializing: self.plot()
 
@@ -1709,15 +1709,15 @@ class fitter():
 
         # everything else should have a value for each data set or plot
         elif key in self._settings or self._initializing:
-            
+
             # Most settings need lists that match the length of the data sets
             if not key in self._single_settings:
-                
+
                 # make sure it's a list or dictionary
                 if not type(value) in [list]: value = [value]
-                
+
                 # make sure it matches the data, unless it's a dictionary
-                while len(value) < max(len(self.f), len(self._set_xdata), len(self._set_ydata)): 
+                while len(value) < max(len(self.f), len(self._set_xdata), len(self._set_ydata)):
                     value.append(value[0])
 
             # set the value
@@ -1755,24 +1755,24 @@ class fitter():
         # Print the constants out
         if len(self._cnames):
             s = s + "\nCONSTANTS\n"
-            for c in self._cnames: 
+            for c in self._cnames:
                 s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
 
 
 
         # If we don't have any data.
-        if len(self._set_xdata)==0 or len(self._set_ydata)==0 or len(self.f)==0: 
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0 or len(self.f)==0:
             s = s + "\nGUESS\n"
 
         # If we do have data, give mor information
         else:
             s = s + "\nGUESS (reduced chi^2 = {:s}, {} DOF)\n".format(
-                
+
                 # Reduced chi^2
-                self._format_value_error(self.reduced_chi_squared(self._pguess), 
-                                         _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
+                self._format_value_error(self.reduced_chi_squared(self._pguess),
+                                         _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))),
                         self.degrees_of_freedom())
-        
+
         # Always print the guess parameters
         for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
 
@@ -1781,7 +1781,7 @@ class fitter():
         # Print out the fit results
         if self.results and not self.results[1] is None:
             s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
-                    self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))), 
+                    self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))),
                     int(self.degrees_of_freedom()))
             for n in range(len(self._pnames)):
                 s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
@@ -1793,7 +1793,7 @@ class fitter():
                 s = s + "  {:10s} = {:G} (meaningless)\n".format(self._pnames[n], self.results[0][n])
 
         # No fit results
-        else: 
+        else:
             s = s + "\nNO FIT RESULTS\n"
 
         # Warning: guessed eydata
@@ -1802,11 +1802,11 @@ class fitter():
 
         # Check if there are any zero error bars.
         eys = self.get_processed_data()[2]
-        
+
         # Could be irregularly shaped, so can't just use (eydata==0).any()
         any_zeros = False
-        for ey in eys: 
-            if _n.any(ey==0): 
+        for ey in eys:
+            if _n.any(ey==0):
                 any_zeros = True
                 break
         if any_zeros: s = s + "\nWARNING: At least one error bar is zero."
@@ -1839,27 +1839,27 @@ class fitter():
             2. The guess parameter of the specified name (if it exists).
             3. The constant parameter of the specified name (if it exists).
             4. The setting of the specified key, e.g. 'xmin'.
-        
+
         Parameters
         ----------
         key
             String key, e.g. 'a' or 'coarsen'.
         """
         fit_parameters = self.get_fit_parameters()
-        if fit_parameters and key in self._pnames: 
+        if fit_parameters and key in self._pnames:
             return fit_parameters[0][self._pnames.index(key)]
-        
-        if key in self._pnames: 
+
+        if key in self._pnames:
             return self._pguess   [self._pnames.index(key)]
-        
-        if key in self._cnames: 
+
+        if key in self._cnames:
             return self._constants[self._cnames.index(key)]
-        
+
         return self._settings[key]
 
     __getitem__ = get
 
-    def _error(self, message): 
+    def _error(self, message):
         raise BaseException(str(message))
 
     def set_functions(self,  f='a*x*cos(b*x)+c', p='a=-0.2, b, c=3', c=None, bg=None, **kwargs):
@@ -1868,26 +1868,26 @@ class fitter():
 
         Parameters
         ----------
-        f=['a*x*cos(b*x)+c', 'a*x+c']  
+        f=['a*x*cos(b*x)+c', 'a*x+c']
             This can be a string function, a defined function
             my_function(x,a,b), or a list of some combination
             of these two types of objects. The length of such
             a list must be equal to the number of data sets
             supplied to the fit routine.
-        p='a=1.5, b'    
+        p='a=1.5, b'
             This must be a comma-separated string list of
             parameters used to fit. If an initial guess value is
             not specified, 1.0 will be used.
             If a function object is supplied, it is assumed that
             this string lists the parameter names in order.
-        c=None          
+        c=None
             Fit _constants; like p, but won't be allowed to float
             during the fit. This can also be None.
-        bg=None         
+        bg=None
             Can be functions in the same format as f describing a
             background (which can be subtracted during fits, etc)
-        
-        
+
+
         Additional keyword arguments are added to the globals used when
         evaluating the functions.
         """
@@ -1897,7 +1897,7 @@ class fitter():
         self._cnames    = []
         self._pguess    = []
         self._constants = []
-        
+
         # Update the globals
         self._globals.update(kwargs)
 
@@ -1936,9 +1936,9 @@ class fitter():
 
         # use the internal settings we just set to create the functions
         self._update_functions()
-        
+
         if self['autoplot']: self.plot()
-        
+
         return self
 
 
@@ -1964,7 +1964,7 @@ class fitter():
 
         # get a comma-delimited string list of parameter names for the "normal" function
         pstring = 'x, ' + ', '.join(self._pnames)
-        
+
         # get the comma-delimited string for the ODR function
         pstring_odr = 'x, '
         for n in range(len(self._pnames)): pstring_odr = pstring_odr+'p['+str(n)+'], '
@@ -1979,14 +1979,14 @@ class fitter():
 
             # if f[n] is a string, define a function on the fly.
             if isinstance(f[n], str):
-                
+
                 # "Normal" least squares function (y-error bars only)
                 self.f.append( eval('lambda ' + pstring + ': ' + f[n],  self._globals))
                 self._fnames.append(f[n])
-            
+
                 # "ODR" compatible function (for x-error bars), based on self.f
                 self._odr_models.append( _odr.Model(eval('lambda p,x: self.f[n]('+pstring_odr+')', dict(self=self, n=n))))
-            
+
             # Otherwise, just append it.
             else:
                 self.f.append(f[n])
@@ -2015,10 +2015,10 @@ class fitter():
 
         Parameters
         ----------
-        xdata, ydata    
+        xdata, ydata
             These can be a single array of data or a list of data arrays.
-        eydata=None      
-            Error bars for ydata. These can be None (for guessed error) or data 
+        eydata=None
+            Error bars for ydata. These can be None (for guessed error) or data
             / numbers matching the dimensionality of xdata and ydata
         dtype=numpy.float64
             When converting the data to arrays, use this conversion function.
@@ -2055,11 +2055,11 @@ class fitter():
 
         results can be obtained by calling get_data()
 
-        Additional optional keyword arguments are added to the globals for 
+        Additional optional keyword arguments are added to the globals for
         script evaluation.
         """
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
-        
+
         # At this stage:
         # xdata,  ydata   'script', [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata, exdata  'script', [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], 3, [3,[1,2,3]], None
@@ -2084,7 +2084,7 @@ class fitter():
         # Note: there is some ambiguity here, if the number of data sets equals the number of data points!
         if _s.fun.is_a_number(eydata[0]) and len(eydata) == len(ydata[0]): eydata = [eydata]
         #if _s.fun.is_a_number(exdata[0]) and len(exdata) == len(xdata[0]): exdata = [exdata]
-        
+
         # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
         # eydata            ['script'], [[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
 
@@ -2109,9 +2109,9 @@ class fitter():
 #        if not exdata.count(None) == len(exdata):
 #            # Search for and replace all None's with 0
 #            for n in range(len(exdata)):
-#                if exdata[n] == None: exdata[n] = 0
-#        
-        
+#                if exdata[n] is None: exdata[n] = 0
+#
+
         # store the data, script, or whatever it is!
         self._set_xdata  = xdata
         self._set_ydata  = ydata
@@ -2123,13 +2123,13 @@ class fitter():
         # set the eyscale to 1 for each data set
         self['scale_eydata'] = [1.0]*len(self._set_xdata)
         #self['scale_exdata'] = [1.0]*len(self._set_xdata)
-        
+
         # Update the settings so they match the number of data sets.
         for k in self._settings.keys(): self[k] = self[k]
-        
+
         # Plot if necessary
         if self['autoplot']: self.plot()
-        
+
         return self
 
     def evaluate_script(self, script, **kwargs):
@@ -2152,7 +2152,7 @@ class fitter():
 
     def get_data(self):
         """
-        Returns current xdata, ydata, eydata, after set_data() 
+        Returns current xdata, ydata, eydata, after set_data()
         has been run.
         """
         # make sure we've done a "set data" call
@@ -2231,7 +2231,7 @@ class fitter():
 #                exdata[n] = _n.ones(len(xdata[n])) * exdata[n]
 #
 #            # make it an array
-#            if not exdata[n] == None:
+#            if not exdata[n] is None:
 #                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
 
         # Make sure everything is a nice array of the right type.
@@ -2240,7 +2240,7 @@ class fitter():
             xdata[n]  = _n.array(xdata[n],  dtype=self._dtype)
             ydata[n]  = _n.array(ydata[n],  dtype=self._dtype)
             eydata[n] = _n.array(eydata[n], dtype=self._dtype)
-        
+
         # Return it
         return xdata, ydata, eydata
 
@@ -2251,10 +2251,10 @@ class fitter():
         """
         # No fit
         if self.results    is None: return None
-        
+
         # Fit that didn't converge
         if self.results[1] is None: return self.results[0], None
-        
+
         # Fit worked
         return self.results[0], _n.sqrt(_n.diagonal(self.results[1]))
 
@@ -2265,25 +2265,25 @@ class fitter():
         """
         # No fit
         if self.results is None: return None
-        
-        # Fit may have not converged, evidenced by results[1] == None
-        
+
+        # Fit may have not converged, evidenced by results[1] is None
+
         # Dictionary of all the stuff
         d = dict()
-        
+
         # Loop over pnames
         for n in range(len(self._pnames)):
-            
+
             # Get the pname, fit value, and fit error
             pname = self._pnames[n]
             value = self.results[0][n]
             error = None
             if self.results[1] is not None: error = self.results[1][n][n]**0.5
-            
+
             # Stuff it in the dictionary
             d[pname]        = value
             d[pname+'.std'] = error
-            
+
         # Include some other stuff
         d['covariance']         = self.results[1]
         d['chi2']               = self.chi_squared()
@@ -2292,7 +2292,7 @@ class fitter():
         d['reduced_chi2.std']   = _n.sqrt(2.0/self.degrees_of_freedom())
         d['reduced_chi2s']      = self.reduced_chi_squareds()
         d['degrees_of_freedom'] = self.degrees_of_freedom()
-        
+
         return d
 
     def get_pnames(self):
@@ -2300,7 +2300,7 @@ class fitter():
         Returns a list of parameter names.
         """
         return list(self._pnames)
-    
+
     def get_cnames(self):
         """
         Returns a list of constant names.
@@ -2326,20 +2326,20 @@ class fitter():
     def get_processed_data(self, do_coarsen=True, do_trim=True):
         """
         This will coarsen and then trim the data sets according to settings.
-        
+
         Returns processed xdata, ydata, eydata.
-        
+
         Parameters
         ----------
         do_coarsen=True
             Whether we should coarsen the data
         do_trim=True
             Whether we should trim the data
-        
+
         Settings
         --------
         xmin, xmax, ymin, ymax
-            Limits on x and y data points for trimming.    
+            Limits on x and y data points for trimming.
         coarsen
             Break the data set(s) into this many groups of points, and average
             each group into one point, propagating errors.
@@ -2353,7 +2353,7 @@ class fitter():
         xmaxs   = self['xmax']
         ymins   = self['ymin']
         ymaxs   = self['ymax']
-        coarsen = self['coarsen'] 
+        coarsen = self['coarsen']
 
         # make sure we have one limit for each data set
         if type(xmins)   is not list: xmins   = [xmins]  *len(xdatas)
@@ -2368,53 +2368,53 @@ class fitter():
         eydata_massaged = []
         #exdata_massaged = []
         for n in range(len(xdatas)):
-            
+
             x  = xdatas[n]
             y  = ydatas[n]
             ey = eydatas[n]
             #ex = exdatas[n]
-            
+
             # coarsen the data
             if do_coarsen:
                 x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
                 y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
                 ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
-#                if not ex == None:
+#                if not ex is None:
 #                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
-            
+
             if do_trim:
                 # Create local mins and maxes
                 xmin = xmins[n]
                 ymin = ymins[n]
                 xmax = xmaxs[n]
                 ymax = ymaxs[n]
-                
+
                 # handle "None" limits
                 if xmin is None: xmin = min(x)
                 if xmax is None: xmax = max(x)
                 if ymin is None: ymin = min(y)
                 if ymax is None: ymax = max(y)
-    
+
                 # trim the data
                 [xt, yt, eyt] = _s.fun.trim_data_uber([x, y, ey],
                                                       [x>=xmin, x<=xmax,
                                                        y>=ymin, y<=ymax])
 
                 # Catch the over-trimmed case
-                if(len(xt)==0): 
+                if(len(xt)==0):
                     self._error("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
                 else:
                     x = xt
                     y = yt
                     ey = eyt
                     #ex = ext
-            
+
             # store the result
             xdata_massaged.append(x)
             ydata_massaged.append(y)
             eydata_massaged.append(ey)
             #exdata_massaged.append(ex)
-            
+
         return xdata_massaged, ydata_massaged, eydata_massaged#, exdata_massaged
 
     def _massage_data(self):
@@ -2422,32 +2422,32 @@ class fitter():
         Processes the data and stores it.
         """
         self._xdata_massaged, self._ydata_massaged, self._eydata_massaged = self.get_processed_data()
-        
+
 #        # Create the odr data.
 #        self._odr_datas = []
 #        for n in range(len(self._xdata_massaged)):
 #            # Only exdata can be None; make sure it's zeros at least.
 #            ex = self._exdata_massaged[n]
-#            if ex == None: ex = _n.zeros(len(self._eydata_massaged[n]))
+#            if ex is None: ex = _n.zeros(len(self._eydata_massaged[n]))
 #            self._odr_datas.append(_odr.RealData(self._xdata_massaged[n],
-#                                                 self._ydata_massaged[n], 
-#                                                 sx=ex, 
+#                                                 self._ydata_massaged[n],
+#                                                 sx=ex,
 #                                                 sy=self._eydata_massaged[n]))
         return self
 
     def fit(self, **kwargs):
         """
         This will try to determine fit parameters using scipy.optimize.leastsq
-        algorithm. This function relies on a previous call of set_data() and 
+        algorithm. This function relies on a previous call of set_data() and
         set_functions().
 
         Notes
         -----
-        results of the fit algorithm are stored in self.results. 
+        results of the fit algorithm are stored in self.results.
         See scipy.optimize.leastsq for more information.
 
         Optional keyword arguments are sent to self.set() prior to
-        fitting. 
+        fitting.
         """
         if len(self._set_xdata)==0 or len(self._set_ydata)==0:
             return self._error("No data. Please use set_data() prior to fitting.")
@@ -2456,7 +2456,7 @@ class fitter():
 
         # Do the processing once, to increase efficiency
         self._massage_data()
-        
+
         # Send the keyword arguments to the settings
         self.set(**kwargs)
 
@@ -2472,13 +2472,13 @@ class fitter():
         """
         Turns parameters to constants. As arguments, parameters must be strings.
         As keyword arguments, they can be set at the same time.
-        
-        Note this will NOT work when specifying a non-string fit function, 
+
+        Note this will NOT work when specifying a non-string fit function,
         because there is no flexibility in the number of arguments. To get
         around this, suppose you've defined a function stuff(x,a,b). Instead
         of sending the stuff object to self.set_functions() directly, make it
         a string function, e.g.:
-        
+
           self.set_functions('stuff(x,a,b)', 'a,b', stuff=stuff)
         """
 
@@ -2607,38 +2607,38 @@ class fitter():
 
         # evaluate the function
         return self.bg[n](*args)
-    
+
     def _format_value_error(self, v, e, pm=" +/- "):
         """
         Returns a string v +/- e with the right number of sig figs.
         """
         # If we have weird stuff
         if not _s.fun.is_a_number(v) or not _s.fun.is_a_number(e) \
-            or v in [_n.inf, _n.nan, _n.NAN] or e in [_n.inf, _n.nan, _n.NAN]: 
+            or v in [_n.inf, _n.nan, _n.NAN] or e in [_n.inf, _n.nan, _n.NAN]:
             return str(v)+pm+str(e)
-        
+
         # Normal values.
         try:
-            sig_figs = -int(_n.floor(_n.log10(abs(e))))+1            
+            sig_figs = -int(_n.floor(_n.log10(abs(e))))+1
             return str(_n.round(v, sig_figs)) + pm + str(_n.round(e, sig_figs))
 
         except:
             return str(v)+pm+str(e)
-        
+
     def _studentized_residuals_fast(self, p=None):
         """
         Returns a list of studentized residuals, (ydata - model)/error
 
         This function relies on a previous call to set_data(), and assumes
         self._massage_data() has been called (to increase speed).
-        
+
         Parameters
         ----------
-        p=None 
+        p=None
             Function parameters to use. None means use the fit results; if no fit, use guess results.
         """
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return
-        
+
         if p is None:
             if self.results is None: p = self._pguess
             else:                    p = self.results[0]
@@ -2653,7 +2653,7 @@ class fitter():
             denominator = _n.absolute(self._eydata_massaged[n])
             residuals.append(numerator/denominator)
         return residuals
-    
+
     def _studentized_residuals_concatenated(self, p=None):
         """
         This function returns a big long list of residuals so leastsq() knows
@@ -2665,9 +2665,9 @@ class fitter():
 
     def studentized_residuals(self, p=None):
         """
-        Massages the data and calculates the studentized residuals for 
+        Massages the data and calculates the studentized residuals for
         each data set / function.
-        
+
         Parameters
         ----------
         p=None
@@ -2684,14 +2684,14 @@ class fitter():
         p=None means use the fit results
         """
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
-        
+
         if p is None: p = self.results[0]
 
         # get the residuals
         rs = self.studentized_residuals(p)
 
         # Handle the none case
-        if rs == None: return None
+        if rs is None: return None
 
         # square em and sum em.
         cs = []
@@ -2701,12 +2701,12 @@ class fitter():
     def chi_squared(self, p=None):
         """
         Returns the total chi squared (summed over all massaged data sets).
-        
+
         p=None means use the fit results.
         """
         chi2s = self.chi_squareds(p)
-        if chi2s == None: return None
-        
+        if chi2s is None: return None
+
         return sum(self.chi_squareds(p))
 
     def degrees_of_freedom(self):
@@ -2714,25 +2714,25 @@ class fitter():
         Returns the number of degrees of freedom.
         """
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
-        
+
         # Temporary hack: get the studentized residuals, which uses the massaged data
         # This should later be changed to get_massaged_data()
         r = self.studentized_residuals()
-        
+
         # Happens if data / functions not defined
-        if r == None: return
-        
+        if r is None: return
+
         # calculate the number of points
         N = 0.0
         for i in range(len(r)): N += len(r[i])
-        
+
         return N-len(self._pnames)
-        
-        
+
+
 
     def reduced_chi_squareds(self, p=None):
         """
-        Returns the reduced chi squared for each massaged data set. 
+        Returns the reduced chi squared for each massaged data set.
 
         p=None means use the fit results.
         """
@@ -2740,7 +2740,7 @@ class fitter():
 
         if p is None: p = self.results[0]
         r = self.studentized_residuals(p)
-        
+
         # In case it's not possible to calculate
         if r is None: return
 
@@ -2758,25 +2758,25 @@ class fitter():
 
     def reduced_chi_squared(self, p=None):
         """
-        Returns the reduced chi squared for all massaged data sets. 
+        Returns the reduced chi squared for all massaged data sets.
 
         p=None means use the fit results.
         """
-        
+
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
         if p is None: p = self.results[0]
-        
+
         chi2 = self.chi_squared(p)
         dof  = self.degrees_of_freedom()
         if not _s.fun.is_a_number(chi2) or not _s.fun.is_a_number(dof):
             return None
-        
+
         return _n.divide(self.chi_squared(p), self.degrees_of_freedom())
 
     def autoscale_eydata(self):
         """
         Rescales the error so the next fit will give reduced chi squareds of 1.
-        Each data set will be scaled independently, and you may wish to run 
+        Each data set will be scaled independently, and you may wish to run
         this a few times until it converges.
         """
         if not self.results:
@@ -2795,13 +2795,13 @@ class fitter():
         if self['autoplot']: self.plot()
 
         return self
-    
-    
+
+
 
     def plot(self, **kwargs):
         """
         This will plot the data (with error) for inspection.
-    
+
         Setting self.figures to a figure instance or list of figure instances
         will override the creation of new figures. If you specify
         a list, its length had better be at least as large as the
@@ -2809,25 +2809,25 @@ class fitter():
 
         kwargs will update the settings
         """
-        
+
         # Make sure there is data to plot.
         if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
-        
+
         # Make sure the figures is a list
-        if not self.figures == None and not type(self.figures) == list:
+        if not self.figures is None and not type(self.figures) == list:
             self.figures = [self.figures]
-        
-        
+
+
         # Get the trimmed and full processed data
         xts, yts, eyts = self.get_processed_data()
         xas, yas, eyas = self.get_processed_data(do_trim=False)
-        
+
         # update settings
         for k in kwargs: self[k] = kwargs[k]
 
         # Calculate all studentized residuals
         if len(self.f) > 0: rt = self.studentized_residuals()
-        
+
         # make a new figure for each data set
         for n in range(len(self._set_xdata)):
             xt = xts[n]
@@ -2838,15 +2838,15 @@ class fitter():
             eya = eyas[n]
             #ext = exts[n]
             eyt = eyts[n]
-            
+
             # get the next figure
-            if self.figures == None: fig = _p.figure(self['first_figure']+n)
+            if self.figures is None: fig = _p.figure(self['first_figure']+n)
             else: fig = self.figures[n]
-                    
+
             # turn off interactive mode and clear the figure
             _p.ioff()
             fig.clear()
-            
+
             # set up two axes. One for data and one for residuals.
             a1 = fig.add_subplot(211)            # Residuals
             a2 = fig.add_subplot(212, sharex=a1) # Data
@@ -2861,14 +2861,14 @@ class fitter():
             # Get the function xdata
             fxa = self._get_xdata_for_function(n,xa)
             fxt = self._get_xdata_for_function(n,xt)
-            
+
             # get the values to subtract from ydata if subtracting the background
             if self['subtract_bg'][n] and not self.bg[n] is None:
 
                 # if we have a fit, use that for the background
                 if self.results: p = self.results[0]
                 else:            p = self._pguess
-                
+
                 # Get the background data
                 d_ya  = self._evaluate_bg(n, xa,  p)
                 d_fya = self._evaluate_bg(n, fxa, p)
@@ -2882,56 +2882,56 @@ class fitter():
                 d_yt  = 0*xt
                 d_fyt = 0*fxt
 
-            
-            
+
+
             # PLOT DATA FIRST
 
             # If we're supposed to, add the "all" data and function
             if self['plot_all_data'][n]:
-                
+
                 # Make it faint.
                 style_data  = dict(self['style_data' ][n]); style_data ['alpha'] = 0.3
-                
+
                 if self['plot_errors'][n]: a2.errorbar(xa, ya-d_ya, eya, zorder=5, **style_data)
                 else:                      a2.plot    (xa, ya-d_ya,      zorder=5, **style_data)
-            
+
             # add the trimmed data
             if self['plot_errors'][n]:     a2.errorbar(xt, yt-d_yt, eyt, zorder=7, **self['style_data'][n])
             else:                          a2.plot(    xt, yt-d_yt,      zorder=7, **self['style_data'][n])
-                           
+
             # Zoom on just the data for now
             _s.tweaks.auto_zoom(axes=a2, draw=False)
-            
-            
-            
+
+
+
             # PLOT FUNCTIONS
-            
+
             if n < len(self.f): # If there are any functions to plot
-                
-                
+
+
                 # Plot the GUESS under the fit
                 if self['plot_guess'][n]:
-                                    
+
                     # FULL GUESS
                     if self['plot_all_data'][n]:
-                        
+
                         # Make it faint.
                         style_guess = dict(self['style_guess'][n]); style_guess['alpha'] = 0.3
-                
+
                         # FULL background GUESS
                         if self['plot_bg'][n] and self.bg[n] is not None:
                             bg_gya = self._evaluate_bg(n, fxa, self._pguess)
                             a2.plot(fxa, bg_gya-d_fya, zorder=9, **style_guess)
-                        
+
                         # FULL guess
                         gya = self._evaluate_f (n, fxa, self._pguess)
                         a2.plot(fxa, gya-d_fya, zorder=9, **style_guess)
-                        
+
                         # Update the trimmed datas so that the points line up
                         [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
 
                     # TRIMMED GUESS BACKGROUND
-                    
+
                     # TRIMMED guess background curve
                     if self['plot_bg'][n] and self.bg[n] is not None:
                         bg_gyt = self._evaluate_bg(n, fxt, self._pguess)
@@ -2940,66 +2940,66 @@ class fitter():
                     # TRIMMED main guess curve
                     gyt = self._evaluate_f (n, fxt, self._pguess)
                     a2.plot(fxt, gyt-d_fyt, zorder=9, **self['style_guess'][n])
-    
-                
-                
+
+
+
                 # Plot the FIT if there is one
-                if not self.results == None:
-    
+                if not self.results is None:
+
                     # FULL FIT
                     if self['plot_all_data'][n]:
-                        
+
                         # Make it faint.
                         style_fit = dict(self['style_fit'][n]); style_fit['alpha'] = 0.3
-                
+
                         # FULL background fit
                         if self['plot_bg'][n] and self.bg[n] is not None:
                             bg_fya = self._evaluate_bg(n, fxa, self.results[0])
                             a2.plot(fxa, bg_fya-d_fya, zorder=10, **style_fit)
-                        
+
                         # FULL fit
                         fya = self._evaluate_f (n, fxa, self.results[0])
                         a2.plot(fxa, fya-d_fya, zorder=10, **style_fit)
-    
+
                         # Update the trimmed datas so that the points line up
                         [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
-                            
+
                     # TRIMMED FIT BACKGROUND
-                    if self['plot_bg'][n] and self.bg[n] is not None: 
-                        bg_fyt = self._evaluate_bg(n, fxt, self.results[0])                    
+                    if self['plot_bg'][n] and self.bg[n] is not None:
+                        bg_fyt = self._evaluate_bg(n, fxt, self.results[0])
                         a2.plot(fxt, bg_fyt-d_fyt, zorder=10, **self['style_fit'][n])
-    
+
                     # TRIMMED main curve
                     fyt = self._evaluate_f(n, fxt, self.results[0])
                     a2.plot(fxt, fyt-d_fyt, zorder=10, **self['style_fit'][n])
 
                 if self['plot_guess_zoom'][n]: _s.tweaks.auto_zoom(axes=a2, draw=False)
-            
-            
+
+
             # plot the residuals only if there are functions defined
             if len(self.f):
-                
-                # If we're supposed to also plot all the data, we have to 
+
+                # If we're supposed to also plot all the data, we have to
                 # Manually calculate the residuals. Clunky, I know.
                 if self['plot_all_data'][n]:
-                    
+
                     # Figure out what guy to use for the residuals
-                    if self.results is None: 
+                    if self.results is None:
                         p = self._pguess
                         style = style_guess
-                    else:                    
+                    else:
                         p = self.results[0]
                         style = style_fit
-                    
+
                     # Calculate them
                     ra = (ya-self._evaluate_f(n, xa, p))/eya
-                        
+
                     # style_data, style_guess, and style_fit should already be faint
                     a1.errorbar(xa, ra, _n.ones(len(ra)), **style_data)
-                    
+
                     # Put the line on top
                     a1.plot([min(xa), max(xa)], [0,0], **style)
-                
+
                 # Figure out what style to use for the line
                 if self.results is None: style = self['style_guess'][n]
                 else:                    style = self['style_fit'  ][n]
@@ -3008,13 +3008,13 @@ class fitter():
                 if n < len(rt):
                     a1.errorbar (xt, rt[n], _n.ones(len(xt)), **self['style_data'][n])
                     a1.plot([min(xt), max(xt)], [0,0], **style)
-                
-                
+
+
             # Tidy up
             yticklabels = a1.get_yticklabels()
             for m in range(2,len(yticklabels)-2): yticklabels[m].set_visible(False)
             for m in a1.get_xticklabels(): m.set_visible(False)
-            
+
             # Add labels to the axes
             if self['xlabel'][n] is None: a2.set_xlabel('xdata['+str(n)+']')
             else:                         a2.set_xlabel(self['xlabel'][n])
@@ -3026,11 +3026,11 @@ class fitter():
             else:                         a2.set_ylabel(self['ylabel'][n])
             a1.set_ylabel('Studentized\nResiduals')
 
-            
+
             # Assemble the title
             wrap = 80
             indent = '      '
-            
+
             # Include the function names if available
             if n < len(self.f):
                 t = _textwrap.fill('Function ('+str(n)+'/'+str(len(self._fnames)-1)+'): y = '+self._fnames[n], wrap, subsequent_indent=indent)
@@ -3048,9 +3048,9 @@ class fitter():
                 for i in range(len(self._pnames)):
                     t1 = t1 + self._pnames[i] + "={:s}, ".format(self._format_value_error(self.results[0][i], _n.sqrt(self.results[1][i][i]), '$\pm$'))
                 t1 = t1 + '$\chi^2_r$={} ({} DOF)'.format(
-                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom())), '$\pm$'), 
+                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom())), '$\pm$'),
                         int(self.degrees_of_freedom()))
-                
+
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
             elif self.results:
@@ -3061,20 +3061,20 @@ class fitter():
 
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
 
-            
+
             # turn back to interactive and show the plots.
             _p.ion()
-            if self.figures == None:
+            if self.figures is None:
                 _p.draw()
                 _p.show()
-        
+
         # End of new figure for each data set loop
         return self
 
     def _get_xdata_for_function(self, n, xdata):
         """
         Generates the x-data for plotting the function.
-        
+
         Parameters
         ----------
         n
@@ -3086,21 +3086,21 @@ class fitter():
         -------
         float
         """
-        
+
         # Use the xdata itself for the function
         if self['fpoints'][n] in [None, 0]: return _n.array(xdata)
-            
+
         # Otherwise, generate xdata with the number of fpoints
-        
+
         # do exponential ranging if xscale is log
         if self['xscale'][n] == 'log':
             return _n.logspace(_n.log10(min(xdata)), _n.log10(max(xdata)),
                                self['fpoints'][n], True, 10.0)
-        
+
         # otherwise do linear spacing
         else:
             return _n.linspace(min(xdata), max(xdata), self['fpoints'][n])
-    
+
     def trim(self, n='all', x=True, y=True):
         """
         This will set xmin and xmax based on the current zoom-level of the
@@ -3114,7 +3114,7 @@ class fitter():
         if len(self._set_xdata)==0 or len(self._set_ydata)==0:
             self._error("No data. Please use set_data() and plot() prior to trimming.")
             return
-        
+
         if _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):   n = list(range(len(self._set_xdata)))
 
@@ -3142,8 +3142,8 @@ class fitter():
 
     def untrim(self, n='all'):
         """
-        Removes xmin, xmax, ymin, and ymax. 
-        
+        Removes xmin, xmax, ymin, and ymax.
+
         Parameters
         ----------
         n='all'
@@ -3163,12 +3163,12 @@ class fitter():
             self['xmax'][i] = None
             self['ymin'][i] = None
             self['ymax'][i] = None
-            
+
         # now show the update.
         self.clear_results()
         if self['autoplot']: self.plot()
         return self
-    
+
     def zoom(self, n='all', xfactor=2.0, yfactor=2.0):
         """
         This will scale the chosen data set's plot range by the
@@ -3177,7 +3177,7 @@ class fitter():
 
         Parameters
         ----------
-        n='all'     
+        n='all'
             Which data set to perform this action upon. 'all' means all data
             sets, or you can specify a list.
         xfactor=2.0
@@ -3266,10 +3266,10 @@ def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, 
         Don't print stuff while loading.
     header_only=False
         Load only the header information.
-    transpose = False    
+    transpose = False
         Return databox.transpose().
 
-    Additioinal optional keyword arguments are sent to spinmob.data.databox(), 
+    Additioinal optional keyword arguments are sent to spinmob.data.databox(),
     so check there for more information.
     """
     d = databox(**kwargs)
@@ -3286,7 +3286,7 @@ def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Selec
     """
     Loads a list of data files into a list of databox data objects.
     Returns said list.
-    
+
     Parameters
     ----------
     path=None
@@ -3304,12 +3304,12 @@ def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Selec
         Don't print stuff while loading.
     header_only=False
         Load only the header information.
-    transpose = False    
+    transpose = False
         Return databox.transpose().
 
     Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
-    if paths == None: paths = _s.dialogs.load_multiple(filters, text, default_directory)
+    if paths is None: paths = _s.dialogs.load_multiple(filters, text, default_directory)
     if paths is None : return
 
     datas = []
@@ -3319,18 +3319,18 @@ def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Selec
                 header_only=header_only, transpose=transpose, **kwargs))
 
     return datas
-    
 
-    
+
+
 if __name__ == '__main__':
 
 #    _s.plot.xy.function()
 #    _s.tweaks.auto_zoom()
 #    a = _s.pylab.gca()
-    
+
     # Load a test file and fit it, making sure "f" is defined at each step.
     f = fitter(plot_all_data=True, plot_guess_zoom=True)
     f.set_data([[1,2,3,4],[1,2,3]], [[1,2,1,2],[2,3,2]], [[1,1,1,1],3], dtype=_n.float32)
     f.set_functions(['a*x+b', 'a*cos(x)+c'], 'a,b,c')
     f.fit()
-               
+
