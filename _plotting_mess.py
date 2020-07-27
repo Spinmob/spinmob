@@ -128,6 +128,11 @@ def _match_error_to_data_set(x, ex):
 
     return ex
 
+def _draw():
+    """ Method for interactive drawing used by all plotters at the end."""
+    _pylab.ion()
+    _pylab.draw()
+    _pylab.show() # This command always raises the figure, unfortunately, and is needed to see it on the first plot.
 
 
 
@@ -182,11 +187,8 @@ def complex_data(data, edata=None, draw=True, **kwargs):
 
     xy_data(rdata, idata, eidata, erdata, draw=False, **kwargs)
 
-    if draw:
-        _pylab.ion()
-        _pylab.draw()
-        _pylab.show()
-        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
+    if draw: _draw()
+
 
 
 
@@ -380,11 +382,8 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
 
     axes2.set_title('')
 
-    if draw:
-        _pylab.ion()
-        _pylab.draw()
-        _pylab.show()
-        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
+    if draw: _draw()
+
 
 
 def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, g=None, **kwargs):
@@ -550,11 +549,7 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
 
     axes2.set_title('')
 
-    if draw:
-        _pylab.ion()
-        _pylab.draw()
-        _pylab.show()
-        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
+    if draw: _draw()
 
 
 def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, g=None, **kwargs):
@@ -697,7 +692,6 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         Should the format be tall?
     draw=True
         Whether or not to draw the plot and raise the figure after plotting.
-        If spinmob.settings['do_not_raise_figures'], this will not raise the figure.
 
     See matplotlib's errorbar() function for additional optional keyword arguments.
     """
@@ -780,11 +774,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         _pt.auto_zoom(axes=axes, draw=False)
 
     # update the canvas
-    if draw:
-        _pylab.ion()
-        _pylab.draw()
-        _pylab.show()
-        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
+    if draw: _draw()
 
     return axes
 
@@ -1137,10 +1127,7 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
 
     if autoformat: _pt.image_format_figure(fig)
 
-    _pylab.ion()
-    _pylab.show()
-    _pylab.draw()
-    if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
+    _draw()
 
     # add the color sliders
     if colormap:

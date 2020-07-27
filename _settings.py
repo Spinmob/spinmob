@@ -1,4 +1,5 @@
 import os as _os
+import spinmob as _s
 
 
 def read_lines(path):
@@ -14,7 +15,7 @@ class settings():
     path_home       = ''
     path_temp       = ''
     path_colormaps  = ''
-    prefs = {}
+    _databox = _s.data.databox(delimiter='=')
 
 
     def __init__(self, name="spinmob"):
@@ -38,72 +39,57 @@ class settings():
 
 
         # now read in the prefs file
-        lines = read_lines(self.path_settings)
-        self.prefs = {}
-        for n in range(0,len(lines)):
-            s = lines[n].split('=')
-            if len(s) > 1:
-                self.prefs[s[0].strip()] = s[1].strip()
+        self._databox.load_file(self.path_settings, header_only=True)
 
 
-    def __call__   (self, key): return self.Get(key)
-    def __getitem__(self,key):  return self.Get(key)
-    def __setitem__(self,key,value): self.Set(key, value)
+    def __call__   (self, key): return self.get(key)
+    def __getitem__(self,key):  return self.get(key)
+    def __setitem__(self,key,value): self.set(key, value)
     def __str__(self):
         s = ''
-        for key in list(self.prefs.keys()):
-            s = s + key + " = " + str(self.prefs[key]) + '\n'
+        for key in list(self._databox.hkeys):
+            s = s + key + " = " + str(self._databox.h(key)) + '\n'
         return s
 
     def __repr__(self):
-        s = '\nSPINMOB SETTINGS\n'
-        for key in list(self.prefs.keys()):
-            s = s + "\n" + key + " = " + str(self.prefs[key]) + '\n'
+        s = '\nSPINMOB SETTINGS'
+        for key in list(self._databox.hkeys):
+            s = s + "\n  " + key + " = " + repr(self._databox.h(key))
         return s
 
-    def keys(self):         return list(self.prefs.keys())
-    def has_key(self, key): return key in self.prefs
+    def keys(self):         return list(self._databox.hkeys)
+    def has_key(self, key): return key in self._databox.hkeys
 
-    def List(self):
-        """
-        Lists the keys and values.
-        """
-        print()
-        for key in list(self.keys()):
-            print(key,'=',self[key])
-        print()
-
-    def Get(self, key):
+    def get(self, key):
         """
         Checks if the key exists and returns it. Returns None if it doesn't
         """
-        if key in self.prefs:
-            return self.prefs[key]
-        else:
-            return None
+        if key in self._databox.hkeys: return self._databox.h(key)
+        else:                          return None
 
-    def Set(self, key, value):
+    def set(self, key, value=None):
         """
         Sets the key-value pair and dumps to the preferences file.
         """
-        if not value == None: self.prefs[key] = value
-        else:                 self.prefs.pop(key)
+        if not value is None: self._databox.h(**{key:value})
+        else:                 self._databox.pop_header(key, ignore_error=True)
 
-        self.Dump()
+        # Save the settings.
+        self.save()
 
-    def Remove(self, key):
+    def pop(self, *keys):
         """
-        Removes a key/value pair
+        Pops the specified keys.
         """
-        self.Set(key, None)
+        for key in keys: self.set(key)
 
-    def RemoveAll(self):
+    def clear(self):
         """
         Removes all settings.
         """
-        for key in list(self.keys()): self.Remove(key)
+        self.pop(*self.keys())
 
-    def MakeDir(self, path="temp"):
+    def make_dir(self, path="temp"):
         """
         Creates a directory of the specified path in the .spinmob directory.
         """
@@ -112,7 +98,7 @@ class settings():
         # only make it if it doesn't exist!
         if not _os.path.exists(full_path): _os.makedirs(full_path)
 
-    def ListDir(self, path="temp"):
+    def list_dir(self, path="temp"):
         """
         Returns a list of files in the specified path (directory), or an
         empty list if the directory doesn't exist.
@@ -125,15 +111,10 @@ class settings():
         else:
             return []
 
-    def Dump(self):
+    def save(self):
         """
         Dumps the current prefs to the preferences.txt file
         """
-        prefs_file = open(self.path_settings, 'w')
-        for n in range(0,len(self.prefs)):
-            if len(list(self.prefs.items())[n]) > 1:
-                prefs_file.write(str(list(self.prefs.items())[n][0]) + ' = ' +
-                                 str(list(self.prefs.items())[n][1]) + '\n')
-        prefs_file.close()
+        self._databox.save_file(self.path_settings)
 
 

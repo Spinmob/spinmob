@@ -4,7 +4,7 @@ import pylab                  as _pylab
 from functools import partial as _partial
 
 try:    from . import _pylab_tweaks
-except: import        _pylab_tweaks 
+except: import        _pylab_tweaks
 
 
 import spinmob as _s
@@ -107,7 +107,7 @@ class colormap():
         colormaps = _os.path.join(_settings.path_home, 'colormaps')
 
         # make sure we have the colormaps directory
-        _settings.MakeDir(colormaps)
+        _settings.make_dir(colormaps)
 
         # assemble the path to the colormap
         path = _os.path.join(_settings.path_home, 'colormaps', name+".cmap")
@@ -516,7 +516,7 @@ class colormap_interface(colormap):
         self._combobox_cmaps.clear()
 
         # list the existing contents
-        paths = _settings.ListDir('colormaps')
+        paths = _settings.list_dir('colormaps')
 
         # loop over the paths and add the names to the list
         for path in paths:
