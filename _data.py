@@ -87,11 +87,35 @@ class databox:
     def __len__(self):
         return len(self.ckeys)
 
+    def _repr_tail(self):
+        """
+        Returns the tail end of the __repr__ string with databox info (needed for inherited classes).
+        """
+        # Find the maximum length of the columns, and whether they're matched
+        rows    = None
+        matched = True
+        for n in range(len(self)):
+            c = self[n]
+
+            # Use the first length
+            if rows is None: rows = len(c)
+
+            # Change it if there are more in this column
+            elif len(c) != rows:
+                matched = False
+                if len(c) > rows: rows = len(c)
+
+        # Clean up formatting.
+        if rows is None: rows = 0
+
+        # Base tail.
+        s = str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns, "+str(rows)
+
+        if matched: return s+' rows>'
+        else:       return s+' rows (max)>'
 
     def __repr__(self):
-
-        s = "<databox instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
-        return s
+        return "<databox instance: "+self._repr_tail()
 
 
     def __eq__(self, other):

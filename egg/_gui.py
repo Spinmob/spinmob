@@ -3369,9 +3369,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.load_gui_settings()
         self._synchronize_controls()
 
-    def __repr__(self):
-        s = "<DataboxPlot instance: "+str(len(self.hkeys))+" headers, "+str(len(self.ckeys))+" columns>"
-        return s
+    def __repr__(self): return "<DataboxPlot instance: " + self._repr_tail()
 
     def _button_enabled_clicked(self, *a):  self.save_gui_settings()
     def _number_file_changed(self, *a):     self.save_gui_settings()
