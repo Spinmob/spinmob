@@ -3,6 +3,7 @@ import pylab        as _pylab
 import numpy        as _n
 import itertools    as _itertools
 import time         as _time
+import spinmob      as _s
 
 
 try:    from . import _functions as _fun
@@ -27,42 +28,42 @@ def _match_data_sets(x,y):
     """
     Makes sure everything is the same shape. "Intelligently".
     """
-    
+
     # If x is a value, use this for the step size.
     dx = 1.0
-    if _fun.is_a_number(x): 
+    if _fun.is_a_number(x):
         dx = x
         x  = None
-        
+
     # Handle the None for x or y
-    if x is None or len(x) == 0: 
+    if x is None or len(x) == 0:
         # If x is None, y can be either [1,2] or [[1,2],[1,2]] or []
         if len(y) == 0: x = []
-    
+
         elif _fun.is_iterable(y[0]):
             # make an array of arrays to match
             x = []
             for n in range(len(y)):
                 x.append(list(dx*_n.array(range(len(y[n])))))
         else: x = list(range(len(y)))
-    
+
     # If y is a value, use this for the step size.
     dy = 1.0
-    if _fun.is_a_number(y): 
+    if _fun.is_a_number(y):
         dy = y
         y  = None
 
-    if y is None or len(y) == 0: 
+    if y is None or len(y) == 0:
         # If y is none, x can be either [1,2] or [[1,2],[1,2]] or []
         if len(x) == 0: y = []
-        
+
         elif _fun.is_iterable(x[0]):
             # make an array of arrays to match
             y = []
             for n in range(len(x)):
                 y.append(list(dy*_n.array(range(len(x[n])))))
         else: y = list(range(len(x)))
-    
+
     # At this point they should be matched, but may still be 1D
     # Default behavior: if all elements are numbers in both, assume they match
     if _fun.elements_are_numbers(x): x=[x]
@@ -84,29 +85,29 @@ def _match_data_sets(x,y):
     for n in range(len(x)):
         if x[n] is None: x[n] = list(range(len(y[n])))
         if y[n] is None: y[n] = list(range(len(x[n])))
-    
+
     return x, y
 
 def _match_error_to_data_set(x, ex):
     """
-    Inflates ex to match the dimensionality of x, "intelligently". 
+    Inflates ex to match the dimensionality of x, "intelligently".
     x is assumed to be a 2D array.
     """
     # Simplest case, ex is None or a number
     if not _fun.is_iterable(ex):
-        
+
         # Just make a matched list of Nones
         if ex is None: ex = [ex]*len(x)
-        
+
         # Make arrays of numbers
-        if _fun.is_a_number(ex): 
+        if _fun.is_a_number(ex):
             value = ex # temporary storage
             ex    = []
-            for n in range(len(x)): 
+            for n in range(len(x)):
                 ex.append([value]*len(x[n]))
-    
+
     # At this point, ex is iterable
-    
+
     # Default behavior: If the elements are all numbers and the length matches
     # that of the first x-array, assume this is meant to match all the x
     # data sets
@@ -115,30 +116,30 @@ def _match_error_to_data_set(x, ex):
     # Make sure it's a list (for appending)
     if not type(ex) == list: ex = list(ex)
 
-    # The user may specify a list of some iterable and some not. 
+    # The user may specify a list of some iterable and some not.
     # The list length may not match
     while len(ex) < len(x): ex.append(ex[-1])
-    
+
     # Now they are the same length
     for n in range(len(x)):
         # do nothing to the None's
         # Inflate single numbers to match
         if _fun.is_a_number(ex[n]): ex[n] = [ex[n]]*len(x[n])
-        
-    return ex    
-    
 
-    
-        
+    return ex
+
+
+
+
 def complex_data(data, edata=None, draw=True, **kwargs):
     """
     Plots the imaginary vs real for complex data.
 
     Parameters
     ----------
-    data             
+    data
         Array of complex data
-    edata=None       
+    edata=None
         Array of complex error bars
     draw=True
         Draw the plot after it's assembled?
@@ -185,23 +186,23 @@ def complex_data(data, edata=None, draw=True, **kwargs):
         _pylab.ion()
         _pylab.draw()
         _pylab.show()
-
+        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
 
 
 
 def complex_databoxes(ds, script='d[1]+1j*d[2]', escript=None, **kwargs):
     """
-    Uses databoxes and specified script to generate data and send to 
+    Uses databoxes and specified script to generate data and send to
     spinmob.plot.complex_data()
 
 
     Parameters
     ----------
-    ds            
+    ds
         List of databoxes
-    script='d[1]+1j*d[2]' 
+    script='d[1]+1j*d[2]'
         Complex-valued script for data array.
-    escript=None      
+    escript=None
         Complex-valued script for error bars
 
     See spinmob.plot.complex.data() for additional optional keyword arguments.
@@ -224,7 +225,7 @@ def complex_databoxes(ds, script='d[1]+1j*d[2]', escript=None, **kwargs):
     _pylab.ion()
     _pylab.draw()
     _pylab.show()
-    
+
     return ds
 
 
@@ -235,19 +236,19 @@ def complex_files(script='d[1]+1j*d[2]', escript=None, paths=None, **kwargs):
 
     Parameters
     ----------
-    script='d[1]+1j*d[2]'       
+    script='d[1]+1j*d[2]'
         Complex-valued script for data array.
-    escript=None       
+    escript=None
         Complex-valued script for error bars
     paths=None
         List of paths to open. None means use a dialog
 
     See spinmob.plot.complex.data() for additional optional keyword arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
-    
+
     Common additional parameters
     ----------------------------
-    filters="*.*" 
+    filters="*.*"
         Set the file filters for the dialog.
 
     """
@@ -266,17 +267,17 @@ def complex_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=None
 
     Parameters
     ----------
-    f='1.0/(1+1j*x)'                 
-        Complex-valued function or list of functions to plot. 
+    f='1.0/(1+1j*x)'
+        Complex-valued function or list of functions to plot.
         These can be string functions or single-argument python functions;
         additional globals can be supplied by g.
-    xmin=-1, xmax=1, steps=200   
+    xmin=-1, xmax=1, steps=200
         Range over which to plot and how many points to plot
     p='x'
         If using strings for functions, p is the independent parameter name.
-    g=None               
+    g=None
         Optional dictionary of extra globals. Try g=globals()!
-    erange=False              
+    erange=False
         Use exponential spacing of the x data?
 
     See spinmob.plot.xy.data() for additional optional keyword arguments.
@@ -291,29 +292,29 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
 
     Parameters
     ----------
-    xdata               
+    xdata
         Real-valued x-axis data
-    ydata               
+    ydata
         Complex-valued y-axis data
-    eydata=None         
+    eydata=None
         Complex-valued y-error
-    exdata=None         
+    exdata=None
         Real-valued x-error
-    xscale='linear'     
+    xscale='linear'
         'log' or 'linear' scale of the x axis
-    mscale='linear'     
+    mscale='linear'
         'log' or 'linear' scale of the magnitude axis
-    pscale='linear'     
+    pscale='linear'
         'log' or 'linear' scale of the phase axis
-    mlabel='Magnitude'  
+    mlabel='Magnitude'
         y-axis label for magnitude plot
-    plabel='Phase'      
+    plabel='Phase'
         y-axis label for phase plot
-    phase='degrees'     
+    phase='degrees'
         'degrees' or 'radians' for the phase axis
-    figure='gcf'        
+    figure='gcf'
         Plot on the specified figure instance or 'gcf' for current figure.
-    clear=1             
+    clear=1
         Clear the figure?
     draw=True
         Draw the figure when complete?
@@ -321,7 +322,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     See spinmob.plot.xy.data() for additional optional keyword arguments.
     """
     _pylab.ioff()
-    
+
     # set up the figure and axes
     if figure == 'gcf': f = _pylab.gcf()
     if clear: f.clear()
@@ -338,7 +339,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     p  = []
     em = []
     ep = []
-    
+
     # Note this is a loop over data sets, not points.
     for l in range(len(ydata)):
         m.append(_n.abs(ydata[l]))
@@ -354,9 +355,9 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
             ep.append(0.5*((er+ei) - (er-ei)*_n.cos(p[l]))/m[l] )
 
         # convert to degrees
-        if phase=='degrees': 
+        if phase=='degrees':
             p[-1] = p[-1]*180.0/_n.pi
-            if not ep[l] is None: 
+            if not ep[l] is None:
                 ep[l] = ep[l]*180.0/_n.pi
 
 
@@ -383,6 +384,7 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
         _pylab.ion()
         _pylab.draw()
         _pylab.show()
+        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
 
 
 def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=None, g=None, **kwargs):
@@ -392,13 +394,13 @@ def magphase_databoxes(ds, xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exs
 
     Parameters
     ----------
-    ds        
+    ds
         List of databoxes
-    xscript=0 
+    xscript=0
         Script for x data
-    yscript='d[1]+1j*d[2]'  
+    yscript='d[1]+1j*d[2]'
         Script for y data
-    eyscript=None  
+    eyscript=None
         Script for y error
     exscript=None
         Script for x error
@@ -417,25 +419,25 @@ def magphase_files(xscript=0, yscript='d[1]+1j*d[2]', eyscript=None, exscript=No
 
     Parameters
     ----------
-    xscript=0 
+    xscript=0
         Script for x data
-    yscript='d[1]+1j*d[2]'  
+    yscript='d[1]+1j*d[2]'
         Script for y data
-    eyscript=None  
+    eyscript=None
         Script for y error
     exscript=None
         Script for x error
     paths=None
         List of paths to open.
-    g=None                                    
+    g=None
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.magphase.data() for additional optional arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
-    
+
     Common additional parameters
     ----------------------------
-    filters="*.*" 
+    filters="*.*"
         Set the file filters for the dialog.
 
     """
@@ -447,17 +449,17 @@ def magphase_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 
     Parameters
     ----------
-    f='1.0/(1+1j*x)'                 
-        Complex-valued function or list of functions to plot. 
+    f='1.0/(1+1j*x)'
+        Complex-valued function or list of functions to plot.
         These can be string functions or single-argument python functions;
         additional globals can be supplied by g.
-    xmin=-1, xmax=1, steps=200   
+    xmin=-1, xmax=1, steps=200
         Range over which to plot and how many points to plot
     p='x'
         If using strings for functions, p is the independent parameter name.
-    g=None               
+    g=None
         Optional dictionary of extra globals. Try g=globals()!
-    erange=False              
+    erange=False
         Use exponential spacing of the x data?
 
     See spinmob.plot.xy.data() for additional optional keyword arguments.
@@ -476,25 +478,25 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     ----------
     xdata
         Real-valued x-axis data
-    ydata               
+    ydata
         Complex-valued y-axis data
-    eydata=None         
+    eydata=None
         Complex-valued y-error
-    exdata=None         
+    exdata=None
         Real-valued x-error
-    xscale='linear'     
+    xscale='linear'
         'log' or 'linear' scale of the x axis
-    rscale='linear'     
+    rscale='linear'
         'log' or 'linear' scale of the real axis
-    iscale='linear'     
+    iscale='linear'
         'log' or 'linear' scale of the imaginary axis
-    rlabel='Magnitude'  
+    rlabel='Magnitude'
         y-axis label for real value plot
-    ilabel='Phase'      
+    ilabel='Phase'
         y-axis label for imaginary value plot
-    figure='gcf'        
+    figure='gcf'
         Plot on the specified figure instance or 'gcf' for current figure.
-    clear=1             
+    clear=1
         Clear the figure?
     draw=True
         Draw the figure when completed?
@@ -507,12 +509,12 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     xdata, ydata = _match_data_sets(xdata, ydata)
     exdata = _match_error_to_data_set(xdata, exdata)
     eydata = _match_error_to_data_set(ydata, eydata)
-    
+
     # convert to real imag, and get error bars
     rdata = []
     idata = []
     erdata = []
-    eidata = []    
+    eidata = []
     for l in range(len(ydata)):
         rdata.append(_n.real(ydata[l]))
         idata.append(_n.imag(ydata[l]))
@@ -552,22 +554,23 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
         _pylab.ion()
         _pylab.draw()
         _pylab.show()
+        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
 
 
 def realimag_databoxes(ds, xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=None, g=None, **kwargs):
     """
-    Use databoxes and scripts to generate data and plot the real and 
+    Use databoxes and scripts to generate data and plot the real and
     imaginary ydata versus xdata.
 
     Parameters
     ----------
-    ds        
+    ds
         List of databoxes
-    xscript=0 
+    xscript=0
         Script for x data
-    yscript='d[1]+1j*d[2]'  
+    yscript='d[1]+1j*d[2]'
         Script for y data
-    eyscript=None  
+    eyscript=None
         Script for y error
     exscript=None
         Script for x error
@@ -586,25 +589,25 @@ def realimag_files(xscript=0, yscript="d[1]+1j*d[2]", eyscript=None, exscript=No
 
     Parameters
     ----------
-    xscript=0 
+    xscript=0
         Script for x data
-    yscript='d[1]+1j*d[2]'  
+    yscript='d[1]+1j*d[2]'
         Script for y data
-    eyscript=None  
+    eyscript=None
         Script for y error
     exscript=None
         Script for x error
     paths=None
         List of paths to open.
-    g=None                                    
+    g=None
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.realimag.data() for additional optional arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
-    
+
     Common additional parameters
     ----------------------------
-    filters="*.*" 
+    filters="*.*"
         Set the file filters for the dialog.
     """
     return files(xscript, yscript, eyscript, exscript, plotter=realimag_databoxes, paths=paths, g=g, **kwargs)
@@ -616,17 +619,17 @@ def realimag_function(f='1.0/(1+1j*x)', xmin=-1, xmax=1, steps=200, p='x', g=Non
 
     Parameters
     ----------
-    f='1.0/(1+1j*x)'                 
-        Complex-valued function or list of functions to plot. 
+    f='1.0/(1+1j*x)'
+        Complex-valued function or list of functions to plot.
         These can be string functions or single-argument python functions;
         additional globals can be supplied by g.
-    xmin=-1, xmax=1, steps=200   
+    xmin=-1, xmax=1, steps=200
         Range over which to plot and how many points to plot
     p='x'
         If using strings for functions, p is the independent parameter name.
-    g=None               
+    g=None
         Optional dictionary of extra globals. Try g=globals()!
-    erange=False              
+    erange=False
         Use exponential spacing of the x data?
 
     See spinmob.plot.xy.data() for additional optional keyword arguments.
@@ -645,69 +648,70 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
 
     Parameters
     ----------
-    xdata, ydata        
+    xdata, ydata
         Arrays (or arrays of arrays) of data to plot. You can also
-        specify None for one of these, which will result in a plot 
+        specify None for one of these, which will result in a plot
         versus the data point number (starting from zero). Or you can
-        specify a number (alone, generally not in a list) to set the 
+        specify a number (alone, generally not in a list) to set the
         scale of the auto-generated data.
-    eydata=None, exdata=None     
+    eydata=None, exdata=None
         Arrays of x and y errorbar values
-    label=None         
+    label=None
         String or array of strings for the line labels
-    xlabel=''           
+    xlabel=''
         Label for the x-axis
-    ylabel=''           
+    ylabel=''
         Label for the y-axis
-    title=''            
+    title=''
         Title for the axes; set to None to have nothing.
-    shell_history=0     
+    shell_history=0
         How many commands from the pyshell history to include with the title
-    xshift=0, yshift=0  
+    xshift=0, yshift=0
         Progressive shifts on the data, to make waterfall plots
-    xshift_every=1      
+    xshift_every=1
         Perform the progressive shift every 1 or n'th line. Set to 0 or False
         to shift all the curves by the same amount.
-    yshift_every=1      
+    yshift_every=1
         perform the progressive shift every 1 or n'th line. Set to 0 or False
         to shift all the curves by the same amount.
-    style=None            
+    style=None
         style cycle object.
-    clear=True          
+    clear=True
         If no axes are specified (see below), clear the figure, otherwise clear just the axes.
-    axes=None           
+    axes=None
         Which matplotlib axes to use, or "gca" for the current axes
-    xscale='linear', yscale='linear'      
+    xscale='linear', yscale='linear'
         'linear' or 'log' x and y axis scales.
-    grid=False          
+    grid=False
         Should we draw a grid on the axes?
-    legend='best'       
+    legend='best'
         Where to place the legend (see pylab.legend() for options)
         Set this to None to ignore the legend.
     legend_max=20
         Number of legend entries before it's truncated with '...'
-    autoformat=True     
+    autoformat=True
         Should we format the figure for printing?
     autoformat_window=True
         Should we resize and reposition the window when autoformatting?
-    tall=False               
+    tall=False
         Should the format be tall?
-    draw=True           
-        Whether or not to draw the plot after plotting.
+    draw=True
+        Whether or not to draw the plot and raise the figure after plotting.
+        If spinmob.settings['do_not_raise_figures'], this will not raise the figure.
 
     See matplotlib's errorbar() function for additional optional keyword arguments.
     """
     _pylab.ioff()
-    
+
     # Make sure the dimensionality of the data sets matches
     xdata, ydata = _match_data_sets(xdata, ydata)
     exdata = _match_error_to_data_set(xdata, exdata)
     eydata = _match_error_to_data_set(ydata, eydata)
-    
+
     # check that the labels is a list of strings of the same length
     if not _fun.is_iterable(label): label = [label]*len(xdata)
     while len(label) < len(ydata):  label.append(label[0])
-    
+
     # concatenate if necessary
     if len(label) > legend_max:
         label[legend_max-2] = '...'
@@ -728,18 +732,17 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     # now loop over the list of data in xdata and ydata
     for n in range(0,len(xdata)):
         # get the label
-        if label[n]=='_nolegend_':
-            l = '_nolegend_'
-        else:
-            l = str(n)+": "+str(label[n])
-        
+        if label[n]=='_nolegend_': l = '_nolegend_'
+        elif len(xdata) > 1:       l = str(n)+": "+str(label[n])
+        else:                      l = str(label[n])
+
         # calculate the x an y progressive shifts
         if xshift_every: dx = xshift*(n/xshift_every)
         else:            dx = xshift
-        
+
         if yshift_every: dy = yshift*(n/yshift_every)
         else:            dy = yshift
-        
+
         # if we're supposed to coarsen the data, do so.
         x  = _fun.coarsen_array(xdata[n],  coarsen)
         y  = _fun.coarsen_array(ydata[n],  coarsen)
@@ -781,6 +784,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         _pylab.ion()
         _pylab.draw()
         _pylab.show()
+        if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
 
     return axes
 
@@ -790,13 +794,13 @@ def xy_databoxes(ds, xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=
 
     Parameters
     ----------
-    ds        
+    ds
         List of databoxes
-    xscript=0 
+    xscript=0
         Script for x data
-    yscript='d[1]' 
+    yscript='d[1]'
         Script for y data
-    eyscript=None  
+    eyscript=None
         Script for y error
     exscript=None
         Script for x error
@@ -805,7 +809,7 @@ def xy_databoxes(ds, xscript=0, yscript='d[1]', eyscript=None, exscript=None, g=
 
     See spinmob.plot.xy.data() for additional optional keyword arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
-    
+
     """
     databoxes(ds, xscript, yscript, eyscript, exscript, plotter=xy_data, g=g, **kwargs)
 
@@ -817,26 +821,26 @@ def xy_files(xscript=0, yscript='d[1]', eyscript=None, exscript=None, paths=None
 
     Parameters
     ----------
-    xscript=0 
+    xscript=0
         Script for x data
-    yscript='d[1]'  
+    yscript='d[1]'
         Script for y data
-    eyscript=None  
+    eyscript=None
         Script for y error
     exscript=None
         Script for x error
     paths=None
         List of paths to open.
-    g=None                                    
+    g=None
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.xy.data() for additional optional arguments.
     See spinmob.data.databox.execute_script() for more information about scripts.
-    
-    
+
+
     Common additional parameters
     ----------------------------
-    filters="*.*" 
+    filters="*.*"
         Set the file filters for the dialog.
     """
     return files(xscript, yscript, eyscript, exscript, plotter=xy_databoxes, paths=paths, g=g, **kwargs)
@@ -847,17 +851,17 @@ def xy_function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=Fa
 
     Parameters
     ----------
-    f='sin(x)'                 
-        Function or list of functions to plot. 
+    f='sin(x)'
+        Function or list of functions to plot.
         These can be string functions or single-argument python functions;
         additional globals can be supplied by g.
-    xmin=-1, xmax=1, steps=200   
+    xmin=-1, xmax=1, steps=200
         Range over which to plot and how many points to plot
     p='x'
         If using strings for functions, p is the independent parameter name.
-    g=None               
+    g=None
         Optional dictionary of extra globals. Try g=globals()!
-    erange=False              
+    erange=False
         Use exponential spacing of the x data?
 
     See spinmob.plot.xy.data() for additional optional keyword arguments.
@@ -916,7 +920,7 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, g=None, pl
     # now check for None's (counting scripts)
     for n in range(len(xscript)):
         if xscript[n] is None and yscript[n] is None:
-            print("Two None scripts? But why?")
+            print("Two None scripts? But... why?")
             return
         if xscript[n] is None:
             if type(yscript[n])==str: xscript[n] = 'range(len('+yscript[n]+'))'
@@ -931,30 +935,34 @@ def databoxes(ds, xscript=0, yscript=1, eyscript=None, exscript=None, g=None, pl
     eydatas = []
     labels  = []
 
-
     # Loop over all the data boxes
     for i in range(len(ds)):
-        
+
         # Reset the default globals
         all_globals = dict(n=i,m=len(ds)-1-i)
-        
+
         # Update them with the user-specified globals
         if not g==None: all_globals.update(g)
-        
+
         # For ease of coding
         d = ds[i]
-        
+
         # Take the transpose if necessary
         if transpose: d = d.transpose()
-        
+
         # Generate the x-data; returns a list of outputs, one for each xscript
         xdata = d(xscript, all_globals)
-        
+
         # Loop over each xdata, appending to the master list, and generating a label
         for n in range(len(xdata)):
             xdatas.append(xdata[n])
-            if len(xdata)>1: labels.append(str(n)+": "+_os.path.split(d.path)[-1])
-            else:            labels.append(_os.path.split(d.path)[-1])
+
+            # Normal data set is a 1d array
+            labels.append(_os.path.split(d.path)[-1])
+
+        # Special case: single-point per file
+        if _fun.is_a_number(xdata[0]) == 1 and len(ds) > 1:
+            labels = [_os.path.split(ds[0].path)[-1] + ' - ' + _os.path.split(ds[-1].path)[-1]]
 
         # Append the other data sets to their master lists
         for y in d( yscript, all_globals):  ydatas.append(y)
@@ -991,7 +999,7 @@ def files(xscript=0, yscript=1, eyscript=None, exscript=None, g=None, plotter=xy
 
     # run the databox plotter
     plotter(ds, xscript=xscript, yscript=yscript, eyscript=eyscript, exscript=exscript, g=g, **kwargs)
-    
+
     return ds
 
 def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False, plotter=xy_data, complex_plane=False, **kwargs):
@@ -1060,18 +1068,18 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
 def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=1, clabel='z', autoformat=True, colormap="Last Used", shell_history=0, **kwargs):
     """
     Generates an image plot.
-    
+
     Parameters
     ----------
-    Z   
+    Z
         2-d array of z-values
     X=[0,1.0], Y=[0,1.0]
         1-d array of x-values (only the first and last element are used)
-    
-    See matplotlib's imshow() for additional optional arguments. 
+
+    See matplotlib's imshow() for additional optional arguments.
     """
     global _colormap
-    
+
     # Set interpolation to something more relevant for every day science
     if not 'interpolation' in kwargs.keys(): kwargs['interpolation'] = 'nearest'
 
@@ -1095,8 +1103,8 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     # Transpose and reverse
     Z = Z.transpose()
     Z = Z[-1::-1]
-    
-    
+
+
     # get rid of the label and title kwargs
     xlabel=''
     ylabel=''
@@ -1131,9 +1139,8 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
 
     _pylab.ion()
     _pylab.show()
-    #_pt.raise_figure_window()
-    #_pt.raise_pyshell()
     _pylab.draw()
+    if not _s.settings['do_not_raise_figures']: _pylab.gcf().canvas.manager.window.raise_()
 
     # add the color sliders
     if colormap:
@@ -1149,10 +1156,10 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
 
     Parameters
     ----------
-    f='sin(5*x)*cos(5*y)'                   
+    f='sin(5*x)*cos(5*y)'
         Takes two inputs and returns one value. Can also
         be a string function such as sin(x*y)
-    xmin=-1, xmax=1, ymin=-1, ymax=1     
+    xmin=-1, xmax=1, ymin=-1, ymax=1
         Range over which to generate/plot the data
     xsteps=100, ysteps=100
         How many points to plot on the specified range
@@ -1160,7 +1167,7 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
         If using strings for functions, this is a string of parameters.
     g=None
         Optional additional globals. Try g=globals()!
-        
+
     See spinmob.plot.image.data() for additional optional keyword arguments.
     """
 
@@ -1213,11 +1220,11 @@ def image_file(path=None, zscript='self[1:]', xscript='[0,1]', yscript='d[0]', g
     ----------
     path=None
         Path to data file.
-    zscript='self[1:]' 
+    zscript='self[1:]'
         Determines how to get data from the columns
-    xscript='[0,1]', yscript='d[0]' 
+    xscript='[0,1]', yscript='d[0]'
         Determine the x and y arrays used for setting the axes bounds
-    g=None   
+    g=None
         Optional dictionary of globals for the scripts
 
     See spinmob.plot.image.data() for additional optional keyword arguments.
@@ -1256,10 +1263,10 @@ def parametric_function(fx='sin(t)', fy='cos(t)', tmin=-1, tmax=1, steps=200, p=
 
     Parameters
     ----------
-    fx='sin(t)', fy='cos(t)'              
-        Functions or (matching) lists of functions to plot; 
+    fx='sin(t)', fy='cos(t)'
+        Functions or (matching) lists of functions to plot;
         can be string functions or python functions taking one argument
-    tmin=-1, tmax=1, steps=200   
+    tmin=-1, tmax=1, steps=200
         Range over which to plot, and how many points to plot
     p='t'
         If using strings for functions, p is the parameter name

@@ -1350,6 +1350,7 @@ class databox:
         # Otherwise assume it's an integer
         return self.columns[self.ckeys[n]]
 
+    get_data    = c
     __getitem__ = c
 
     def h(self, *args, **kwargs):

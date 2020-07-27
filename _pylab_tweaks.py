@@ -16,7 +16,7 @@ import spinmob           as _s
 
 # Python 3 or 2?
 if _sys.version_info[0] >= 3: import _thread as _thread
-else:                         import  thread as _thread 
+else:                         import  thread as _thread
 
 image_colormap = _pylab_colormap.colormap_interface
 
@@ -67,18 +67,18 @@ def auto_zoom(zoomx=True, zoomy=True, axes="gca", x_space=0.04, y_space=0.04, dr
         xc = 0.5*(x1+x2)
         xs = 0.5*(1+x_space)*(x2-x1)
         axes.set_xlim(xc-xs, xc+xs)
-    
+
     if axes.get_yscale() == 'linear':
         y1, y2 = axes.get_ylim()
         yc = 0.5*(y1+y2)
         ys = 0.5*(1+y_space)*(y2-y1)
         axes.set_ylim(yc-ys, yc+ys)
-    
+
     # If we weren't supposed to zoom x or y, reset them
     if not zoomx: axes.set_xlim(x10, x20)
     if not zoomy: axes.set_ylim(y10, y20)
-    
-    if draw: 
+
+    if draw:
         _pylab.ion()
         _pylab.draw()
 
@@ -189,22 +189,22 @@ def copy_figure_to_clipboard(figure='gcf'):
     """
     Copies the specified figure to the system clipboard. Specifying 'gcf'
     will use the current figure.
-    """    
+    """
     try:
         import pyqtgraph as _p
-    
-        # Get the current figure if necessary        
-        if figure is 'gcf': figure = _s.pylab.gcf() 
-        
+
+        # Get the current figure if necessary
+        if figure is 'gcf': figure = _s.pylab.gcf()
+
         # Store the figure as an image
         path = _os.path.join(_s.settings.path_home, "clipboard.png")
         figure.savefig(path)
-        
-        # Set the clipboard. I know, it's weird to use pyqtgraph, but 
+
+        # Set the clipboard. I know, it's weird to use pyqtgraph, but
         # This covers both Qt4 and Qt5 with their Qt4 wrapper!
         _p.QtGui.QApplication.instance().clipboard().setImage(_p.QtGui.QImage(path))
-        
-    except:         
+
+    except:
         print("This function currently requires pyqtgraph to be installed.")
 
 def differentiate_shown_data(neighbors=1, fyname=1, **kwargs):
@@ -446,7 +446,7 @@ def image_autozoom(axes="gca"):
 
     _pylab.draw()
 
-def image_coarsen(xlevel=0, ylevel=0, image="auto", method='average'):
+def image_coarsen(xlevel=0, ylevel=0, image="auto", method='mean'):
     """
     This will coarsen the image data by binning each xlevel+1 along the x-axis
     and each ylevel+1 points along the y-axis
@@ -1347,7 +1347,7 @@ def smooth_line(line, smoothing=1, trim=True, draw=True):
 def coarsen_line(line, level=2, exponential=False, draw=True):
     """
     Coarsens the specified line (see spinmob.coarsen_data() for more information).
-    
+
     Parameters
     ----------
     line
@@ -1365,7 +1365,7 @@ def coarsen_line(line, level=2, exponential=False, draw=True):
     ydata = line.get_ydata()
 
     xdata,ydata = _fun.coarsen_data(xdata, ydata, level=level, exponential=exponential)
-    
+
     # don't do anything if we don't have any data left
     if len(ydata) == 0: print("There's nothing left in "+str(line)+"!")
 
@@ -1430,9 +1430,9 @@ def smooth_all_traces(smoothing=1, trim=True, axes="gca"):
 
 def coarsen_all_traces(level=2, exponential=False, axes="all", figure=None):
     """
-    This function does nearest-neighbor coarsening of the data. See 
+    This function does nearest-neighbor coarsening of the data. See
     spinmob.fun.coarsen_data for more information.
-    
+
     Parameters
     ----------
     level=2
@@ -1443,7 +1443,7 @@ def coarsen_all_traces(level=2, exponential=False, axes="all", figure=None):
         Which axes to coarsen.
     figure=None
         Which figure to use.
-    
+
     """
     if axes=="gca": axes=_pylab.gca()
     if axes=="all":
@@ -1555,10 +1555,10 @@ def yscale(scale='log'):
     _pylab.draw()
 
 def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial', font_size=12, font_weight='normal',
-             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005, 
+             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005,
              window_size=[550,400], window_position=[0,0],
              keep_title=False, title_font_size=14, title_font_weight='normal',
-             keep_axis_labels=True, axis_label_font_size=14, axis_label_font_weight='normal', 
+             keep_axis_labels=True, axis_label_font_size=14, axis_label_font_weight='normal',
              keep_legend=True, grid=False):
     """
 
@@ -1567,43 +1567,43 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial'
 
     Parameters
     ----------
-    figure="gcf"                    
+    figure="gcf"
         Which figure to tidy.
-    zoom=True                       
+    zoom=True
         Whether to auto-zoom on the data
-    width=None                      
+    width=None
         Width of the axes (relative to window)
-    height=None                     
+    height=None
         Height of the axes (relative to window)
-    font_name='Arial'               
+    font_name='Arial'
         Must be installed on system
-    font_size=12                    
+    font_size=12
         Font size for all but axis labels
-    font_weight='normal'            
+    font_weight='normal'
         Could be 'bold'
-    border_width=1.2                
+    border_width=1.2
         Thickness of the axes border
-    tick_width=1                    
+    tick_width=1
         Thickness of ticks
-    ticks_point="in"                
+    ticks_point="in"
         Whether ticks point "in" or "out" of axis
-    xtick_label_pad=0.010           
+    xtick_label_pad=0.010
         Padding on x-tick labels
-    ytick_label_pad=0.008           
+    ytick_label_pad=0.008
         Padding on y-tick labels
-    window_size=[550,400]           
+    window_size=[550,400]
         Size of window in pixels
     window_position=[0,0]
         Coordinates of the upper left corner.
-    keep_axis_labels=True          
+    keep_axis_labels=True
         Whether to keep the axis labels
     keep_title=False
         Whether to keep the title
-    axis_label_font_size=14         
+    axis_label_font_size=14
         Font size for axis labels
-    axis_label_font_weight='normal' 
+    axis_label_font_weight='normal'
         Could be 'bold'
-    keep_legend=False               
+    keep_legend=False
         Whether to keep the legend
     grid=False
         Whether to add a grid.
@@ -1671,13 +1671,13 @@ def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial'
         if height: a.set_position([p[0],0.17,p[2],0.17+height*0.5])
 
         # set the axis labels to empty (so we can add them with a drawing program)
-        if not keep_title: 
+        if not keep_title:
             a.set_title('')
         else:
             title = a.get_title()
             a.set_title('')
             _pylab.title(title, fontsize=title_font_size, fontweight=title_font_weight, fontname=font_name, horizontalalignment='right')
-        
+
         if not keep_axis_labels:
             a.set_xlabel('')
             a.set_ylabel('')
