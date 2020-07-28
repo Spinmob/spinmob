@@ -37,7 +37,9 @@ def _warn(*args):
 
 
 try:
-    import pyqtgraph    as _pyqtgraph
+    import pyqtgraph as _pyqtgraph
+    if pyqtgraph.__version__[0:4] == '0.10': _warn('We require pyqtgraph version 0.11 or higher. Previous versions are no longer supported.')
+
     _qtc = _pyqtgraph.Qt.QtCore
     _qt  = _pyqtgraph.Qt
     _qtw = _pyqtgraph.Qt.QtGui
@@ -50,7 +52,7 @@ try:
     _qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
 
 except:
-    _warn("pyqtgraph version 0.10 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
+    _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
 
     _qtc = None
     _qt  = None

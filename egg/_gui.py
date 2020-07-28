@@ -1,91 +1,7 @@
 import pyqtgraph as _pg
 
-# PYQTGRAPH v0.10.0 PATCHWORK Will be fixed in v0.11.0
-if _pg.__version__ == '0.10.0':
 
-    def _ParameterItem_optsChanged(self, param, opts):
-        if 'visible'  in opts: self.setHidden(not opts['visible'])
-        if 'expanded' in opts: self.setExpanded(opts['expanded'])
-        if 'enabled'  in opts: self.setDisabled(not opts['enabled'])
-        if 'addList'  in opts: self.updateAddList()
 
-    # Replace the function!
-    _pg.parametertree.ParameterItem.optsChanged                     = _ParameterItem_optsChanged
-    _pg.parametertree.parameterTypes.GroupParameterItem.optsChanged = _ParameterItem_optsChanged
-
-    # Spinbox hiding in parameter trees
-    from decimal import Decimal as _D  ## Use decimal to avoid accumulating floating-point errors
-    from pyqtgraph.python2_3 import asUnicode as _asUnicode
-    def _SpinBox_setOpts(self, **opts):
-        """
-        Changes the behavior of the SpinBox. Accepts most of the arguments
-        allowed in :func:`__init__ <pyqtgraph.SpinBox.__init__>`.
-
-        """
-        #print opts
-        for k in opts:
-            if k == 'bounds':
-                self.setMinimum(opts[k][0], update=False)
-                self.setMaximum(opts[k][1], update=False)
-            elif k == 'min':
-                self.setMinimum(opts[k], update=False)
-            elif k == 'max':
-                self.setMaximum(opts[k], update=False)
-            elif k in ['step', 'minStep']:
-                self.opts[k] = _D(_asUnicode(opts[k]))
-
-            # Jack Start
-            elif k in ['visible']:
-                self.opts[k] = opts[k]
-            # Jack End
-
-            elif k == 'value':
-                pass   ## don't set value until bounds have been set
-            elif k in self.opts:
-                self.opts[k] = opts[k]
-            else:
-                raise TypeError("Invalid keyword argument '%s'." % k)
-        if 'value' in opts:
-            self.setValue(opts['value'])
-
-        ## If bounds have changed, update value to match
-        if 'bounds' in opts and 'value' not in opts:
-            self.setValue()
-
-        ## sanity checks:
-        if self.opts['int']:
-            if 'step' in opts:
-                step = opts['step']
-                ## not necessary..
-                #if int(step) != step:
-                    #raise Exception('Integer SpinBox must have integer step size.')
-            else:
-                self.opts['step'] = int(self.opts['step'])
-
-            if 'minStep' in opts:
-                step = opts['minStep']
-                if int(step) != step:
-                    raise Exception('Integer SpinBox must have integer minStep size.')
-            else:
-                ms = int(self.opts.get('minStep', 1))
-                if ms < 1:
-                    ms = 1
-                self.opts['minStep'] = ms
-
-        if 'delay' in opts:
-            self.proxy.setDelay(opts['delay'])
-
-        self.updateText()
-    _pg.SpinBox.setOpts = _SpinBox_setOpts
-
-    # If imported by spinmob
-    try:    from . import _temporary_fixes
-
-    # If running the file directly
-    except: import _temporary_fixes
-
-# For tweaks associated with version 0.11.0+
-_pyqtgraph_v11 = int(_pg.__version__.split('.')[0]) == 0 and not int(_pg.__version__.split('.')[1]) == 10
 
 # Regular imports
 import time     as _t
@@ -1204,7 +1120,7 @@ class NumberBox(BaseObject):
     def __init__(self, value=0, step=1, bounds=(None,None), int=False, autosettings_path=None, tip=None, **kwargs):
 
         # Fix
-        if _pyqtgraph_v11: kwargs['compactHeight'] = False
+        kwargs['compactHeight'] = False
 
         # pyqtgraph spinbox
         self._widget = _pg.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
@@ -2488,7 +2404,7 @@ class TreeDictionary(BaseObject):
 
         # search for the root key
         result = self._widget.findItems(r, _pg.QtCore.Qt.MatchCaseSensitive | _pg.QtCore.Qt.MatchFixedString)
-
+        
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
             if not quiet: self.print_message("ERROR: Could not find '"+r+"' in "+str(self))
@@ -2497,10 +2413,11 @@ class TreeDictionary(BaseObject):
         # otherwise use the first value
         elif len(result): x = result[0].param
 
-        # otherwise, if there are more keys in the list,
-        # create the branch and keep going
+        # otherwise, we didn't find it; create the branch and keep going
         else:
             key = '/'.join(key_list)
+            
+            # x is the empty group
             x = _pg.parametertree.Parameter.create(name=r, type='group', children=[], syncExpanded=True)
             self._tree_widgets[self._unstrip(key)] = x
             self._widget.addParameters(x)
@@ -2684,7 +2601,7 @@ class TreeDictionary(BaseObject):
                 other_kwargs['values'][n] = str(other_kwargs['values'][n])
 
         # Now that the type is determined, set up other options
-        if _pyqtgraph_v11 and other_kwargs['type'] in ['int', 'float']:
+        if other_kwargs['type'] in ['int', 'float']:
             other_kwargs['compactHeight'] = False
 
 
@@ -2703,7 +2620,9 @@ class TreeDictionary(BaseObject):
         b = self._find_parameter(s, create_missing=True)
 
         # quit out if it pooped
-        if b == None: return self
+        if b == None: 
+            self.print_message('Error: Could not create \''+key+'\'')
+            return self
 
         # create the leaf object
         leaf = _pg.parametertree.Parameter.create(name=p, value=value, syncExpanded=True, **other_kwargs)
@@ -2722,11 +2641,17 @@ class TreeDictionary(BaseObject):
         # And the expanded state
         if key+'|expanded' in self._lazy_load:
             expanded = self._lazy_load.pop(key+'|expanded')
-            self.get_widget(key).setOpts(expanded=expanded)
-
+            self.get_param(key).setOpts(expanded=expanded)
 
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
+        
+        # Make the tool tip more responsive
+        w = self.get_widget(key)
+        if 'tip' in w.param.opts:
+            w.setToolTip(0, w.param.opts['tip'])
+            w.setToolTip(1, w.param.opts['tip'])
+        
         return self
 
 
@@ -2791,7 +2716,7 @@ class TreeDictionary(BaseObject):
         """
         Returns a copy of the pyqtgraph options for the supplied parameter key.
         """
-        return dict(self.get_widget(key).opts)
+        return dict(self.get_param(key).opts)
 
     def set_pyqtgraph_options(self, key, **kwargs):
         """
@@ -2801,27 +2726,42 @@ class TreeDictionary(BaseObject):
 
         Returns self.
         """
-        self.get_widget(key).setOpts(**kwargs)
+        self.get_param(key).setOpts(**kwargs)
         return self
 
-    def get_widget(self, key):
+    def get_param(self, key):
         """
-        Returns the Qt widget associated with the parameter.
-
-        Parameters
-        ----------
-        key : string
-            Tree key. Can include self.name.
+        Returns the pyqtgraph Parameter associated with the specified key.
         """
         s = self._strip(key).split('/')
         if s[0] == '': s.pop(0)
         return self._find_parameter(s)
 
+    def get_widget(self, key):
+        """
+        Returns the ParameterItem associated with the specified key.
+        """
+        # Get the usual widget
+        w = self.get_param(key)
+        
+        # Create a QTreeWidgetItemIterator to search
+        iterator = _pg.Qt.QtWidgets.QTreeWidgetItemIterator(self._widget)
+        
+        # Loop and search.
+        item = iterator.value()
+        while item is not None and item.param is not w:
+
+            # Iterate
+            iterator += 1
+            item = iterator.value()
+
+        return item
+
     def get_type(self, key):
         """
         Returns the type string of the specified parameter.
         """
-        return str(self.get_widget(key).opts['type'])
+        return str(self.get_param(key).opts['type'])
 
     def get_value(self, key):
         """
@@ -2890,7 +2830,7 @@ class TreeDictionary(BaseObject):
             return
 
         # Return a copy of the list values
-        return list(self.get_widget(key).opts['values'])
+        return list(self.get_param(key).opts['values'])
 
     def get_list_index(self, key):
         """
@@ -2968,7 +2908,7 @@ class TreeDictionary(BaseObject):
         n : integer
             Index to select.
         """
-        self.set_value(key, self.get_widget(key).opts['values'][n])
+        self.set_value(key, self.get_param(key).opts['values'][n])
 
     def set_value(self, key, value, ignore_error=False, block_key_signals=False, block_all_signals=False):
         """
