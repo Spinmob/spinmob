@@ -1281,7 +1281,7 @@ class CheckBox(GridLayout):
 
 class ComboBox(BaseObject):
 
-    def __init__(self, items=['test','me'], autosettings_path=None):
+    def __init__(self, items=['test','me'], autosettings_path=None, tip=None):
         """
         Simplified QComboBox.
 
@@ -1292,11 +1292,16 @@ class ComboBox(BaseObject):
         autosettings_path=None
             If you want this object to remember its settings from run to run,
             give it a unique identifier string, e.g. 'my_combobox'
+        tip=None
+            Set to a string to pop up a message while the mouse hovers.
+            
+        **kwargs are sent to the underlying widget options self._widget.setOpts()
         """
 
         # pyqt objects
         self._widget = _pg.QtGui.QComboBox()
-
+        self._widget.setToolTip(tip)
+        
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path=autosettings_path)
 
@@ -3215,20 +3220,20 @@ class DataboxPlot(_d.databox, GridLayout):
         # top row is main controls
         self.grid_controls   = self.place_object(GridLayout(margins=False), alignment=0)
         self.grid_controls.place_object(Label("Raw Data:"), alignment=1)
-        self.button_clear    = self.grid_controls.place_object(Button("Clear")                 .set_width(40), alignment=1)
-        self.button_load     = self.grid_controls.place_object(Button("Load")                  .set_width(40), alignment=1)
-        self.button_save     = self.grid_controls.place_object(Button("Save")                  .set_width(40), alignment=1)
-        self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256']), alignment=1)
-        self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True).set_width(40), alignment=1)
-        self.number_file     = self.grid_controls.place_object(NumberBox(int=True, bounds=(0,None)))
+        self.button_clear    = self.grid_controls.place_object(Button("Clear", tip='Clear all header and columns.').set_width(40), alignment=1)
+        self.button_load     = self.grid_controls.place_object(Button("Load",  tip='Load data from file.')         .set_width(40), alignment=1)
+        self.button_save     = self.grid_controls.place_object(Button("Save",  tip='Save data to file.')           .set_width(40), alignment=1)
+        self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256'], tip='Format of output file columns.'), alignment=1)
+        self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True, tip='Enable autosaving. Note this will only autosave when self.autosave() is called in the host program.').set_width(40), alignment=1)
+        self.number_file     = self.grid_controls.place_object(NumberBox(int=True, bounds=(0,None), tip='Current autosave file name prefix number. This will increment every autosave().'))
         self.label_path      = self.grid_controls.place_object(Label(""))
 
         self.grid_controls.place_object(Label("")) # spacer
-        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True, checked=True).set_width(50)).set_checked(False)
-        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Edit', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'])).set_value(autoscript)
-        self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True).set_width(40)).set_checked(True)
-        self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True).set_width(40)).set_checked(autoscript==1)
-        self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True).set_width(50)).set_checked(True)
+        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True, checked=True, tip='Show the script box.').set_width(50)).set_checked(False)
+        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Edit', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'], tip='Script mode. Select "Edit" to modify the script.')).set_value(autoscript)
+        self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True, tip="If checked, plot with multiple plots. If unchecked, all data on the same plot.").set_width(40)).set_checked(True)
+        self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True, tip="Link the x-axes of all plots.").set_width(40)).set_checked(autoscript==1)
+        self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True, tip="Enable this plot.").set_width(50)).set_checked(True)
 
         # keep the buttons shaclackied together
         self.grid_controls.set_column_stretch(7)
@@ -3240,9 +3245,9 @@ class DataboxPlot(_d.databox, GridLayout):
         self.grid_script = self.place_object(GridLayout(margins=False), 0,1, alignment=0)
 
         # script grid
-        self.button_save_script = self.grid_script.place_object(Button("Save").set_width(40), 2,1)
-        self.button_load_script = self.grid_script.place_object(Button("Load").set_width(40), 2,2)
-        self.button_plot        = self.grid_script.place_object(Button("Plot!").set_width(40), 2,3)
+        self.button_save_script = self.grid_script.place_object(Button("Save", tip='Save the shown script.').set_width(40), 2,1)
+        self.button_load_script = self.grid_script.place_object(Button("Load", tip='Load a script.').set_width(40), 2,2)
+        self.button_plot        = self.grid_script.place_object(Button("Plot!", tip='Attempt to plot using the shown script!').set_width(40), 2,3)
 
         self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
@@ -3968,9 +3973,9 @@ class DataboxProcessor(Window):
         self.grid_bottom = self.add(GridLayout(margins=False), alignment=0)
 
         # Top controls
-        self.button_go    = self.grid_top.add(Button('Run')).set_width(50)
-        self.number_count = self.grid_top.add(NumberBox(int=True))
-        self.button_reset = self.grid_top.add(Button('Reset')).set_width(50)
+        self.button_run   = self.grid_top.add(Button('Run', tip='Run the enabled processes on the specified source data.')).set_width(50)
+        self.number_count = self.grid_top.add(NumberBox(int=True, tip='How many times this has run since last reset.'))
+        self.button_reset = self.grid_top.add(Button('Reset', tip='Reset the run count.')).set_width(50)
         self.label_info   = self.grid_top.add(Label('')).set_colors('red',None)
         self.label_dump   = self.grid_top.add(Label(''))
 
@@ -3979,7 +3984,7 @@ class DataboxProcessor(Window):
         self.plot       = self.grid_bottom.add(DataboxPlot(file_type, name+'.plot', name=name), 1,0, alignment=0)
 
         # Add the PSD settings
-        self.settings.add_parameter('Enabled',      False)
+        self.settings.add_parameter('Enabled',      False, tip='Enable or disable all analyses below.')
         self.settings.add_parameter('Coarsen',          0, bounds=(0,None), tip='Break the data into groups of this many, and average each group into a single data point. 0 to disable.')
 
         self.settings.add_parameter('PSD',          False, tip='Calculate the power spectral density')
@@ -3995,7 +4000,7 @@ class DataboxProcessor(Window):
         self.settings.add_parameter('Average/Frames',   0, step=2, tip='Exponential moving average time constant. Set to 0 to include all data in average.')
         self.settings.add_parameter('Average/Error',False, tip='Estimate the standard error on the mean (sent to column "<name>.std_mean")')
         self.settings.add_parameter('Stream',       False, tip='Stream some single quantity associated with the data.')
-        self.settings.add_parameter('Stream/Method', 'mean', values=['max','min','mean','mean+e','std','hkeys'])
+        self.settings.add_parameter('Stream/Method', 'mean', values=['max','min','mean','mean+e','std','hkeys'], tip='Method for converting source data into a single data point.')
         self.settings.add_parameter('Stream/hkeys',  '',   tip='Comma-separated list of hkeys used to stream header elements as well.')
         self.settings.add_parameter('Stream/History', 200, dec=True, bounds=(2, None), tip='How many points to keep in the stream.')
         self.settings.add_parameter('Stream/File_Dump',  False, tip='Enable to dump the whole stream to a file of your choice.')
@@ -4007,7 +4012,7 @@ class DataboxProcessor(Window):
         self.settings.connect_signal_changed('Stream/File_Dump', self._stream_dump_changed)
         self.settings.connect_signal_changed('Stream', self._stream_changed)
         self.settings.connect_signal_changed('Stream/Method', self._stream_method_changed)
-        self.button_go.signal_clicked.connect(self._button_go_clicked)
+        self.button_run.signal_clicked.connect(self._button_run_clicked)
         self.plot.button_clear.signal_clicked.connect(self._reset)
         self.button_reset.signal_clicked.connect(self._button_reset_clicked)
 
@@ -4017,7 +4022,7 @@ class DataboxProcessor(Window):
         # Update the visibility of hkeys
         self._stream_method_changed()
 
-    def _button_go_clicked(self, *a):
+    def _button_run_clicked(self, *a):
         self.run()
 
     def _button_reset_clicked(self, *a):
