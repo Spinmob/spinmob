@@ -1211,10 +1211,11 @@ class CheckBox(GridLayout):
 
     """
 
-    def __init__(self, text=None, text_editable=False, text_position='right', autosettings_path=None, **kwargs):
+    def __init__(self, text=None, text_editable=False, text_position='right', autosettings_path=None, tip=None, **kwargs):
 
         # pyqt objects
         self._widget_checkbox = _pg.QtGui.QCheckBox()
+        self._widget_checkbox.setToolTip(tip)
 
         # Other stuff common to all objects
         GridLayout.__init__(self, margins=False, scroll=False, autosettings_path=autosettings_path)
@@ -1236,6 +1237,11 @@ class CheckBox(GridLayout):
             elif text_position == 'left' : self.add(self.text, 0,1, alignment=0)
             elif text_position == 'top'  : self.add(self.text, 1,0, alignment=0)
             else:                          self.add(self.text, 1,2, alignment=0)
+            
+            # Set the tooltip.
+            self.text._widget.setToolTip(tip)
+            
+        # No label.
         else: self.text = None
 
         # signals
@@ -2482,7 +2488,7 @@ class TreeDictionary(BaseObject):
         for n in self.naughty: key = key.replace(n, '_')
         return key
 
-    def add_button(self, key, checkable=False, checked=False):
+    def add_button(self, key, checkable=False, checked=False, tip=None):
         """
         Adds (and returns) a button at the specified location.
         """
@@ -2526,7 +2532,7 @@ class TreeDictionary(BaseObject):
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
 
-        return Button(key, checkable, checked, list(ap.items.keys())[0].button)
+        return Button(key, checkable, checked, list(ap.items.keys())[0].button, tip=tip)
 
     def add_parameter(self, key='test', value=42.0, default_list_index=0, **kwargs):
         """
