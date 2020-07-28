@@ -38,7 +38,7 @@ def _warn(*args):
 
 try:
     import pyqtgraph as _pyqtgraph
-    if _pyqtgraph.__version__[0:4] == '0.10': _warn('We require pyqtgraph version 0.11 or higher. Previous versions are no longer supported.')
+    if _pyqtgraph.__version__[0:4] == '0.10': _warn('Spinmob requires pyqtgraph version 0.11 or higher. Previous versions are no longer supported.')
 
     _qtc = _pyqtgraph.Qt.QtCore
     _qt  = _pyqtgraph.Qt

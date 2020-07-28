@@ -115,6 +115,6 @@ class settings():
         """
         Dumps the current prefs to the preferences.txt file
         """
-        self._databox.save_file(self.path_settings)
+        self._databox.save_file(self.path_settings, force_overwrite=True)
 
 

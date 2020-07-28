@@ -603,6 +603,12 @@ class databox:
             # Normal ascii saving mode.
             if binary in [None, 'None', False, 'False']:
 
+                # First check if any of the columns are more than 1D and complain
+                alles_klar = True
+                for n in range(len(self)):
+                    if len(_n.array(self[n]).shape) != 1: alles_klar = False
+                if not alles_klar: print('WARNING: You must save in binary mode if your columns have more than 1 dimension.')
+                
                 # write the ckeys
                 elements = []
                 for ckey in self.ckeys: elements.append(str(ckey).replace(delimiter,'_'))
