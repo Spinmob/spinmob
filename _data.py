@@ -360,15 +360,17 @@ class databox:
                 if stop == -1: break
                 ckey  = s[start:stop].decode('utf-8').strip()
 
-                # Get the array length
+                # Get the array shape
                 start = stop+1
                 stop  = s.find(b'\n', start)
-                length = int(s[start:stop].strip())
+                shape = eval(s[start:stop].strip())
+                if type(shape) == int: length = shape
+                else:                  length = _n.prod(_n.array(shape))
 
                 # Get the data!
                 start = stop+1
                 stop  = start+size*length
-                self[ckey] = _n.frombuffer(s[start:stop], binary)
+                self[ckey] = _n.frombuffer(s[start:stop], binary).reshape(shape)
 
                 # Go to next ckey
                 start = stop+1
@@ -581,8 +583,18 @@ class databox:
             # Write the special first key.
             f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
 
+
+
+
         # Write the usual header
-        for k in self.hkeys: f.write(k + delimiter + repr(self.headers[k]) + "\n")
+        for k in self.hkeys: 
+            h = self.h(k)
+            
+            # Convert arrays to lists so we can get all the numbers.
+            if type(h) is _n.ndarray: h = h.tolist()
+            
+            # Write it.
+            f.write(k + delimiter + repr(h).replace('\n',' ') + "\n")
         f.write('\n')
 
         # if we're not just supposed to write the header
@@ -593,8 +605,7 @@ class databox:
 
                 # write the ckeys
                 elements = []
-                for ckey in self.ckeys:
-                    elements.append(str(ckey).replace(delimiter,'_'))
+                for ckey in self.ckeys: elements.append(str(ckey).replace(delimiter,'_'))
                 f.write(delimiter.join(elements) + "\n")
 
                 # now loop over the data
@@ -623,7 +634,7 @@ class databox:
                     # Write the column
                     #  ckey + delimiter + count + \n + datastring + \n
                     f.write(str(self.ckeys[n]).replace(delimiter,'_')
-                           + delimiter + str(len(self[n])) + '\n')
+                           + delimiter + str(_n.array(self[n]).shape) + '\n')
                     f.close()
                     f = open(temporary_path, 'ab')
                     f.write(data_string)
@@ -636,6 +647,32 @@ class databox:
         # now move it
         _shutil.move(temporary_path, path)
 
+        return self
+
+    def set_binary_mode(self, binary='float64'):
+        """
+        Sets the save_file() mode to binary.
+        
+        Parameters
+        ----------
+        binary=float64
+            Can be any of these objects found in numpy: 
+                'float16', 'float32', 'float64', 'float128' (if supported),
+                'int8', 'int16', 'int32', 'int64', 'int128' (if supported), 
+                'complex64', 'complex128', 'complex256' (if supported).
+            If False, this will set the save format to text mode.
+            If True, defaults to float64.
+        """
+        if binary is True: self.h(SPINMOB_BINARY='float64')
+        elif binary:       self.h(SPINMOB_BINARY=binary)
+        else:              self.pop_header('SPINMOB_BINARY', ignore_error=True) 
+        return self
+    
+    def set_text_mode(self):
+        """
+        Sets the save_file() format to text mode. Same as self.set_binary_mode(False).
+        """
+        self.set_binary_mode(False)
         return self
 
     def get_data_point(self, n):

@@ -176,6 +176,27 @@ class Test_databox(_ut.TestCase):
         expected_value = [85., 42.]
         self.assertListEqual(value, expected_value)
 
+    def test_save_load_header_array_newline_ndim(self):
+        """
+        Test that headers having newlines are fixed and big ndarrays are handled.
+        Also tests that binary can handle multi-dimensional columns.
+        """
+        a = _s.data.databox()
+        a.h(pants=_n.random.rand(30,40,5), shoes='my\nshoes')
+        a[0] = _n.random.rand(1,2,3)
+        
+        # Save and load
+        a.set_binary_mode(True)
+        a.save_file('test_newlines', '*.txt', 'txt')
+        b = _s.data.load('test_newlines.txt')
+        _os.remove('test_newlines.txt')
+        
+        # Assert
+        _n.testing.assert_almost_equal(a.h('pants'), b.h('pants'))
+        self.assertEqual('my\nshoes', b.h('shoes'))
+        _n.testing.assert_almost_equal(a[0], b[0])
+        
+
     def test_load_save_binary(self):
         global d
         
@@ -188,7 +209,8 @@ class Test_databox(_ut.TestCase):
         d.h(poo = 32)
         d['pants']       = [1,2,3,4,5]
         d['shoes,teeth'] = [1,2,1]
-        d.save_file('test_binary', '*.txt', 'txt', binary='float16')
+        d['wow'] = x = _n.random.rand(100)
+        d.save_file('test_binary', '*.txt', 'txt', binary='float64')
         
         # Crash tests
         print()
@@ -197,10 +219,11 @@ class Test_databox(_ut.TestCase):
         
         # Load said binary
         d = _s.data.load('test_binary.txt')
-        self.assertEqual(len(d), 2)
+        self.assertEqual(len(d), 3)
         self.assertEqual(len(d[1]), 3)
         self.assertEqual(len(d[0]), 5)
         self.assertEqual(len(d.hkeys), 2)
+        _n.testing.assert_equal(d['wow'], x)
         
         # Do the same with no delimiter
         d = _s.data.databox(delimiter=None)
