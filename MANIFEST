@@ -21,7 +21,6 @@ setup.py
 ./_spline.py
 ./egg/__init__.py
 ./egg/_gui.py
-./egg/_temporary_fixes.py
 ./egg/example_daq.py
 ./egg/example_from_wiki.py
 ./egg/example_from_wiki_2.py
