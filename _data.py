@@ -681,9 +681,9 @@ class databox:
         self.set_binary_mode(False)
         return self
 
-    def get_data_point(self, n):
+    def get_row(self, n):
         """
-        Returns the n'th data point (starting at 0) from all columns.
+        Returns a list of the n'th row (starting at 0) from all columns.
 
         Parameters
         ----------
@@ -695,10 +695,16 @@ class databox:
         for k in self.ckeys: point.append(self[k][n])
         return point
 
-
-    def pop_data_point(self, n):
+    def get_data_point(self, n):
         """
-        This will remove and return the n'th data point (starting at 0) from
+        Obsolete. Please use get_row() instead.
+        """
+        print('OBSOLETE: Please use databox.get_row() instead of databox.get_data_point()')
+        return self.get_row(n)
+        
+    def pop_row(self, n):
+        """
+        This will remove and return the n'th row (starting at 0) from
         all columns.
 
         Parameters
@@ -721,10 +727,17 @@ class databox:
             self.insert_column(_n.array(data), k)
 
         return popped
-
-    def insert_data_point(self, new_data, index=None, ckeys=None):
+    
+    def pop_data_point(self, n):
         """
-        Inserts a data point at index n.
+        Obsolete.please use pop_row() instead.
+        """
+        print('OBSOLETE: Please use databox.pop_row() instead of databox.pop_data_point()')
+        return self.pop_row(n)
+
+    def insert_row(self, new_data, index=None, ckeys=None):
+        """
+        Inserts a row at index n.
 
         Parameters
         ----------
@@ -772,14 +785,21 @@ class databox:
 
         return self
 
-    def append_data_point(self, new_data, ckeys=None, history=0):
+    def insert_data_point(self, *a, **kw):
         """
-        Appends the supplied data point to the column(s).
+        Obsolete. Please use insert_row() instead.
+        """
+        print('OBSOLETE: Please use databox.insert_row() instead of databox.insert_data_point()')
+        return self.insert_row(*a, **kw)
 
+    def append_row(self, new_data, ckeys=None, history=0):
+        """
+        Appends the supplied row (list) to the column(s). 
+        
         Parameters
         ----------
         new_data
-            A list or array of new data points, one for each column.
+            A list or array of new data, one for each column.
         ckeys=None
             An optional list (of the same size as new_data) of ckeys. If this
             list does not match the existing ckeys, it will clear the columns
@@ -789,12 +809,19 @@ class databox:
             it will pop the first data points off until the length of the
             0th column is equal to the specified value.
         """
-        self.insert_data_point(new_data, None, ckeys)
+        self.insert_row(new_data, None, ckeys)
 
         if history > 0:
-            while len(self[0]) > history: self.pop_data_point(0)
+            while len(self[0]) > history: self.pop_row(0)
 
         return self
+
+    def append_data_point(self, *a, **kw):
+        """
+        Obsolete. Use append_row() instead.
+        """
+        print('OBSOLETE: Please use append_row() instead of append_data_point().')
+        return self.append_row(*a, **kw)
 
     def execute_script(self, script, g=None):
         """

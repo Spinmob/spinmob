@@ -117,7 +117,7 @@ def acquire_button_clicked(*a):
         m, p = get_data()
 
         # store the data
-        d_sweep.append_data_point([x,m,p])
+        d_sweep.append_row([x,m,p])
 
         # plot the data
         d_sweep.plot()

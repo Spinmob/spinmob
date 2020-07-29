@@ -53,14 +53,14 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(d[0][1], 90.0)
         self.assertEqual(d.delimiter, ';')
 
-    def test_pop_data_point(self):
+    def test_pop_row(self):
         d = _s.data.load(path=_os.path.join(self.data_path, "basic.dat"))
         
         # length
         l = len(d[0])
         
         # Check a value of the loaded file, first level
-        val = d.pop_data_point(3)
+        val = d.pop_row(3)
 
         # The expected response
         exp = [100.0, 2.43]

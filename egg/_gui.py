@@ -4336,12 +4336,12 @@ class DataboxProcessor(Window):
                         new_data.append(_n.std(c, ddof=1)/_n.sqrt(len(c)))
 
             # Now append this line to the plotter
-            self.plot.append_data_point(new_data, ckeys)
+            self.plot.append_row(new_data, ckeys)
 
             # If we're keeping fixed history
             history = self.settings['Stream/History']
             if history > 0:
-                while(len(self.plot[0]))>history: self.plot.pop_data_point(0)
+                while(len(self.plot[0]))>history: self.plot.pop_row(0)
 
             # Now write it to the file if necessary
             if self.settings['Stream/File_Dump']:
