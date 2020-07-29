@@ -3283,6 +3283,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # holds the curves and plot widgets for the data, and the buttons
         self._curves          = []
         self._errors          = []
+        self._legend          = None
         self.styles           = []   # List of dictionaries to send to PlotDataItem's
         self._previous_styles = None # Used to determine if a rebuild is necessary
         self.plot_widgets     = []
@@ -3697,12 +3698,24 @@ class DataboxPlot(_d.databox, GridLayout):
             xlabels = g['xlabels']
             ylabels = g['ylabels']
 
+            # Make sure these are iterable lists
+            if not hasattr(xlabels, '__iter__'): xlabels = [xlabels]
+            if not hasattr(ylabels, '__iter__'): ylabels = [ylabels]
+            
+            xlabels = list(xlabels)
+            ylabels = list(ylabels)
+            
+            # Adjust the length
+            while len(xlabels) < len(x): xlabels.append(xlabels[-1])
+            while len(ylabels) < len(y): ylabels.append(ylabels[-1])
+
             # Get the styles
             self.styles = g['styles']
 
             # make sure we have exactly the right number of plots
             self._set_number_of_plots(y, ey)
             self._update_linked_axes()
+            self._update_legend(ylabels)
 
             # return if there is nothing.
             if len(y) == 0: return
@@ -3715,25 +3728,14 @@ class DataboxPlot(_d.databox, GridLayout):
                 if ey[n] is not None:
                     self._errors[n].setData(x=x[n], y=y[n], top=ey[n], bottom=ey[n])
 
-                # get the labels for the curves
-
-                # if it's a string, use the same label for all axes
-                if type(xlabels) in [str,type(None)]: xlabel = xlabels
-                elif n < len(xlabels):                xlabel = xlabels[n]
-                else:                                 xlabel = ''
-
-                if type(ylabels) in [str,type(None)]: ylabel = ylabels
-                elif n < len(ylabels):                ylabel = ylabels[n]
-                else:                                 ylabel = ''
-
                 # set the labels
                 i = min(n, len(self.plot_widgets)-1)
-                self.plot_widgets[i].setLabel('left',   ylabel)
-                self.plot_widgets[i].setLabel('bottom', xlabel)
+                self.plot_widgets[i].setLabel('left',   ylabels[n])
+                self.plot_widgets[i].setLabel('bottom', xlabels[n])
 
                 # special case: hide if None
-                if xlabel == None: self.plot_widgets[i].getAxis('bottom').showLabel(False)
-                if ylabel == None: self.plot_widgets[i].getAxis('left')  .showLabel(False)
+                if xlabels[n] == None: self.plot_widgets[i].getAxis('bottom').showLabel(False)
+                if ylabels[n] == None or not self.button_multi.is_checked(): self.plot_widgets[i].getAxis('left').showLabel(False)
 
             # unpink the script, since it seems to have worked
             self.script          .set_colors('black','white')
@@ -3824,6 +3826,18 @@ class DataboxPlot(_d.databox, GridLayout):
         # All good!
         return True
 
+    def _update_legend(self, ylabels):
+        """
+        Updates the legend according to the list of ylabels.
+        """
+        if not self._legend: return
+        
+        # Clear it
+        self._legend.clear()
+        
+        # Loop and append
+        for i in range(len(ylabels)): self._legend.addItem(self._curves[i], ylabels[i])
+
     def _set_number_of_plots(self, y, ey):
         """
         Adjusts number of plots & curves to the desired value the gui, populating
@@ -3857,10 +3871,8 @@ class DataboxPlot(_d.databox, GridLayout):
         for i in range(len(y)):
 
             # Default to the user-supplied self.styles, if they exist.
-            if self.styles and i < len(self.styles) and self.styles[i]:
-                kw = self.styles[i]
-            else:
-                kw = dict(pen=(i,len(y)))
+            if self.styles and i < len(self.styles) and self.styles[i]: kw = self.styles[i]
+            else:                                                       kw = dict(pen=(i,len(y)))
 
             # Append the curve
             self._curves.append(_pg.PlotDataItem(**kw))
@@ -3876,6 +3888,10 @@ class DataboxPlot(_d.databox, GridLayout):
         # add new plots
         for i in range(n_plots):
             self.plot_widgets.append(self.grid_plot.place_object(_pg.PlotWidget(), 0, i, alignment=0))
+            
+            # Legend for single plot mode.
+            if self.button_multi.is_checked(): self._legend = None
+            else:                              self._legend = self.plot_widgets[-1].addLegend()
 
         # loop over the curves and add them to the plots
         for i in range(len(y)):
@@ -4480,24 +4496,12 @@ if __name__ == '__main__':
     import spinmob
     #runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
 
-    e = TreeDictionary(autosettings_path='pants.txt')
-    e.add_parameter('floaty', 42.0)
-    e.name = 'testname'
-    e.save()
-
-    # Create the TreeDictionary
-    # s = TreeDictionary('pants.txt')
-
-    # # Create some different value types
-    # s.add_button('button')
-    # s.add_parameter('booly',   value=False)
-    # s.add_parameter('inty',    value=42)
-
-    # ks, d = s.get_dictionary()
-    # d['inty'] = 32
-    # s.update(d)
-
-    # s.show()
+    p = DataboxPlot(autosettings_path='test')
+    p[0] = [1,2,3,4]
+    p[1] = [1,2,1,2]
+    p[2] = [2,1,2,1]
+    p.plot()
+    p.show()
 
 
 
