@@ -1119,7 +1119,7 @@ class NumberBox(BaseObject):
 
     def __init__(self, value=0, step=1, bounds=(None,None), int=False, autosettings_path=None, tip=None, **kwargs):
 
-        # Fix
+        # Fix the weird default behavior
         kwargs['compactHeight'] = False
 
         # pyqtgraph spinbox
@@ -3699,8 +3699,8 @@ class DataboxPlot(_d.databox, GridLayout):
             ylabels = g['ylabels']
 
             # Make sure these are iterable lists
-            if not hasattr(xlabels, '__iter__'): xlabels = [xlabels]
-            if not hasattr(ylabels, '__iter__'): ylabels = [ylabels]
+            if not type(xlabels) in [tuple,list]: xlabels = [xlabels]
+            if not type(ylabels) in [tuple,list]: ylabels = [ylabels]
             
             xlabels = list(xlabels)
             ylabels = list(ylabels)
@@ -3708,7 +3708,8 @@ class DataboxPlot(_d.databox, GridLayout):
             # Adjust the length
             while len(xlabels) < len(x): xlabels.append(xlabels[-1])
             while len(ylabels) < len(y): ylabels.append(ylabels[-1])
-
+            print(ylabels)
+            
             # Get the styles
             self.styles = g['styles']
 
@@ -3734,12 +3735,16 @@ class DataboxPlot(_d.databox, GridLayout):
                 self.plot_widgets[i].setLabel('bottom', xlabels[n])
 
                 # special case: hide if None
-                if xlabels[n] == None: self.plot_widgets[i].getAxis('bottom').showLabel(False)
-                if ylabels[n] == None or not self.button_multi.is_checked(): self.plot_widgets[i].getAxis('left').showLabel(False)
+                if xlabels[n] == None: 
+                    self.plot_widgets[i].getAxis('bottom').showLabel(False)
+                
+                # special case: hide if None or we're in single-plot mode (legend handles this)
+                if ylabels[n] == None or not self.button_multi.is_checked(): 
+                    self.plot_widgets[i].getAxis('left').showLabel(False)
 
             # unpink the script, since it seems to have worked
-            self.script          .set_colors('black','white')
-            self.button_script   .set_colors('black', None)
+            self.script       .set_colors('black','white')
+            self.button_script.set_colors('black', None)
 
             # Remember the style of this plot
             if self.styles: self._previous_styles = list(self.styles)
@@ -3836,7 +3841,11 @@ class DataboxPlot(_d.databox, GridLayout):
         self._legend.clear()
         
         # Loop and append
-        for i in range(len(ylabels)): self._legend.addItem(self._curves[i], ylabels[i])
+        for i in range(len(ylabels)): 
+            
+            # Only add the legend item if it's interesting
+            if ylabels[i] not in [None, '']:
+                self._legend.addItem(self._curves[i], ylabels[i])
 
     def _set_number_of_plots(self, y, ey):
         """
