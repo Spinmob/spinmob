@@ -3279,7 +3279,7 @@ class DataboxPlot(_d.databox, GridLayout):
         
         #self.script.set_style('font-family:monospace; font-size:12;')
         # Windows compatibility
-        font = _s._qtw.QFont('Arial')
+        font = _s._qtw.QFont()
         font.setFamily("monospace")
         font.setFixedPitch(True)
         font.setPointSize(10)

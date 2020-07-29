@@ -5,6 +5,7 @@ setup.py
 ./_data.py
 ./_dialogs.py
 ./_functions.py
+./_fusion_theme.py
 ./_plot.py
 ./_plot_complex.py
 ./_plot_image.py
@@ -21,6 +22,7 @@ setup.py
 ./_spline.py
 ./egg/__init__.py
 ./egg/_gui.py
+./egg/_syntax.py
 ./egg/example_daq.py
 ./egg/example_from_wiki.py
 ./egg/example_from_wiki_2.py
