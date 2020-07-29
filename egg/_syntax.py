@@ -262,6 +262,8 @@ if __name__ == '__main__':
     hl = PythonHighlighter(p.document())
     font = QtGui.QFont()
     font.setFamily("monospace")
+    font.setFixedPitch(True)
+    #font.setStyleHint(font.TypeWriter)
     p.setFont(font)
     l = spinmob.fun.read_lines('_syntax.py')
     p.setText(''.join(l))

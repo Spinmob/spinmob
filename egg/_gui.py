@@ -3276,7 +3276,14 @@ class DataboxPlot(_d.databox, GridLayout):
 
         self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
-        self.script.set_style('font-family:monospace; font-size:12;')
+        
+        #self.script.set_style('font-family:monospace; font-size:12;')
+        # Windows compatibility
+        font = _s._qtw.QFont('Arial')
+        font.setFamily("monospace")
+        font.setFixedPitch(True)
+        font.setPointSize(10)
+        self.script._widget.setFont(font)
 
         self._label_script_error = self.place_object(Label('ERRORS GO HERE'), 0,2, column_span=2, alignment=0)
         self._label_script_error.hide()
