@@ -157,8 +157,6 @@ class Test_egg(_ut.TestCase):
         self.d.set_value('a', 1, block_all_signals=True)
         self.assertEqual(self.d['a'], 1)
         
-        
-        
     def test_DataboxPlot_DataboxProcessor(self):
         
         # Create window
@@ -176,6 +174,8 @@ class Test_egg(_ut.TestCase):
         # Create plotter and processor
         p = ts.add_tab('Data').add(_g.DataboxPlot('*.dat','p', autoscript=4), alignment=0)
         a = ts.add_tab('Processor').add(_g.DataboxProcessor(databox_source=p), alignment=0)
+        
+        p.button_script.set_checked(True)
         
         # Window close stops acquisition
         def close(): l.set_checked(False)

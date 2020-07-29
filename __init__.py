@@ -50,6 +50,15 @@ try:
 
     # Set the dpi scaling
     _qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
+    
+    # Standard Fusion light theme
+    _qtapp.setStyle('Fusion')
+    
+    # Dark theme
+    # _theme_file = _qtc.QFile(_os.path.join(_os.path.split(__file__)[0], 'dark.qss'))
+    # _theme_file.open(_qtc.QFile.ReadOnly | _qtc.QFile.Text)
+    # _qtapp.setStyleSheet(_qtc.QTextStream(_theme_file).readAll())
+
 
 except:
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
@@ -57,8 +66,8 @@ except:
     _qtc = None
     _qt  = None
     _qtw = None
+    _qtapp = None
 
-if _qtapp is not None: _qtapp.setStyle('Fusion')
 
 # some defaults
 _mpl.rcParams['figure.facecolor']='w'

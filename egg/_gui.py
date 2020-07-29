@@ -1,8 +1,5 @@
 import pyqtgraph as _pg
 
-
-
-
 # Regular imports
 import time     as _t
 import os       as _os
@@ -19,6 +16,8 @@ _d = _s.data
 import pyqtgraph as _pg
 _e = _pg.QtCore.QEvent
 
+# Syntax highlighter
+from . import _syntax
 
 _a = _pg.mkQApp()
 
@@ -2088,15 +2087,42 @@ class TextLog(BaseObject):
 
 class TextBox(BaseObject):
 
-    def __init__(self, text="", multiline=False, autosettings_path=None):
+    def __init__(self, text="", multiline=False, autosettings_path=None, python_highlighting=False):
         """
         Simplified QLineEdit.
+        
+        Parameters
+        ----------
+        
+        text='' : str
+            Default text.
+        
+        multiline=False : bool
+            Whether this box should be multiple lines.
+        
+        autosettings_path=None : str
+            If specified with a unique path-like string, this will save the state of the text box
+            between runs.
+        
+        python_highlighting=False : bool
+            Enables python syntax highlighting, but only in multiline mode.
         """
         self._multiline = multiline
 
         # pyqt objects
-        if multiline:   self._widget = _pg.QtGui.QTextEdit()
-        else:           self._widget = _pg.QtGui.QLineEdit(); self.signal_return_pressed = self._widget.returnPressed
+        if multiline:   
+            self._widget = _pg.QtGui.QTextEdit()
+        
+            # Python highlighting
+            self._highlighter = _syntax.PythonHighlighter(self._widget.document())
+            
+        
+        # Single-line
+        else:
+            self._widget = _pg.QtGui.QLineEdit()
+            self.signal_return_pressed = self._widget.returnPressed
+        
+        # Set the text
         self.set_text(str(text))
 
         # signals
