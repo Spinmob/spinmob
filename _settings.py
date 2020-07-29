@@ -30,12 +30,14 @@ class settings():
 
         # see if this is the first time running (no home directory)
         if not _os.path.exists(self.path_home):
-            print("\nFirst run: creating "+self.path_home)
+            print("\nFirst run:\n Creating "+self.path_home)
             _os.mkdir(self.path_home)
 
         if not _os.path.exists(self.path_settings):
             print(" Creating "+self.path_settings + "\n")
-            open(self.path_settings, 'w').close()
+            f = open(self.path_settings, 'w')
+            f.write('dark_theme=True')
+            f.close()
 
 
         # now read in the prefs file

@@ -103,13 +103,13 @@ class BaseObject(object):
         else:      self.show()
         return self
 
-    def set_colors(self, text='black', background=None):
+    def set_colors(self, text=None, background=None):
         """
         Sets the colors of the text area.
 
         Parameters
         ----------
-        text='black'
+        text=None
             Color of the main text.
         background=None
             Color of the background. None means transparent.
@@ -1182,13 +1182,6 @@ class NumberBox(BaseObject):
         """
         return self.set_value(self.get_value()+n)
 
-    def set_colors(self, text='black', background='white'):
-        """
-        Sets the colors of the text area.
-        """
-        self._widget.setStyleSheet("SpinBox {background-color: "+background+"; color: "+text+"}")
-
-        return self
 
 class CheckBox(GridLayout):
     """
@@ -3283,7 +3276,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
-        self.script.set_style('font-family:courier; font-size:12;')
+        self.script.set_style('font-family:monospace; font-size:12;')
 
         self._label_script_error = self.place_object(Label('ERRORS GO HERE'), 0,2, column_span=2, alignment=0)
         self._label_script_error.hide()
@@ -3767,8 +3760,8 @@ class DataboxPlot(_d.databox, GridLayout):
                     self.plot_widgets[i].getAxis('left').showLabel(False)
 
             # unpink the script, since it seems to have worked
-            self.script       .set_colors('black','white')
-            self.button_script.set_colors('black', None)
+            self.script       .set_colors(None, None)
+            self.button_script.set_colors(None, None)
 
             # Remember the style of this plot
             if self.styles: self._previous_styles = list(self.styles)
@@ -3786,7 +3779,8 @@ class DataboxPlot(_d.databox, GridLayout):
             # Show the error
             self._label_script_error.show()
             self._label_script_error.set_text('OOP! '+ type(e).__name__ + ": '" + str(e.args[0]) + "'")
-            self._label_script_error.set_colors('red', None)
+            if _s.settings['dark_theme']: self._label_script_error.set_colors('pink', None)
+            else:                         self._label_script_error.set_colors('red', None)
 
         return self
 
@@ -4031,7 +4025,7 @@ class DataboxProcessor(Window):
         self.button_run   = self.grid_top.add(Button('Run', tip='Run the enabled processes on the specified source data.')).set_width(50)
         self.number_count = self.grid_top.add(NumberBox(int=True, tip='How many times this has run since last reset.'))
         self.button_reset = self.grid_top.add(Button('Reset', tip='Reset the run count.')).set_width(50)
-        self.label_info   = self.grid_top.add(Label('')).set_colors('red',None)
+        self.label_info   = self.grid_top.add(Label('')).set_colors('pink' if _s.settings['dark_theme'] else 'red',None)
         self.label_dump   = self.grid_top.add(Label(''))
 
         # Add settings and plotter

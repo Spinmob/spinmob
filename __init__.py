@@ -55,10 +55,7 @@ try:
     _qtapp.setStyle('Fusion')
     
     # Dark theme
-    # _theme_file = _qtc.QFile(_os.path.join(_os.path.split(__file__)[0], 'dark.qss'))
-    # _theme_file.open(_qtc.QFile.ReadOnly | _qtc.QFile.Text)
-    # _qtapp.setStyleSheet(_qtc.QTextStream(_theme_file).readAll())
-
+    if settings['dark_theme']: from . import _fusion_theme    
 
 except:
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
@@ -67,6 +64,7 @@ except:
     _qt  = None
     _qtw = None
     _qtapp = None
+
 
 
 # some defaults

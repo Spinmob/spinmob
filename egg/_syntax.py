@@ -1,5 +1,5 @@
 # based on https://github.com/art1415926535/PyQt5-syntax-highlighting
-
+import spinmob
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 import builtins
 
@@ -56,8 +56,8 @@ class LightThemeColors:
 
 class DarkThemeColors:
 
-    Red = "#F44336"
-    Pink = "#F48FB1"
+    Red = "#FF7777"
+    Pink = "#FFAAAA"
     Purple = "#CE93D8"
     DeepPurple = "#B39DDB"
     Indigo = "#9FA8DA"
@@ -65,7 +65,7 @@ class DarkThemeColors:
     LightBlue = "#81D4FA"
     Cyan = "#80DEEA"
     Teal = "#80CBC4"
-    Green = "#A5D6A7"
+    Green = "#A5FFA7"
     LightGreen = "#C5E1A5"
     Lime = "#E6EE9C"
     Yellow = "#FFF59D"
@@ -80,7 +80,7 @@ class DarkThemeColors:
 LIGHT_STYLES = {
     'keyword': getQTextCharFormat(LightThemeColors.Blue, 'bold'),
     'builtin': getQTextCharFormat(LightThemeColors.Pink, 'bold'),
-    'operator': getQTextCharFormat(LightThemeColors.Purple, 'bold'),
+    'operator': getQTextCharFormat(LightThemeColors.Purple),
     'brace': getQTextCharFormat(LightThemeColors.Green),
     'defclass': getQTextCharFormat(LightThemeColors.Indigo, 'bold'),
     'string': getQTextCharFormat(LightThemeColors.Green, 'italic'),
@@ -92,16 +92,16 @@ LIGHT_STYLES = {
 
 
 DARK_STYLES = {
-    'keyword': getQTextCharFormat(DarkThemeColors.Blue, 'bold'),
-    'builtin': getQTextCharFormat(DarkThemeColors.Pink, 'bold'),
+    'keyword' : getQTextCharFormat(DarkThemeColors.Blue, 'bold'),
+    'builtin' : getQTextCharFormat(DarkThemeColors.Pink, 'bold'),
     'operator': getQTextCharFormat(DarkThemeColors.Red, 'bold'),
-    'brace': getQTextCharFormat(DarkThemeColors.Purple),
+    'brace'   : getQTextCharFormat(DarkThemeColors.Purple),
     'defclass': getQTextCharFormat(DarkThemeColors.Indigo, 'bold'),
-    'string': getQTextCharFormat(DarkThemeColors.Amber),
-    'string2': getQTextCharFormat(DarkThemeColors.DeepPurple),
-    'comment': getQTextCharFormat(DarkThemeColors.Green, 'italic'),
-    'self': getQTextCharFormat(DarkThemeColors.Blue, 'bold'),
-    'numbers': getQTextCharFormat(DarkThemeColors.Teal),
+    'string'  : getQTextCharFormat(DarkThemeColors.Amber),
+    'string2' : getQTextCharFormat(DarkThemeColors.DeepPurple),
+    'comment' : getQTextCharFormat(DarkThemeColors.Green, 'italic'),
+    'self'    : getQTextCharFormat(DarkThemeColors.Blue, 'bold'),
+    'numbers' : getQTextCharFormat(DarkThemeColors.Teal),
 }
 
 
@@ -191,8 +191,7 @@ class PythonHighlighter(QSyntaxHighlighter):
                       for (pat, index, fmt) in rules]
 
     def styles(self, style):
-        app = QtGui.QApplication.instance()
-        return DARK_STYLES[style] if hasattr(app, 'dark_mode') and app.dark_mode else LIGHT_STYLES[style]
+        return DARK_STYLES[style] if spinmob.settings['dark_theme'] else LIGHT_STYLES[style]
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.
@@ -261,6 +260,9 @@ if __name__ == '__main__':
     
     p = QtWidgets.QTextEdit()
     hl = PythonHighlighter(p.document())
+    font = QtGui.QFont()
+    font.setFamily("monospace")
+    p.setFont(font)
     l = spinmob.fun.read_lines('_syntax.py')
     p.setText(''.join(l))
     
