@@ -3844,7 +3844,7 @@ class DataboxPlot(_d.databox, GridLayout):
         for i in range(len(ylabels)): 
             
             # Only add the legend item if it's interesting
-            if ylabels[i] not in [None, '']:
+            if ylabels[i] not in [None, '', False]:
                 self._legend.addItem(self._curves[i], ylabels[i])
 
     def _set_number_of_plots(self, y, ey):
