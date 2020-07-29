@@ -3580,8 +3580,7 @@ class DataboxPlot(_d.databox, GridLayout):
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
 
             return sx+" )\n"+sy+" )\n\n"+sxlabels+" )\n"+sylabels+" )\n"
-            print("test")
-
+            
         # Column triples
         elif self.combo_autoscript.get_index() == 3:
 
@@ -3708,7 +3707,6 @@ class DataboxPlot(_d.databox, GridLayout):
             # Adjust the length
             while len(xlabels) < len(x): xlabels.append(xlabels[-1])
             while len(ylabels) < len(y): ylabels.append(ylabels[-1])
-            print(ylabels)
             
             # Get the styles
             self.styles = g['styles']
