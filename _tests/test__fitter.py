@@ -53,7 +53,7 @@ class Test_fitter(_ut.TestCase):
         f.__repr__()
 
         # Check that the reduced chi^2 is roughly correct
-        r = f.reduced_chi_squareds()
+        r = f.get_reduced_chi_squareds()
         self.assertIs(type(r), list)
         self.assertAlmostEqual(r[0], 29.2238, 2)
 
@@ -145,7 +145,7 @@ class Test_fitter(_ut.TestCase):
         f.fit()
         f.__repr__()
 
-        # Set functions to have the wrong number
+        # Set the wrong number of functions
         f.set_functions(['a*x+b', 'a*cos(b*x)+c'], 'a=-1,b,c')
         f.__repr__()
 
@@ -185,7 +185,7 @@ class Test_fitter(_ut.TestCase):
         f.set_data(_n.array([1,2,3,4], dtype=_n.float16),
                    _n.array([1,2,3,4], dtype=_n.float64),
                    _n.array([1,2,3,4], dtype=_n.float32))
-        self.assertEqual(f.get_processed_data()[0][0].dtype, _n.float64)
+        self.assertEqual(f.get_processed_data()[0][0].dtype, _n.float16)
 
         f.set_data(_n.array([1,2,3,4], dtype=_n.float16),
                    _n.array([1,2,3,4], dtype=_n.float64),
@@ -206,8 +206,9 @@ class Test_fitter(_ut.TestCase):
         f.fix('a')
         f.set_data([1,2,3],[1,2,1],0.1)
         f.fix(b=2)
-        self.assertEqual(f['b'], 2)
-        self.assertEqual(f._cnames, ['a','b'])
+        self.assertEqual(f['b'].value, 2)
+        self.assertFalse(f['b'].vary)
+        self.assertFalse(f['a'].vary)
         f.__repr__()
         f.fit()
         f.__repr__()

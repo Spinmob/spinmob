@@ -3,19 +3,18 @@ import shutil  as _shutil
 
 # do this so all the scripts will work with all the numpy functions
 import numpy          as _n
+import scipy.optimize as _opt
 import scipy.special  as _special
+import scipy.odr      as _odr
 import pylab          as _p
 import textwrap       as _textwrap
 import spinmob        as _s
 import time           as _time
 
-# Try importing lmfit
-try: import lmfit as _lm        
-except: _lm = None
-            
+# Things that belong here too
 try:     from . import _functions
 except:  _functions = _s.fun
-
+averager = _functions.averager
 
 
 
@@ -275,9 +274,9 @@ class databox:
 
                         # try the different delimiter schemes until we find one
                         # that produces a number. Otherwise it's ambiguous.
-                        if   _functions.is_a_number(s.split(None)[0]): self.delimiter = None
-                        elif _functions.is_a_number(s.split(',') [0]): self.delimiter = ','
-                        elif _functions.is_a_number(s.split(';') [0]): self.delimiter = ';'
+                        if   _s.fun.is_a_number(s.split(None)[0]): self.delimiter = None
+                        elif _s.fun.is_a_number(s.split(',') [0]): self.delimiter = ','
+                        elif _s.fun.is_a_number(s.split(';') [0]): self.delimiter = ';'
 
                         # quit the loop!
                         break
@@ -298,7 +297,7 @@ class databox:
             if len(s) and s[-1].strip() == '': s.pop(-1)
 
             # first check and see if this is a data line (all elements are numbers)
-            if first_data_line == "auto" and _functions.elements_are_numbers(s):
+            if first_data_line == "auto" and _s.fun.elements_are_numbers(s):
 
                 # we've reached the first data line
                 first_data_line = n
@@ -871,7 +870,7 @@ class databox:
 
         # If the script is not a list of scripts, return the script value.
         # This is the termination of a recursive call.
-        if not _functions.is_iterable(script):
+        if not _s.fun.is_iterable(script):
 
             # special case
             if script is None: return None
@@ -936,7 +935,7 @@ class databox:
         ########################################
 
         # if it's a simple script, like "column0" or "c(3)/2.0"
-        if len(split_script) == 1:
+        if len(split_script) is 1:
             if self.debug: print("script of length 1")
 
             # try to evaluate the script
@@ -1356,7 +1355,7 @@ class databox:
         new_databox.copy_headers(self)
 
         # trim it up, send it out.
-        cs = _functions.trim_data_uber(self, conditions)
+        cs = _s.fun.trim_data_uber(self, conditions)
         for n in range(len(cs)): new_databox.append_column(cs[n], self.ckeys[n])
 
         return new_databox
@@ -1526,7 +1525,7 @@ class databox:
 
         # If the averager does not exist
         if ckey not in self.averagers:
-            self.averagers[ckey] = _functions.averager(name=ckey)
+            self.averagers[ckey] = averager(name=ckey)
 
         # Update the averaging method
         x = self.averagers[ckey]
@@ -1694,39 +1693,38 @@ class fitter():
 
     def __init__(self, **kwargs):
 
-        if not _lm: 
-            self._raise_error("You need to install lmfit to use the new fitter. You can install it with 'pip install lmfit'.")
-            return
-        
         self.f  = []    # list of functions
         self.bg = []    # list of background functions (for subtracting etc)
-        self.p_in    = _lm.Parameters() # Parameters for the fit
-        self.p_fit   = None             # Shortcut to self.results.params
-        self.results = None             # output from the fitter.
 
         self._f_raw  = None # raw argument passed to set_functions()
         self._bg_raw = None # raw argument passed to set_functions()
 
-        self._xdatas_given  = [] # Starting point for massaging data
-        self._ydatas_given  = []
-        self._eydatas_given = []
-        
-        self._xdatas_processed  = None # trimmed, processed data to send to the fitter
-        self._ydatas_processed  = None
-        self._eydatas_processed = None
-        self._guessed_eydata  = False # Flag becomes True when a "guess" is used. For warnings.
-        
-        # make sure all the awesome stuff from numpy and scipy special is visible to the functions
+        self._set_xdata  = [] # definitions from which data is derived during fits
+        self._set_ydata  = []
+        self._set_eydata = []
+        #self._set_exdata = []
+        self._set_data_globals = dict(_n.__dict__) # defaults to numpy + scipy special
+        self._set_data_globals.update(_special.__dict__)
+
+        self._xdata_massaged  = None
+        self._ydata_massaged  = None
+        self._eydata_massaged = None
+        self._guessed_eydata  = False
+        #self._exdata_massaged = None
+
+        self._settings = dict()   # dictionary containing all the fitter settings
+
+        self.results = None  # full output from the fitter.
+
+        # make sure all the awesome stuff from numpy is visible.
         self._globals  = dict(_n.__dict__)
         self._globals.update(_special.__dict__)
-        
-        self._fnames    = [] # names for each function
-        self._bgnames   = [] # names for each background
-
-        
-        
-        # dictionary containing all the fitter settings
-        self._settings = dict()   
+        self._pnames    = []
+        self._cnames    = []
+        self._fnames    = []
+        self._bgnames   = []
+        self._pguess    = []
+        self._constants = []
 
         # Silence warnings
         self._settings['silent'] = False
@@ -1741,9 +1739,8 @@ class fitter():
         # settings that should not be lists in general (i.e. not one per data set)
         self._single_settings = list(['autoplot', 'first_figure', 'silent'])
 
-        # default settings; we use the _no_autoplot flag so the set function doesn't 
-        # do all the automatic stuff like plotting and updating the analysis.
-        self._no_autoplot = True
+        # default settings
+        self._initializing = True
         self.set(silent        = False,    # Ignore warnings
                  autoplot      = True,     # whether we always plot when changing stuff
                  plot_all_data = False,    # Plot all of the data even after trimming?
@@ -1772,10 +1769,10 @@ class fitter():
                  style_fit    = dict(marker='',  color='r',   ls='-'),
                  style_guess  = dict(marker='',  color='0.25',ls='-'),
                  style_bg     = dict(marker='',  color='k',   ls='-'),)
-        self._no_autoplot = False
+        self._initializing = False
 
-        # Update with additional kwargs, and run the usual processes.
-        self.set(**kwargs)
+        # Update with kwargs
+        self(**kwargs)
 
 
     def set(self, **kwargs):
@@ -1789,7 +1786,7 @@ class fitter():
         for k in list(kwargs.keys()): self[k] = kwargs[k]
 
         # Plot if we're supposed to.
-        if not self._no_autoplot and self['autoplot']: self.plot()
+        if self['autoplot'] and not self._initializing: self.plot()
 
         return self
 
@@ -1797,15 +1794,17 @@ class fitter():
     __call__ = set
 
     def __setitem__(self, key, value):
-        """
-        This is the "main" function used by set() and self().
-        """
-        
-        # special case: setting an input parameter
-        if key in self.p_in.keys(): self.p_in[key].value = value
+
+        # special case: setting a _pguess
+        if key in self._pnames: self._pguess[self._pnames.index(key)] = value
+
+        # special case: setting a _constants
+        elif key in self._cnames:
+            self._constants[self._cnames.index(key)] = value
+            self._update_functions()
 
         # everything else should have a value for each data set or plot
-        elif key in self._settings or self._no_autoplot:
+        elif key in self._settings or self._initializing:
 
             # Most settings need lists that match the length of the data sets
             if not key in self._single_settings:
@@ -1814,14 +1813,14 @@ class fitter():
                 if not type(value) in [list]: value = [value]
 
                 # make sure it matches the data, unless it's a dictionary
-                while len(value) < max(len(self.f), len(self._xdatas_given), len(self._ydatas_given)):
+                while len(value) < max(len(self.f), len(self._set_xdata), len(self._set_ydata)):
                     value.append(value[0])
 
             # set the value
             self._settings[key] = value
 
         # yell.
-        else: self._raise_error("'"+key+"' is not a valid setting or parameter name.")
+        else: self._error("'"+key+"' is not a valid setting, pname or cname.")
 
         # if it isn't a "safe" key, invalidate the previous fit results.
         if not key in self._safe_settings: self.clear_results()
@@ -1838,7 +1837,7 @@ class fitter():
         s = "\nSETTINGS\n"
         for k in keys:
             # for the clunky style settings, loop over the list
-            if k[0:5] == 'style' and _functions.is_iterable(self[k]):
+            if k[0:5] == 'style' and _s.fun.is_iterable(self[k]):
                 s = s+"  {:15s} [".format(k)
                 for n in range(len(self[k])):
                     s = s+str(self[k][n])
@@ -1849,48 +1848,46 @@ class fitter():
                 s = s+"  {:15s} {:s}\n".format(k, str(self[k]))
 
 
-        # Get the longest string name
-        l = 0
-        for pname in self.p_in: 
-            if len(pname) > l: l = len(pname)
-        l = str(l)
+        # Print the constants out
+        if len(self._cnames):
+            s = s + "\nCONSTANTS\n"
+            for c in self._cnames:
+                s = s + "  {:10s} = {:s}\n".format(c, str(self[c]))
+
+
 
         # If we don't have any data.
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0 or len(self.f)==0:
-            s = s + "\nINPUT PARAMETERS\n"
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0 or len(self.f)==0:
+            s = s + "\nGUESS\n"
 
         # If we do have data, give mor information
         else:
-            s = s + "\nINPUT PARAMETERS (reduced chi^2 = {:s}, {} DOF)\n".format(
-                self._format_value_error(self.get_reduced_chi_squared(self.p_in),
-                                         _n.sqrt(_n.divide(2.0,self.get_degrees_of_freedom()))),
-                        self.get_degrees_of_freedom())
+            s = s + "\nGUESS (reduced chi^2 = {:s}, {} DOF)\n".format(
+
+                # Reduced chi^2
+                self._format_value_error(self.reduced_chi_squared(self._pguess),
+                                         _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))),
+                        self.degrees_of_freedom())
 
         # Always print the guess parameters
-        for pname in self.p_in: 
-            s = s + str("  {:"+l+"s} = {:G}, vary={:G} min={:G} max={:G} expr={:s}\n").format(
-                pname, 
-                self.p_in[pname].value,
-                self.p_in[pname].vary,
-                self.p_in[pname].min,
-                self.p_in[pname].max,
-                repr(self.p_in[pname].expr))
+        for p in self._pnames: s = s + "  {:10s} = {:s}\n".format(p, str(self[p]))
+
+
 
         # Print out the fit results
-        if self.results and hasattr(self.results, 'covar'):
+        if self.results and not self.results[1] is None:
             s = s + "\nFIT RESULTS (reduced chi^2 = {:s}, {:d} DOF)\n".format(
-                    self._format_value_error(self.get_reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.get_degrees_of_freedom()))),
-                    int(self.get_degrees_of_freedom()))
-            for pname in self.p_fit:
-                if self.p_in[pname].vary:
-                    s = s + str("  {:"+l+"s} = {:s}\n").format(pname, self._format_value_error(self.p_fit[pname].value, self.p_fit[pname].stderr))
-                else:
-                    s = s + str("  {:"+l+"s} = {:G} (fixed)\n").format(pname, self.p_fit[pname].value)
+                    self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom()))),
+                    int(self.degrees_of_freedom()))
+            for n in range(len(self._pnames)):
+                s = s + "  {:10s} = {:s}\n".format(self._pnames[n], self._format_value_error(self.results[0][n], _n.sqrt(self.results[1][n][n])))
+
         # If the fit did not converge, the covariance matrix is None
-        elif self.results and hasattr(self.results, 'covar'):
+        elif self.results and self.results[1] is None:
             s = s + "\nFIT DID NOT CONVERGE\n"
-            for pname in self.p_in:
-                s = s + "  {:10s} = {:G} (meaningless)\n".format(pname, self.p_fit[pname].value)
+            for n in range(len(self._pnames)):
+                s = s + "  {:10s} = {:G} (meaningless)\n".format(self._pnames[n], self.results[0][n])
+
         # No fit results
         else:
             s = s + "\nNO FIT RESULTS\n"
@@ -1912,11 +1909,31 @@ class fitter():
 
         return s
 
+    def print_fit_parameters(self):
+        """
+        Just prints them out in a way that's easy to copy / paste into python.
+        """
+        s = ''
+        if self.results and self.results[1] is not None:
+            s = s + "\n# FIT RESULTS (reduced chi squared = {:s})\n".format(str(self.reduced_chi_squareds()))
+            for n in range(len(self._pnames)):
+                s = s + "{:10s} = {:G}\n".format(self._pnames[n], self.results[0][n])
+
+        elif self.results and self.results[1] is None:
+            s = s + "\n# FIT DID NOT CONVERGE\n"
+            for n in range(len(self._pnames)):
+                s = s + "{:10s} = {:G}\n".format(self._pnames[n], self.results[0][n])
+
+        else: s = s + "\n# NO FIT RESULTS\n"
+
+        print(s)
+
     def get(self, key):
         """
         Returns (in order of availability):
             1. The fit parameter of the specified name (if it exists).
             2. The guess parameter of the specified name (if it exists).
+            3. The constant parameter of the specified name (if it exists).
             4. The setting of the specified key, e.g. 'xmin'.
 
         Parameters
@@ -1924,42 +1941,24 @@ class fitter():
         key
             String key, e.g. 'a' or 'coarsen'.
         """
+        fit_parameters = self.get_fit_parameters()
+        if fit_parameters and key in self._pnames:
+            return fit_parameters[0][self._pnames.index(key)]
 
-        # Default to fit parameters
-        if self.results and key in self.results.params.keys(): return self.results.params[key]
-        
-        # Then guess parameters
-        if key in self.p_in.keys():                            return self.p_in[key]
-        
-        # Then settings.
+        if key in self._pnames:
+            return self._pguess   [self._pnames.index(key)]
+
+        if key in self._cnames:
+            return self._constants[self._cnames.index(key)]
+
         return self._settings[key]
 
     __getitem__ = get
 
-    def _raise_error(self, message): raise BaseException(str(message))
+    def _error(self, message):
+        raise BaseException(str(message))
 
-    def _parse_parameter_string(self, p):
-        """
-        Returns a dictionary of key-value pairs for strings like 'a=-0.2, b, c'.
-        If no value is given, 1.0 is assumed. If p is None, returns empty dict()
-        """
-        r = dict() # return value
-        
-        # No parameters
-        if not p: return r
-        
-        # break up the parameter names and initial values.
-        for s in p.split(','):
-
-            # split by '=' and see if there is an initial value
-            s = s.split('=')
-
-            # add the key-value pair
-            r[s[0].strip()] = float(s[1]) if len(s)>1 else 1.0
-
-        return r            
-
-    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=-0.2, b, c=3', c=None, bg=None, g=None, **kwargs):
+    def set_functions(self,  f='a*x*cos(b*x)+c', p='a=-0.2, b, c=3', c=None, bg=None, **kwargs):
         """
         Sets the function(s) used to describe the data.
 
@@ -1983,29 +1982,53 @@ class fitter():
         bg=None
             Can be functions in the same format as f describing a
             background (which can be subtracted during fits, etc)
-        g=None
-            Can be a dictionary of globals for evaluating functions.
+
 
         Additional keyword arguments are added to the globals used when
         evaluating the functions.
         """
 
+        # initialize everything
+        self._pnames    = []
+        self._cnames    = []
+        self._pguess    = []
+        self._constants = []
+
         # Update the globals
-        if g: self._globals.update(g)
         self._globals.update(kwargs)
 
         # store these for later
         self._f_raw  = f
         self._bg_raw = bg
 
-        # Get dictionaries for the constants and parameters        
-        cs = self._parse_parameter_string(c)
-        ps = self._parse_parameter_string(p)
+        # break up the constant names and initial values.
+        if c:
+            for s in c.split(','):
 
-        # Create the parameters
-        self.p_in.clear()
-        for k in cs: self.p_in.add(k, cs[k], vary=False)
-        for k in ps: self.p_in.add(k, ps[k], vary=True)
+                # split by '=' and see if there is an initial value
+                s = s.split('=')
+
+                # add the name to the list
+                self._cnames.append(s[0].strip())
+
+                # if there is a guess value, add this (or 1.0)
+                if len(s) > 1: self._constants.append(float(s[1]))
+                else:          self._constants.append(1.0)
+
+
+        # break up the parameter names and initial values.
+        for s in p.split(','):
+
+            # split by '=' and see if there is an initial value
+            s = s.split('=')
+
+            # add the name to the list
+            self._pnames.append(s[0].strip())
+
+            # if there is a guess value, add this (or 1.0)
+            if len(s) > 1: self._pguess.append(float(s[1]))
+            else:          self._pguess.append(1.0)
+
 
         # use the internal settings we just set to create the functions
         self._update_functions()
@@ -2024,26 +2047,42 @@ class fitter():
         self.bg            = []
         self._fnames       = []
         self._bgnames      = []
-        
+        self._odr_models   = [] # Like f, but different parameters, for use in ODR
+
+
         f  = self._f_raw
         bg = self._bg_raw
 
         # make sure f and bg are lists of matching length
-        if not _functions.is_iterable(f) : f  = [f]
-        if not _functions.is_iterable(bg): bg = [bg]
+        if not _s.fun.is_iterable(f) : f  = [f]
+        if not _s.fun.is_iterable(bg): bg = [bg]
         while len(bg) < len(f): bg.append(None)
 
         # get a comma-delimited string list of parameter names for the "normal" function
-        pstring = 'x, ' + ', '.join(self.p_in.keys())
-        
+        pstring = 'x, ' + ', '.join(self._pnames)
+
+        # get the comma-delimited string for the ODR function
+        pstring_odr = 'x, '
+        for n in range(len(self._pnames)): pstring_odr = pstring_odr+'p['+str(n)+'], '
+
+        # update the globals for the functions
+        # the way this is done, we must redefine the functions
+        # every time we change a constant
+        for cname in self._cnames: self._globals[cname] = self[cname]
+
         # loop over all the functions and create the master list
         for n in range(len(f)):
 
             # if f[n] is a string, define a function on the fly.
             if isinstance(f[n], str):
+
+                # "Normal" least squares function (y-error bars only)
                 self.f.append( eval('lambda ' + pstring + ': ' + f[n],  self._globals))
                 self._fnames.append(f[n])
-                
+
+                # "ODR" compatible function (for x-error bars), based on self.f
+                self._odr_models.append( _odr.Model(eval('lambda p,x: self.f[n]('+pstring_odr+')', dict(self=self, n=n))))
+
             # Otherwise, just append it.
             else:
                 self.f.append(f[n])
@@ -2053,69 +2092,134 @@ class fitter():
             if isinstance(bg[n], str):
                 self.bg.append(eval('lambda ' + pstring + ': ' + bg[n], self._globals))
                 self._bgnames.append(bg[n])
-            
-            # Otherwise assume it's an actual function or None
             else:
                 self.bg.append(bg[n])
-                if bg[n] is None: self._bgnames.append('None')
+                if bg[n] is None: self._bgnames.append("None")
                 else:             self._bgnames.append(bg[n].__name__)
 
-        # update the format of all the settings (each setting should be a list of size equal to the number of data sets)
+        # update the format of all the settings
         for k in list(self._settings.keys()): self[k] = self[k]
 
         # make sure we don't think our fit results are valid!
         self.clear_results()
 
 
-    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, dtype=None, **kwargs):
+    def set_data(self, xdata=[1,2,3,4,5], ydata=[1.7,2,3,4,3], eydata=None, dtype=_n.float64, **kwargs):
         """
         This will handle the different types of supplied data and put everything
         in a standard format for processing.
 
         Parameters
         ----------
-        xdata, ydata, eydata=None
-            These can each be a single array of data, a number, or None (generates
-            integer arrays), or a list of any combination of these for fitting
-            multiple data sets.
-        dtype=None
+        xdata, ydata
+            These can be a single array of data or a list of data arrays.
+        eydata=None
+            Error bars for ydata. These can be None (for guessed error) or data
+            / numbers matching the dimensionality of xdata and ydata
+        dtype=numpy.float64
             When converting the data to arrays, use this conversion function.
+
+        Notes
+        -----
+        xdata, ydata, and eydata can all be scripts or lists of scripts that
+        produce arrays. Any python code will work, and the scripts
+        automatically know about all numpy functions, the guessed parameters,
+        and the data itself (as x, y, ey). However, the scripts are
+        executed in order -- xdata, ydata, and eydata -- so the xdata script
+        cannot know about ydata or eydata, the ydata script cannot know about
+        eydata, and the eydata script knows about xdata and ydata.
+
+        Example:
+          xdata  = [1,2,3,4,5]
+          ydata  = [[1,2,1,2,1], 'cos(x[0])']
+          eydata = ['arctan(y[1])*a+b', 5]
+
+        In this example, there will be two data sets to fit (so there better be
+        two functions!), they will share the same xdata, the second ydata set
+        will be the array cos([1,2,3,4,5]) (note since there are multiple data
+        sets assumed (always), you have to select the data set with an index
+        on x and y), the error on the first data set will be this weird
+        functional dependence on the second ydata set and fit parameters a and
+        b (note, if a and b are not fit parameters, then you must
+        send them as keyword arguments so that they are defined) and the second
+        data set error bar will be a constant, 5.
 
         Note this function is "somewhat" smart about reshaping the input
         data to ease life a bit, but it can't handle ambiguities. If you
         want to play it safe, supply lists for all three arguments that
         match in dimensionality.
+
+        results can be obtained by calling get_data()
+
+        Additional optional keyword arguments are added to the globals for
+        script evaluation.
         """
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
-        xdatas, ydatas = _functions._match_data_sets        (xdata, ydata)
-        eydatas        = _functions._match_error_to_data_set(ydatas, eydata)
 
-        # Convert all None to a guess value.
-        for n in range(len(eydatas)):
+        # At this stage:
+        # xdata,  ydata   'script', [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
+        # eydata, exdata  'script', [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], 3, [3,[1,2,3]], None
 
-            # If it's none, guess a value 0.2*(ymax-ymin)            
-            if eydatas[n] is None:
-                self._guessed_eydata = True
-                eyguess = 0.1*(max(ydatas[n])-min(ydatas[n]))
-                if eyguess == 0: eyguess = 1
-                eydatas[n] = _n.zeros(len(ydatas[n])) + eyguess
+        # if xdata, ydata, or eydata are bare scripts, make them into lists
+        if type(xdata)  is str: xdata  = [xdata]
+        if type(ydata)  is str: ydata  = [ydata]
+        if type(eydata) is str or _s.fun.is_a_number(eydata) or eydata is None: eydata = [eydata]
+        #if type(exdata) is str or _s.fun.is_a_number(exdata) or exdata is None: exdata = [exdata]
+
+        # xdata and ydata   ['script'], [1,2,3], [[1,2,3],'script'], ['script', [1,2,3]]
+        # eydata            ['script'], [1,1,1], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
+
+        # if the first element of data is a number, then this is a normal array
+        if _s.fun.is_a_number(xdata[0]): xdata = [xdata]
+        if _s.fun.is_a_number(ydata[0]): ydata = [ydata]
+
+        # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
+        # eydata            ['script'], [1,1,1],   [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
+
+        # if the first element of eydata is a number, this could also just be an error bar value
+        # Note: there is some ambiguity here, if the number of data sets equals the number of data points!
+        if _s.fun.is_a_number(eydata[0]) and len(eydata) == len(ydata[0]): eydata = [eydata]
+        #if _s.fun.is_a_number(exdata[0]) and len(exdata) == len(xdata[0]): exdata = [exdata]
+
+        # xdata and ydata   ['script'], [[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
+        # eydata            ['script'], [[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3], [3,[1,2,3]], [None]
+
+        # Inflate the x, ex, and ey data sets to match the ydata sets
+        while len(xdata)  < len(ydata): xdata .append( xdata[0])
+        while len(ydata)  < len(xdata): ydata .append( ydata[0])
+        #while len(exdata) < len(xdata): exdata.append(exdata[0])
+        while len(eydata) < len(ydata): eydata.append(eydata[0])
 
 
-        # Convert to arrays
-        for n in range(len(xdatas)): 
-            xdatas[n]  = _n.array(xdatas[n], dtype)
-            ydatas[n]  = _n.array(ydatas[n], dtype)
-            eydatas[n] = _n.array(eydatas[n],dtype)
+        # make sure these lists are the same length as the number of functions
+        while len(ydata)  < len(self.f): ydata.append(ydata[0])
+        while len(xdata)  < len(self.f): xdata.append(xdata[0])
+        while len(eydata) < len(self.f): eydata.append(eydata[0])
+        #while len(exdata) < len(self.f): exdata.append(exdata[0])
+
+        # xdata and ydata   ['script','script'], [[1,2,3],[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
+        # eydata            ['script','script'], [[1,1,1],[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3,3], [3,[1,2,3]], [None,None]
+
+        # Clean up exdata. If any element isn't None, the other None elements need
+        # to be set to 0 so that ODR works.
+#        if not exdata.count(None) == len(exdata):
+#            # Search for and replace all None's with 0
+#            for n in range(len(exdata)):
+#                if exdata[n] is None: exdata[n] = 0
+#
 
         # store the data, script, or whatever it is!
-        self._xdatas_given  = xdatas
-        self._ydatas_given  = ydatas
-        self._eydatas_given = eydatas
+        self._set_xdata  = xdata
+        self._set_ydata  = ydata
+        self._set_eydata = eydata
         self._dtype = dtype
-        
+        #self._set_exdata = exdata
+        self._set_data_globals.update(kwargs)
+
         # set the eyscale to 1 for each data set
-        self['scale_eydata'] = [1.0]*len(self._xdatas_given)
-        
+        self['scale_eydata'] = [1.0]*len(self._set_xdata)
+        #self['scale_exdata'] = [1.0]*len(self._set_xdata)
+
         # Update the settings so they match the number of data sets.
         for k in self._settings.keys(): self[k] = self[k]
 
@@ -2124,13 +2228,131 @@ class fitter():
 
         return self
 
+    def evaluate_script(self, script, **kwargs):
+        """
+        Evaluates the supplied script (python-executable string).
+        Useful for testing your scripts!
+
+        globals already include all of numpy objects plus
+
+        self = self
+        f    = self.f
+        bg   = self.bg
+
+        and all the current guess parameters and constants
+
+        kwargs are added to globals for script evaluation.
+        """
+        self._set_data_globals.update(kwargs)
+        return eval(script, self._set_data_globals)
+
     def get_data(self):
         """
-        Returns the original xdata, ydata, eydata, supplied by set_data().
+        Returns current xdata, ydata, eydata, after set_data()
+        has been run.
         """
-        if len(self._xdatas_given) == 0: return [], [], []
-        
-        return list(self._xdatas_given), list(self._ydatas_given), list(self._eydatas_given)
+        # make sure we've done a "set data" call
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return [[],[],[]]
+
+        # update the globals with the current fit parameter guess values
+        for n in range(len(self._pnames)): self._set_data_globals[self._pnames[n]] = self._pguess[n]
+        for n in range(len(self._cnames)): self._set_data_globals[self._cnames[n]] = self._constants[n]
+
+        # update the globals with x, y, and ey, and the functions
+        self._set_data_globals['f']    = self.f
+        self._set_data_globals['bg']   = self.bg
+        self._set_data_globals['self'] = self
+
+        # possibilities after calling set_data():
+        # xdata and ydata   ['script','script'], [[1,2,3],[1,2,3]], [[1,2,3],'script'], ['script', [1,2,3]]
+        # eydata            ['script','script'], [[1,1,1],[1,1,1]], [[1,1,1],'script'], ['script', [1,1,1]], [3,3], [3,[1,2,3]], [None,None]
+
+        # make a copy
+        xdata  = list(self._set_xdata)
+        ydata  = list(self._set_ydata)
+        eydata = list(self._set_eydata)
+        #exdata = list(self._set_exdata)
+
+        # make sure they're all lists of numpy arrays
+        for n in range(len(xdata)):
+
+            # For xdata, handle scripts or arrays
+            if type(xdata[n]) is str: xdata[n] = self.evaluate_script(xdata[n], **self._set_data_globals)
+            else:                     xdata[n] = _n.array(xdata[n])*1.0
+
+        # update the globals
+        self._set_data_globals['x'] = xdata
+
+        # make sure they're all lists of numpy arrays
+        for n in range(len(ydata)):
+
+            # For ydata, handle scripts or arrays
+            if type(ydata[n]) is str: ydata[n] = self.evaluate_script(ydata[n], **self._set_data_globals)
+            else:                     ydata[n] = _n.array(ydata[n])*1.0
+
+        # update the globals
+        self._set_data_globals['y'] = ydata
+
+        # make sure they're all lists of numpy arrays
+        self._guessed_eydata = False
+        for n in range(len(eydata)):
+
+            # handle scripts
+            if type(eydata[n]) is str:
+                eydata[n] = self.evaluate_script(eydata[n], **self._set_data_globals)
+
+            # handle None (possibly returned by script): take a visually-appealing guess at the error
+            if eydata[n] is None:
+                eydata[n] = _n.ones(len(xdata[n])) * (max(ydata[n])-min(ydata[n]))*0.05
+                self._guessed_eydata = True
+
+            # handle constant error bars (possibly returned by script)
+            if _s.fun.is_a_number(eydata[n]):
+                eydata[n] = _n.ones(len(xdata[n])) * eydata[n]
+
+            # make it an array
+            eydata[n] = _n.array(eydata[n]) * self["scale_eydata"][n]
+
+#        # make sure they're all lists of numpy arrays
+#        for n in range(len(exdata)):
+#
+#            # handle scripts
+#            if type(exdata[n]) is str:
+#                exdata[n] = self.evaluate_script(exdata[n], **self._set_data_globals)
+#
+#            # None is okay for exdata
+#
+#            # handle constant error bars (possibly returned by script)
+#            if _s.fun.is_a_number(exdata[n]):
+#                exdata[n] = _n.ones(len(xdata[n])) * exdata[n]
+#
+#            # make it an array
+#            if not exdata[n] is None:
+#                exdata[n] = _n.array(exdata[n]) * self["scale_exdata"][n]
+
+        # Make sure everything is a nice array of the right type.
+        # Note we have to do this loop because not all sets are the same length.
+        for n in range(len(xdata)):
+            xdata[n]  = _n.array(xdata[n],  dtype=self._dtype)
+            ydata[n]  = _n.array(ydata[n],  dtype=self._dtype)
+            eydata[n] = _n.array(eydata[n], dtype=self._dtype)
+
+        # Return it
+        return xdata, ydata, eydata
+
+
+    def get_fit_parameters(self):
+        """
+        If there are fit results, returns values, errors.
+        """
+        # No fit
+        if self.results    is None: return None
+
+        # Fit that didn't converge
+        if self.results[1] is None: return self.results[0], None
+
+        # Fit worked
+        return self.results[0], _n.sqrt(_n.diagonal(self.results[1]))
 
     def get_fit_results(self):
         """
@@ -2140,33 +2362,46 @@ class fitter():
         # No fit
         if self.results is None: return None
 
-        # Fit may have not converged, evidenced by not hasattr(results, 'covar')
+        # Fit may have not converged, evidenced by results[1] is None
 
         # Dictionary of all the stuff
         d = dict()
 
         # Loop over pnames
-        for k in self.results.var_names:
-            p = self.results.params[k]
-            
+        for n in range(len(self._pnames)):
+
             # Get the pname, fit value, and fit error
-            value = p.value
-            error = p.stderr
+            pname = self._pnames[n]
+            value = self.results[0][n]
+            error = None
+            if self.results[1] is not None: error = self.results[1][n][n]**0.5
 
             # Stuff it in the dictionary
-            d[k] = value
-            d[k+'.std'] = error
+            d[pname]        = value
+            d[pname+'.std'] = error
 
         # Include some other stuff
-        d['covariance']         = self.results.covar
-        d['chi2']               = self.results.chisqr
-        d['chi2s']              = self.get_chi_squareds()
-        d['reduced_chi2']       = self.results.redchi
-        d['reduced_chi2.std']   = _n.sqrt(2.0/self.get_degrees_of_freedom())
-        d['reduced_chi2s']      = self.get_reduced_chi_squareds()
-        d['get_degrees_of_freedom'] = self.get_degrees_of_freedom()
+        d['covariance']         = self.results[1]
+        d['chi2']               = self.chi_squared()
+        d['chi2s']              = self.chi_squareds()
+        d['reduced_chi2']       = self.reduced_chi_squared()
+        d['reduced_chi2.std']   = _n.sqrt(2.0/self.degrees_of_freedom())
+        d['reduced_chi2s']      = self.reduced_chi_squareds()
+        d['degrees_of_freedom'] = self.degrees_of_freedom()
 
         return d
+
+    def get_pnames(self):
+        """
+        Returns a list of parameter names.
+        """
+        return list(self._pnames)
+
+    def get_cnames(self):
+        """
+        Returns a list of constant names.
+        """
+        return list(self._cnames)
 
     def set_guess_to_fit_result(self):
         """
@@ -2178,7 +2413,7 @@ class fitter():
             return
 
         # loop over the results and set the guess values
-        for k in self.results.var_names: self.p_in[k].value = self.results.params[k].value
+        for n in range(len(self._pguess)): self._pguess[n] = self.results[0][n]
 
         if self['autoplot']: self.plot()
 
@@ -2208,7 +2443,7 @@ class fitter():
 
         # get the data
         xdatas, ydatas, eydatas = self.get_data()
-        
+
         # get the trim limits (trimits)
         xmins   = self['xmin']
         xmaxs   = self['xmax']
@@ -2224,20 +2459,24 @@ class fitter():
         if type(coarsen) is not list: coarsen = [coarsen]*len(xdatas)
 
         # this should cover all the data sets (dimensions should match!)
-        xdata_processed  = []
-        ydata_processed  = []
-        eydata_processed = []
+        xdata_massaged  = []
+        ydata_massaged  = []
+        eydata_massaged = []
+        #exdata_massaged = []
         for n in range(len(xdatas)):
 
             x  = xdatas[n]
             y  = ydatas[n]
             ey = eydatas[n]
-            
+            #ex = exdatas[n]
+
             # coarsen the data
             if do_coarsen:
-                x  =         _functions.coarsen_array(x,     self['coarsen'][n], 'mean')
-                y  =         _functions.coarsen_array(y,     self['coarsen'][n], 'mean')
-                ey = _n.sqrt(_functions.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+                x  =         _s.fun.coarsen_array(x,     self['coarsen'][n], 'mean')
+                y  =         _s.fun.coarsen_array(y,     self['coarsen'][n], 'mean')
+                ey = _n.sqrt(_s.fun.coarsen_array(ey**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
+#                if not ex is None:
+#                    ex = _n.sqrt(_s.fun.coarsen_array(ex**2, self['coarsen'][n], 'mean')/self['coarsen'][n])
 
             if do_trim:
                 # Create local mins and maxes
@@ -2253,13 +2492,13 @@ class fitter():
                 if ymax is None: ymax = max(y)
 
                 # trim the data
-                [xt, yt, eyt] = _functions.trim_data_uber([x, y, ey],
+                [xt, yt, eyt] = _s.fun.trim_data_uber([x, y, ey],
                                                       [x>=xmin, x<=xmax,
                                                        y>=ymin, y<=ymax])
 
                 # Catch the over-trimmed case
                 if(len(xt)==0):
-                    self._raise_error("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
+                    self._error("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
                 else:
                     x = xt
                     y = yt
@@ -2267,42 +2506,30 @@ class fitter():
                     #ex = ext
 
             # store the result
-            xdata_processed.append(x)
-            ydata_processed.append(y)
-            eydata_processed.append(ey)
-            
-        return xdata_processed, ydata_processed, eydata_processed
+            xdata_massaged.append(x)
+            ydata_massaged.append(y)
+            eydata_massaged.append(ey)
+            #exdata_massaged.append(ex)
 
-    def _process_data(self):
+        return xdata_massaged, ydata_massaged, eydata_massaged#, exdata_massaged
+
+    def _massage_data(self):
         """
         Processes the data and stores it.
         """
-        self._xdatas_processed, self._ydatas_processed, self._eydatas_processed = self.get_processed_data()
+        self._xdata_massaged, self._ydata_massaged, self._eydata_massaged = self.get_processed_data()
+
+#        # Create the odr data.
+#        self._odr_datas = []
+#        for n in range(len(self._xdata_massaged)):
+#            # Only exdata can be None; make sure it's zeros at least.
+#            ex = self._exdata_massaged[n]
+#            if ex is None: ex = _n.zeros(len(self._eydata_massaged[n]))
+#            self._odr_datas.append(_odr.RealData(self._xdata_massaged[n],
+#                                                 self._ydata_massaged[n],
+#                                                 sx=ex,
+#                                                 sy=self._eydata_massaged[n]))
         return self
-
-    def _studentized_residuals(self, p, xdatas, ydatas, eydatas):
-        """
-        Given the supplied parameters, return the studentized residuals of all
-        data sets.
-        """
-        # Get the list of parameter values
-        ps = []
-        for k in self.p_in.keys(): ps.append(p[k].value)
-        
-        # Collect the residuals for each data set
-        rs = []
-        for n in range(len(ydatas)): 
-            if n < len(self.f):
-                rs.append( (ydatas[n] - self.f[n](xdatas[n], *ps)) / eydatas[n])
-
-        # Concatenate and return
-        return rs     
-
-    def _studentized_residuals_concatenated(self, p, xdatas, ydatas, eydatas):
-        """
-        Returns concatenated 1D array of residuals.
-        """
-        return _n.concatenate(self._studentized_residuals(p,xdatas,ydatas,eydatas))
 
     def fit(self, **kwargs):
         """
@@ -2318,37 +2545,37 @@ class fitter():
         Optional keyword arguments are sent to self.set() prior to
         fitting.
         """
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            return self._raise_error("No data. Please use set_data() prior to fitting.")
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
+            return self._error("No data. Please use set_data() prior to fitting.")
         if self._f_raw is None:
-            return self._raise_error("No functions. Please use set_functions() prior to fitting.")
-        if len(self.f) != len(self._xdatas_given):
-            return self._raise_error("The number of functions must equal the number of data sets.")
-
+            return self._error("No functions. Please use set_functions() prior to fitting.")
 
         # Do the processing once, to increase efficiency
-        self._process_data()
+        self._massage_data()
 
         # Send the keyword arguments to the settings
         self.set(**kwargs)
 
         # do the actual optimization
-        self.results = _lm.minimize(self._studentized_residuals_concatenated, self.p_in, 
-                                    args=(self._xdatas_processed, self._ydatas_processed, self._eydatas_processed))
-        self.p_fit = self.results.params
+        self.results = _opt.leastsq(self._studentized_residuals_concatenated, self._pguess, full_output=1)
 
         # plot if necessary
         if self['autoplot']: self.plot()
 
-        return self        
+        return self
 
     def fix(self, *args, **kwargs):
         """
         Turns parameters to constants. As arguments, parameters must be strings.
         As keyword arguments, they can be set at the same time.
 
-        set_constants() is the same as fix(), and you can do all of this using
-        self.p_in directly.
+        Note this will NOT work when specifying a non-string fit function,
+        because there is no flexibility in the number of arguments. To get
+        around this, suppose you've defined a function stuff(x,a,b). Instead
+        of sending the stuff object to self.set_functions() directly, make it
+        a string function, e.g.:
+
+          self.set_functions('stuff(x,a,b)', 'a,b', stuff=stuff)
         """
 
         # first set all the keyword argument values
@@ -2359,99 +2586,130 @@ class fitter():
 
         # move each pname to the constants
         for pname in pnames:
-            
-            # Exists!
-            if pname in self.p_in.keys(): self.p_in[pname].vary = False
-                
-            # Naughty!
-            else: return self._raise_error("Naughty. '"+pname+"' is not a valid fit parameter name.")                
+            if not pname in self._pnames:
+                self._error("Naughty. '"+pname+"' is not a valid fit parameter name.")
 
-        self.clear_results().plot()
+            else:
+                n = self._pnames.index(pname)
+
+                # use the fit result if it exists
+                if self.results: value = self.results[0][n]
+
+                # otherwise use the guess value
+                else: value = self._pguess[n]
+
+                # make the switcheroo
+                if type(self._pnames)    is not list: self._pnames    = list(self._pnames)
+                if type(self._pguess)    is not list: self._pguess    = list(self._pguess)
+                if type(self._cnames)    is not list: self._cnames    = list(self._cnames)
+                if type(self._constants) is not list: self._constants = list(self._constants)
+                self._pnames.pop(n)
+                self._pguess.pop(n)
+                self._cnames.append(pname)
+                self._constants.append(value)
+
+                # update
+                self._update_functions()
+
         return self
-
-    set_constants = fix
 
     def free(self, *args, **kwargs):
         """
         Turns a constant into a parameter. As arguments, parameters must be strings.
         As keyword arguments, they can be set at the same time.
-        
-        set_variables() is the same as free(), and you can do all of this
-        using self.p_in directly.
         """
         # first set all the keyword argument values
         self.set(**kwargs)
 
         # get everything into one big list
-        pnames = list(args) + list(kwargs.keys())
+        cnames = list(args) + list(kwargs.keys())
 
         # move each pname to the constants
-        for pname in pnames:
-            
-            # Exists!
-            if pname in self.p_in.keys(): self.p_in[pname].vary = True
-                
-            # Naughty!
-            else: return self._raise_error("Naughty. '"+pname+"' is not a valid fit parameter name.")                
+        for cname in cnames:
 
-        self.clear_results().plot()
+            if not cname in self._cnames:
+                self._error("Naughty. '"+cname+"' is not a valid constant name.")
+
+            else:
+                n = self._cnames.index(cname)
+
+                # make the switcheroo
+                if type(self._pnames)    is not list: self._pnames    = list(self._pnames)
+                if type(self._pguess)    is not list: self._pguess    = list(self._pguess)
+                if type(self._cnames)    is not list: self._cnames    = list(self._cnames)
+                if type(self._constants) is not list: self._constants = list(self._constants)
+                self._pnames.append(self._cnames.pop(n))
+                self._pguess.append(self._constants.pop(n))
+
+                # update
+                self._update_functions()
+
         return self
-    
-    set_variables = free
-
-    def get_constants(self):
-        """
-        Returns a list of Parameters that are constant.
-        """
-        r = []
-        for pname in self.p_in:
-            if not self.p_in[pname].vary: r.append(self.p_in[pname])
-        return r
-
-    def get_variables(self):
-        """
-        Returns a list of Parameters that are constant.
-        """
-        r = []
-        for pname in self.p_in:
-            if self.p_in[pname].vary: r.append(self.p_in[pname])
-        return r
-
 
     def clear_results(self):
         """
         Removes any fit results.
         """
-        self.results = self.p_fit = None
+        self.results = None
         return self
 
-    def _parameters_to_list(self, p):
+    def _evaluate_all_functions(self, xdata, p=None):
         """
-        Takes the supplied Parameters() instance and returns a list of 
-        parameter values.
+        This returns a list of function outputs given the stored data sets.
+        This function relies on a previous call of set_data().
+
+        p=None means use the fit results
         """
-        ps = []
-        for pname in p: ps.append(p[pname])
-        return ps
+        if p is None: p = self.results[0]
+
+        output = []
+        for n in range(len(self.f)):
+            if len(self._xdata_massaged) > n:
+                output.append(self._evaluate_f(n, self._xdata_massaged[n], p) )
+
+        return output
 
     def _evaluate_f(self, n, xdata, p=None):
         """
-        Evaluates a single function n for arbitrary xdata and parameters p.
-        """        
-        return self.f[n](xdata, *self._parameters_to_list(p))
-        
+        Evaluates a single function n for arbitrary xdata and p tuple.
+
+        p=None means use the fit results
+        """
+        # by default, use the fit values, otherwise, use the guess values.
+        if   p is None and self.results is not None: p = self.results[0]
+        elif p is None and self.results is None:     p = self._pguess
+
+        # assemble the arguments for the function
+        args = (xdata,) + tuple(p)
+
+        # evaluate this function.
+        return self.f[n](*args)
+
     def _evaluate_bg(self, n, xdata, p=None):
         """
-        Evaluates a single background function n for arbitrary xdata and parameters p.
+        Evaluates a single background function n for arbitrary xdata and p tuple.
+
+        p=None means use the fit results
         """
-        if self.bg[n]: self.bg[n](xdata, *self._parameters_to_list(p))
-        
+        # by default, use the fit values, otherwise, use the guess values.
+        if   p is None and self.results is not None: p = self.results[0]
+        elif p is None and self.results is None:     p = self._pguess
+
+        # return None if there is no background function
+        if self.bg[n] is None: return None
+
+        # assemble the arguments for the function
+        args = (xdata,) + tuple(p)
+
+        # evaluate the function
+        return self.bg[n](*args)
+
     def _format_value_error(self, v, e, pm=" +/- "):
         """
         Returns a string v +/- e with the right number of sig figs.
         """
         # If we have weird stuff
-        if not _functions.is_a_number(v) or not _functions.is_a_number(e) \
+        if not _s.fun.is_a_number(v) or not _s.fun.is_a_number(e) \
             or v in [_n.inf, _n.nan, _n.NAN] or e in [_n.inf, _n.nan, _n.NAN]:
             return str(v)+pm+str(e)
 
@@ -2463,9 +2721,48 @@ class fitter():
         except:
             return str(v)+pm+str(e)
 
-    def get_studentized_residuals(self, p=None):
+    def _studentized_residuals_fast(self, p=None):
         """
-        Calculates the studentized residuals for each processed data set / function.
+        Returns a list of studentized residuals, (ydata - model)/error
+
+        This function relies on a previous call to set_data(), and assumes
+        self._massage_data() has been called (to increase speed).
+
+        Parameters
+        ----------
+        p=None
+            Function parameters to use. None means use the fit results; if no fit, use guess results.
+        """
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return
+
+        if p is None:
+            if self.results is None: p = self._pguess
+            else:                    p = self.results[0]
+
+        # evaluate the function for all the data, returns a list!
+        f = self._evaluate_all_functions(self._xdata_massaged, p)
+
+        # get the full residuals list
+        residuals = []
+        for n in range(len(f)):
+            numerator = self._ydata_massaged[n]-f[n]
+            denominator = _n.absolute(self._eydata_massaged[n])
+            residuals.append(numerator/denominator)
+        return residuals
+
+    def _studentized_residuals_concatenated(self, p=None):
+        """
+        This function returns a big long list of residuals so leastsq() knows
+        what to do with it. This function relies on a previous call to set_data()
+
+        p=None means use the fit results
+        """
+        return _n.concatenate(self._studentized_residuals_fast(p))
+
+    def studentized_residuals(self, p=None):
+        """
+        Massages the data and calculates the studentized residuals for
+        each data set / function.
 
         Parameters
         ----------
@@ -2473,69 +2770,72 @@ class fitter():
             List of parameter values for the functions. If None, it will use
             the fit results or guess values (if no fit results exist).
         """
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0: return None
-        
-        # Default parameters
-        if p == None and self.results: p = self.results.params
-        elif not p:                    p = self.p_in
-        
-        # Get the processed data and residuals
-        self._process_data()
-        return self._studentized_residuals(p, self._xdatas_processed, self._ydatas_processed, self._eydatas_processed)
+        self._massage_data()
+        return self._studentized_residuals_fast(p)
 
-    def get_chi_squareds(self, p=None):
+    def chi_squareds(self, p=None):
         """
-        Returns a list of chi squared for each processed data set.
+        Returns a list of chi squared for each data set. Also uses ydata_massaged.
 
-        p=None means use the fit results if possible, and guess results otherwise.
+        p=None means use the fit results
         """
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
+
+        if p is None: p = self.results[0]
+
         # get the residuals
-        rs = self.get_studentized_residuals(p)
+        rs = self.studentized_residuals(p)
 
-        # will be None if no data, etc
-        if rs: 
-            
-            # square em and sum em.
-            cs = []
-            for r in rs: cs.append(sum(r**2))
-            return cs
+        # Handle the none case
+        if rs is None: return None
 
-    def get_chi_squared(self, p=None):
+        # square em and sum em.
+        cs = []
+        for r in rs: cs.append(sum(r**2))
+        return cs
+
+    def chi_squared(self, p=None):
         """
-        Returns the total chi squared (summed over all processed data sets).
+        Returns the total chi squared (summed over all massaged data sets).
 
         p=None means use the fit results.
         """
-        chi2s = self.get_chi_squareds(p)
-        if chi2s: return sum(chi2s)
+        chi2s = self.chi_squareds(p)
+        if chi2s is None: return None
 
-    def get_degrees_of_freedom(self):
+        return sum(self.chi_squareds(p))
+
+    def degrees_of_freedom(self):
         """
-        Returns the number of degrees of freedom for processed data.
+        Returns the number of degrees of freedom.
         """
-        if len(self.f) == 0 or len(self._ydatas_given) == 0: 
-            return self._raise_error("You have to call self.set_functions() and self.set_data() first.")
-        
-        # Get the studentized residuals, which uses the processed data
-        # This should later be changed to get_processed_data()
-        xs, ys, eys = self.get_processed_data()
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
+
+        # Temporary hack: get the studentized residuals, which uses the massaged data
+        # This should later be changed to get_massaged_data()
+        r = self.studentized_residuals()
+
+        # Happens if data / functions not defined
+        if r is None: return
 
         # calculate the number of points
         N = 0.0
-        for i in range(len(xs)): N += len(xs[i])
+        for i in range(len(r)): N += len(r[i])
 
-        return N-len(self.p_in)
+        return N-len(self._pnames)
 
 
-    def get_reduced_chi_squareds(self, p=None):
+
+    def reduced_chi_squareds(self, p=None):
         """
-        Returns the reduced chi squared for each processed data set.
+        Returns the reduced chi squared for each massaged data set.
 
-        p=None means use the fit results (if defined) then guess values.
+        p=None means use the fit results.
         """
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0: return None
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
 
-        r = self.get_studentized_residuals(p)
+        if p is None: p = self.results[0]
+        r = self.studentized_residuals(p)
 
         # In case it's not possible to calculate
         if r is None: return
@@ -2544,25 +2844,30 @@ class fitter():
         N = 0
         for i in range(len(r)): N += len(r[i])
 
-        # degrees of freedom per point
-        dof_per_point = self.get_degrees_of_freedom()/N
+        # degrees of freedom
+        dof_per_point = self.degrees_of_freedom()/N
 
-        for n in range(len(r)): r[n] = sum(r[n]**2)/(len(r[n])*dof_per_point)
+        for n in range(len(r)):
+            r[n] = sum(r[n]**2)/(len(r[n])*dof_per_point)
 
         return r
 
-    def get_reduced_chi_squared(self, p=None):
+    def reduced_chi_squared(self, p=None):
         """
-        Returns the reduced chi squared for all processed data sets.
+        Returns the reduced chi squared for all massaged data sets.
 
-        p=None means use the fit results if defined, then use guess results.
+        p=None means use the fit results.
         """
-        chi2 = self.get_chi_squared(p)
-        dof  = self.get_degrees_of_freedom()
-        if not chi2 or not dof: return None
 
-        # Safe divider.
-        return _n.divide(self.get_chi_squared(p), self.get_degrees_of_freedom())
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return None
+        if p is None: p = self.results[0]
+
+        chi2 = self.chi_squared(p)
+        dof  = self.degrees_of_freedom()
+        if not _s.fun.is_a_number(chi2) or not _s.fun.is_a_number(dof):
+            return None
+
+        return _n.divide(self.chi_squared(p), self.degrees_of_freedom())
 
     def autoscale_eydata(self):
         """
@@ -2571,10 +2876,10 @@ class fitter():
         this a few times until it converges.
         """
         if not self.results:
-            self._raise_error("You must complete a fit first.")
+            self._error("You must complete a fit first.")
             return
 
-        r = self.get_reduced_chi_squareds()
+        r = self.reduced_chi_squareds()
 
         # loop over the eydata and rescale
         for n in range(len(r)): self["scale_eydata"][n] *= _n.sqrt(r[n])
@@ -2602,10 +2907,12 @@ class fitter():
         """
 
         # Make sure there is data to plot.
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0: return self
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0: return self
 
         # Make sure the figures is a list
-        if not self.figures is None and not type(self.figures) == list: self.figures = [self.figures]
+        if not self.figures is None and not type(self.figures) == list:
+            self.figures = [self.figures]
+
 
         # Get the trimmed and full processed data
         xts, yts, eyts = self.get_processed_data()
@@ -2615,16 +2922,17 @@ class fitter():
         for k in kwargs: self[k] = kwargs[k]
 
         # Calculate all studentized residuals
-        if len(self.f) > 0: rt = self.get_studentized_residuals()
+        if len(self.f) > 0: rt = self.studentized_residuals()
 
         # make a new figure for each data set
-        for n in range(len(self._xdatas_given)):
+        for n in range(len(self._set_xdata)):
             xt = xts[n]
             xa = xas[n]
             yt = yts[n]
             ya = yas[n]
             eyt = eyts[n]
             eya = eyas[n]
+            #ext = exts[n]
             eyt = eyts[n]
 
             # get the next figure
@@ -2645,9 +2953,6 @@ class fitter():
             a1.set_xscale(self['xscale'][n])
             a2.set_xscale(self['xscale'][n])
             a2.set_yscale(self['yscale'][n])
-            
-            # Set the window geometry
-            _s.tweaks.set_figure_window_geometry(fig, None, [500,500])
 
             # Get the function xdata
             fxa = self._get_xdata_for_function(n,xa)
@@ -2657,8 +2962,8 @@ class fitter():
             if self['subtract_bg'][n] and not self.bg[n] is None:
 
                 # if we have a fit, use that for the background
-                if self.results: p = self.p_fit
-                else:            p = self.p_in
+                if self.results: p = self.results[0]
+                else:            p = self._pguess
 
                 # Get the background data
                 d_ya  = self._evaluate_bg(n, xa,  p)
@@ -2711,25 +3016,25 @@ class fitter():
 
                         # FULL background GUESS
                         if self['plot_bg'][n] and self.bg[n] is not None:
-                            bg_gya = self._evaluate_bg(n, fxa, self.p_in)
+                            bg_gya = self._evaluate_bg(n, fxa, self._pguess)
                             a2.plot(fxa, bg_gya-d_fya, zorder=9, **style_guess)
 
                         # FULL guess
-                        gya = self._evaluate_f(n, fxa, self.p_in)
+                        gya = self._evaluate_f (n, fxa, self._pguess)
                         a2.plot(fxa, gya-d_fya, zorder=9, **style_guess)
 
                         # Update the trimmed datas so that the points line up
-                        [fxt] = _functions.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
+                        [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
 
                     # TRIMMED GUESS BACKGROUND
 
                     # TRIMMED guess background curve
                     if self['plot_bg'][n] and self.bg[n] is not None:
-                        bg_gyt = self._evaluate_bg(n, fxt, self.p_in)
+                        bg_gyt = self._evaluate_bg(n, fxt, self._pguess)
                         a2.plot(fxt, bg_gyt-d_fyt, zorder=9, **self['style_guess'][n])
 
                     # TRIMMED main guess curve
-                    gyt = self._evaluate_f (n, fxt, self.p_in)
+                    gyt = self._evaluate_f (n, fxt, self._pguess)
                     a2.plot(fxt, gyt-d_fyt, zorder=9, **self['style_guess'][n])
 
 
@@ -2745,23 +3050,23 @@ class fitter():
 
                         # FULL background fit
                         if self['plot_bg'][n] and self.bg[n] is not None:
-                            bg_fya = self._evaluate_bg(n, fxa, self.results.params)
+                            bg_fya = self._evaluate_bg(n, fxa, self.results[0])
                             a2.plot(fxa, bg_fya-d_fya, zorder=10, **style_fit)
 
                         # FULL fit
-                        fya = self._evaluate_f (n, fxa, self.results.params)
+                        fya = self._evaluate_f (n, fxa, self.results[0])
                         a2.plot(fxa, fya-d_fya, zorder=10, **style_fit)
 
                         # Update the trimmed datas so that the points line up
-                        [fxt] = _functions.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
+                        [fxt] = _s.fun.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
 
                     # TRIMMED FIT BACKGROUND
                     if self['plot_bg'][n] and self.bg[n] is not None:
-                        bg_fyt = self._evaluate_bg(n, fxt, self.results.params)
+                        bg_fyt = self._evaluate_bg(n, fxt, self.results[0])
                         a2.plot(fxt, bg_fyt-d_fyt, zorder=10, **self['style_fit'][n])
 
                     # TRIMMED main curve
-                    fyt = self._evaluate_f(n, fxt, self.results.params)
+                    fyt = self._evaluate_f(n, fxt, self.results[0])
                     a2.plot(fxt, fyt-d_fyt, zorder=10, **self['style_fit'][n])
 
                 if self['plot_guess_zoom'][n]: _s.tweaks.auto_zoom(axes=a2, draw=False)
@@ -2776,10 +3081,10 @@ class fitter():
 
                     # Figure out what guy to use for the residuals
                     if self.results is None:
-                        p = self.p_in
+                        p = self._pguess
                         style = style_guess
                     else:
-                        p = self.p_fit
+                        p = self.results[0]
                         style = style_fit
 
                     # Calculate them
@@ -2828,46 +3133,28 @@ class fitter():
             else:
                 t = "No functions defined. Use set_functions()."
 
-
-            # Now create the strings for Constants: ... and Fit: ...
-            constant_strings = []
-            fit_strings = []
-            for pname in self.p_in:
-                
-                # Fit and guess parameters stored in fit_strings
-                if self.p_in[pname].vary: 
-                    if self.results:
-                        fit_strings.append(pname+"={:s}".format(self._format_value_error(self.p_fit[pname].value, self.p_fit[pname].stderr, '$\pm$')))
-                    else:
-                        fit_strings.append(pname+"={:G}".format(self.p_in[pname].value))
-                
-                # Constants
-                else: constant_strings.append(pname+"={:G}".format(self.p_in[pname].value))
-
-            # do the line about constants
-            if len(constant_strings):
-                t1 = "Constants: "+', '.join(constant_strings)
+            if len(self._cnames):
+                t1 = "Constants: "
+                for i in range(len(self._cnames)):
+                    t1 = t1 + self._cnames[i] + "={:G}, ".format(self._constants[i])
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
-            # If the fit converged
-            if self.results and hasattr(self.results, 'covar'):
-                t1 = "Fit: "+', '.join(fit_strings) + \
-                    ', $\chi^2_r$={} ({} DOF)'.format(
-                        self._format_value_error(self.get_reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.get_degrees_of_freedom())), '$\pm$'),
-                        int(self.get_degrees_of_freedom()))
+            if self.results and not self.results[1] is None:
+                t1 = "Fit: "
+                for i in range(len(self._pnames)):
+                    t1 = t1 + self._pnames[i] + "={:s}, ".format(self._format_value_error(self.results[0][i], _n.sqrt(self.results[1][i][i]), '$\pm$'))
+                t1 = t1 + '$\chi^2_r$={} ({} DOF)'.format(
+                        self._format_value_error(self.reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.degrees_of_freedom())), '$\pm$'),
+                        int(self.degrees_of_freedom()))
+
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
-            # If the fit did not converge
             elif self.results:
-                t1 = "Fit did not converge: "+', '.join(fit_strings)
+                t1 = "Fit did not converge: "
+                for i in range(len(self._pnames)):
+                    t1 = t1 + self._pnames[i] + "={:8G}$, "
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
-            # No fit
-            else:
-                t1 = "Guess: "+', '.join(fit_strings)
-                t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
-
-            # Set the title to t
             a1.set_title(t, fontsize=10, ha='left', position=(0,1))
 
 
@@ -2907,7 +3194,8 @@ class fitter():
                                self['fpoints'][n], True, 10.0)
 
         # otherwise do linear spacing
-        else: return _n.linspace(min(xdata), max(xdata), self['fpoints'][n])
+        else:
+            return _n.linspace(min(xdata), max(xdata), self['fpoints'][n])
 
     def trim(self, n='all', x=True, y=True):
         """
@@ -2919,12 +3207,12 @@ class fitter():
         x=True      Trim the x-range
         y=True      Trim the y-range
         """
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            self._raise_error("No data. Please use set_data() and plot() prior to trimming.")
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
+            self._error("No data. Please use set_data() and plot() prior to trimming.")
             return
 
-        if _functions.is_a_number(n): n = [n]
-        elif isinstance(n,str):   n = list(range(len(self._xdatas_given)))
+        if _s.fun.is_a_number(n): n = [n]
+        elif isinstance(n,str):   n = list(range(len(self._set_xdata)))
 
         # loop over the specified plots
         for i in n:
@@ -2940,7 +3228,7 @@ class fitter():
                     self['ymax'][i] = ymax
 
             except:
-                self._raise_error("Data "+str(i)+" is not currently plotted.")
+                self._error("Data "+str(i)+" is not currently plotted.")
 
         # now show the update.
         self.clear_results()
@@ -2958,12 +3246,12 @@ class fitter():
             Which data set to perform this action upon. 'all' means all data
             sets, or you can specify a list.
         """
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            self._raise_error("No data. Please use set_data() and plot() prior to zooming.")
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
+            self._error("No data. Please use set_data() and plot() prior to zooming.")
             return
 
-        if   _functions.is_a_number(n): n = [n]
-        elif isinstance(n,str):     n = list(range(len(self._xdatas_given)))
+        if   _s.fun.is_a_number(n): n = [n]
+        elif isinstance(n,str):     n = list(range(len(self._set_xdata)))
 
         # loop over the specified plots
         for i in n:
@@ -2993,14 +3281,14 @@ class fitter():
         yfactor=2.0
             Factor by which to scale the y range.
         """
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            self._raise_error("No data. Please use set_data() and plot() prior to zooming.")
+        if len(self._set_xdata)==0 or len(self._set_ydata)==0:
+            self._error("No data. Please use set_data() and plot() prior to zooming.")
             return
 
         # get the data
         xdata, ydata, eydata = self.get_data()
 
-        if   _functions.is_a_number(n): n = [n]
+        if   _s.fun.is_a_number(n): n = [n]
         elif isinstance(n,str):     n = list(range(len(xdata)))
 
         # loop over the specified plots
@@ -3019,7 +3307,7 @@ class fitter():
                 self['ymin'][i] = yc - yfactor*ys
                 self['ymax'][i] = yc + yfactor*ys
             except:
-                self._raise_error("Data "+str(fig)+" is not currently plotted.")
+                self._error("Data "+str(fig)+" is not currently plotted.")
 
         # now show the update.
         self.clear_results()
@@ -3137,7 +3425,9 @@ if __name__ == '__main__':
 #    a = _s.pylab.gca()
 
     # Load a test file and fit it, making sure "f" is defined at each step.
-    f = fitter()
-    f.set_data()
-    
+    f = fitter(plot_all_data=True, plot_guess_zoom=True)
+    f.set_data([[1,2,3,4],[1,2,3]], [[1,2,1,2],[2,3,2]], [[1,1,1,1],3], dtype=_n.float32)
+    f.set_functions(['a*x+b', 'a*cos(x)+c'], 'a,b,c')
+    f.fix('a')
+    f.fit()
 

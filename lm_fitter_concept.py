@@ -52,9 +52,3 @@ for pname in pnames: pfit.add(pname, value=1.0)
 results = minimize(residuals_concatenated, pfit, args=(xdatas, ydatas))
 report_fit(results.params)
 
-
-# Comparison
-f = _s.data.fitter()
-f.set_data(xdatas, ydatas, 1)
-f.set_functions(fstrings, 'a,b')
-f.fit()

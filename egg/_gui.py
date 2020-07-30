@@ -3716,8 +3716,8 @@ class DataboxPlot(_d.databox, GridLayout):
             ey = g['ey'] # Use spinmob._plotting_mess
 
             # make everything the right shape
-            x, y = _s._plotting_mess._match_data_sets(x,y)
-            ey   = _s._plotting_mess._match_error_to_data_set(y,ey)
+            x, y = _s.fun._match_data_sets(x,y)
+            ey   = _s.fun._match_error_to_data_set(y,ey)
 
             # xlabels and ylabels should be strings or lists of strings
             xlabels = g['xlabels']

@@ -24,109 +24,7 @@ from scipy.special import *
 # handle for the colormap so it doesn't immediately close
 _colormap = None
 
-def _match_data_sets(x,y):
-    """
-    Makes sure everything is the same shape. "Intelligently".
-    """
 
-    # If x is a value, use this for the step size.
-    dx = 1.0
-    if _fun.is_a_number(x):
-        dx = x
-        x  = None
-
-    # Handle the None for x or y
-    if x is None or len(x) == 0:
-        # If x is None, y can be either [1,2] or [[1,2],[1,2]] or []
-        if len(y) == 0: x = []
-
-        elif _fun.is_iterable(y[0]):
-            # make an array of arrays to match
-            x = []
-            for n in range(len(y)):
-                x.append(list(dx*_n.array(range(len(y[n])))))
-        else: x = list(range(len(y)))
-
-    # If y is a value, use this for the step size.
-    dy = 1.0
-    if _fun.is_a_number(y):
-        dy = y
-        y  = None
-
-    if y is None or len(y) == 0:
-        # If y is none, x can be either [1,2] or [[1,2],[1,2]] or []
-        if len(x) == 0: y = []
-
-        elif _fun.is_iterable(x[0]):
-            # make an array of arrays to match
-            y = []
-            for n in range(len(x)):
-                y.append(list(dy*_n.array(range(len(x[n])))))
-        else: y = list(range(len(x)))
-
-    # At this point they should be matched, but may still be 1D
-    # Default behavior: if all elements are numbers in both, assume they match
-    if _fun.elements_are_numbers(x): x=[x]
-    if _fun.elements_are_numbers(y): y=[y]
-
-    # Make sure they are both lists (so append works!)
-    if not type(x) == list: x = list(x)
-    if not type(y) == list: y = list(y)
-
-    # Make sure they're the same length
-    while len(x) > len(y): y.append(y[-1])
-    while len(y) > len(x): x.append(x[-1])
-
-    # Second default behavior: shared array [1,2,3], [[1,2,1],[1,2,1]] or vis versa
-    if _fun.elements_are_numbers(x) and not _fun.elements_are_numbers(y): x = [x]*len(y)
-    if _fun.elements_are_numbers(y) and not _fun.elements_are_numbers(x): y = [y]*len(x)
-
-    # Clean up any remaining Nones
-    for n in range(len(x)):
-        if x[n] is None: x[n] = list(range(len(y[n])))
-        if y[n] is None: y[n] = list(range(len(x[n])))
-
-    return x, y
-
-def _match_error_to_data_set(x, ex):
-    """
-    Inflates ex to match the dimensionality of x, "intelligently".
-    x is assumed to be a 2D array.
-    """
-    # Simplest case, ex is None or a number
-    if not _fun.is_iterable(ex):
-
-        # Just make a matched list of Nones
-        if ex is None: ex = [ex]*len(x)
-
-        # Make arrays of numbers
-        if _fun.is_a_number(ex):
-            value = ex # temporary storage
-            ex    = []
-            for n in range(len(x)):
-                ex.append([value]*len(x[n]))
-
-    # At this point, ex is iterable
-
-    # Default behavior: If the elements are all numbers and the length matches
-    # that of the first x-array, assume this is meant to match all the x
-    # data sets
-    if _fun.elements_are_numbers(ex) and len(ex) == len(x[0]): ex = [ex]*len(x)
-
-    # Make sure it's a list (for appending)
-    if not type(ex) == list: ex = list(ex)
-
-    # The user may specify a list of some iterable and some not.
-    # The list length may not match
-    while len(ex) < len(x): ex.append(ex[-1])
-
-    # Now they are the same length
-    for n in range(len(x)):
-        # do nothing to the None's
-        # Inflate single numbers to match
-        if _fun.is_a_number(ex[n]): ex[n] = [ex[n]]*len(x[n])
-
-    return ex
 
 def _draw():
     """ Method for interactive drawing used by all plotters at the end."""
@@ -332,9 +230,9 @@ def magphase_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', mscal
     axes2 = _pylab.subplot(212,sharex=axes1)
 
     # Make sure the dimensionality of the data sets matches
-    xdata, ydata = _match_data_sets(xdata, ydata)
-    exdata = _match_error_to_data_set(xdata, exdata)
-    eydata = _match_error_to_data_set(ydata, eydata)
+    xdata, ydata = _fun._match_data_sets(xdata, ydata)
+    exdata = _fun._match_error_to_data_set(xdata, exdata)
+    eydata = _fun._match_error_to_data_set(ydata, eydata)
 
     # convert to magnitude and phase
     m  = []
@@ -505,9 +403,9 @@ def realimag_data(xdata, ydata, eydata=None, exdata=None, xscale='linear', rscal
     _pylab.ioff()
 
     # Make sure the dimensionality of the data sets matches
-    xdata, ydata = _match_data_sets(xdata, ydata)
-    exdata = _match_error_to_data_set(xdata, exdata)
-    eydata = _match_error_to_data_set(ydata, eydata)
+    xdata, ydata = _fun._match_data_sets(xdata, ydata)
+    exdata = _fun._match_error_to_data_set(xdata, exdata)
+    eydata = _fun._match_error_to_data_set(ydata, eydata)
 
     # convert to real imag, and get error bars
     rdata = []
@@ -698,9 +596,9 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     _pylab.ioff()
 
     # Make sure the dimensionality of the data sets matches
-    xdata, ydata = _match_data_sets(xdata, ydata)
-    exdata = _match_error_to_data_set(xdata, exdata)
-    eydata = _match_error_to_data_set(ydata, eydata)
+    xdata, ydata = _fun._match_data_sets(xdata, ydata)
+    exdata = _fun._match_error_to_data_set(xdata, exdata)
+    eydata = _fun._match_error_to_data_set(ydata, eydata)
 
     # check that the labels is a list of strings of the same length
     if not _fun.is_iterable(label): label = [label]*len(xdata)
