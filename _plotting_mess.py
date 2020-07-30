@@ -715,8 +715,8 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
     if clear and not axes: _pylab.gcf().clear() # axes cleared later
 
     # setup axes
-    if axes=="gca" or axes is None: axes = _pylab.gca()
-
+    if axes=="gca" or not axes: axes = _pylab.gca()
+    
     # if we're clearing the axes
     if clear: axes.clear()
 
