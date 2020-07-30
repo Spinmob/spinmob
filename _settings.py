@@ -36,7 +36,6 @@ class settings():
         if not _os.path.exists(self.path_settings):
             print(" Creating "+self.path_settings + "\n")
             f = open(self.path_settings, 'w')
-            f.write('dark_theme=True')
             f.close()
 
 
