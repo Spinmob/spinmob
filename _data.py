@@ -2087,10 +2087,11 @@ class fitter():
         match in dimensionality.
         """
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
-        xdatas, ydatas = _functions._match_data_sets        (xdata, ydata)
+        xdatas, ydatas = _functions._match_data_sets        (xdata,  ydata)
         eydatas        = _functions._match_error_to_data_set(ydatas, eydata)
 
         # Convert all None to a guess value.
+        self._guessed_eydata = False
         for n in range(len(eydatas)):
 
             # If it's none, guess a value 0.2*(ymax-ymin)            
@@ -2099,7 +2100,6 @@ class fitter():
                 eyguess = 0.1*(max(ydatas[n])-min(ydatas[n]))
                 if eyguess == 0: eyguess = 1
                 eydatas[n] = _n.zeros(len(ydatas[n])) + eyguess
-
 
         # Convert to arrays
         for n in range(len(xdatas)): 
