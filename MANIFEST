@@ -3,6 +3,7 @@ README.rst
 setup.py
 ./__init__.py
 ./_data.py
+./_data_old.py
 ./_dialogs.py
 ./_functions.py
 ./_fusion_theme.py
@@ -20,6 +21,8 @@ setup.py
 ./_pylab_tweaks.py
 ./_settings.py
 ./_spline.py
+./lm_fitter_concept.py
+./lm_fitter_test.py
 ./egg/__init__.py
 ./egg/_gui.py
 ./egg/_syntax.py

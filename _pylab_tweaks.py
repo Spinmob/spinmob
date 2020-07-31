@@ -331,7 +331,7 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
         # set the position of the legend
         _pylab.axes(axes) # set the current axes
         if len(axes.lines)>0:
-            _pylab.legend(loc=[legend_position, 0], borderpad=0.02, prop=_FontProperties(size=7))
+            _pylab.legend(loc=[legend_position, 0], borderpad=0.5, prop=_FontProperties(size=_s.settings['font_size_legend']))
 
         # set the label spacing in the legend
         if axes.get_legend():
@@ -343,8 +343,13 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
         axes.title.set_size(8)
         axes.title.set_position([1.5,1.02])
         axes.title.set_visible(1)
+        axes.title.set_fontsize(_s.settings['font_size_title'])
         #axes.yaxis.label.set_horizontalalignment('center')
         #axes.xaxis.label.set_horizontalalignment('center')
+        
+        # Axes labels
+        axes.xaxis.label.set_fontsize(_s.settings['font_size_axis_labels'])
+        axes.yaxis.label.set_fontsize(_s.settings['font_size_axis_labels'])
 
     _pylab.axes(current_axes)
 
@@ -1554,145 +1559,7 @@ def yscale(scale='log'):
     _pylab.yscale(scale)
     _pylab.draw()
 
-def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial', font_size=12, font_weight='normal',
-             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005,
-             window_size=[550,400], window_position=[0,0],
-             keep_title=False, title_font_size=14, title_font_weight='normal',
-             keep_axis_labels=True, axis_label_font_size=14, axis_label_font_weight='normal',
-             keep_legend=True, grid=False):
-    """
 
-    This guy performs the ubertidy, which some of us use to prep a figure
-    for talks or papers.
-
-    Parameters
-    ----------
-    figure="gcf"
-        Which figure to tidy.
-    zoom=True
-        Whether to auto-zoom on the data
-    width=None
-        Width of the axes (relative to window)
-    height=None
-        Height of the axes (relative to window)
-    font_name='Arial'
-        Must be installed on system
-    font_size=12
-        Font size for all but axis labels
-    font_weight='normal'
-        Could be 'bold'
-    border_width=1.2
-        Thickness of the axes border
-    tick_width=1
-        Thickness of ticks
-    ticks_point="in"
-        Whether ticks point "in" or "out" of axis
-    xtick_label_pad=0.010
-        Padding on x-tick labels
-    ytick_label_pad=0.008
-        Padding on y-tick labels
-    window_size=[550,400]
-        Size of window in pixels
-    window_position=[0,0]
-        Coordinates of the upper left corner.
-    keep_axis_labels=True
-        Whether to keep the axis labels
-    keep_title=False
-        Whether to keep the title
-    axis_label_font_size=14
-        Font size for axis labels
-    axis_label_font_weight='normal'
-        Could be 'bold'
-    keep_legend=False
-        Whether to keep the legend
-    grid=False
-        Whether to add a grid.
-    """
-
-    if figure=="gcf": f = _pylab.gcf()
-    else:             f = figure
-
-    # set the window to a standard size
-    set_figure_window_geometry(fig=f, position=window_position, size=window_size)
-
-    for n in range(len(f.axes)):
-
-        # get the axes
-        a = f.axes[n]
-
-        # set the current axes
-        _pylab.axes(a)
-
-        # we want thick axis lines
-        a.spines['top']     .set_linewidth(border_width)
-        a.spines['left']    .set_linewidth(border_width)
-        a.spines['bottom']  .set_linewidth(border_width)
-        a.spines['right']   .set_linewidth(border_width)
-
-        # get the tick lines in one big list
-        xticklines = a.get_xticklines()
-        yticklines = a.get_yticklines()
-
-        # set their marker edge width
-        _pylab.setp(xticklines+yticklines, mew=tick_width)
-
-        # set what kind of tickline they are (outside axes)
-        if ticks_point=="out":
-            for n in range(len(xticklines)):
-                if not n%2: xticklines[n].set_marker(_mpl.lines.TICKDOWN)
-                else:       xticklines[n].set_marker(_mpl.lines.TICKUP)
-            for n in range(len(yticklines)):
-                if not n%2: yticklines[n].set_marker(_mpl.lines.TICKLEFT)
-                else:       yticklines[n].set_marker(_mpl.lines.TICKRIGHT)
-        else:
-            for n in range(len(xticklines)):
-                if n%2: xticklines[n].set_marker(_mpl.lines.TICKDOWN)
-                else:   xticklines[n].set_marker(_mpl.lines.TICKUP)
-            for n in range(len(yticklines)):
-                if n%2: yticklines[n].set_marker(_mpl.lines.TICKLEFT)
-                else:   yticklines[n].set_marker(_mpl.lines.TICKRIGHT)
-
-
-        # we want bold fonts
-        _pylab.xticks(fontsize=font_size, fontweight=font_weight, fontname=font_name)
-        _pylab.yticks(fontsize=font_size, fontweight=font_weight, fontname=font_name)
-
-        # we want to give the labels some breathing room (1% of the data range)
-        for label in _pylab.xticks()[1]: label.set_y(-xlabel_pad)
-        for label in _pylab.yticks()[1]: label.set_x(-ylabel_pad)
-
-        # get rid of tick label offsets
-        #a.ticklabel_format(style='plain')
-
-        # set the position/size of the axis in the window
-        p = a.get_position().bounds
-        if width:  a.set_position([0.15,p[1],0.15+width*0.5,p[3]])
-        p = a.get_position().bounds
-        if height: a.set_position([p[0],0.17,p[2],0.17+height*0.5])
-
-        # set the axis labels to empty (so we can add them with a drawing program)
-        if not keep_title:
-            a.set_title('')
-        else:
-            title = a.get_title()
-            a.set_title('')
-            _pylab.title(title, fontsize=title_font_size, fontweight=title_font_weight, fontname=font_name, horizontalalignment='right')
-
-        if not keep_axis_labels:
-            a.set_xlabel('')
-            a.set_ylabel('')
-        else:
-            _pylab.xlabel(a.get_xlabel(), fontsize=axis_label_font_size, fontweight=axis_label_font_weight, fontname=font_name)
-            _pylab.ylabel(a.get_ylabel(), fontsize=axis_label_font_size, fontweight=axis_label_font_weight, fontname=font_name)
-
-        # kill the legend
-        if not keep_legend: a.legend_ = None
-
-        # Grid
-        if grid: a.grid(ls='--', color=(0.9,0.9,0.9))
-
-        # zoom!
-        if zoom: auto_zoom(axes=a)
 
 def make_inset(figure="current", width=1, height=1):
     """
@@ -1977,7 +1844,145 @@ def legend(location='best', fontsize=16, axes="gca"):
     axes.legend(loc=location, prop=_mpl.font_manager.FontProperties(size=fontsize))
     _pylab.draw()
 
+def ubertidy(figure="gcf", zoom=True, width=None, height=None, font_name='Arial', font_size=12, font_weight='normal',
+             border_width=1.2, tick_width=1, ticks_point="in", xlabel_pad=0.010, ylabel_pad=0.005,
+             window_size=[550,400], window_position=[0,0],
+             keep_title=False, title_font_size=14, title_font_weight='normal',
+             keep_axis_labels=True, axis_label_font_size=14, axis_label_font_weight='normal',
+             keep_legend=True, grid=False):
+    """
 
+    This guy performs the ubertidy, which some of us use to prep a figure
+    for talks or papers.
+
+    Parameters
+    ----------
+    figure="gcf"
+        Which figure to tidy.
+    zoom=True
+        Whether to auto-zoom on the data
+    width=None
+        Width of the axes (relative to window)
+    height=None
+        Height of the axes (relative to window)
+    font_name='Arial'
+        Must be installed on system
+    font_size=12
+        Font size for all but axis labels
+    font_weight='normal'
+        Could be 'bold'
+    border_width=1.2
+        Thickness of the axes border
+    tick_width=1
+        Thickness of ticks
+    ticks_point="in"
+        Whether ticks point "in" or "out" of axis
+    xtick_label_pad=0.010
+        Padding on x-tick labels
+    ytick_label_pad=0.008
+        Padding on y-tick labels
+    window_size=[550,400]
+        Size of window in pixels
+    window_position=[0,0]
+        Coordinates of the upper left corner.
+    keep_axis_labels=True
+        Whether to keep the axis labels
+    keep_title=False
+        Whether to keep the title
+    axis_label_font_size=14
+        Font size for axis labels
+    axis_label_font_weight='normal'
+        Could be 'bold'
+    keep_legend=False
+        Whether to keep the legend
+    grid=False
+        Whether to add a grid.
+    """
+
+    if figure=="gcf": f = _pylab.gcf()
+    else:             f = figure
+
+    # set the window to a standard size
+    set_figure_window_geometry(fig=f, position=window_position, size=window_size)
+
+    for n in range(len(f.axes)):
+
+        # get the axes
+        a = f.axes[n]
+
+        # set the current axes
+        _pylab.axes(a)
+
+        # we want thick axis lines
+        a.spines['top']     .set_linewidth(border_width)
+        a.spines['left']    .set_linewidth(border_width)
+        a.spines['bottom']  .set_linewidth(border_width)
+        a.spines['right']   .set_linewidth(border_width)
+
+        # get the tick lines in one big list
+        xticklines = a.get_xticklines()
+        yticklines = a.get_yticklines()
+
+        # set their marker edge width
+        _pylab.setp(xticklines+yticklines, mew=tick_width)
+
+        # set what kind of tickline they are (outside axes)
+        if ticks_point=="out":
+            for n in range(len(xticklines)):
+                if not n%2: xticklines[n].set_marker(_mpl.lines.TICKDOWN)
+                else:       xticklines[n].set_marker(_mpl.lines.TICKUP)
+            for n in range(len(yticklines)):
+                if not n%2: yticklines[n].set_marker(_mpl.lines.TICKLEFT)
+                else:       yticklines[n].set_marker(_mpl.lines.TICKRIGHT)
+        else:
+            for n in range(len(xticklines)):
+                if n%2: xticklines[n].set_marker(_mpl.lines.TICKDOWN)
+                else:   xticklines[n].set_marker(_mpl.lines.TICKUP)
+            for n in range(len(yticklines)):
+                if n%2: yticklines[n].set_marker(_mpl.lines.TICKLEFT)
+                else:   yticklines[n].set_marker(_mpl.lines.TICKRIGHT)
+
+
+        # we want bold fonts
+        _pylab.xticks(fontsize=font_size, fontweight=font_weight, fontname=font_name)
+        _pylab.yticks(fontsize=font_size, fontweight=font_weight, fontname=font_name)
+
+        # we want to give the labels some breathing room (1% of the data range)
+        for label in _pylab.xticks()[1]: label.set_y(-xlabel_pad)
+        for label in _pylab.yticks()[1]: label.set_x(-ylabel_pad)
+
+        # get rid of tick label offsets
+        #a.ticklabel_format(style='plain')
+
+        # set the position/size of the axis in the window
+        p = a.get_position().bounds
+        if width:  a.set_position([0.15,p[1],0.15+width*0.5,p[3]])
+        p = a.get_position().bounds
+        if height: a.set_position([p[0],0.17,p[2],0.17+height*0.5])
+
+        # set the axis labels to empty (so we can add them with a drawing program)
+        if not keep_title:
+            a.set_title('')
+        else:
+            title = a.get_title()
+            a.set_title('')
+            _pylab.title(title, fontsize=title_font_size, fontweight=title_font_weight, fontname=font_name, horizontalalignment='right')
+
+        if not keep_axis_labels:
+            a.set_xlabel('')
+            a.set_ylabel('')
+        else:
+            _pylab.xlabel(a.get_xlabel(), fontsize=axis_label_font_size, fontweight=axis_label_font_weight, fontname=font_name)
+            _pylab.ylabel(a.get_ylabel(), fontsize=axis_label_font_size, fontweight=axis_label_font_weight, fontname=font_name)
+
+        # kill the legend
+        if not keep_legend: a.legend_ = None
+
+        # Grid
+        if grid: a.grid(ls='--', color=(0.9,0.9,0.9))
+
+        # zoom!
+        if zoom: auto_zoom(axes=a)
 
 
 #

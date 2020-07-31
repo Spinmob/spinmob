@@ -1,12 +1,10 @@
-
-
-version = '3.3.0'
+__version__ = '3.3.2' # Keep this on the first line.
 
 
 
 from distutils.core import setup
 setup(name           = 'Spinmob',
-      version        = version,
+      version        = __version__,
       description    = 'Data Handling, Plotting, Analysis, and GUI Building for Laboratories',
       author         = 'Jack Sankey',
       author_email   = 'jack.sankey@gmail.com',

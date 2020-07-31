@@ -3,6 +3,7 @@ import sys          as _sys
 import matplotlib   as _mpl
 import pylab
 
+
 # Try to run the qt magic first
 try:
     if not pylab.get_backend()[0:2] == 'Qt':
@@ -25,6 +26,9 @@ from . import _settings
 settings = _settings.settings()
 fun._settings  = settings
 data._settings = settings
+
+# Get the version
+exec(fun.read_lines(_os.path.join(__path__[0],'setup.py'))[0])
 
 
 def _warn(*args):
@@ -55,7 +59,9 @@ try:
     _qtapp.setStyle('Fusion')
     
     # Dark theme
-    if settings['dark_theme']: from . import _fusion_theme    
+    if settings['dark_theme']: 
+        from . import _fusion_theme
+        pylab.style.use('dark_background')
 
 except:
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
@@ -65,10 +71,6 @@ except:
     _qtw = None
     _qtapp = None
 
-
-
-# some defaults
-_mpl.rcParams['figure.facecolor']='w'
 
 
 if _sys.version[0] == '2':
@@ -83,5 +85,14 @@ plot.tweaks._pylab_colormap._settings = settings
 
 instaprint = tweaks.instaprint
 
+# Default settings
+_defaults = dict(
+    dark_theme            = False,
+    font_size_legend      = 9,
+    font_size_axis_labels = 12,
+    font_size_title       = 10,)
+
+for _k in _defaults: 
+    if not _k in settings.keys(): settings[_k] = _defaults[_k]
 
 

@@ -663,6 +663,11 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
             title = title + "\n" + history[n].split('\n')[0].strip()
 
         title = title + '\nPlot created ' + _time.asctime()
+        
+        # Try to add the last command to the title.
+        try: title = title + '\n' + list(get_ipython().history_manager.get_range())[-1][2]
+        except: pass
+        
         axes.set_title(title)
 
     if grid: _pylab.grid(True)
