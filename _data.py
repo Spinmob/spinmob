@@ -2399,6 +2399,15 @@ class fitter():
     
     set_variables = free
 
+    def get_pnames(self):
+        """
+        Returns a list of parameter names.
+        """
+        pnames = []
+        for pname in self.p_fit: pnames.append(pname)
+        return pnames
+
+
     def get_constants(self):
         """
         Returns a list of Parameters that are constant.
