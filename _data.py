@@ -1868,10 +1868,10 @@ class fitter():
 
         # Always print the guess parameters
         for pname in self.p_in: 
-            s = s + str("  {:"+l+"s} = {:G}, vary={:G} min={:G} max={:G} expr={:s}\n").format(
+            s = s + str("  {:"+l+"s} = {:G}, vary={:s} min={:G} max={:G} expr={:s}\n").format(
                 pname, 
                 self.p_in[pname].value,
-                self.p_in[pname].vary,
+                str(self.p_in[pname].vary == 1),
                 self.p_in[pname].min,
                 self.p_in[pname].max,
                 repr(self.p_in[pname].expr))
@@ -2828,7 +2828,7 @@ class fitter():
 
 
             # Assemble the title
-            wrap = 80
+            wrap = 100
             indent = '      '
 
             # Include the function names if available
