@@ -41,6 +41,10 @@ def _get_standard_title():
             def f(*a, **kw): return a[0]
             command = eval('f'+command[7:], dict(f=f))
             
+        
+        # Just the last line
+        command = command.replace('\n', '; ')
+            
         title = title + '\n' + command
     except: pass
     return title

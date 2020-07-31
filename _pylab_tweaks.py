@@ -285,7 +285,7 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
 
     if modify_geometry:
         if tall: set_figure_window_geometry(figure, (0,0), (550,700))
-        else:    set_figure_window_geometry(figure, (0,0), (550,400))
+        else:    set_figure_window_geometry(figure, (0,0), (550,450))
 
     legend_position=1.01
 
@@ -303,7 +303,7 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
 
     # Fraction of the figure's width and height to use for all the plots.
     w = 0.55
-    h = 0.75
+    h = 0.70
 
     # buffers on left and bottom edges
     bb = 0.15
