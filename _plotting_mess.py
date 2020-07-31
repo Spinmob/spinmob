@@ -25,6 +25,27 @@ from scipy.special import *
 _colormap = None
 
 
+def _get_standard_title():
+    """
+    Gets the standard title.
+    """
+    
+    title = 'Plot created ' + _time.asctime()
+        
+    # Try to add the last command to the title.
+    try: 
+        command = list(get_ipython().history_manager.get_range())[-1][2]
+        
+        # Get the path of the runfile()
+        if command[0:8] == 'runfile(':
+            def f(*a, **kw): return a[0]
+            command = eval('f'+command[7:], dict(f=f))
+            
+        title = title + '\n' + command
+    except: pass
+    return title
+        
+
 
 def _draw():
     """ Method for interactive drawing used by all plotters at the end."""
@@ -662,11 +683,8 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
         for n in range(0, min(shell_history, len(history))):
             title = title + "\n" + history[n].split('\n')[0].strip()
 
-        title = title + '\nPlot created ' + _time.asctime()
+        title = title + '\n' + _get_standard_title()
         
-        # Try to add the last command to the title.
-        try: title = title + '\n' + list(get_ipython().history_manager.get_range())[-1][2]
-        except: pass
         
         axes.set_title(title)
 
@@ -1025,7 +1043,7 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     for n in range(0, min(shell_history, len(history))):
         title = title + "\n" + history[n].split('\n')[0].strip()
 
-    title = title + '\nPlot created ' + _time.asctime()
+    title = title + '\n' + _get_standard_title()
     a.set_title(title.strip())
 
     if autoformat: _pt.image_format_figure(fig)

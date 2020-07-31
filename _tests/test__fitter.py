@@ -216,6 +216,13 @@ class Test_fitter(_ut.TestCase):
         f.__repr__()
         f.fit()
         f.__repr__()
+        
+    def test_background(self):
+        f = _s.data.fitter(xmin=2, plot_guess_zoom=True, plot_all_data=True)
+        f.set_data()
+        f.set_functions('stuff*cos(x*other_stuff)+final_stuff', 'stuff, other_stuff, final_stuff', bg='final_stuff')
+        f.fit()
+    
 
 if __name__ == "__main__":
     _ut.main()

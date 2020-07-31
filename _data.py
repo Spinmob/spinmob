@@ -1772,6 +1772,15 @@ class fitter():
                  style_fit    = dict(marker='',  color='r',   ls='-'),
                  style_guess  = dict(marker='',  color='0.25',ls='-'),
                  style_bg     = dict(marker='',  color='k',   ls='-'),)
+        
+        if _s.settings['dark_theme']:
+            self.set(
+                 style_data   = dict(marker='o', color='#77AAFF',ls='', mec='#77AAFF'),
+                 style_fit    = dict(marker='',  color='#FF7777',ls='-'),
+                 style_guess  = dict(marker='',  color='0.5',ls='-'),
+                 style_bg     = dict(marker='',  color='k',   ls='-'),)
+                
+        
         self._no_autoplot = False
 
         # Update with additional kwargs, and run the usual processes.
@@ -2453,7 +2462,7 @@ class fitter():
         """
         Evaluates a single background function n for arbitrary xdata and parameters p.
         """
-        if self.bg[n]: self.bg[n](xdata, *self._parameters_to_list(p))
+        if self.bg[n]: return self.bg[n](xdata, *self._parameters_to_list(p))
         
     def _format_value_error(self, v, e, pm=" +/- "):
         """
@@ -2609,6 +2618,7 @@ class fitter():
 
         kwargs will update the settings
         """
+        alpha = 0.57 if _s.settings['dark_theme'] else 0.3
 
         # Make sure there is data to plot.
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0: return self
@@ -2690,7 +2700,7 @@ class fitter():
             if self['plot_all_data'][n]:
 
                 # Make it faint.
-                style_data  = dict(self['style_data' ][n]); style_data ['alpha'] = 0.3
+                style_data  = dict(self['style_data' ][n]); style_data ['alpha'] = alpha
 
                 if self['plot_errors'][n]: a2.errorbar(xa, ya-d_ya, eya, zorder=5, **style_data)
                 else:                      a2.plot    (xa, ya-d_ya,      zorder=5, **style_data)
@@ -2716,7 +2726,7 @@ class fitter():
                     if self['plot_all_data'][n]:
 
                         # Make it faint.
-                        style_guess = dict(self['style_guess'][n]); style_guess['alpha'] = 0.3
+                        style_guess = dict(self['style_guess'][n]); style_guess['alpha'] = alpha
 
                         # FULL background GUESS
                         if self['plot_bg'][n] and self.bg[n] is not None:
@@ -2750,7 +2760,7 @@ class fitter():
                     if self['plot_all_data'][n]:
 
                         # Make it faint.
-                        style_fit = dict(self['style_fit'][n]); style_fit['alpha'] = 0.3
+                        style_fit = dict(self['style_fit'][n]); style_fit['alpha'] = alpha
 
                         # FULL background fit
                         if self['plot_bg'][n] and self.bg[n] is not None:
@@ -3146,7 +3156,9 @@ if __name__ == '__main__':
 #    a = _s.pylab.gca()
 
     # Load a test file and fit it, making sure "f" is defined at each step.
-    f = fitter()
+    f = fitter(xmin=2, plot_guess_zoom=True, plot_all_data=True)
     f.set_data()
+    f.set_functions('stuff*cos(x*other_stuff)+final_stuff', 'stuff, other_stuff, final_stuff', bg='final_stuff')
+    f.fit()
     
 
