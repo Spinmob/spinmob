@@ -59,9 +59,8 @@ try:
     _qtapp.setStyle('Fusion')
     
     # Dark theme
-    if settings['dark_theme']: 
-        from . import _fusion_theme
-        pylab.style.use('dark_background')
+    if settings['dark_theme_qt']: from . import _fusion_theme
+    if settings['dark_theme_figures']: pylab.style.use('dark_background')
 
 except:
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
@@ -87,7 +86,8 @@ instaprint = tweaks.instaprint
 
 # Default settings
 _defaults = dict(
-    dark_theme            = False,
+    dark_theme_qt        = False,
+    dark_theme_figures    = False,
     font_size_legend      = 9,
     font_size_axis_labels = 12,
     font_size_title       = 10,)

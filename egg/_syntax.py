@@ -191,7 +191,7 @@ class PythonHighlighter(QSyntaxHighlighter):
                       for (pat, index, fmt) in rules]
 
     def styles(self, style):
-        return DARK_STYLES[style] if spinmob.settings['dark_theme'] else LIGHT_STYLES[style]
+        return DARK_STYLES[style] if spinmob.settings['dark_theme_qt'] else LIGHT_STYLES[style]
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.

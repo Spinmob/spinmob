@@ -54,7 +54,10 @@ class settings():
 
     def __repr__(self):
         s = '\nSPINMOB SETTINGS'
-        for key in list(self._databox.hkeys):
+        keys = list(self._databox.hkeys)
+        keys.sort()
+        
+        for key in keys:
             s = s + "\n  " + key + " = " + repr(self._databox.h(key))
         return s
 

@@ -3786,7 +3786,7 @@ class DataboxPlot(_d.databox, GridLayout):
             # Show the error
             self._label_script_error.show()
             self._label_script_error.set_text('OOP! '+ type(e).__name__ + ": '" + str(e.args[0]) + "'")
-            if _s.settings['dark_theme']: self._label_script_error.set_colors('pink', None)
+            if _s.settings['dark_theme_qt']: self._label_script_error.set_colors('pink', None)
             else:                         self._label_script_error.set_colors('red', None)
 
         return self
@@ -4032,7 +4032,7 @@ class DataboxProcessor(Window):
         self.button_run   = self.grid_top.add(Button('Run', tip='Run the enabled processes on the specified source data.')).set_width(50)
         self.number_count = self.grid_top.add(NumberBox(int=True, tip='How many times this has run since last reset.'))
         self.button_reset = self.grid_top.add(Button('Reset', tip='Reset the run count.')).set_width(50)
-        self.label_info   = self.grid_top.add(Label('')).set_colors('pink' if _s.settings['dark_theme'] else 'red',None)
+        self.label_info   = self.grid_top.add(Label('')).set_colors('pink' if _s.settings['dark_theme_qt'] else 'red',None)
         self.label_dump   = self.grid_top.add(Label(''))
 
         # Add settings and plotter

@@ -1773,7 +1773,7 @@ class fitter():
                  style_guess  = dict(marker='',  color='0.25',ls='-'),
                  style_bg     = dict(marker='',  color='k',   ls='-'),)
         
-        if _s.settings['dark_theme']:
+        if _s.settings['dark_theme_figures']:
             self.set(
                  style_data   = dict(marker='o', color='#77AAFF',ls='', mec='#77AAFF'),
                  style_fit    = dict(marker='',  color='#FF7777',ls='-'),
@@ -2618,7 +2618,7 @@ class fitter():
 
         kwargs will update the settings
         """
-        alpha = 0.57 if _s.settings['dark_theme'] else 0.3
+        alpha = 0.57 if _s.settings['dark_theme_figures'] else 0.3
 
         # Make sure there is data to plot.
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0: return self
