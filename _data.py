@@ -2399,7 +2399,7 @@ class fitter():
     
     set_variables = free
 
-    def get_pnames(self):
+    def get_parameter_names(self):
         """
         Returns a list of parameter names.
         """
