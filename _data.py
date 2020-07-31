@@ -1835,7 +1835,7 @@ class fitter():
         keys = list(self._settings.keys())
         keys.sort()
 
-        s = "\nSETTINGS\n"
+        s = "\nFITTER SETTINGS\n"
         for k in keys:
             # for the clunky style settings, loop over the list
             if k[0:5] == 'style' and _functions.is_iterable(self[k]):
