@@ -16,10 +16,6 @@ _d = _s.data
 import pyqtgraph as _pg
 _e = _pg.QtCore.QEvent
 
-# If we have the right version
-if not (float('.'.join(_pg.__version__.split('.')[0:2])) > 0.1):
-    raise Exception('Please update pyqtgraph to v0.11.0. Previous versions are no longer supported.')
-
 # Syntax highlighter
 from . import _syntax
 
@@ -54,6 +50,8 @@ class BaseObject(object):
         deriving objects from this, call BaseObject.__init__(self) as the
         LAST step of the new __init__ function.
         """
+        if not _s._pyqtgraph_ok: raise Exception('Cannot create egg GUIs without pyqtgraph v0.11.0 or higher.')
+            
         # Parent object (to be set)
         self._parent = None
 

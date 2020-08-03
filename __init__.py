@@ -43,7 +43,9 @@ def _warn(*args):
 
 try:
     import pyqtgraph as _pyqtgraph
-    if _pyqtgraph.__version__[0:4] == '0.10': _warn('Spinmob requires pyqtgraph version 0.11 or higher. Previous versions are no longer supported.')
+    _pyqtgraph_ok = float('.'.join(_pyqtgraph.__version__.split('.')[0:2])) > 0.1
+
+    if not _pyqtgraph_ok: _warn('Spinmob requires pyqtgraph version 0.11 or higher. Previous versions are no longer supported.')
 
     _qtc = _pyqtgraph.Qt.QtCore
     _qt  = _pyqtgraph.Qt
@@ -64,7 +66,7 @@ try:
     
     
 except:
-    _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
+    _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install).")
 
     _qtc = None
     _qt  = None
