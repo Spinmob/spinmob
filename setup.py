@@ -1,15 +1,30 @@
-__version__ = '3.4.0' # Keep this on the first line.
+__version__ = '3.4.7' # Keep this on the first line so it's easy for __init__.py to grab.
 
 
 
 from distutils.core import setup
 setup(name           = 'Spinmob',
       version        = __version__,
-      description    = 'Data Handling, Plotting, Analysis, and GUI Building for Laboratories',
+      description    = 'Data handling, plotting, analysis, and GUI building for scientific labs',
       author         = 'Jack Sankey',
       author_email   = 'jack.sankey@gmail.com',
       url            = 'https://github.com/Spinmob/spinmob',
-      packages       = ['spinmob', 'spinmob.egg'],
-      package_dir    = {'spinmob'      :   '.',
-                        'egg'          :   'spinmob/egg'}
+      packages       = [
+           'spinmob', 
+           'spinmob.tests', 
+           'spinmob.egg',
+           ],
+      package_dir = {
+          'spinmob'          : '.',
+          'tests'            : './tests',
+          'egg'              : './egg',
+          },
+      package_data={
+          ''  : [
+              './setup.py',
+              './tests/fixtures/*.*', 
+              './egg/DataboxProcessor/*.*',
+            ],
+          },
+      include_package_data=True,
      )

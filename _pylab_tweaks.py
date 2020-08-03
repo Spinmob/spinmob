@@ -30,7 +30,8 @@ if __name__ == '__main__':
 line_attributes = ["linestyle","linewidth","color","marker","markersize","markerfacecolor","markeredgewidth","markeredgecolor"]
 image_undo_list = []
 
-
+# Pylab's ginput function.
+ginput = _pylab.ginput
 
 
 def add_text(text, x=0.01, y=0.01, axes="gca", draw=True, **kwargs):
@@ -343,13 +344,13 @@ def format_figure(figure=None, tall=False, draw=True, modify_geometry=True):
         axes.title.set_size(8)
         axes.title.set_position([1.5,1.02])
         axes.title.set_visible(1)
-        axes.title.set_fontsize(_s.settings['font_size_title'])
+        axes.title.set_fontsize(_s.settings['font_size'])
         #axes.yaxis.label.set_horizontalalignment('center')
         #axes.xaxis.label.set_horizontalalignment('center')
         
         # Axes labels
-        axes.xaxis.label.set_fontsize(_s.settings['font_size_axis_labels'])
-        axes.yaxis.label.set_fontsize(_s.settings['font_size_axis_labels'])
+        axes.xaxis.label.set_fontsize(_s.settings['font_size'])
+        axes.yaxis.label.set_fontsize(_s.settings['font_size'])
 
     _pylab.axes(current_axes)
 
@@ -1708,6 +1709,9 @@ def save_figure_raw_data(figure="gcf", **kwargs):
             for j in range(0, len(x)):
                 f.write(str(x[j]) + "\t" + str(y[j]) + "\n")
             f.close()
+
+
+
 
 
 def load_plot(clear=1, offset=0, axes="gca"):

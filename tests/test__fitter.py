@@ -18,7 +18,7 @@ class Test_fitter(_ut.TestCase):
 
     def setUp(self):
         # Path to the spinmob module
-        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), '_tests', 'fixtures', 'data_files')
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), '_tests', 'fixtures')
 
         self.x1 = [0,1,2,3,4,5,6,7]
         self.y1 = [10,1,2,1,3,4,5,3]
@@ -201,7 +201,7 @@ class Test_fitter(_ut.TestCase):
         """
 
         def my_fun(x,a,b): return a*x+b
-        f = _s.data.fitter()
+        f = _s.data.fitter(autoplot=False)
         f.set_functions('stuff(x,a,b)', 'a,b', stuff=my_fun)
         f.fix('a')
         f.set_data([1,2,3],[1,2,1],0.1)
@@ -223,6 +223,16 @@ class Test_fitter(_ut.TestCase):
         f.set_functions('stuff*cos(x*other_stuff)+final_stuff', 'stuff, other_stuff, final_stuff', bg='final_stuff')
         f.fit()
     
+    def test_autoscale_eydata(self):
+        f = _s.data.fitter(autoplot=False).set_data(None, [[1,2,1,3],[1,2,1,4]]).set_functions(['a*x+b','a*cos(b*x)+c'], 'a,b,c').fit()
+        f.autoscale_eydata().fit()
+        self.assertAlmostEqual(f.results.redchi,0.9958597)
+
+    def test_set_guess_to_fit_result(self):
+        f = _s.data.fitter(autoplot=False).set_data(None, [[1,2,1,3],[1,2,1,4]]).set_functions(['a*x+b','a*cos(b*x)+c'], 'a,b,c').fit()
+        f.set_guess_to_fit_result()
+        self.assertEqual(f.p_fit['a'].value,f.p_in['a'].value)
+
 
 if __name__ == "__main__":
-    _ut.main()
+    _ut.main(failfast=True)

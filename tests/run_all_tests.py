@@ -11,4 +11,4 @@ from test__egg       import *
 
 if _os.path.exists('egg_settings'): _sh.rmtree('egg_settings')
 
-_ut.main()
+_ut.main(failfast=True)

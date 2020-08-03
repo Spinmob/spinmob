@@ -9,14 +9,11 @@ import textwrap       as _textwrap
 import spinmob        as _s
 import time           as _time
 
-# Try importing lmfit
-try: import lmfit as _lm        
-except: _lm = None
             
 try:     from . import _functions
 except:  _functions = _s.fun
 
-
+_lm = _s._lm
 
 
 
@@ -2240,7 +2237,7 @@ class fitter():
 
             x  = xdatas[n]
             y  = ydatas[n]
-            ey = eydatas[n]
+            ey = eydatas[n]*self['scale_eydata'][n]
             
             # coarsen the data
             if do_coarsen:
@@ -2657,9 +2654,9 @@ class fitter():
             # set up two axes. One for data and one for residuals.
             a1 = fig.add_subplot(211)            # Residuals
             a2 = fig.add_subplot(212, sharex=a1) # Data
-            a1.set_position([0.15, 0.72, 0.75, 0.15])
-            a2.set_position([0.15, 0.10, 0.75, 0.60])
-
+            a1.set_position([0.15, 0.65, 0.75, 0.15])
+            a2.set_position([0.15, 0.12, 0.75, 0.50])
+            
             # set the scales
             a1.set_xscale(self['xscale'][n])
             a2.set_xscale(self['xscale'][n])
@@ -2838,7 +2835,7 @@ class fitter():
 
 
             # Assemble the title
-            wrap = 100
+            wrap = 80
             indent = '      '
 
             # Include the function names if available

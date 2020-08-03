@@ -49,9 +49,14 @@ qApp.setStyleSheet(
 
     """)
 
+    
+
 
 
 if __name__ == '__main__':
+    # Standard Fusion theme
+    spinmob._qtapp.setStyle('Fusion')
+
     import mcphysics
     self = mcphysics.instruments.adalm2000()
     #self.button_connect.click()

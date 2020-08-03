@@ -28,7 +28,8 @@ fun._settings  = settings
 data._settings = settings
 
 # Get the version
-exec(fun.read_lines(_os.path.join(__path__[0],'setup.py'))[0])
+try: exec(fun.read_lines(_os.path.join(__path__[0],'setup.py'))[0])
+except: __version__ = 'unknown'
 
 
 def _warn(*args):
@@ -37,7 +38,7 @@ def _warn(*args):
     args = list(args)
     print('\nWarning:', args.pop(0))
     for a in args: print('  ', a)
-    print("To disable warnings, set spinmob.settings['ignore_warnings']='True'")
+    print("  To disable warnings, set spinmob.settings['ignore_warnings']=True")
 
 
 try:
@@ -59,9 +60,9 @@ try:
     _qtapp.setStyle('Fusion')
     
     # Dark theme
-    if settings['dark_theme_qt']: from . import _fusion_theme
-    if settings['dark_theme_figures']: pylab.style.use('dark_background')
-
+    if settings['dark_theme_qt']: from . import _theme_fusion_dark
+    
+    
 except:
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install) if you wish to use dialogs or egg.")
 
@@ -70,6 +71,12 @@ except:
     _qtw = None
     _qtapp = None
 
+
+# Try importing lmfit
+try: import lmfit as _lm        
+except: 
+    _warn("spinmob.data.fitter() now requires lmfit, which is available via pip.")
+    _lm = None
 
 
 if _sys.version[0] == '2':
@@ -86,13 +93,23 @@ instaprint = tweaks.instaprint
 
 # Default settings
 _defaults = dict(
-    dark_theme_qt        = False,
+    dark_theme_qt         = False,
     dark_theme_figures    = False,
-    font_size_legend      = 9,
-    font_size_axis_labels = 12,
-    font_size_title       = 10,)
+    font_size             = 12,
+    font_size_legend      = 9)
 
 for _k in _defaults: 
-    if not _k in settings.keys(): settings[_k] = _defaults[_k]
+    if not _k in settings.keys(): 
+        settings[_k] = _defaults[_k]
+
+# Touch the keys that affect visuals
+for _k in [
+    'font_size', 
+    'dark_theme_figures'
+    ]: 
+    settings[_k] = settings[_k]
+
+    
+
 
 
