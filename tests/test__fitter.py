@@ -18,7 +18,7 @@ class Test_fitter(_ut.TestCase):
 
     def setUp(self):
         # Path to the spinmob module
-        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), '_tests', 'fixtures')
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures')
 
         self.x1 = [0,1,2,3,4,5,6,7]
         self.y1 = [10,1,2,1,3,4,5,3]

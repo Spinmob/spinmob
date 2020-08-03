@@ -22,7 +22,7 @@ class Test_egg(_ut.TestCase):
         self.module_path = _os.path.dirname(_s.__file__)
         
         # Path to the data files
-        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), '_tests', 'fixtures')
+        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures')
 
         return
 

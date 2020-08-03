@@ -13,7 +13,7 @@ import time           as _time
 try:     from . import _functions
 except:  _functions = _s.fun
 
-_lm = _s._lm
+
 
 
 
@@ -1691,13 +1691,13 @@ class fitter():
 
     def __init__(self, **kwargs):
 
-        if not _lm: 
+        if not _s._lm: 
             self._raise_error("You need to install lmfit to use the new fitter. You can install it with 'pip install lmfit'.")
             return
         
         self.f  = []    # list of functions
         self.bg = []    # list of background functions (for subtracting etc)
-        self.p_in    = _lm.Parameters() # Parameters for the fit
+        self.p_in    = _s._lm.Parameters() # Parameters for the fit
         self.p_fit   = None             # Shortcut to self.results.params
         self.results = None             # output from the fitter.
 
@@ -2339,7 +2339,7 @@ class fitter():
         self.set(**kwargs)
 
         # do the actual optimization
-        self.results = _lm.minimize(self._studentized_residuals_concatenated, self.p_in, 
+        self.results = _s._lm.minimize(self._studentized_residuals_concatenated, self.p_in, 
                                     args=(self._xdatas_processed, self._ydatas_processed, self._eydatas_processed))
         self.p_fit = self.results.params
 

@@ -4532,7 +4532,7 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 if __name__ == '__main__':
     import spinmob
-    #runfile(spinmob.__path__[0] + '/_tests/test__egg.py')
+    #runfile(spinmob.__path__[0] + '/tests/test__egg.py')
 
     p = DataboxPlot(autosettings_path='test')
     p[0] = [1,2,3,4]

@@ -93,15 +93,13 @@ class settings():
             if not value is None: self._databox.h(**{key:value})
             else:                 self._databox.pop_header(key, ignore_error=True)
 
-        # If different theme is provided, update it.
-        if key == 'dark_theme_figures' and value != self['dark_theme_figures']:
+        # If figure theme is provided, update it.
+        if key == 'dark_theme_figures':
             self._set_theme_figures('dark_background' if self['dark_theme_figures'] else 'classic')
             
             if not self['dark_theme_figures']: 
                 _s.pylab.rcParams['figure.facecolor'] = 'white'
             
-            _s._warn('You will need to close and rebuild all figures for changes to take effect.')
-        
         # Other pylab settings
         if key in ['font_size']:
              _s.pylab.rcParams.update({
