@@ -2321,8 +2321,7 @@ class fitter():
         results of the fit algorithm are stored in self.results.
         See scipy.optimize.leastsq for more information.
 
-        Optional keyword arguments are sent to self.set() prior to
-        fitting.
+        Optional keyword arguments are sent to lmfit.minimize().
         """
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
             return self._raise_error("No data. Please use set_data() prior to fitting.")
@@ -2335,12 +2334,10 @@ class fitter():
         # Do the processing once, to increase efficiency
         self._process_data()
 
-        # Send the keyword arguments to the settings
-        self.set(**kwargs)
-
         # do the actual optimization
         self.results = _s._lm.minimize(self._studentized_residuals_concatenated, self.p_in, 
-                                    args=(self._xdatas_processed, self._ydatas_processed, self._eydatas_processed))
+                                    args=(self._xdatas_processed, self._ydatas_processed, self._eydatas_processed),
+                                    **kwargs)
         self.p_fit = self.results.params
 
         # plot if necessary

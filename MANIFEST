@@ -6,7 +6,6 @@ setup.py
 ./_data_old.py
 ./_dialogs.py
 ./_functions.py
-./_fusion_theme.py
 ./_plot.py
 ./_plot_complex.py
 ./_plot_image.py
@@ -21,6 +20,7 @@ setup.py
 ./_pylab_tweaks.py
 ./_settings.py
 ./_spline.py
+./_theme_fusion_dark.py
 ./lm_fitter_concept.py
 ./lm_fitter_test.py
 ././setup.py
@@ -48,7 +48,7 @@ setup.py
 ./egg/example_sliders.py
 ./egg/example_sweeper.py
 ./tests/__init__.py
-./tests/run_all_tests.py
+./tests/spinmob_tests.py
 ./tests/test__databox.py
 ./tests/test__dialogs.py
 ./tests/test__egg.py
