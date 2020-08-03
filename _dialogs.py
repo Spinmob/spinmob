@@ -24,6 +24,10 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
         Setting this to a string, e.g. 'txt', will enforce that the filename 
         will have this extension. You can also set this to True, which sets it to 
         the filters value.
+    
+    Returns
+    -------
+    Saved path string.
     """
     original_filters = filters
     
@@ -68,6 +72,19 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
 def load(filters="*.*", text='Select a file, FACEFACE!', default_directory='default_directory'):
     """
     Pops up a dialog for opening a single file. Returns a string path or None.
+    
+    Parameters
+    ----------
+    filters='*.*' : str
+        String filter for dialog.
+    text='Select a file, FACEFACE!' : str
+        Dialog window title.
+    default_directory='default_directory' : str
+        Key to use in spinmob.settings for remembering which directory to start in.
+    
+    Returns
+    -------
+    Selected path.
     """
     # make sure the filters contains "*.*" as an option!
     if not '*' in filters.split(';'): filters = filters + ";;All files (*)"
@@ -94,6 +111,19 @@ def load(filters="*.*", text='Select a file, FACEFACE!', default_directory='defa
 def load_multiple(filters="*.*", text='Select some files, FACEFACE!', default_directory='default_directory'):
     """
     Pops up a dialog for opening more than one file. Returns a list of string paths or None.
+    
+    Parameters
+    ----------
+    filters='*.*' : str
+        String filter for dialog.
+    text='Select some files, FACEFACE!' : str
+        Dialog window title.
+    default_directory='default_directory' : str
+        Key to use in spinmob.settings for remembering which directory to start in.
+    
+    Returns
+    -------
+    List of selected paths.
     """
     # make sure the filters contains "*.*" as an option!
     if not '*' in filters.split(';'): filters = filters + ";;All files (*)"
@@ -119,7 +149,22 @@ def load_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
 
 
 def select_directory(text='Select a directory, POCKETPANTS!', default_directory='default_directory'):
+    """
+    
 
+    Parameters
+    ----------
+    text='Select a directory, POCKETPANTS!': str
+        Dialog window title text.
+    default_directory='default_directory' : str
+        Key to use in spinmob.settings for remembering which directory to start in.
+    
+    Returns
+    -------
+    result : str
+        Selected path.
+
+    """
     # if this type of pref doesn't exist, we need to make a new one
     if default_directory in _settings.keys(): default = _settings[default_directory]
     else:                                     default = ""
