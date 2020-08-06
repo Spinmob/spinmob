@@ -2149,6 +2149,28 @@ class fitter():
         
         return ps
 
+    def get_fit_values(self):
+        """
+        Returns a numpy array of the fit values, in order.
+        """
+        if self.p_fit is None: return None
+            
+        ps = []
+        for p in self.p_fit: ps.append(self.p_fit[p].value)
+        
+        return _n.array(ps)
+
+    def get_fit_standard_errors(self):
+        """
+        Returns a numpy array of the fit standard errors, in order.
+        """
+        if self.p_fit is None: return None
+            
+        ps = []
+        for p in self.p_fit: ps.append(self.p_fit[p].stderr)
+        
+        return _n.array(ps)
+
     def get_fit_results(self):
         """
         If there are fit results, returns a dictionary with all the fit
