@@ -3476,6 +3476,13 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         return
 
+    def before_save_file(self):
+        """
+        Called at the start of save_file(). You can overload this to insert
+        your own functionality.
+        """
+        return
+
     def save_file(self, path=None, force_overwrite=False, just_settings=False, **kwargs):
         """
         Saves the data in the databox to a file.
@@ -3493,6 +3500,8 @@ class DataboxPlot(_d.databox, GridLayout):
 
         **kwargs are sent to the normal databox save_file() function.
         """
+        self.before_save_file()
+        
         # Update the binary mode
         if not 'binary' in kwargs: kwargs['binary'] = self.combo_binary.get_text()
 
@@ -3508,6 +3517,8 @@ class DataboxPlot(_d.databox, GridLayout):
         # save the file using the skeleton function, so as not to recursively
         # call this one again!
         _d.databox.save_file(d, path, self.file_type, self.file_type, force_overwrite, **kwargs)
+
+        return self
 
     def load_file(self, path=None, just_settings=False):
         """
