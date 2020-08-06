@@ -2138,6 +2138,17 @@ class fitter():
         
         return list(self._xdatas_given), list(self._ydatas_given), list(self._eydatas_given)
 
+    def get_fit_parameters(self):
+        """
+        Returns a list of the fit parameters, in order.
+        """
+        if self.p_fit is None: return None
+            
+        ps = []
+        for p in self.p_fit: ps.append(self.p_fit[p])
+        
+        return ps
+
     def get_fit_results(self):
         """
         If there are fit results, returns a dictionary with all the fit
