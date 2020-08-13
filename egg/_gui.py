@@ -51,7 +51,7 @@ class BaseObject(object):
         LAST step of the new __init__ function.
         """
         if not _s._pyqtgraph_ok: raise Exception('Cannot create egg GUIs without pyqtgraph v0.11.0 or higher.')
-            
+
         # Parent object (to be set)
         self._parent = None
 
@@ -1231,10 +1231,10 @@ class CheckBox(GridLayout):
             elif text_position == 'left' : self.add(self.text, 0,1, alignment=0)
             elif text_position == 'top'  : self.add(self.text, 1,0, alignment=0)
             else:                          self.add(self.text, 1,2, alignment=0)
-            
+
             # Set the tooltip.
             self.text._widget.setToolTip(tip)
-            
+
         # No label.
         else: self.text = None
 
@@ -1294,14 +1294,14 @@ class ComboBox(BaseObject):
             give it a unique identifier string, e.g. 'my_combobox'
         tip=None
             Set to a string to pop up a message while the mouse hovers.
-            
+
         **kwargs are sent to the underlying widget options self._widget.setOpts()
         """
 
         # pyqt objects
         self._widget = _pg.QtGui.QComboBox()
         self._widget.setToolTip(tip)
-        
+
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path=autosettings_path)
 
@@ -2085,38 +2085,38 @@ class TextBox(BaseObject):
     def __init__(self, text="", multiline=False, autosettings_path=None, python_highlighting=False):
         """
         Simplified QLineEdit.
-        
+
         Parameters
         ----------
-        
+
         text='' : str
             Default text.
-        
+
         multiline=False : bool
             Whether this box should be multiple lines.
-        
+
         autosettings_path=None : str
             If specified with a unique path-like string, this will save the state of the text box
             between runs.
-        
+
         python_highlighting=False : bool
             Enables python syntax highlighting, but only in multiline mode.
         """
         self._multiline = multiline
 
         # pyqt objects
-        if multiline:   
+        if multiline:
             self._widget = _pg.QtGui.QTextEdit()
-        
+
             # Python highlighting
             self._highlighter = _syntax.PythonHighlighter(self._widget.document())
-            
-        
+
+
         # Single-line
         else:
             self._widget = _pg.QtGui.QLineEdit()
             self.signal_return_pressed = self._widget.returnPressed
-        
+
         # Set the text
         self.set_text(str(text))
 
@@ -2253,6 +2253,7 @@ class TreeDictionary(BaseObject):
         self._lazy_load          = dict()
         self._tree_widgets       = dict() # list of all tree widgets, including non-parameters.
         self.name = name
+        self.default_signal_changed = None
 
         # Load the previous settings (if any)
         self.load()
@@ -2436,7 +2437,7 @@ class TreeDictionary(BaseObject):
 
         # search for the root key
         result = self._widget.findItems(r, _pg.QtCore.Qt.MatchCaseSensitive | _pg.QtCore.Qt.MatchFixedString)
-        
+
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
             if not quiet: self.print_message("ERROR: Could not find '"+r+"' in "+str(self))
@@ -2448,7 +2449,7 @@ class TreeDictionary(BaseObject):
         # otherwise, we didn't find it; create the branch and keep going
         else:
             key = '/'.join(key_list)
-            
+
             # x is the empty group
             x = _pg.parametertree.Parameter.create(name=r, type='group', children=[], syncExpanded=True)
             self._tree_widgets[self._unstrip(key)] = x
@@ -2557,7 +2558,8 @@ class TreeDictionary(BaseObject):
 
     def add_parameter(self, key='test', value=42.0, default_list_index=0, **kwargs):
         """
-        Adds a parameter "leaf" to the tree.
+        Adds a parameter "leaf" to the tree. If self.default_signal_changed is
+        a function, this runs self.connect_signal_changed(key, self.default_signal_changed).
 
         Parameters
         ----------
@@ -2652,7 +2654,7 @@ class TreeDictionary(BaseObject):
         b = self._find_parameter(s, create_missing=True)
 
         # quit out if it pooped
-        if b == None: 
+        if b == None:
             self.print_message('Error: Could not create \''+key+'\'')
             return self
 
@@ -2677,13 +2679,17 @@ class TreeDictionary(BaseObject):
 
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
-        
+
         # Make the tool tip more responsive
         w = self.get_widget(key)
         if 'tip' in w.param.opts:
             w.setToolTip(0, w.param.opts['tip'])
             w.setToolTip(1, w.param.opts['tip'])
-        
+
+        # Connect to the default signal_changed function if it's specified.
+        if self.default_signal_changed:
+            self.connect_signal_changed(key, self.default_signal_changed)
+
         return self
 
 
@@ -2775,10 +2781,10 @@ class TreeDictionary(BaseObject):
         """
         # Get the usual widget
         w = self.get_param(key)
-        
+
         # Create a QTreeWidgetItemIterator to search
         iterator = _pg.Qt.QtWidgets.QTreeWidgetItemIterator(self._widget)
-        
+
         # Loop and search.
         item = iterator.value()
         while item is not None and item.param is not w:
@@ -2950,10 +2956,13 @@ class TreeDictionary(BaseObject):
         ----------
         key : string
             Dictionary key, e.g. 'a/b/parameter'
+
         value
             Value to set for this item.
+
         ignore_error : bool
             If True, will ignore the error, such as not finding the key.
+
         block_key_signals : bool
             If True, this will not trigger a signal_changed, etc.
         """
@@ -3278,7 +3287,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
-        
+
         #self.script.set_style('font-family:monospace; font-size:12;')
         # Windows compatibility
         font = _s._qtw.QFont()
@@ -3501,7 +3510,7 @@ class DataboxPlot(_d.databox, GridLayout):
         **kwargs are sent to the normal databox save_file() function.
         """
         self.before_save_file()
-        
+
         # Update the binary mode
         if not 'binary' in kwargs: kwargs['binary'] = self.combo_binary.get_text()
 
@@ -3619,7 +3628,7 @@ class DataboxPlot(_d.databox, GridLayout):
                 sylabels += ", '"+self.ckeys[2*n+1]+"'"
 
             return sx+" )\n"+sy+" )\n\n"+sxlabels+" )\n"+sylabels+" )\n"
-            
+
         # Column triples
         elif self.combo_autoscript.get_index() == 3:
 
@@ -3739,14 +3748,14 @@ class DataboxPlot(_d.databox, GridLayout):
             # Make sure these are iterable lists
             if not type(xlabels) in [tuple,list]: xlabels = [xlabels]
             if not type(ylabels) in [tuple,list]: ylabels = [ylabels]
-            
+
             xlabels = list(xlabels)
             ylabels = list(ylabels)
-            
+
             # Adjust the length
             while len(xlabels) < len(x): xlabels.append(xlabels[-1])
             while len(ylabels) < len(y): ylabels.append(ylabels[-1])
-            
+
             # Get the styles
             self.styles = g['styles']
 
@@ -3772,11 +3781,11 @@ class DataboxPlot(_d.databox, GridLayout):
                 self.plot_widgets[i].setLabel('bottom', xlabels[n])
 
                 # special case: hide if None
-                if xlabels[n] == None: 
+                if xlabels[n] == None:
                     self.plot_widgets[i].getAxis('bottom').showLabel(False)
-                
+
                 # special case: hide if None or we're in single-plot mode (legend handles this)
-                if ylabels[n] == None or not self.button_multi.is_checked(): 
+                if ylabels[n] == None or not self.button_multi.is_checked():
                     self.plot_widgets[i].getAxis('left').showLabel(False)
 
             # unpink the script, since it seems to have worked
@@ -3874,13 +3883,13 @@ class DataboxPlot(_d.databox, GridLayout):
         Updates the legend according to the list of ylabels.
         """
         if not self._legend: return
-        
+
         # Clear it
         self._legend.clear()
-        
+
         # Loop and append
-        for i in range(len(ylabels)): 
-            
+        for i in range(len(ylabels)):
+
             # Only add the legend item if it's interesting
             if ylabels[i] not in [None, '', False]:
                 self._legend.addItem(self._curves[i], ylabels[i])
@@ -3935,7 +3944,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # add new plots
         for i in range(n_plots):
             self.plot_widgets.append(self.grid_plot.place_object(_pg.PlotWidget(), 0, i, alignment=0))
-            
+
             # Legend for single plot mode.
             if self.button_multi.is_checked(): self._legend = None
             else:                              self._legend = self.plot_widgets[-1].addLegend()

@@ -12,7 +12,7 @@ except: pass
 
 import traceback    as _traceback
 _sys.excepthook = _traceback.print_exception
-
+_p = _traceback.print_last
 
 # ignore warnings by default
 import warnings as _warnings
@@ -57,14 +57,14 @@ try:
 
     # Set the dpi scaling
     _qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
-    
+
     # Standard Fusion light theme
     _qtapp.setStyle('Fusion')
-    
+
     # Dark theme
     if settings['dark_theme_qt']: from . import _theme_fusion_dark
-    
-    
+
+
 except:
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install).")
 
@@ -75,8 +75,8 @@ except:
 
 
 # Try importing lmfit
-try: import lmfit as _lm        
-except: 
+try: import lmfit as _lm
+except:
     _warn("spinmob.data.fitter() now requires lmfit, which is available via pip.")
     _lm = None
 
@@ -100,18 +100,18 @@ _defaults = dict(
     font_size             = 12,
     font_size_legend      = 9)
 
-for _k in _defaults: 
-    if not _k in settings.keys(): 
+for _k in _defaults:
+    if not _k in settings.keys():
         settings[_k] = _defaults[_k]
 
 # Touch the keys that affect visuals
 for _k in [
-    'font_size', 
+    'font_size',
     'dark_theme_figures'
-    ]: 
+    ]:
     settings[_k] = settings[_k]
 
-    
+
 
 
 
