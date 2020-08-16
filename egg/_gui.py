@@ -3,6 +3,7 @@ import pyqtgraph as _pg
 # Regular imports
 import time     as _t
 import os       as _os
+import shutil   as _shutil
 import numpy    as _n
 import scipy.special as _scipy_special
 
@@ -17,7 +18,8 @@ import pyqtgraph as _pg
 _e = _pg.QtCore.QEvent
 
 # Syntax highlighter
-from . import _syntax
+try: from . import _syntax
+except:     import _syntax
 
 _a = _pg.mkQApp()
 
@@ -38,6 +40,11 @@ def hasattr_safe(x,a):
     except:
         return False
 
+def clear_egg_settings():
+    """
+    Removes the egg_settings directory from the current working directory.
+    """
+    _shutil.rmtree('egg_settings', ignore_errors=True)
 
 
 class BaseObject(object):
@@ -65,6 +72,14 @@ class BaseObject(object):
 
         # common signals
         return
+
+    def __call__(self, *args, **kwargs):
+        """
+        Shortcut that returns self.set_value() if a value is provided or self.get_value() if it is not.
+        **kwargs are sent to both functions.
+        """
+        if len(args): return self.set_value(*args, **kwargs)
+        else:         return self.get_value(**kwargs)
 
     def hide(self, opposite=False):
         """
@@ -1326,7 +1341,7 @@ class ComboBox(BaseObject):
         """
         Adds an item to the combobox.
         """
-        self._widget.addItem(text)
+        self._widget.addItem(str(text))
         return self
 
     def remove_item(self, index=0):
@@ -2418,7 +2433,7 @@ class TreeDictionary(BaseObject):
         Recursively tries to find and return the parameter of the specified key. The key
         should be of the form
 
-        ['branch1','branch2', 'parametername']
+        ['branch1', 'branch2', 'parametername']
 
         Setting create_missing=True means if it doesn't find a branch it
         will create one.
@@ -2440,7 +2455,7 @@ class TreeDictionary(BaseObject):
 
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
-            if not quiet: self.print_message("ERROR: Could not find '"+r+"' in "+str(self))
+            if not quiet: raise Exception("ERROR: Could not find '"+r+"' in "+str(self))
             return None
 
         # otherwise use the first value
@@ -2563,13 +2578,16 @@ class TreeDictionary(BaseObject):
 
         Parameters
         ----------
+
         key='test'
             The key of the leaf. It should be a string of the form
             "branch1/branch2/parametername" and will be nested as indicated.
+
         value=42.0
             Value of the leaf. If nothing else is specified, the parameter
             will be assumed to be the type of the value, so specifying 0 will
             result in an int, 0.0 will be a float, [] will be a list, etc.
+
         default_list_index=0
             When setting value=[], use this to specify the default selected
             list index.
@@ -2728,14 +2746,11 @@ class TreeDictionary(BaseObject):
         """
         Hides the specified parameter.
         """
-        self.block_events()
-        try:
-            if opposite: self._find_parameter(key.split('/')).show()
-            else:        self._find_parameter(key.split('/')).hide()
-        except:
-            print('issue')
-            pass
-        self.unblock_events()
+        #print('hiding', key, key.split('/'), self._find_parameter(key.split('/')))
+        #self.block_events()
+        if opposite: self._find_parameter(key.split('/')).show()
+        else:        self._find_parameter(key.split('/')).hide()
+        #self.unblock_events()
 
     def show_parameter(self, key, opposite=False):
         """

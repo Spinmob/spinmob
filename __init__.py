@@ -22,6 +22,7 @@ _qtapp = None
 # Import databox first
 from . import _data      as data
 from . import _functions as fun
+from . import _thread    as thread
 from . import _settings
 settings = _settings.settings()
 fun._settings  = settings
