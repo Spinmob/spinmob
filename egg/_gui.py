@@ -2455,7 +2455,7 @@ class TreeDictionary(BaseObject):
 
         # if it pooped and we're not supposed to create it, quit
         if len(result) == 0 and not create_missing:
-            if not quiet: raise Exception("ERROR: Could not find '"+r+"' in "+str(self))
+            if not quiet: raise Exception("Could not find '"+r+"' in "+str(self))
             return None
 
         # otherwise use the first value
@@ -2495,7 +2495,7 @@ class TreeDictionary(BaseObject):
 
                 # otherwise poop out
                 else:
-                    if not quiet: self.print_message("ERROR: Could not find '"+n+"' in '"+x.name()+"'."+str(self))
+                    if not quiet: raise Exception("Could not find '"+self.get_full_key(x)+"' in "+str(self))
                     return None
 
         # return the last one we found / created.
@@ -2764,6 +2764,24 @@ class TreeDictionary(BaseObject):
             print('issue')
             pass
         self.unblock_events()
+
+    def get_full_key(self, param):
+        """
+        For the supplied param (see also self.get_param()) this will return the
+        full key associated with it.
+
+        This function is particularly useful within the function supplied to
+        self.connect_any_signal_changed(), e.g., since the data sent to this
+        function is a param.
+        """
+        if not param: return
+
+        key = param.name()
+        while param.parent():
+            param = param.parent()
+            key = param.name() + '/' + key
+
+        return key
 
     def get_pyqtgraph_options(self, key):
         """
