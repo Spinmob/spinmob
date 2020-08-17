@@ -76,7 +76,7 @@ class worker(_pg.QtCore.QRunnable):
 
         my_thread = spinmob.thread.worker(my_function, *args, **kwargs)
 
-    you can fire it off with spinmob.thread.pool.start(my_thread).
+    you can fire it off with spinmob.thread.pool.start(my_thread) or my_thread.start()
 
     Parameters
     ----------
@@ -96,11 +96,17 @@ class worker(_pg.QtCore.QRunnable):
         self.signal_error = signal()
         self.signal_done  = signal()
 
-    def start(self):
+    def start(self, priority=0):
         """
-        Shortcut to pool.start(self)
+        Shortcut to pool.start(self, priority=priority)
+
+        Parameters
+        ----------
+        priority=0 : int
+            Thread priority. A higher value means it will move to the front
+            of the queue above those threads having lower priority.
         """
-        pool.start(self)
+        pool.start(self, priority=priority)
 
     @_pg.QtCore.pyqtSlot()
     def run(self):
@@ -119,7 +125,7 @@ class worker(_pg.QtCore.QRunnable):
             exctype, value = _sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, _traceback.format_exc()))
 
-def start(function, *args, done=None, error=None, **kwargs):
+def start(function, *args, done=None, error=None, priority=0, **kwargs):
     """
     Start a thread with the supplied function, arguments, and keyword arguments.
     This is just a shortcut to create the worker, connect signals, and
@@ -138,6 +144,10 @@ def start(function, *args, done=None, error=None, **kwargs):
         Function to which signal_error will be connected. None means the signal
         will remain unconnected.
 
+    priority=0 : int
+        Controls the priority in the thread queue. Higher number means higher
+        priority.
+
     Other *args and **kwargs are sent to the worker function itself.
 
     Returns
@@ -152,7 +162,7 @@ def start(function, *args, done=None, error=None, **kwargs):
     if error: w.signal_error.connect(error)
 
     # Start the worker
-    pool.start(w)
+    pool.start(w, priority=priority)
     return w
 
 def get_active_thread_count():
