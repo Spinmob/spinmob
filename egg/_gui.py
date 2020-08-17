@@ -1007,6 +1007,12 @@ class Button(BaseObject):
         self._widget.setText(str(text))
         return self
 
+    def get_text(self):
+        """
+        Gets the text of the button.
+        """
+        return self._widget.text()
+
     def sleep_until_unchecked(self, dt=0.1):
         """
         Waits while updating the gui until the button is unchecked.

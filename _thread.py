@@ -5,20 +5,70 @@ import sys       as _sys
 # Thread pool
 pool = _pg.QtCore.QThreadPool()
 
-class _signals(_pg.QtCore.QObject):
-    '''
-    Defines the signals available from a running worker thread.
+class locker():
+    """
+    Simplified recursive QMutex. Use self.lock() to lock and self.unlock() to unlock a
+    resource. Use self.try_lock() to try locking (returns True if successful, False if not).
+    """
+    def __init__(self):
+        self._QMutex = _pg.QtCore.QMutex(_pg.QtCore.QMutex.Recursive)
+        self.lock           = self._QMutex.lock
+        self.try_lock       = self._QMutex.tryLock
+        self.unlock         = self._QMutex.unlock
 
-    Signals
-    -------
-    error
-        `tuple` (exctype, value, traceback.format_exc() )
 
-    done
-        `object` data returned from processing, if any
-    '''
-    error = _pg.QtCore.pyqtSignal(tuple)
-    done  = _pg.QtCore.pyqtSignal(object)
+class signal(_pg.QtCore.QObject):
+    """
+    Simplified pyqtSignal with self.connect() and self.emit().
+    This is a thread-safe way to pass data. I hear.
+
+    Parameters
+    ----------
+    You can optionally provide functions as arguments. These will be automatically
+    connected after initialization.
+
+
+    Example Usage
+    -------------
+
+    s = signal()
+
+    s.connect(my_function)
+
+    # Elsewhere in the code:
+
+    s.emit(my_data)
+
+    # my_function will receive my_data as the argument.
+
+    # You can also take the daisy-chain shortcut:
+
+    s = signal().connect(my_function)
+
+    # Though this is the same as
+
+    s = signal(my_function)
+
+    """
+    _pyqtSignal = _pg.QtCore.pyqtSignal(object)
+
+    def __init__(self, *functions):
+        _pg.QtCore.QObject.__init__(self)
+        for f in functions: self.connect(f)
+
+    def connect(self, function):
+        """
+        Connect the signal to the supplied function. Returns self.
+        """
+        self._pyqtSignal.connect(function)
+        return self
+
+    def emit(self, data):
+        """
+        Emits the supplied data to the connected functions. Returns self.
+        """
+        self._pyqtSignal.emit(data)
+        return self
 
 class worker(_pg.QtCore.QRunnable):
     '''
@@ -43,9 +93,14 @@ class worker(_pg.QtCore.QRunnable):
         self.function = function
         self.args     = args
         self.kwargs   = kwargs
-        self._signals = _signals()
-        self.signal_error = self._signals.error
-        self.signal_done  = self._signals.done
+        self.signal_error = signal()
+        self.signal_done  = signal()
+
+    def start(self):
+        """
+        Shortcut to pool.start(self)
+        """
+        pool.start(self)
 
     @_pg.QtCore.pyqtSlot()
     def run(self):
@@ -100,18 +155,32 @@ def start(function, *args, done=None, error=None, **kwargs):
     pool.start(w)
     return w
 
+def get_active_thread_count():
+    """
+    Returns the number of active threads in the pool.
+    """
+    return pool.activeThreadCount()
+
 
 if __name__ == '__main__':
 
     import time
+
     def f(n):
         print('pants', n)
-        time.sleep(1.0)
+        time.sleep(0.1)
         print('shoes', n)
+        time.sleep(0.1)
+        s.emit('other')
         return 37*n
 
-    def done(*a): print('result', a)
+
+    def done(a): print('result', a)
+    def other(a): print('other', a)
+
+    s = signal(other).connect(other)
 
     # Start a thread
     w = start(f, 2, done=done)
+    w.start()
 
