@@ -910,30 +910,44 @@ class Button(BaseObject):
     ----------
     text="My Button! No!"
         Text to appear on the button.
+
     checkable=False
         Whether the button can be toggled or just pressed.
+
     checked=False
         Whether the initial state is checked.
+
     QPushButton=None
         Optionally, you can specify a QPushButton instance that it will use
         instead of creating a new one.
+
     autosettings_path=None
         If you want this object to remember its state from run to run, specify
         a unique identifier string, e.g. 'my_button_no'.
+
     tip=None
         If set to a string, assigns a tool tip to the button (text that pops up
         when hovering)
+
+    signal_clicked=None : function
+        Optional function to which signal_clicked will connect.
+
+    signal_toggled=None : function
+        Optional function to which signal_toggled will connect.
 
     Signals
     -------
     self.signal_clicked
         When the user has clicked and released the button.
+
     self.signal_toggled
-        When the value has changed.
+        When the checked state has changed.
     """
 
 
-    def __init__(self, text="My Button! No!", checkable=False, checked=False, QPushButton=None, autosettings_path=None, tip=None):
+    def __init__(self, text="My Button! No!", checkable=False, checked=False,
+                 QPushButton=None, autosettings_path=None, tip=None,
+                 signal_clicked=None, signal_toggled=None):
 
         # Qt button instance
         if QPushButton is None: self._widget = _pg.Qt.QtGui.QPushButton(text)
@@ -965,6 +979,10 @@ class Button(BaseObject):
 
         # Bind to save gui settings when changed
         self.signal_toggled.connect(self.save_gui_settings)
+
+        # If other functions were supplied
+        if signal_clicked: self.signal_clicked.connect(signal_clicked)
+        if signal_toggled: self.signal_toggled.connect(signal_toggled)
 
 
     def is_checked(self):
@@ -1111,35 +1129,48 @@ class NumberBox(BaseObject):
 
     Parameters
     ----------
-    value=0
+    value=0 : number
         Initial value
-    step=1
+
+    step=1 : number
         Step size
-    bounds=(None,None)
+
+    bounds=(None,None) : tuple or list
         Min and max values
-    int=False
+
+    int=False : bool
         Force the value to be an integer if True
-    autosettings_path=None
+
+    autosettings_path=None : str
         If you want this object to remember its value from run to run, specify
         a unique identifier, e.g. 'my_numberbox'.
-    tip=None
+
+    tip=None : str
         If set to a string, sets the tool tip (text that pops up when hovering).
+
+    signal_changed=None : function
+        Optional function to which signal_changed will connect.
 
     Some Common Keyword Arguments
     -----------------------------
     suffix=None
         String value for units to display
+
     siPrefix=False
         True to add a prefix on units
+
     dec=False
         True means increments grow with the size of the number.
+
     minStep=None
         Minimum step when dec is True
+
     decimals
         Number of decimals to display
     """
 
-    def __init__(self, value=0, step=1, bounds=(None,None), int=False, autosettings_path=None, tip=None, **kwargs):
+    def __init__(self, value=0, step=1, bounds=(None,None), int=False,
+                 autosettings_path=None, tip=None, signal_changed=None, **kwargs):
 
         # Fix the weird default behavior
         kwargs['compactHeight'] = False
@@ -1167,6 +1198,9 @@ class NumberBox(BaseObject):
 
         # Bind to save gui settings when changed
         self.signal_changed.connect(self.save_gui_settings)
+
+        # If functions provided
+        if signal_changed: self.signal_changed.connect(signal_changed)
 
     def get_value(self):
         """
@@ -1212,21 +1246,52 @@ class CheckBox(GridLayout):
 
     Parameters
     ----------
-    text=None
+    text=None : str
         None means no label. A string will set the label next to the box.
-    label_editable=False
+
+    label_editable=False : bool
         If True, self.text will be a TextBox. If False, it will be a Label.
-    label_position='right'
+
+    label_position='right' : str
         Can be 'right', 'left', 'top', 'bottom'
-    autosettings_path=None
+
+    autosettings_path=None : str
         If you wish for this object to remember its state from run to run,
         specify a unique identifier string, e.g. 'my_checkbox'
+
+    signal_toggled=None : function
+    signal_changed=None : function
+    signal_clicked=None : function
+    signal_text_changed=None : function
+        Optional functions to which each signal will connect. Note
+        signal_text_changed only exists if label_editable==True
+
+    Signals
+    -------
+    self.signal_toggled
+        Emitted whenever someone toggles the state of the checkbox. This is the
+        recommended signal.
+
+    self.signal_text_changed
+        If label_editable==True, this is the signal self.text.signal_changed
+
+    self.signal_changed
+        Emitted whenver the 'state' changes.
+
+    self.signal_clicked
+        Emitted whenever the checkbox is clicked.
 
     **kwargs are sent to the label item.
 
     """
 
-    def __init__(self, text=None, text_editable=False, text_position='right', autosettings_path=None, tip=None, **kwargs):
+    def __init__(self, text=None, text_editable=False, text_position='right',
+                 autosettings_path=None, tip=None,
+                 signal_toggled=None,
+                 signal_text_changed=None,
+                 signal_changed=None,
+                 signal_clicked=None,
+                 **kwargs):
 
         # pyqt objects
         self._widget_checkbox = _pg.QtGui.QCheckBox()
@@ -1243,6 +1308,8 @@ class CheckBox(GridLayout):
             if text_editable:
                 self.text = TextBox(text=text, **kwargs)
                 self._autosettings_controls = ['self', 'self.text']
+                self.signal_text_changed = self.text.signal_changed
+                if signal_text_changed: self.signal_text_changed.connect(signal_text_changed)
             else:
                 self.text = Label  (text=text, **kwargs)
                 self._autosettings_controls = ['self']
@@ -1274,6 +1341,11 @@ class CheckBox(GridLayout):
         self.signal_changed.connect(self.save_gui_settings)
         if text and text_editable: self.text.signal_changed.connect(self.save_gui_settings)
 
+        # If functions supplied
+        if signal_changed: self.signal_changed.connect(signal_changed)
+        if signal_toggled: self.signal_toggled.connect(signal_toggled)
+        if signal_clicked: self.signal_clicked.connect(signal_clicked)
+
     def is_checked(self):
         """
         Check if checked.
@@ -1301,23 +1373,39 @@ class CheckBox(GridLayout):
 
 
 class ComboBox(BaseObject):
+    """
+    Simplified QComboBox.
 
-    def __init__(self, items=['test','me'], autosettings_path=None, tip=None):
-        """
-        Simplified QComboBox.
+    Parameters
+    ----------
+    items=['test','me']
+        List of items for the combobox.
 
-        Parameters
-        ----------
-        items=['test','me']
-            List of items for the combobox.
-        autosettings_path=None
-            If you want this object to remember its settings from run to run,
-            give it a unique identifier string, e.g. 'my_combobox'
-        tip=None
-            Set to a string to pop up a message while the mouse hovers.
+    autosettings_path=None
+        If you want this object to remember its settings from run to run,
+        give it a unique identifier string, e.g. 'my_combobox'
 
-        **kwargs are sent to the underlying widget options self._widget.setOpts()
-        """
+    tip=None
+        Set to a string to pop up a message while the mouse hovers.
+
+    signal_changed=None : function
+    signal_activated=None : function
+        Optional functions to which the signals will be connected.
+
+    Signals
+    -------
+    self.signal_changed
+        Called when the selection changes.
+
+    self.signal_activated
+        Called when the combo box is activated.
+
+
+    **kwargs are sent to the underlying widget options self._widget.setOpts()
+    """
+
+    def __init__(self, items=['test','me'], autosettings_path=None, tip=None,
+                 signal_changed=None, signal_activated=None):
 
         # pyqt objects
         self._widget = _pg.QtGui.QComboBox()
@@ -1341,6 +1429,9 @@ class ComboBox(BaseObject):
 
         # Bind to save gui settings when changed
         self.signal_changed.connect(self.save_gui_settings)
+
+        if signal_activated: self.signal_activated.connect(signal_activated)
+        if signal_changed:   self.signal_changed  .connect(signal_changed)
 
 
     def add_item(self, text="ploop"):
@@ -1407,12 +1498,20 @@ class Slider(GridLayout):
     ----------
     bounds=(0,1)
         Default bounds on the slider value.
+
     steps=1000
         Number of
+
     autosettings_path=None
         Unique identifier string that also works as a file name for saving settings.
+
     hide_numbers=False
         If True, numbers will be hidden.
+
+    signal_value_changed=None : function
+    signal_upper_changed=None : function
+    signal_lower_changed=None : function
+        Optional functions to which these signals will connect.
 
     Keyword arguments are sent to the pyqtgraph number boxes.
 
@@ -1420,12 +1519,28 @@ class Slider(GridLayout):
     ------------------------
     suffix : string
         Units label.
+
     siPrefix : bool
         Whether to use SI prefixes on the label.
+
     bounds=None : tuple or list
         2-long tuple or list specifying the allowed values.
+
+    Signals
+    -------
+    self.signal_value_changed
+        Emitted when the value of the slider changes.
+
+    self.signal_upper_changed
+        Emitted when the upper bound changes.
+
+    self.signal_lower_changed
+        Emitted when the lower bound changes.
     """
-    def __init__(self, bounds=(0,1), steps=1000, autosettings_path=None, hide_numbers=False, **kwargs):
+    def __init__(self, bounds=(0,1), steps=1000, autosettings_path=None, hide_numbers=False,
+                 signal_value_changed=None,
+                 signal_upper_changed=None,
+                 signal_lower_changed=None, **kwargs):
 
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
@@ -1441,8 +1556,12 @@ class Slider(GridLayout):
         self.number_value      ._widget.setMaximumWidth(16777215)
         self.number_upper_bound._widget.setMaximumWidth(16777215)
 
+        self.signal_value_changed = self.number_value.signal_changed
+        self.signal_upper_changed = self.number_upper_bound.signal_changed
+        self.signal_lower_changed = self.number_lower_bound.signal_changed
+
         self.new_autorow()
-        self._widget_slider     = self.add(_pg.QtGui.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
+        self._widget_slider = self.add(_pg.QtGui.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
         self._widget_slider.setMinimum(0)
         self.set_steps(steps)
         self.set_row_stretch(3)
@@ -1464,6 +1583,11 @@ class Slider(GridLayout):
 
         # Update the value
         self._slider_changed()
+
+        # Connect to user functions
+        if signal_value_changed: self.signal_value_changed.connect(signal_value_changed)
+        if signal_upper_changed: self.signal_upper_changed.connect(signal_upper_changed)
+        if signal_lower_changed: self.signal_lower_changed.connect(signal_lower_changed)
 
     def _slider_changed(self, *a):
         """
@@ -1575,7 +1699,6 @@ class Slider(GridLayout):
 
 
 class TabArea(BaseObject):
-
     """
     Simplified QTabWidget.
 
@@ -1584,14 +1707,26 @@ class TabArea(BaseObject):
     autosettings_path=None
         Set to a string file name to have this widget remember settings from
         the previous run.
-    tabs_closable=False
-        Set to True to make the tabs closable (you still have to link the tab
-        signals to a suitable close function, however.)
+
+    signal_switched=None : function
+    signal_tab_close_requested : function
+        Optional functions to which the signals will connect.
+
+    Signals
+    -------
+    self.signal_switched
+        Emitted when the tab switches.
+
+    self.signal_tab_close_requested
+        Emitted when someone tries to close a tab.
+
     """
 
 
 
-    def __init__(self, autosettings_path=None):
+    def __init__(self, autosettings_path=None,
+                 signal_switched=None,
+                 signal_tab_close_requested=None):
 
         # tab widget
         self._widget = _pg.Qt.QtGui.QTabWidget()
@@ -1624,6 +1759,9 @@ class TabArea(BaseObject):
         # yet (no tabs added!), so only load into self._lazy_load
         self.load_gui_settings(lazy_only=True)
 
+        # Connect signals
+        if signal_switched: self.signal_switched.connect(signal_switched)
+        if signal_tab_close_requested: self.signal_tab_close_requested.connect(signal_tab_close_requested)
 
     def get_total_tab_count(self):
         """
@@ -1815,11 +1953,37 @@ class TabArea(BaseObject):
         d.h(popped_tabs=list(self.popped_tabs.keys()))
 
 class Table(BaseObject):
+    """
+    Simplified QTableWidget. This is not a commonly used object. If you need
+    features let Jack know.
 
-    def __init__(self, columns=2, rows=1):
-        """
-        Simplified QTableWidget.
-        """
+    Parameters
+    ----------
+    columns=2 : int
+    rows=1 : int
+        Columns and rows of the table.
+
+    signal_cell_changed=None : function
+    signal_cell_clicked=None : function
+    signal_cell_double_clicked=None : function
+        Optional functions to which these signals connect.
+
+    Signals
+    -------
+    self.signal_cell_changed
+        Emitted when a cell's value changes.
+
+    self.signal_cell_clicked
+        Emitted when someone clicks a cell.
+
+    self.signal_cell_double_clicked
+        Emitted when someone double-clicks a cell.
+    """
+
+    def __init__(self, columns=2, rows=1,
+                 signal_cell_changed=None,
+                 signal_cell_clicked=None,
+                 signal_cell_double_clicked=None):
 
         # create the widget
         self._widget = _pg.Qt.QtGui.QTableWidget(rows, columns)
@@ -1839,6 +2003,12 @@ class Table(BaseObject):
         # Expose the show and hide functions
         self.show = self._widget.show
         self.hide = self._widget.hide
+
+        if signal_cell_changed: self.signal_cell_changed.connect(signal_cell_changed)
+        if signal_cell_clicked: self.signal_cell_clicked.connect(signal_cell_clicked)
+        if signal_cell_double_clicked: self.signal_cell_double_clicked.connect(signal_cell_double_clicked)
+
+
 
 
     def clear(self):
@@ -1925,22 +2095,25 @@ class Table(BaseObject):
 
 
 class TableDictionary(Table):
+    """
+    This object has been replaced by TreeDictionary, which is much more powerful.
+
+    This is an enhanced version of Table() with two columns, containing
+    key / value pairs. It is designed to behave somewhat like a python
+    dictionary object, and has a specific use, namely to store settings
+    for writing to a header file.
+
+    The keys are strings none of the characters in self.naughty
+    (these will be replaced). The dictionary
+    can be sorted by key, alphabetically.
+
+    The values must be python code that can be eval'd.
+    """
 
     naughty = [' ','\t','\n',',']
 
     def __init__(self):
-        """
-        This is an enhanced version of Table() with two columns, containing
-        key / value pairs. It is designed to behave somewhat like a python
-        dictionary object, and has a specific use, namely to store settings
-        for writing to a header file.
 
-        The keys are strings none of the characters in self.naughty
-        (these will be replaced). The dictionary
-        can be sorted by key, alphabetically.
-
-        The values must be python code that can be eval'd.
-        """
 
         # Other stuff common to all objects
         Table.__init__(self, 2, 0)
@@ -2066,12 +2239,12 @@ class TableDictionary(Table):
 
 
 class TextLog(BaseObject):
+    """
+    Tired of print statements to the command line? Try this for dumping
+    your log info.
+    """
 
     def __init__(self):
-        """
-        Tired of print statements to the command line? Try this for dumping
-        your log info.
-        """
         self._widget = _pg.QtGui.QTextEdit()
 
         # Other stuff common to all objects
@@ -2102,27 +2275,36 @@ class TextLog(BaseObject):
 
 
 class TextBox(BaseObject):
+    """
+    Simplified QLineEdit.
 
-    def __init__(self, text="", multiline=False, autosettings_path=None, python_highlighting=False):
-        """
-        Simplified QLineEdit.
+    Parameters
+    ----------
 
-        Parameters
-        ----------
+    text='' : str
+        Default text.
 
-        text='' : str
-            Default text.
+    multiline=False : bool
+        Whether this box should be multiple lines.
 
-        multiline=False : bool
-            Whether this box should be multiple lines.
+    autosettings_path=None : str
+        If specified with a unique path-like string, this will save the state of the text box
+        between runs.
 
-        autosettings_path=None : str
-            If specified with a unique path-like string, this will save the state of the text box
-            between runs.
+    python_highlighting=False : bool
+        Enables python syntax highlighting, but only in multiline mode.
 
-        python_highlighting=False : bool
-            Enables python syntax highlighting, but only in multiline mode.
-        """
+    signal_changed=None : function
+        Optional function to which this signal will connect.
+
+    Signals
+    -------
+    self.signal_changed
+        Emitted when the value / text changes.
+    """
+    def __init__(self, text="", multiline=False, autosettings_path=None, python_highlighting=False,
+                 signal_changed=None):
+
         self._multiline = multiline
 
         # pyqt objects
@@ -2142,7 +2324,7 @@ class TextBox(BaseObject):
         self.set_text(str(text))
 
         # signals
-        self.signal_changed        = self._widget.textChanged
+        self.signal_changed = self._widget.textChanged
         #self.signal_return_pressed = self._widget.returnPressed
 
         # Other stuff common to all objects
@@ -2164,6 +2346,8 @@ class TextBox(BaseObject):
 
         # Bind to save gui settings when changed
         self.signal_changed.connect(self.save_gui_settings)
+
+        if signal_changed: self.signal_changed.connect(signal_changed)
 
 
     def get_text(self):
@@ -2187,14 +2371,23 @@ class TextBox(BaseObject):
 
 
 class Timer():
+    """
+    Simplified QTimer.
 
-    def __init__(self, interval_ms=500, single_shot=False):
-        """
-        Simplified QTimer.
+    Parameters
+    ----------
+    interval_ms=500 : int
+        How long before signal_tick is emitted.
 
-          interval_ms   in milliseconds
-          single_shot   whether the timer fires only once
-        """
+    single_shot=False
+        Whether the timer fires only once
+
+    signal_tick=None : function
+        Optional function to which signal_tick will connect. Shortcut to
+        calling self.signal_tick.connect(function).
+    """
+    def __init__(self, interval_ms=500, single_shot=False, signal_tick=None):
+
 
         # pyqt objects
         self._widget     = _pg.QtCore.QTimer();
@@ -2207,6 +2400,8 @@ class Timer():
         # Set the interval
         self.set_interval(interval_ms)
         self.set_single_shot(single_shot)
+
+        if signal_tick: self.signal_tick.connect(signal_tick)
 
     def set_interval(self, interval_ms=500):
         """
@@ -2241,19 +2436,28 @@ class TreeDictionary(BaseObject):
 
     Parameters
     ----------
-    autosettings_path=None
+    autosettings_path=None : str
         Where this object will save its settings when self.save() and self.load()
         are called without a path specified. None means no settings will be
         automatically saved.
-    name=None
+
+    name=None : str
         If specified as a string, this will prepend name+'/' to all elements
         output in self.get_dictionary(), self.send_to_databox_header(), self.save()
         and will strip them from self.load() and self.update() accordingly
-    show_header=False
+
+    show_header=False : bool
         Whether to show the top-level trunk.
+
+    new_signal_changed=None : function
+        Optional function to which signal_changed will automatically connect
+        for all newly created parameters. You can also change this function
+        after the tree is created by writing directly to self.any_signal_changed.
 
     Signals
     -------
+    This object uses a different means of connecting signals.
+
     self.connect_signal_changed(name, function)
         This will connect the change event for the specified parameter
         name to the specified function.
@@ -2262,7 +2466,7 @@ class TreeDictionary(BaseObject):
         This will connect the signal from anything changing to the specified
         function.
     """
-    def __init__(self, autosettings_path=None, name=None, show_header=False):
+    def __init__(self, autosettings_path=None, name=None, show_header=False, new_signal_changed=None):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -2275,12 +2479,10 @@ class TreeDictionary(BaseObject):
         self._tree_widgets       = dict() # list of all tree widgets, including non-parameters.
         self.name = name
         self.default_signal_changed = None
+        self.new_signal_changed = new_signal_changed
 
         # Load the previous settings (if any)
         self.load()
-
-        # Connect any signal changing to the autosave
-        self.connect_any_signal_changed(self.autosave)
 
         # Expose the show and hide functions
         self.show = self._widget.show
@@ -2328,15 +2530,19 @@ class TreeDictionary(BaseObject):
         return self
 
 
-    def connect_any_signal_changed(self, function):
+    def connect_any_signal_changed(self, function, unique=True):
         """
         Connects the "anything changed" signal for all of the tree to the
-        specified function.
+        specified function. Note this is using the sigTreeStateChanged signal,
+        not the sigValueChanged signal (as is the case for self.connect_signal_changed())
 
         Parameters
         ----------
-        function
+        function : function
             Function to connect to this signal.
+
+        unique=True : bool
+            Whether only one such connection is allowed.
         """
 
         # loop over all top level parameters
@@ -2344,17 +2550,33 @@ class TreeDictionary(BaseObject):
 
             # make sure there is only one connection!
             try:
-                self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(
-                                  function, type=_pg.QtCore.Qt.UniqueConnection)
+                if unique:
+                    self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(
+                        function, type=_pg.QtCore.Qt.UniqueConnection)
+                else:
+                    self._widget.topLevelItem(i).param.sigTreeStateChanged.connect(function)
             except:
                 pass
 
         return self
 
-    def connect_signal_changed(self, key, function):
+    def connect_signal_changed(self, key, function, unique=True):
         """
         Connects a changed signal from the parameters of the specified key
-        to the supplied function.
+        to the supplied function. Note this uses the sigValueChanged signal,
+        not the sigTreeStateChanged signal (as is the case for
+        self.connect_any_signal_changed()).
+
+        Parameters
+        ----------
+        key : str
+            Parameter whose signal_changed we connect.
+
+        function : function
+            Function to which signal_changed will connect.
+
+        unique=True : bool
+            Whether only one such connection will be allowed.
         """
         x = self._find_parameter(key.split("/"))
 
@@ -2362,7 +2584,8 @@ class TreeDictionary(BaseObject):
         if x==None: return None
 
         # connect it
-        x.sigValueChanged.connect(function)
+        if unique: x.sigValueChanged.connect(function, type=_pg.QtCore.Qt.UniqueConnection)
+        else:      x.sigValueChanged.connect(function)
 
         # Keep track of the functions
         if key in self._connection_lists: self._connection_lists[key].append(function)
@@ -2577,7 +2800,7 @@ class TreeDictionary(BaseObject):
 
         return Button(key, checkable, checked, list(ap.items.keys())[0].button, tip=tip)
 
-    def add_parameter(self, key='test', value=42.0, default_list_index=0, **kwargs):
+    def add_parameter(self, key='test', value=42.0, default_list_index=0, signal_changed=None, **kwargs):
         """
         Adds a parameter "leaf" to the tree. If self.default_signal_changed is
         a function, this runs self.connect_signal_changed(key, self.default_signal_changed).
@@ -2597,6 +2820,9 @@ class TreeDictionary(BaseObject):
         default_list_index=0
             When setting value=[], use this to specify the default selected
             list index.
+
+        signal_changed=None
+            Optional function to which signal_changed for this parameter will connect.
 
 
         Common Keyword Arguments
@@ -2701,8 +2927,10 @@ class TreeDictionary(BaseObject):
             expanded = self._lazy_load.pop(key+'|expanded')
             self.get_param(key).setOpts(expanded=expanded)
 
-        # Connect it to autosave (will only create unique connections)
+        # Connect it to autosave (will only create unique connections; will not duplicate)
         self.connect_any_signal_changed(self.autosave)
+        if self.new_signal_changed: self.connect_signal_changed(key, self.new_signal_changed)
+        if signal_changed:          self.connect_signal_changed(key, signal_changed)
 
         # Make the tool tip more responsive
         w = self.get_widget(key)
