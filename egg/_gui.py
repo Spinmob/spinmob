@@ -2724,7 +2724,7 @@ class TreeDictionary(BaseObject):
 
                 # otherwise poop out
                 else:
-                    if not quiet: raise Exception("Could not find '"+self.get_full_key(x)+"' in "+str(self))
+                    if not quiet: raise Exception("Could not find '"+self.get_key(x)+"' in "+str(self))
                     return None
 
         # return the last one we found / created.
@@ -2999,7 +2999,7 @@ class TreeDictionary(BaseObject):
             pass
         self.unblock_events()
 
-    def get_full_key(self, param):
+    def get_key(self, param):
         """
         For the supplied param (see also self.get_param()) this will return the
         full key associated with it.
@@ -3522,7 +3522,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # top row is main controls
         self.grid_controls   = self.place_object(GridLayout(margins=False), alignment=0)
-        self.grid_controls.place_object(Label("Raw Data:"), alignment=1)
+        #self.grid_controls.place_object(Label("Raw Data:"), alignment=1)
         self.button_clear    = self.grid_controls.place_object(Button("Clear", tip='Clear all header and columns.').set_width(40), alignment=1)
         self.button_load     = self.grid_controls.place_object(Button("Load",  tip='Load data from file.')         .set_width(40), alignment=1)
         self.button_save     = self.grid_controls.place_object(Button("Save",  tip='Save data to file.')           .set_width(40), alignment=1)
