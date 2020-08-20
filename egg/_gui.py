@@ -3210,20 +3210,20 @@ class TreeDictionary(BaseObject):
         ----------
         key : string
             Key to a list item / combo box in the tree.
-        
+
         n : integer
             Index to select.
-            
+
         ignore_error=False : bool
             If True, will ignore the error, such as not finding the key.
 
         block_key_signals=False : bool
             If True, this will not trigger a signal_changed, etc.
-            
+
         block_all_signals=False : bool
             If True, try to block ALL signals while setting.
         """
-        self.set_value(key, self.get_param(key).opts['values'][n], 
+        self.set_value(key, self.get_param(key).opts['values'][n],
                        ignore_error=ignore_error,
                        block_key_signals=block_key_signals,
                        block_all_signals=block_all_signals)
@@ -3245,7 +3245,7 @@ class TreeDictionary(BaseObject):
 
         block_key_signals=False : bool
             If True, this will not trigger a signal_changed, etc.
-            
+
         block_all_signals=False : bool
             If True, try to block ALL signals while setting.
         """
@@ -4085,14 +4085,15 @@ class DataboxPlot(_d.databox, GridLayout):
         # otherwise, look angry and don't autosave
         except Exception as e:
             self._e = e
-            self.script.set_colors('black','pink')
+            if _s.settings['dark_theme_qt']: self.script.set_colors(None,'#552222')
+            else:                            self.script.set_colors(None,'pink')
             self.button_script.set_colors('black', 'pink')
 
             # Show the error
             self._label_script_error.show()
             self._label_script_error.set_text('OOP! '+ type(e).__name__ + ": '" + str(e.args[0]) + "'")
             if _s.settings['dark_theme_qt']: self._label_script_error.set_colors('pink', None)
-            else:                         self._label_script_error.set_colors('red', None)
+            else:                            self._label_script_error.set_colors('red', None)
 
         return self
 
