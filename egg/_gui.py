@@ -1,11 +1,10 @@
-import pyqtgraph as _pg
-
 # Regular imports
 import time     as _t
 import os       as _os
 import shutil   as _shutil
 import numpy    as _n
 import scipy.special as _scipy_special
+import sys as _sys
 
 import traceback as _traceback
 _p = _traceback.print_last
@@ -4831,6 +4830,32 @@ class DataboxSaveLoad(_d.databox, GridLayout):
     def enable_save(self):  self.button_save.enable()
 
 
+
+class ExceptionTimer(Timer):
+    """
+    Periodically checks for a new exception and prints the last one if it exists.
+    
+    Note this is a really dumb object that doesn't ensure every passing
+    exception is caught. If you know how to get a list of *all* exceptions, 
+    please let me know.
+    
+    **kwargs are sent to Timer(), upon which this is based.
+    """
+    def __init__(self, interval_ms=500, **kwargs):
+        Timer.__init__(self, interval_ms=interval_ms, **kwargs)
+        
+        self.signal_tick.connect(self._timer_tick)
+        self.signal_new_exception = _s.thread.signal()
+        self.start()
+
+    def _timer_tick(self, *a):
+        """
+        Checks if there is a new exception and appends it.
+        """
+        if hasattr(_sys, 'last_value') and _sys.last_value:
+            _p()
+            self.signal_new_exception.emit(None)
+            _sys.last_value = None
 
 if __name__ == '__main__':
     import spinmob
