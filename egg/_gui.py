@@ -2724,7 +2724,7 @@ class TreeDictionary(BaseObject):
 
                 # otherwise poop out
                 else:
-                    if not quiet: raise Exception("Could not find '"+self.get_key(x)+"' in "+str(self))
+                    if not quiet: raise Exception("Could not find '"+'/'.join(key_list)+"' in "+str(self))
                     return None
 
         # return the last one we found / created.
@@ -3202,7 +3202,7 @@ class TreeDictionary(BaseObject):
         return self.get_dictionary(short_keys=short_keys)[0]
     get_keys = keys
 
-    def set_list_index(self, key, n):
+    def set_list_index(self, key, n, ignore_error=False, block_key_signals=False, block_all_signals=False):
         """
         Sets the selected index of a list (combo box) in the tree.
 
@@ -3210,10 +3210,23 @@ class TreeDictionary(BaseObject):
         ----------
         key : string
             Key to a list item / combo box in the tree.
+        
         n : integer
             Index to select.
+            
+        ignore_error=False : bool
+            If True, will ignore the error, such as not finding the key.
+
+        block_key_signals=False : bool
+            If True, this will not trigger a signal_changed, etc.
+            
+        block_all_signals=False : bool
+            If True, try to block ALL signals while setting.
         """
-        self.set_value(key, self.get_param(key).opts['values'][n])
+        self.set_value(key, self.get_param(key).opts['values'][n], 
+                       ignore_error=ignore_error,
+                       block_key_signals=block_key_signals,
+                       block_all_signals=block_all_signals)
 
     def set_value(self, key, value, ignore_error=False, block_key_signals=False, block_all_signals=False):
         """
@@ -3227,11 +3240,14 @@ class TreeDictionary(BaseObject):
         value
             Value to set for this item.
 
-        ignore_error : bool
+        ignore_error=False : bool
             If True, will ignore the error, such as not finding the key.
 
-        block_key_signals : bool
+        block_key_signals=False : bool
             If True, this will not trigger a signal_changed, etc.
+            
+        block_all_signals=False : bool
+            If True, try to block ALL signals while setting.
         """
 
         # first clean up the key
@@ -3422,7 +3438,7 @@ class TreeDictionary(BaseObject):
 
     def _set_value_safe(self, k, v, ignore_errors=False, block_key_signals=False):
         """
-        Actually sets the value, first by trying it directly, then by
+        Actually sets the value, first by trying it directly.
         """
         # for safety: by default assume it's a repr() with python code
         try:
@@ -3430,7 +3446,7 @@ class TreeDictionary(BaseObject):
                                  block_key_signals = block_key_signals)
 
         except:
-            print("ERROR: Could not set '"+k+"' to '"+v+"'"+'\n'+str(self))
+            raise Exception("Could not set '"+str(k)+"' to '"+str(v)+"'"+'\n'+str(self))
 
 
 
