@@ -231,20 +231,35 @@ class BaseObject(object):
             # process events
             self.process_events()
 
-
-    def block_events(self):
+    def block_signals(self):
         """
         Prevents the widget from sending signals.
         """
         self._widget.blockSignals(True)
         self._widget.setUpdatesEnabled(False)
+        return self
 
-    def unblock_events(self):
+    def unblock_signals(self):
         """
         Allows the widget to send signals.
         """
         self._widget.blockSignals(False)
         self._widget.setUpdatesEnabled(True)
+        return self
+
+    def block_events(self):
+        """
+        Antiquated. Use block_signals().
+        """
+        print('WARNING: block_events and unblock_events are antiquated. Please use block_signals and unblock_signals instead.')
+        return self.block_signals()
+
+    def unblock_events(self):
+        """
+        Antiquated. Use unblock_signals().
+        """
+        print('WARNING: block_events and unblock_events are antiquated. Please use block_signals and unblock_signals instead.')
+        return self.unblock_signals()
 
     def disable(self, value=True):
         """
@@ -477,20 +492,6 @@ class GridLayout(BaseObject):
 
 
     def __getitem__(self, n): return self.objects[n]
-
-    def block_events(self):
-        """
-        This will tell the window widget to stop processing events.
-        """
-        self._widget.blockSignals(True)
-        self._widget.setUpdatesEnabled(False)
-
-    def unblock_events(self):
-        """
-        This will tell the window widget to start processing events again.
-        """
-        self._widget.blockSignals(False)
-        self._widget.setUpdatesEnabled(True)
 
     def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=1):
         """
@@ -1004,16 +1005,20 @@ class Button(BaseObject):
         self._widget.setCheckable(checkable)
         return self
 
-    def set_checked(self, value=True, block_events=False):
+    def set_checked(self, value=True, block_signals=False, **kwargs):
         """
         This will set whether the button is checked.
 
-        Setting block_events=True will temporarily disable signals
+        Setting block_signals=True will temporarily disable signals
         from the button when setting the value.
         """
-        if block_events: self._widget.blockSignals(True)
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
+
+        if block_signals: self._widget.blockSignals(True)
         self._widget.setChecked(value)
-        if block_events: self._widget.blockSignals(False)
+        if block_signals: self._widget.blockSignals(False)
 
         return self
 
@@ -1207,16 +1212,20 @@ class NumberBox(BaseObject):
         """
         return self._widget.value()
 
-    def set_value(self, value, block_events=False):
+    def set_value(self, value, block_signals=False, **kwargs):
         """
         Sets the current value of the number box.
 
-        Setting block_events=True will temporarily block the widget from
+        Setting block_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        if block_events: self.block_events()
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
+
+        if block_signals: self.block_events()
         self._widget.setValue(value)
-        if block_events: self.unblock_events()
+        if block_signals: self.unblock_events()
         return self
 
     def set_step(self, value, block_events=False):
@@ -4834,16 +4843,16 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 class ExceptionTimer(Timer):
     """
     Periodically checks for a new exception and prints the last one if it exists.
-    
+
     Note this is a really dumb object that doesn't ensure every passing
-    exception is caught. If you know how to get a list of *all* exceptions, 
+    exception is caught. If you know how to get a list of *all* exceptions,
     please let me know.
-    
+
     **kwargs are sent to Timer(), upon which this is based.
     """
     def __init__(self, interval_ms=500, **kwargs):
         Timer.__init__(self, interval_ms=interval_ms, **kwargs)
-        
+
         self.signal_tick.connect(self._timer_tick)
         self.signal_new_exception = _s.thread.signal()
         self.start()
