@@ -1223,9 +1223,9 @@ class NumberBox(BaseObject):
             print('WARNING: block_events is antiquated. Please use block_signals instead.')
             block_signals = kwargs['block_events']
 
-        if block_signals: self.block_events()
+        if block_signals: self.block_signals()
         self._widget.setValue(value)
-        if block_signals: self.unblock_events()
+        if block_signals: self.unblock_signals()
         return self
 
     def set_step(self, value, block_events=False):
@@ -1235,9 +1235,9 @@ class NumberBox(BaseObject):
         Setting block_events=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        if block_events: self.block_events()
+        if block_events: self.block_signals()
         self._widget.setSingleStep(value)
-        if block_events: self.unblock_events()
+        if block_events: self.unblock_signals()
 
         return self
 
@@ -1473,9 +1473,9 @@ class ComboBox(BaseObject):
         """
         Sets current index.
         """
-        if block_events: self.block_events()
+        if block_events: self.block_signals()
         self._widget.setCurrentIndex(index)
-        if block_events: self.unblock_events()
+        if block_events: self.unblock_signals()
         return self
 
     def get_text(self, index=None):
@@ -1666,7 +1666,7 @@ class Slider(GridLayout):
         if u-l == 0: N = int(self.get_steps()/2)
         else:        N = int(_n.round(self.get_steps()*(value-l)/(u-l)))
 
-        if block_events: self.block_events()
+        if block_events: self.block_signals()
 
         # See if the slider will change
         slider_stayed = (N == self._widget_slider.value())
@@ -1688,7 +1688,7 @@ class Slider(GridLayout):
                 # Next time we won't arrive here because they'll be the same. Run the user event change
                 self.event_changed(v)
 
-        if block_events: self.unblock_events()
+        if block_events: self.unblock_signals()
 
         self.save_gui_settings()
 
@@ -2055,7 +2055,7 @@ class Table(BaseObject):
         sending any signals when setting the value.
         """
 
-        if block_events: self.block_events()
+        if block_events: self.block_signals()
 
         # dynamically resize
         while column > self._widget.columnCount()-1: self._widget.insertColumn(self._widget.columnCount())
@@ -2064,7 +2064,7 @@ class Table(BaseObject):
         # set the value
         self._widget.setItem(row, column, _pg.Qt.QtGui.QTableWidgetItem(str(value)))
 
-        if block_events: self.unblock_events()
+        if block_events: self.unblock_signals()
 
         return self
 
@@ -2151,7 +2151,7 @@ class TableDictionary(Table):
         """
 
         # block all signals during the update (to avoid re-calling this)
-        self.block_events()
+        self.block_signals()
 
         # loop over the rows
         for n in range(self.get_row_count()):
@@ -2182,7 +2182,7 @@ class TableDictionary(Table):
                     self._widget.item(n,1).setData(_pg.QtCore.Qt.BackgroundRole, _pg.Qt.QtGui.QColor('pink'))
 
         # unblock all signals
-        self.unblock_events()
+        self.unblock_signals()
 
     def get_item(self, key):
         """
@@ -2516,7 +2516,7 @@ class TreeDictionary(BaseObject):
         Special version of block_events that loops over all tree elements.
         """
         # block events in the usual way
-        BaseObject.block_events(self)
+        BaseObject.block_signals(self)
 
         # loop over all top level parameters
         for i in range(self._widget.topLevelItemCount()):
@@ -2529,7 +2529,7 @@ class TreeDictionary(BaseObject):
         Special version of unblock_events that loops over all tree elements as well.
         """
         # unblock events in the usual way
-        BaseObject.unblock_events(self)
+        BaseObject.unblock_signals(self)
 
         # loop over all top level parameters
         for i in range(self._widget.topLevelItemCount()):
@@ -2989,23 +2989,23 @@ class TreeDictionary(BaseObject):
         Hides the specified parameter.
         """
         #print('hiding', key, key.split('/'), self._find_parameter(key.split('/')))
-        #self.block_events()
+        #self.block_signals()
         if opposite: self._find_parameter(key.split('/')).show()
         else:        self._find_parameter(key.split('/')).hide()
-        #self.unblock_events()
+        #self.unblock_signals()
 
     def show_parameter(self, key, opposite=False):
         """
         Hides the specified parameter.
         """
-        self.block_events()
+        self.block_signals()
         try:
             if opposite: self._find_parameter(key.split('/')).hide()
             else:        self._find_parameter(key.split('/')).show()
         except:
             print('issue')
             pass
-        self.unblock_events()
+        self.unblock_signals()
 
     def get_key(self, param):
         """
@@ -3262,7 +3262,7 @@ class TreeDictionary(BaseObject):
         key = self._clean_up_key(self._strip(key))
 
         # If we're supposed to, block the user signals for this parameter
-        if block_all_signals: self.block_events()
+        if block_all_signals: self.block_signals()
         if block_key_signals: self.block_key_signals(key, ignore_error)
 
         # now get the parameter object
@@ -3285,7 +3285,7 @@ class TreeDictionary(BaseObject):
 
         # If we're supposed to unblock the user signals for this parameter
         if block_key_signals: self.unblock_key_signals(key, ignore_error)
-        if block_all_signals: self.unblock_events()
+        if block_all_signals: self.unblock_signals()
 
         # Do other stuff if needed.
         self.after_set_value()
@@ -4199,7 +4199,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # Otherwise, we rebuild from scratch (too difficult to track everything)
 
         # don't update anything until we're done
-        self.grid_plot.block_events()
+        self.grid_plot.block_signals()
 
         # clear the plots
         while len(self.plot_widgets):
@@ -4274,7 +4274,7 @@ class DataboxPlot(_d.databox, GridLayout):
                     if m>=0 and not ROI == None: self.plot_widgets[m].addItem(ROI)
 
         # show the plots
-        self.grid_plot.unblock_events()
+        self.grid_plot.unblock_signals()
 
 
     def _update_linked_axes(self):
