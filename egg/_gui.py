@@ -1409,6 +1409,9 @@ class ComboBox(BaseObject):
     tip=None
         Set to a string to pop up a message while the mouse hovers.
 
+    default_index=0
+        Default selected index.
+
     signal_changed=None : function
     signal_activated=None : function
         Optional functions to which the signals will be connected.
@@ -1426,7 +1429,7 @@ class ComboBox(BaseObject):
     """
 
     def __init__(self, items=['test','me'], autosettings_path=None, tip=None,
-                 signal_changed=None, signal_activated=None):
+                 default_index=0, signal_changed=None, signal_activated=None):
 
         # pyqt objects
         self._widget = _pg.QtGui.QComboBox()
@@ -1437,6 +1440,9 @@ class ComboBox(BaseObject):
 
         # Populate it.
         for item in items: self.add_item(item)
+        
+        # Set the default index
+        if default_index: self.set_index(default_index)
 
         # signals
         self.signal_activated = self._widget.activated
