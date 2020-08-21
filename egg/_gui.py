@@ -635,23 +635,29 @@ class Window(GridLayout):
 
     Parameters
     ----------
-    title='Window'
+    title='Window' : str
         Text for the window's title bar.
-    size=[700,500]
+    
+    size=[700,500] : tuple or list
         Starting size of the window.
-    autosettings_path=None
+    
+    autosettings_path=None : str
         If set to a file name, e.g. "w.txt", the window will create and update
         the file egg_settings/w.txt every time a window setting changes (e.g.,
         if you resize or move it.) Previous settings will be automatically
         loaded when the program is next run.
-    margins
+    
+    margins=True : bool
         Set to True or False or a length-4 tuple to include, exclude or define
         the space around the widgets in the window.
 
+    event_close=None : function
+        Optional function to perform duties when the window closes.
     """
 
 
-    def __init__(self, title='Window', size=[700,500], autosettings_path=None, margins=True):
+    def __init__(self, title='Window', size=[700,500], autosettings_path=None, 
+                 margins=True, event_close=None):
         self._parent = self
 
         # initialize the grid layout
@@ -678,6 +684,9 @@ class Window(GridLayout):
 
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
+
+        # If there is a close event
+        if event_close: self.event_close = event_close
 
         # reload the last settings if they exist
         self._load_settings()
