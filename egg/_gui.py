@@ -1228,16 +1228,20 @@ class NumberBox(BaseObject):
         if block_signals: self.unblock_signals()
         return self
 
-    def set_step(self, value, block_events=False):
+    def set_step(self, value, block_signals=False, **kwargs):
         """
         Sets the step of the number box.
 
-        Setting block_events=True will temporarily block the widget from
+        Setting block_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
-        if block_events: self.block_signals()
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
+
+        if block_signals: self.block_signals()
         self._widget.setSingleStep(value)
-        if block_events: self.unblock_signals()
+        if block_signals: self.unblock_signals()
 
         return self
 
@@ -1469,13 +1473,17 @@ class ComboBox(BaseObject):
         """
         return self._widget.currentIndex()
 
-    def set_index(self,index=0, block_events=False):
+    def set_index(self, index=0, block_signals=False, **kwargs):
         """
         Sets current index.
         """
-        if block_events: self.block_signals()
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
+
+        if block_signals: self.block_signals()
         self._widget.setCurrentIndex(index)
-        if block_events: self.unblock_signals()
+        if block_signals: self.unblock_signals()
         return self
 
     def get_text(self, index=None):
@@ -1602,7 +1610,7 @@ class Slider(GridLayout):
         Raw call that updates gui and calls event_changed(value)
         """
         v = self.get_value()
-        self.number_value.set_value(v, block_events=True)
+        self.number_value.set_value(v, block_signals=True)
         self.save_gui_settings()
         self.event_changed(v)
 
@@ -1656,17 +1664,21 @@ class Slider(GridLayout):
         """
         return
 
-    def set_value(self, value, block_events=False):
+    def set_value(self, value, block_signals=False, **kwargs):
         """
         Sets the value, respecting bounds and the slider steps.
         """
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
+
         # Convert it to the nearest integer.
         l = self.number_lower_bound.get_value()
         u = self.number_upper_bound.get_value()
         if u-l == 0: N = int(self.get_steps()/2)
         else:        N = int(_n.round(self.get_steps()*(value-l)/(u-l)))
 
-        if block_events: self.block_signals()
+        if block_signals: self.block_signals()
 
         # See if the slider will change
         slider_stayed = (N == self._widget_slider.value())
@@ -1688,7 +1700,7 @@ class Slider(GridLayout):
                 # Next time we won't arrive here because they'll be the same. Run the user event change
                 self.event_changed(v)
 
-        if block_events: self.unblock_signals()
+        if block_signals: self.unblock_signals()
 
         self.save_gui_settings()
 
@@ -1789,7 +1801,7 @@ class TabArea(BaseObject):
 
     def __getitem__(self, n): return self.all_tabs[n]
 
-    def add_tab(self, title="Yeah!", block_events=True, margins=True):
+    def add_tab(self, title="Yeah!", margins=True, block_signals=True, **kwargs):
         """
         Adds a tab to the area, and creates the layout for this tab.
 
@@ -1797,13 +1809,19 @@ class TabArea(BaseObject):
         ----------
         title : string
             Title of the tab.
-        block_events=True : bool
+            
+        block_signals=True : bool
             Whether to block events when adding the tab. This is useful for
             auto-loading sequences.
+        
         margins=True: bool
             Whether the tab should include margins.
         """
-        self._widget.blockSignals(block_events)
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
+
+        self._widget.blockSignals(block_signals)
 
         # create a widget to go in the tab
         tab = GridLayout(margins=margins)
@@ -2046,16 +2064,19 @@ class Table(BaseObject):
         if x==None: return x
         else:       return str(self._widget.item(row,column).text())
 
-    def set_value(self, column=0, row=0, value='', block_events=False):
+    def set_value(self, column=0, row=0, value='', block_signals=False, **kwargs):
         """
         Sets the value at column, row. This will create elements dynamically,
         and in a totally stupid while-looping way.
 
-        Setting block_events=True will temporarily block the widget from
+        Setting block_signals=True will temporarily block the widget from
         sending any signals when setting the value.
         """
+        if 'block_events' in kwargs:
+            print('WARNING: block_events is antiquated. Please use block_signals instead.')
+            block_signals = kwargs['block_events']
 
-        if block_events: self.block_signals()
+        if block_signals: self.block_signals()
 
         # dynamically resize
         while column > self._widget.columnCount()-1: self._widget.insertColumn(self._widget.columnCount())
@@ -2064,7 +2085,7 @@ class Table(BaseObject):
         # set the value
         self._widget.setItem(row, column, _pg.Qt.QtGui.QTableWidgetItem(str(value)))
 
-        if block_events: self.unblock_signals()
+        if block_signals: self.unblock_signals()
 
         return self
 
@@ -2311,7 +2332,7 @@ class TextBox(BaseObject):
         Emitted when the value / text changes.
     """
     def __init__(self, text="", multiline=False, autosettings_path=None, python_highlighting=False,
-                 signal_changed=None):
+                 signal_changed=None, tip=None):
 
         self._multiline = multiline
 
@@ -2354,6 +2375,9 @@ class TextBox(BaseObject):
 
         # Bind to save gui settings when changed
         self.signal_changed.connect(self.save_gui_settings)
+
+        # Set the tooltip
+        if tip: self._widget.setToolTip(tip)
 
         if signal_changed: self.signal_changed.connect(signal_changed)
 
@@ -2511,9 +2535,9 @@ class TreeDictionary(BaseObject):
         #         s = s + "  "+k+" = "+repr(self[k])+" from "+repr(self.get_list_values(k)) + "\n"
         return s
 
-    def block_events(self):
+    def block_signals(self):
         """
-        Special version of block_events that loops over all tree elements.
+        Special version of block_signals that also loops over all tree elements.
         """
         # block events in the usual way
         BaseObject.block_signals(self)
@@ -2524,9 +2548,16 @@ class TreeDictionary(BaseObject):
 
         return self
 
-    def unblock_events(self):
+    def block_events(self):
         """
-        Special version of unblock_events that loops over all tree elements as well.
+        Antiquated. Use block_signals().
+        """
+        print("WARNING: block_events() and unblock_events() are antiquated. Use block_signals() and unblock_signals()")
+        return self.block_signals()
+
+    def unblock_signals(self):
+        """
+        Special version of unblock_signals that loops over all tree elements as well.
         """
         # unblock events in the usual way
         BaseObject.unblock_signals(self)
@@ -2537,6 +2568,12 @@ class TreeDictionary(BaseObject):
 
         return self
 
+    def unblock_events(self):
+        """
+        Antiquated. Use unblock_signals().
+        """
+        print("WARNING: block_events() and unblock_events() are antiquated. Use block_signals() and unblock_signals()")
+        return self.unblock_signals()
 
     def connect_any_signal_changed(self, function, unique=True):
         """
