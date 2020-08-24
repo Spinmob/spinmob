@@ -637,16 +637,16 @@ class Window(GridLayout):
     ----------
     title='Window' : str
         Text for the window's title bar.
-    
+
     size=[700,500] : tuple or list
         Starting size of the window.
-    
+
     autosettings_path=None : str
         If set to a file name, e.g. "w.txt", the window will create and update
         the file egg_settings/w.txt every time a window setting changes (e.g.,
         if you resize or move it.) Previous settings will be automatically
         loaded when the program is next run.
-    
+
     margins=True : bool
         Set to True or False or a length-4 tuple to include, exclude or define
         the space around the widgets in the window.
@@ -656,7 +656,7 @@ class Window(GridLayout):
     """
 
 
-    def __init__(self, title='Window', size=[700,500], autosettings_path=None, 
+    def __init__(self, title='Window', size=[700,500], autosettings_path=None,
                  margins=True, event_close=None):
         self._parent = self
 
@@ -1270,10 +1270,13 @@ class CheckBox(GridLayout):
     text=None : str
         None means no label. A string will set the label next to the box.
 
-    label_editable=False : bool
+    checked=False : bool
+        Whether it is initially checked.
+
+    text_editable=False : bool
         If True, self.text will be a TextBox. If False, it will be a Label.
 
-    label_position='right' : str
+    text_position='right' : str
         Can be 'right', 'left', 'top', 'bottom'
 
     autosettings_path=None : str
@@ -1443,7 +1446,7 @@ class ComboBox(BaseObject):
 
         # Populate it.
         for item in items: self.add_item(item)
-        
+
         # Set the default index
         if default_index: self.set_index(default_index)
 
@@ -1827,11 +1830,11 @@ class TabArea(BaseObject):
         ----------
         title : string
             Title of the tab.
-            
+
         block_signals=True : bool
             Whether to block events when adding the tab. This is useful for
             auto-loading sequences.
-        
+
         margins=True: bool
             Whether the tab should include margins.
         """
