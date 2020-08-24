@@ -1306,7 +1306,7 @@ class CheckBox(GridLayout):
 
     """
 
-    def __init__(self, text=None, text_editable=False, text_position='right',
+    def __init__(self, text=None, checked=False, text_editable=False, text_position='right',
                  autosettings_path=None, tip=None,
                  signal_toggled=None,
                  signal_text_changed=None,
@@ -1336,8 +1336,8 @@ class CheckBox(GridLayout):
                 self._autosettings_controls = ['self']
 
             # Position the text
-            if   text_position == 'right': self.add(self.text, 2,1, alignment=0)
-            elif text_position == 'left' : self.add(self.text, 0,1, alignment=0)
+            if   text_position == 'right': self.add(self.text, 2,1, alignment=1)
+            elif text_position == 'left' : self.add(self.text, 0,1, alignment=2)
             elif text_position == 'top'  : self.add(self.text, 1,0, alignment=0)
             else:                          self.add(self.text, 1,2, alignment=0)
 
@@ -1346,6 +1346,9 @@ class CheckBox(GridLayout):
 
         # No label.
         else: self.text = None
+
+        # Default value
+        if checked: self.set_checked(True)
 
         # signals
         self.signal_changed = self._widget_checkbox.stateChanged
