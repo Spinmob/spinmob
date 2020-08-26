@@ -21,6 +21,7 @@ setup.py
 ./_settings.py
 ./_spline.py
 ./_theme_fusion_dark.py
+./_thread.py
 ./lm_fitter_concept.py
 ./lm_fitter_test.py
 ././setup.py
