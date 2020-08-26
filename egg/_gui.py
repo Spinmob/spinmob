@@ -47,15 +47,15 @@ def clear_egg_settings():
 
 
 class BaseObject(object):
-
+    """
+    Base object containing stuff common to all of our objects. When
+    deriving objects from this, call BaseObject.__init__(self) as the
+    LAST step of the new __init__ function.
+    """
+        
     log = None
 
     def __init__(self, autosettings_path=None):
-        """
-        Base object containing stuff common to all of our objects. When
-        deriving objects from this, call BaseObject.__init__(self) as the
-        LAST step of the new __init__ function.
-        """
         if not _s._pyqtgraph_ok: raise Exception('Cannot create egg GUIs without pyqtgraph v0.11.0 or higher.')
 
         # Parent object (to be set)
@@ -1070,10 +1070,52 @@ class Button(BaseObject):
             self.signal_clicked.emit(True)
         return self
 
+class Image(BaseObject):
+    """
+    Simplified QPixmap object.
+    
+    Parameters
+    ----------
+    image_path=None : str
+        Path to the image.
+    
+    autosettings_path=None : str
+        If you want this object to remember its state from run to run, specify
+        a unique identifier string, e.g. 'my_button_no'.
+    """
+    def __init__(self, image_path=None, autosettings_path=None):
+
+        # Create the widget and label
+        self._widget = _pg.Qt.QtGui.QLabel()
+        self._pixmap = _pg.Qt.QtGui.QPixmap(image_path)
+        self._widget.setPixmap(self._pixmap)
+
+        # Other stuff common to all objects
+        BaseObject.__init__(self, autosettings_path=autosettings_path)
+
+        # Aliases for autosettings
+        self.get_value = self.get_image_path
+        self.set_value = self.set_image_path
+
+        # Autsettings engage!
+        self._autosettings_controls = ['self']
+        self.load_gui_settings()
+
+    def set_image_path(self, image_path=None):
+        """
+        Sets the image path.
+        """
+    
+    def get_image_path(self):
+        """
+        Returns the image path.
+        """
+    
 
 class Label(BaseObject):
-
     """
+    Simplified QLabel object.
+    
     Parameters
     ----------
     text="My Label! No!"
