@@ -1881,6 +1881,8 @@ class TabArea(BaseObject):
 
         return tab
 
+    add = add_tab
+
     def _remove_tab(self, n=0):
         """
         Removes the tab by visible index.
@@ -2502,7 +2504,7 @@ class TreeDictionary(BaseObject):
     show_header=False : bool
         Whether to show the top-level trunk.
 
-    new_signal_changed=None : function
+    new_parameter_signal_changed=None : function
         Optional function to which signal_changed will automatically connect
         for all newly created parameters. You can also change this function
         after the tree is created by writing directly to self.any_signal_changed.
@@ -2519,7 +2521,7 @@ class TreeDictionary(BaseObject):
         This will connect the signal from anything changing to the specified
         function.
     """
-    def __init__(self, autosettings_path=None, name=None, show_header=False, new_signal_changed=None):
+    def __init__(self, autosettings_path=None, name=None, show_header=False, new_parameter_signal_changed=None):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -2532,7 +2534,7 @@ class TreeDictionary(BaseObject):
         self._tree_widgets       = dict() # list of all tree widgets, including non-parameters.
         self.name = name
         self.default_signal_changed = None
-        self.new_signal_changed = new_signal_changed
+        self.new_parameter_signal_changed = new_parameter_signal_changed
 
         # Load the previous settings (if any)
         self.load()
@@ -2995,7 +2997,7 @@ class TreeDictionary(BaseObject):
 
         # Connect it to autosave (will only create unique connections; will not duplicate)
         self.connect_any_signal_changed(self.autosave)
-        if self.new_signal_changed: self.connect_signal_changed(key, self.new_signal_changed)
+        if self.new_parameter_signal_changed: self.connect_signal_changed(key, self.new_parameter_signal_changed)
         if signal_changed:          self.connect_signal_changed(key, signal_changed)
 
         # Make the tool tip more responsive
@@ -3009,6 +3011,8 @@ class TreeDictionary(BaseObject):
             self.connect_signal_changed(key, self.default_signal_changed)
 
         return self
+
+    add = add_parameter
 
 
     def _get_parameter_dictionary(self, base_key, dictionary, sorted_keys, parameter):
