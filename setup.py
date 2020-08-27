@@ -1,4 +1,4 @@
-__version__ = '3.4.12' # Keep this on the first line so it's easy for __init__.py to grab.
+__version__ = '3.4.13' # Keep this on the first line so it's easy for __init__.py to grab.
 
 
 
@@ -10,8 +10,8 @@ setup(name           = 'Spinmob',
       author_email   = 'jack.sankey@gmail.com',
       url            = 'https://github.com/Spinmob/spinmob',
       packages       = [
-           'spinmob', 
-           'spinmob.tests', 
+           'spinmob',
+           'spinmob.tests',
            'spinmob.egg',
            ],
       package_dir = {
@@ -22,7 +22,7 @@ setup(name           = 'Spinmob',
       package_data={
           ''  : [
               './setup.py',
-              './tests/fixtures/*.*', 
+              './tests/fixtures/*.*',
               './egg/DataboxProcessor/*.*',
             ],
           },

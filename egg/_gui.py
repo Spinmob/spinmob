@@ -166,8 +166,9 @@ class BaseObject(object):
 
     def set_pyqtgraph_options(self, **kwargs):
         """
-        Sets the options for a pyqtgraph widget, via keyword arguments, e.g.,
-        suffix='pants'.
+        Sets the options for a pyqtgraph widget using self._widget.setOpts(**kwargs).
+        Any valid pyqtgraph widget keyword arguments can be modified this way
+        via keyword arguments, e.g., suffix='pants', bounds=(0,100)
 
         Returns self
         """
@@ -3837,7 +3838,9 @@ class DataboxPlot(_d.databox, GridLayout):
                 self.button_log_data.set_checked(False)
                 self.text_log_note.enable()
 
-        else: self.label_log_path.set_text('').hide()
+        else:
+            self.label_log_path.set_text('').hide()
+            self.text_log_note.enable()
 
     def __repr__(self): return "<DataboxPlot instance: " + self._repr_tail()
 
