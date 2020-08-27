@@ -3663,7 +3663,8 @@ class DataboxPlot(_d.databox, GridLayout):
 
     """
 
-    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1, name=None, styles=[], **kwargs):
+    def __init__(self, file_type="*.dat", autosettings_path=None, autoscript=1,
+                 name=None, show_logger=False, styles=[], **kwargs):
 
         self.name = name
 
@@ -3725,27 +3726,28 @@ class DataboxPlot(_d.databox, GridLayout):
         self.grid_plot = self.place_object(GridLayout(margins=False), 0,3, column_span=self.get_column_count(), alignment=0)
 
         # History area
-        self.grid_history = self.add(GridLayout(margins=False), 0,4, column_span=self.get_column_count(), alignment=0)
+        self.grid_logger = self.add(GridLayout(margins=False), 0,4, column_span=self.get_column_count(), alignment=0)
 
-        self.grid_history.add(Label('History:'), alignment=0)
-        self.grid_history.set_column_stretch(2)
-        self.number_history = self.grid_history.add(NumberBox(
+        self.grid_logger.add(Label('History:'), alignment=0)
+        self.grid_logger.set_column_stretch(2)
+        self.number_history = self.grid_logger.add(NumberBox(
             0, step=100, bounds=(0,None), int=True,
             tip='How many points to keep in the plot when using append_log(). Set to 0 to keep everything.\n'+
                 'You can also use the script to display the last N points with indexing,\n'+
                 'e.g., d[0][-200:], which will not delete the old data.')).set_width(70)
 
-        self.text_log_note = self.grid_history.add(TextBox(
+        self.text_log_note = self.grid_logger.add(TextBox(
             'Note', tip='Note to be added to the header when saving.'), alignment=0)
 
-        self.button_log_data = self.grid_history.add(Button(
+        self.button_log_data = self.grid_logger.add(Button(
             'Log Data',
             checkable=True,
             signal_toggled=self._button_log_data_toggled,
             tip='Append incoming data to a text file of your choice when calling self.append_log(). Saves the current data and header first.'
             )).set_width(70)
 
-        self.label_log_path = self.grid_history.add(Label('')).hide()
+        self.label_log_path = self.grid_logger.add(Label('')).hide()
+        if not show_logger: self.grid_logger.hide()
 
 
 
