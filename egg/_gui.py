@@ -52,7 +52,7 @@ class BaseObject(object):
     deriving objects from this, call BaseObject.__init__(self) as the
     LAST step of the new __init__ function.
     """
-        
+
     log = None
 
     def __init__(self, autosettings_path=None):
@@ -1072,18 +1072,14 @@ class Button(BaseObject):
 
 class Image(BaseObject):
     """
-    Simplified QPixmap object.
-    
+    Simplified QPixmap container.
+
     Parameters
     ----------
-    image_path=None : str
+    image_path= : str
         Path to the image.
-    
-    autosettings_path=None : str
-        If you want this object to remember its state from run to run, specify
-        a unique identifier string, e.g. 'my_button_no'.
     """
-    def __init__(self, image_path=None, autosettings_path=None):
+    def __init__(self, image_path):
 
         # Create the widget and label
         self._widget = _pg.Qt.QtGui.QLabel()
@@ -1091,31 +1087,15 @@ class Image(BaseObject):
         self._widget.setPixmap(self._pixmap)
 
         # Other stuff common to all objects
-        BaseObject.__init__(self, autosettings_path=autosettings_path)
+        BaseObject.__init__(self)
 
-        # Aliases for autosettings
-        self.get_value = self.get_image_path
-        self.set_value = self.set_image_path
 
-        # Autsettings engage!
-        self._autosettings_controls = ['self']
-        self.load_gui_settings()
 
-    def set_image_path(self, image_path=None):
-        """
-        Sets the image path.
-        """
-    
-    def get_image_path(self):
-        """
-        Returns the image path.
-        """
-    
 
 class Label(BaseObject):
     """
     Simplified QLabel object.
-    
+
     Parameters
     ----------
     text="My Label! No!"
@@ -2514,6 +2494,49 @@ class Timer():
         """
         self._widget.setSingleShot(single_shot)
 
+class TimerExceptions(Timer):
+    """
+    Periodically checks for a new exception and prints the last one if it exists.
+
+    Note this is a really dumb object that just checks for sys.last_value; this
+    doesn't ensure every passing exception is caught. If you know how to get a
+    list of *all* exceptions, please let me know.
+
+    Parameters
+    ----------
+    interval_ms=500 : number
+        How often to check for a new exception.
+
+    always_print=True: bool
+        Whether the timer should always print the exception when sending the
+        signal.
+
+    **kwargs are sent to Timer(), upon which this is based.
+
+    Signals
+    -------
+    signal_tick
+        Emitted when the timer ticks.
+
+    signal_new_exception
+        Emitted when a new exception is found.
+    """
+    def __init__(self, interval_ms=500, always_print=True, **kwargs):
+        Timer.__init__(self, interval_ms=interval_ms, **kwargs)
+
+        self.always_print=always_print
+        self.signal_tick.connect(self._timer_tick)
+        self.signal_new_exception = _s.thread.signal()
+        self.start()
+
+    def _timer_tick(self, *a):
+        """
+        Checks if there is a new exception and appends it.
+        """
+        if hasattr(_sys, 'last_value') and _sys.last_value:
+            if self.always_print: _p()
+            self.signal_new_exception.emit(_sys.last_value.args[0])
+            _sys.last_value = None
 
 class TreeDictionary(BaseObject):
     """
@@ -3701,6 +3724,31 @@ class DataboxPlot(_d.databox, GridLayout):
         # plot area
         self.grid_plot = self.place_object(GridLayout(margins=False), 0,3, column_span=self.get_column_count(), alignment=0)
 
+        # History area
+        self.grid_history = self.add(GridLayout(margins=False), 0,4, column_span=self.get_column_count(), alignment=0)
+
+        self.grid_history.add(Label('History:'), alignment=0)
+        self.grid_history.set_column_stretch(2)
+        self.number_history = self.grid_history.add(NumberBox(
+            0, step=100, bounds=(0,None), int=True,
+            tip='How many points to keep in the plot when using append_log(). Set to 0 to keep everything.\n'+
+                'You can also use the script to display the last N points with indexing,\n'+
+                'e.g., d[0][-200:], which will not delete the old data.')).set_width(70)
+
+        self.text_log_note = self.grid_history.add(TextBox(
+            'Note', tip='Note to be added to the header when saving.'), alignment=0)
+
+        self.button_log_data = self.grid_history.add(Button(
+            'Log Data',
+            checkable=True,
+            signal_toggled=self._button_log_data_toggled,
+            tip='Append incoming data to a text file of your choice when calling self.append_log(). Saves the current data and header first.'
+            )).set_width(70)
+
+        self.label_log_path = self.grid_history.add(Label('')).hide()
+
+
+
         ##### set up the internal variables
 
         # will be set later. This is where files will be dumped to when autosaving
@@ -3738,6 +3786,8 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_enabled    .signal_toggled.connect(self._button_enabled_clicked)
         self.number_file       .signal_changed.connect(self._number_file_changed)
         self.script            .signal_changed.connect(self._script_changed)
+        self.number_history    .signal_changed.connect(self.save_gui_settings)
+        self.text_log_note     .signal_changed.connect(self.save_gui_settings)
 
         # list of controls we should auto-save / load
         self._autosettings_controls = ["self.combo_binary",
@@ -3747,11 +3797,45 @@ class DataboxPlot(_d.databox, GridLayout):
                                        "self.button_link_x",
                                        "self.button_script",
                                        "self.number_file",
-                                       "self.script"]
+                                       "self.script",
+                                       "self.number_history",
+                                       "self.text_log_note", ]
 
         # load settings if a settings file exists and initialize
         self.load_gui_settings()
         self._synchronize_controls()
+
+    def _button_log_data_toggled(self, *a):
+        """
+        Called when someone toggles the dump button. Ask for a path or remove the path.
+        """
+        if self.button_log_data.is_checked():
+            path = _s.dialogs.save(self.file_type, 'Dump incoming data to this file.', force_extension=self.file_type)
+
+            # If the path is valid, reset the clock, write the header
+            if path:
+
+                # Store the path in a visible location
+                self.label_log_path.set_text(path).show()
+                self.text_log_note.disable()
+
+                # Add header information to the Databox
+                self.h(**{
+                    'DataboxPlot_Note'              : self.text_log_note(),
+                    'DataboxPlot_LogFileCreated'    : _t.ctime(_t.time()),
+                    'DataboxPlot_LogFileCreated(s)' : _t.time(),})
+
+                if len(self.ckeys): self.h(**{'Log File Initial Row Count' : len(self[0])})
+                else:               self.h(**{'Log File Initial Row Count' : 0})
+
+                # Save it forcing overwrite
+                self.save_file(path, force_overwrite=True)
+
+            else:
+                self.button_log_data.set_checked(False)
+                self.text_log_note.enable()
+
+        else: self.label_log_path.set_text('').hide()
 
     def __repr__(self): return "<DataboxPlot instance: " + self._repr_tail()
 
@@ -3887,6 +3971,32 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         return
 
+    def append_log(self, row, ckeys=None):
+        """
+        Appends the supplied row of data, using self.append_row(), but with
+        history equal to the shown value in self.number_history. Also, if the
+        "Log Data" button is enabled, appends the new data to the log file.
+        """
+        # First append like normal
+        self.append_row(row, ckeys, self.number_history())
+
+        # If the dump file is checked, dump the row
+        if self.button_log_data() and len(self.label_log_path()):
+
+            # Get a list of strings
+            row_strings = []
+            for x in row: row_strings.append(str(x))
+
+            # The most pythony python that ever pythoned.
+            delimiter = '\t' if self.delimiter is None else self.delimiter
+
+            # Append a single line.
+            f = open(self.label_log_path(), 'a')
+            f.write(delimiter.join(row_strings)+'\n')
+            f.close()
+
+        return self
+
     def save_file(self, path=None, force_overwrite=False, just_settings=False, **kwargs):
         """
         Saves the data in the databox to a file.
@@ -3905,6 +4015,9 @@ class DataboxPlot(_d.databox, GridLayout):
         **kwargs are sent to the normal databox save_file() function.
         """
         self.before_save_file()
+
+        # Update the log file note
+        self.h(**{'DataboxPlot_Note' : self.text_log_note(),})
 
         # Update the binary mode
         if not 'binary' in kwargs: kwargs['binary'] = self.combo_binary.get_text()
@@ -4944,43 +5057,14 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 
 
 
-class ExceptionTimer(Timer):
-    """
-    Periodically checks for a new exception and prints the last one if it exists.
 
-    Note this is a really dumb object that doesn't ensure every passing
-    exception is caught. If you know how to get a list of *all* exceptions,
-    please let me know.
-
-    **kwargs are sent to Timer(), upon which this is based.
-    """
-    def __init__(self, interval_ms=500, **kwargs):
-        Timer.__init__(self, interval_ms=interval_ms, **kwargs)
-
-        self.signal_tick.connect(self._timer_tick)
-        self.signal_new_exception = _s.thread.signal()
-        self.start()
-
-    def _timer_tick(self, *a):
-        """
-        Checks if there is a new exception and appends it.
-        """
-        if hasattr(_sys, 'last_value') and _sys.last_value:
-            _p()
-            self.signal_new_exception.emit(None)
-            _sys.last_value = None
 
 if __name__ == '__main__':
     import spinmob
     #runfile(spinmob.__path__[0] + '/tests/test__egg.py')
 
-    p = DataboxPlot(autosettings_path='test')
-    p[0] = [1,2,3,4]
-    p[1] = [1,2,1,2]
-    p[2] = [2,1,2,1]
-    p.plot()
-    p.show()
-
+    self = DataboxPlot(autosettings_path='pants')
+    self.show()
 
 
 

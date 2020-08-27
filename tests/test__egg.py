@@ -209,7 +209,7 @@ class Test_egg(_ut.TestCase):
         w.show(True)
         global x
         x = p
-        
+    
       
 
 if __name__ == "__main__":

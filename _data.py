@@ -764,7 +764,7 @@ class databox:
                 for k in ckeys: self[k] = []
 
         if not len(row) == len(self.columns) and not len(self.columns)==0:
-            raise Exception("row must have as many elements as there are columns.")
+            raise Exception("Row must have as many elements as there are columns:", len(row), 'appending to', self)
 
         # otherwise, we just auto-add this data point as new columns
         elif len(self.columns)==0:
