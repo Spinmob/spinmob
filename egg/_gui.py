@@ -2495,40 +2495,47 @@ class Timer():
         """
         self._widget.setSingleShot(single_shot)
 
-class TimerExceptions(Timer):
-    """
-    Periodically checks for a new exception and prints the last one if it exists.
+class _TimerExceptions(Timer):
 
-    Note this is a really dumb object that just checks for sys.last_value; this
-    doesn't ensure every passing exception is caught. If you know how to get a
-    list of *all* exceptions, please let me know.
-
-    Parameters
-    ----------
-    interval_ms=500 : number
-        How often to check for a new exception.
-
-    always_print=True: bool
-        Whether the timer should always print the exception when sending the
-        signal.
-
-    **kwargs are sent to Timer(), upon which this is based.
-
-    Signals
-    -------
-    signal_tick
-        Emitted when the timer ticks.
-
-    signal_new_exception
-        Emitted when a new exception is found.
-    """
     def __init__(self, interval_ms=500, always_print=True, **kwargs):
         Timer.__init__(self, interval_ms=interval_ms, **kwargs)
 
         self.always_print=always_print
         self.signal_tick.connect(self._timer_tick)
         self.signal_new_exception = _s.thread.signal()
+
+    def __call__(self, interval_ms=500, always_print=True):
+        """
+        Periodically checks for a new exception and prints the last one if it exists.
+
+        Note this is a really dumb object that just checks for sys.last_value; this
+        doesn't ensure every passing exception is caught. If you know how to get a
+        list of *all* exceptions, please let me know.
+
+        Parameters
+        ----------
+        interval_ms=500 : number
+            How often to check for a new exception.
+
+        always_print=True: bool
+            Whether the timer should always print the exception when sending the
+            signal.
+
+        **kwargs are sent to Timer(), upon which this is based.
+
+        Signals
+        -------
+        signal_tick
+            Emitted when the timer ticks.
+
+        signal_new_exception
+            Emitted when a new exception is found.
+        """
+        self.set_interval(interval_ms)
+        self.always_print=always_print
         self.start()
+        return self
+
 
     def _timer_tick(self, *a):
         """
@@ -2538,6 +2545,9 @@ class TimerExceptions(Timer):
             if self.always_print: _p()
             self.signal_new_exception.emit(_sys.last_value.args[0])
             _sys.last_value = None
+
+# We will have one instance only.
+TimerExceptions = _TimerExceptions()
 
 class TreeDictionary(BaseObject):
     """
