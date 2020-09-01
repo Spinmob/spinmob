@@ -2512,6 +2512,10 @@ class _TimerExceptions(Timer):
         doesn't ensure every passing exception is caught. If you know how to get a
         list of *all* exceptions, please let me know.
 
+        Note this is a function call of a single instance of an enhanced Timer()
+        object. This way, there won't be more than one such timer, all accessing
+        the same exceptions.
+
         Parameters
         ----------
         interval_ms=500 : number
