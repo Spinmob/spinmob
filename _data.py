@@ -1684,7 +1684,7 @@ class fitter():
     def __init__(self, **kwargs):
 
         if not _s._lm:
-            self._raise_error("You need to install lmfit to use the new fitter. You can install it with 'pip install lmfit'.")
+            raise Exception("You need to install lmfit to use the new fitter. You can install it with 'pip install lmfit'.")
             return
 
         self.f  = []    # list of functions
@@ -1819,7 +1819,7 @@ class fitter():
             self._settings[key] = value
 
         # yell.
-        else: self._raise_error("'"+key+"' is not a valid setting or parameter name.")
+        else: raise Exception("'"+key+"' is not a valid setting or parameter name.")
 
         # if it isn't a "safe" key, invalidate the previous fit results.
         if not key in self._safe_settings: self.clear_results()
@@ -1934,8 +1934,6 @@ class fitter():
 
     __getitem__ = get
 
-    def _raise_error(self, message): raise BaseException(str(message))
-
     def _parse_parameter_string(self, p):
         """
         Returns a dictionary of key-value pairs for strings like 'a=-0.2, b, c'.
@@ -1969,23 +1967,35 @@ class fitter():
             of these two types of objects. The length of such
             a list must be equal to the number of data sets
             supplied to the fit routine.
+        
         p='a=1.5, b'
             This must be a comma-separated string list of
             parameters used to fit. If an initial guess value is
             not specified, 1.0 will be used.
             If a function object is supplied, it is assumed that
             this string lists the parameter names in order.
+        
         c=None
             Fit _constants; like p, but won't be allowed to float
             during the fit. This can also be None.
+        
         bg=None
             Can be functions in the same format as f describing a
             background (which can be subtracted during fits, etc)
+        
         g=None
             Can be a dictionary of globals for evaluating functions.
 
         Additional keyword arguments are added to the globals used when
-        evaluating the functions.
+        evaluating the functions. For example, 
+        
+            set_functions('f(a,x)+b', 'a,b', f=my_function)
+            
+        or
+        
+            set_functions('f(a,x)+b', 'a,b', g={'f':my_function})
+        
+        will work the same.
         """
 
         # Update the globals
@@ -2076,14 +2086,21 @@ class fitter():
             These can each be a single array of data, a number, or None (generates
             integer arrays), or a list of any combination of these for fitting
             multiple data sets.
+        
         dtype=None
             When converting the data to arrays, use this conversion function.
+
+        **kwargs
+            Sent to self.set()
 
         Note this function is "somewhat" smart about reshaping the input
         data to ease life a bit, but it can't handle ambiguities. If you
         want to play it safe, supply lists for all three arguments that
         match in dimensionality.
         """
+        # Send additional kwargs to set
+        self(**kwargs)
+        
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
         xdatas, ydatas = _functions._match_data_sets        (xdata,  ydata)
         eydatas        = _functions._match_error_to_data_set(ydatas, eydata)
@@ -2290,7 +2307,7 @@ class fitter():
 
                 # Catch the over-trimmed case
                 if(len(xt)==0):
-                    self._raise_error("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
+                    raise Exception("\nDATA SET "+str(n)+": OOPS! OOPS! Specified limits (xmin, xmax, ymin, ymax) eliminate all data! Ignoring.")
                 else:
                     x = xt
                     y = yt
@@ -2335,25 +2352,33 @@ class fitter():
         """
         return _n.concatenate(self._studentized_residuals(p,xdatas,ydatas,eydatas))
 
-    def fit(self, **kwargs):
+    def fit(self, autoscale_eydata=False, **kwargs):
         """
-        This will try to determine fit parameters using scipy.optimize.leastsq
-        algorithm. This function relies on a previous call of set_data() and
-        set_functions().
+        This will try to determine fit parameters using the least squares 
+        method in lmfit.minimize. This function relies on a previous call 
+        of set_data() and set_functions().
+
+        Parameters
+        ----------
+        autoscale_eydata=False : bool
+            If True, runs the fit, runs self.autoscale_eydata(), and runs the fit again.
+            Use with caution; this can give some sense of the error, but is
+            very hard to justify and generally a bad idea.
+        
+        **kwargs ar sent to lmfit.minimize().
 
         Notes
         -----
         results of the fit algorithm are stored in self.results.
-        See scipy.optimize.leastsq for more information.
+        See lmfit.minimize for more information.
 
-        Optional keyword arguments are sent to lmfit.minimize().
         """
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            return self._raise_error("No data. Please use set_data() prior to fitting.")
+            raise Exception("No data. Please use set_data() prior to fitting.")
         if self._f_raw is None:
-            return self._raise_error("No functions. Please use set_functions() prior to fitting.")
+            raise Exception("No functions. Please use set_functions() prior to fitting.")
         if len(self.f) != len(self._xdatas_given):
-            return self._raise_error("The number of functions must equal the number of data sets.")
+            raise Exception("The number of functions must equal the number of data sets.")
 
 
         # Do the processing once, to increase efficiency
@@ -2365,8 +2390,11 @@ class fitter():
                                     **kwargs)
         self.p_fit = self.results.params
 
+        # If we're supposed to autoscale, temporarily disable autoplot and do so
+        if autoscale_eydata: self.autoscale_eydata().fit(**kwargs)
+            
         # plot if necessary
-        if self['autoplot']: self.plot()
+        if self['autoplot'] and not autoscale_eydata: self.plot()
 
         return self
 
@@ -2392,7 +2420,7 @@ class fitter():
             if pname in self.p_in.keys(): self.p_in[pname].vary = False
 
             # Naughty!
-            else: return self._raise_error("Naughty. '"+pname+"' is not a valid fit parameter name.")
+            else: raise Exception("Naughty. '"+pname+"' is not a valid fit parameter name.")
 
         self.clear_results().plot()
         return self
@@ -2420,7 +2448,7 @@ class fitter():
             if pname in self.p_in.keys(): self.p_in[pname].vary = True
 
             # Naughty!
-            else: return self._raise_error("Naughty. '"+pname+"' is not a valid fit parameter name.")
+            else: raise Exception("Naughty. '"+pname+"' is not a valid fit parameter name.")
 
         self.clear_results().plot()
         return self
@@ -2551,7 +2579,7 @@ class fitter():
         Returns the number of degrees of freedom for processed data.
         """
         if len(self.f) == 0 or len(self._ydatas_given) == 0:
-            return self._raise_error("You have to call self.set_functions() and self.set_data() first.")
+            raise Exception("You have to call self.set_functions() and self.set_data() first.")
 
         # Get the studentized residuals, which uses the processed data
         # This should later be changed to get_processed_data()
@@ -2607,8 +2635,9 @@ class fitter():
         Each data set will be scaled independently, and you may wish to run
         this a few times until it converges.
         """
+            
         if not self.results:
-            self._raise_error("You must complete a fit first.")
+            raise Exception("You must complete a fit first.")
             return
 
         r = self.get_reduced_chi_squareds()
@@ -2958,7 +2987,7 @@ class fitter():
         y=True      Trim the y-range
         """
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            self._raise_error("No data. Please use set_data() and plot() prior to trimming.")
+            raise Exception("No data. Please use set_data() and plot() prior to trimming.")
             return
 
         if _functions.is_a_number(n): n = [n]
@@ -2978,7 +3007,7 @@ class fitter():
                     self['ymax'][i] = ymax
 
             except:
-                self._raise_error("Data "+str(i)+" is not currently plotted.")
+                raise Exception("Data "+str(i)+" is not currently plotted.")
 
         # now show the update.
         self.clear_results()
@@ -2997,7 +3026,7 @@ class fitter():
             sets, or you can specify a list.
         """
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            self._raise_error("No data. Please use set_data() and plot() prior to zooming.")
+            raise Exception("No data. Please use set_data() and plot() prior to zooming.")
             return
 
         if   _functions.is_a_number(n): n = [n]
@@ -3032,7 +3061,7 @@ class fitter():
             Factor by which to scale the y range.
         """
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0:
-            self._raise_error("No data. Please use set_data() and plot() prior to zooming.")
+            raise Exception("No data. Please use set_data() and plot() prior to zooming.")
             return
 
         # get the data
@@ -3057,7 +3086,7 @@ class fitter():
                 self['ymin'][i] = yc - yfactor*ys
                 self['ymax'][i] = yc + yfactor*ys
             except:
-                self._raise_error("Data "+str(fig)+" is not currently plotted.")
+                raise Exception("Data "+str(fig)+" is not currently plotted.")
 
         # now show the update.
         self.clear_results()
