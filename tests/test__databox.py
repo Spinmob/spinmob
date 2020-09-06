@@ -19,8 +19,14 @@ class Test_databox(_ut.TestCase):
         """
         Load data
         """
-        # Path to the spinmob module
-        self.data_path = _os.path.join(_os.path.dirname(_s.__file__), 'tests', 'fixtures')
+        # Tests should be run via tests/spinmob_tests.py in order to bootstrap
+        # sys.path[0] = "/path/to/repo/spinmob/tests".
+        # See https://stackoverflow.com/a/1897665.
+        import sys as _sys, pathlib as _pathlib
+        working_dir = _pathlib.Path(_sys.path[0]).resolve()
+        if working_dir.name == "tests" and working_dir.parent.name == "spinmob":
+            self.data_path = str(working_dir / "fixtures")
+            return
 
     def tearDown(self):
         """
