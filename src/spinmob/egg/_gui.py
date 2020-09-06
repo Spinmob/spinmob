@@ -55,8 +55,6 @@ class BaseObject(object):
     log = None
 
     def __init__(self, autosettings_path=None):
-        if not _s._pyqtgraph_ok: raise Exception('Cannot create egg GUIs without pyqtgraph v0.11.0 or higher.')
-
         # Parent object (to be set)
         self._parent = None
 
