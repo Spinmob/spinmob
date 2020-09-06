@@ -45,7 +45,9 @@ setup(
     install_requires=[
         "scipy",
         "matplotlib",
-        "lmfit",
-        "pyqtgraph>=0.11,<1",
     ],
+    extras_require={
+        "fit": ["lmfit"],
+        "GUI": ["pyqtgraph>=0.11,<1"],
+    },
 )

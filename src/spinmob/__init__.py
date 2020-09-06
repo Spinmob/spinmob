@@ -19,12 +19,10 @@ _p = _traceback.print_last
 # ignore warnings by default
 import warnings as _warnings
 _warnings.simplefilter("ignore")
-_qtapp = None
 
 # Import databox first
 from . import _data      as data
 from . import _functions as fun
-from . import _thread    as thread
 from . import _settings
 settings = _settings.settings()
 fun._settings  = settings
@@ -42,6 +40,15 @@ def _warn(*args):
 
 try:
     import pyqtgraph as _pyqtgraph
+except ModuleNotFoundError:
+    class _ModuleNotFound_pyqtgraph:
+        pass
+    _qtc = _ModuleNotFound_pyqtgraph
+    _qt  = _ModuleNotFound_pyqtgraph
+    _qtw = _ModuleNotFound_pyqtgraph
+    _qtapp = _ModuleNotFound_pyqtgraph
+    thread = _ModuleNotFound_pyqtgraph
+else:
     _qtc = _pyqtgraph.Qt.QtCore
     _qt  = _pyqtgraph.Qt
     _qtw = _pyqtgraph.Qt.QtGui
@@ -59,17 +66,17 @@ try:
     # Dark theme
     if settings['dark_theme_qt']: from . import _theme_fusion_dark
 
-
-except:
-    _qtc = None
-    _qt  = None
-    _qtw = None
-    _qtapp = None
+    # _thread requires pyqtgraph
+    from . import _thread as thread
 
 
 # Try importing lmfit
-try: import lmfit as _lm
-except: _lm = None
+try:
+    import lmfit as _lm
+except ModuleNotFoundError:
+    class _ModuleNotFound_lmfit:
+        pass
+    _lm = _ModuleNotFound_lmfit
 
 
 if _sys.version[0] == '2':
