@@ -17,8 +17,6 @@ def get_version(rel_path):
     else:
         raise RuntimeError("Unable to find version string.")
 
-with open("README.md", "r") as f:
-    long_description = f.read()
 
 setup(
     name="spinmob",
@@ -26,7 +24,7 @@ setup(
     author="Jack Sankey",
     author_email="jack.sankey@gmail.com",
     description="Data handling, plotting, analysis, and GUI building for scientific labs",
-    long_description=long_description,
+    long_description=read("README.md"),
     long_description_content_type="text/markdown",
     url="https://github.com/Spinmob/spinmob",
     project_urls={
