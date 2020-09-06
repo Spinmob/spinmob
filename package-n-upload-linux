@@ -1,10 +1,9 @@
 #!/bin/sh
 
-rm -rf dist/*
-python setup.py sdist
+rm -rf dist src/*.egg-info
 
+python setup.py sdist
 pip install twine
 twine upload dist/*
 
-rm -rf dist
-
+rm -rf dist src/*.egg-info

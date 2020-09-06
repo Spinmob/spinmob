@@ -1,12 +1,12 @@
-*.pyc
 .SyncID
 .SyncIgnore
 .SyncArchive/
 /.project
 build/
 dist/
-Spinmob.egg*/
-*.cfg
-egg_settings/
+*.egg-info/
+*.egg
+*.py[cod]
+__pycache__/
 *ipython.html
 *.ipynb_checkpoints/
