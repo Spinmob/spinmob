@@ -1883,4 +1883,3 @@ def _match_error_to_data_set(x, ex):
 if __name__ == '__main__':  
     import spinmob
     runfile(spinmob.__path__[0] + '/tests/test__functions.py')
-     
