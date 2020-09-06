@@ -1,14 +1,28 @@
-__version__ = '3.5.4' # Keep this on the first line so it's easy for __init__.py to grab.
-
-
 from setuptools import setup, find_packages
+import codecs
+import os.path
+
+
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
     name="spinmob",
-    version=__version__,
+    version=get_version("src/spinmob/__init__.py"),
     author="Jack Sankey",
     author_email="jack.sankey@gmail.com",
     description="Data handling, plotting, analysis, and GUI building for scientific labs",

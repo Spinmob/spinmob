@@ -1,3 +1,5 @@
+__version__ = "3.5.4"
+
 import os           as _os
 import sys          as _sys
 import matplotlib   as _mpl
@@ -27,10 +29,6 @@ from . import _settings
 settings = _settings.settings()
 fun._settings  = settings
 data._settings = settings
-
-# Get the version
-try: exec(fun.read_lines(_os.path.join(__path__[0],'setup.py'))[0])
-except: __version__ = 'unknown'
 
 
 def _warn(*args):
