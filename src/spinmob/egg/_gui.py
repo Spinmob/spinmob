@@ -17,8 +17,7 @@ import pyqtgraph as _pg
 _e = _pg.QtCore.QEvent
 
 # Syntax highlighter
-try: from . import _syntax
-except:     import _syntax
+from . import _syntax
 
 _a = _pg.mkQApp()
 

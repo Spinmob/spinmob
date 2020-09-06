@@ -10,8 +10,7 @@ import spinmob        as _s
 import time           as _time
 
 
-try:     from . import _functions
-except:  _functions = _s.fun
+from . import _functions
 
 
 

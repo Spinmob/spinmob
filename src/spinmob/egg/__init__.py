@@ -5,8 +5,7 @@ import numpy  as _n
 # home-made code
 import spinmob as _spinmob
 
-try:    from . import _gui as gui
-except:        import _gui as gui
+from . import _gui as gui
 
 dialogs           = _spinmob.dialogs
 data              = _spinmob.data

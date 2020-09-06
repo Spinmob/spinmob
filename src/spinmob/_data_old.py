@@ -12,8 +12,7 @@ import spinmob        as _s
 import time           as _time
 
 # Things that belong here too
-try:     from . import _functions
-except:  _functions = _s.fun
+from . import _functions
 averager = _functions.averager
 
 

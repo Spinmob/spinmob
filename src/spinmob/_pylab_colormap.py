@@ -3,8 +3,7 @@ import matplotlib             as _mpl
 import pylab                  as _pylab
 from functools import partial as _partial
 
-try:    from . import _pylab_tweaks
-except: import        _pylab_tweaks
+from . import _pylab_tweaks
 
 
 import spinmob as _s
