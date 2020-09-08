@@ -2386,8 +2386,9 @@ class fitter():
 
         # do the actual optimization
         self.results = _s._lm.minimize(self._studentized_residuals_concatenated, self.p_in,
-                                    args=(self._xdatas_processed, self._ydatas_processed, self._eydatas_processed),
-                                    **kwargs)
+                                       scale_covar=False, # WTF? Why do I have to specify this? AWFUL default!
+                                       args=(self._xdatas_processed, self._ydatas_processed, self._eydatas_processed),
+                                       **kwargs)
         self.p_fit = self.results.params
 
         # If we're supposed to autoscale, temporarily disable autoplot and do so
