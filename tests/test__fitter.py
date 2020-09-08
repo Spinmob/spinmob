@@ -48,6 +48,14 @@ class Test_fitter(_ut.TestCase):
         f.__repr__()
 
         f.fit()
+        
+        # Check results and error bars. The small error / large reduced chi^2
+        # ensures that there is no autoscaling of the covariance matrix / error bars,
+        # which is the default (CRAZY!!) behavior of many professional packages including
+        # lmfit and scipy's curve_fit()
+        self.assertAlmostEqual(6.958333341520, f.p_fit['a1'].value)
+        self.assertAlmostEqual(0.2808363344234, f.p_fit['a2'].stderr)
+        
         _s.tweaks.set_figure_window_geometry(position=[0,0])
         _s.pylab.ginput(timeout=self.plot_delay)
         f.__repr__()
@@ -55,7 +63,7 @@ class Test_fitter(_ut.TestCase):
         # Check that the reduced chi^2 is roughly correct
         r = f.get_reduced_chi_squareds()
         self.assertIs(type(r), list)
-        self.assertAlmostEqual(r[0], 29.2238, 2)
+        self.assertAlmostEqual(r[0], 29.2238095)
 
         # trim the data
         f.set(xmin=1.5, xmax=6.5)
