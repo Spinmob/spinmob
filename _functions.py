@@ -431,10 +431,32 @@ def erange(start, end, steps):
 
     return a
 
-def is_a_number(s):
+def is_a_number(s, other_options=[]):
     """
     This takes an object and determines whether it's a number or a string
-    representing a number.
+    representing a number. Handles real or complex numbers, and strings such as
+    '1.23', '1.23+4.5j', '1.23+4.5i', '(1.23+4.5j)', '(1.23+4.5i)', numpy.nan,
+    numpy.inf.
+    
+    This uses a try/except to cover strings and numbers simultaneously, so it's
+    slower than numpy's iscomplex, isreal, isnan, isinf.
+    
+    Parameters
+    ----------
+    s : object, str
+        Object to test with float() and complex() and complex() after removing
+        parenthesis and replacing 'i' with 'j' (for other formats).
+    
+    other_options=[] : list
+        List of other values to check if the default methods fail.
+        
+    Returns
+    -------
+    1 if float() worked
+    2 if complex() worked
+    3 if is in other_options
+
+    False if nothing worked
     """
     if _s.fun.is_iterable(s) and not type(s) == str: return False
 
@@ -449,8 +471,9 @@ def is_a_number(s):
             try: 
                 complex(s.replace('(','').replace(')','').replace('i','j'))
                 return 2
-            except:            
-                return False
+            except:
+                if s in other_options: return 3
+                else:                  return False
 
 def is_iterable(a):
     """

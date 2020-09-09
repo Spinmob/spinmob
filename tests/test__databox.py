@@ -197,8 +197,67 @@ class Test_databox(_ut.TestCase):
         _n.testing.assert_almost_equal(a[0], b[0])
         
 
-    def test_load_save_binary(self):
+    def test_save_load_mismatched_columns(self):
         global d
+        
+        # Clean up.
+        if _os.path.exists('test_mismatched.txt'):        _os.remove('test_mismatched.txt')
+        if _os.path.exists('test_mismatched.txt.backup'): _os.remove('test_mismatched.txt.backup')
+
+        # Create a databox with mismatched columns
+        d = _s.data.databox(delimiter=',') 
+        d['a'] = [1,2,3] 
+        d['b'] = [1,2,3,4,5]
+        d['c'] = [1,_n.nan,3]
+        d.save_file('test_mismatched.txt') 
+        d = _s.data.load(d.path)
+        
+        # Make sure the values are sensible
+        self.assertTrue(_n.isnan(d['a'][3]))
+        self.assertEqual(d['b'][4], 5)
+        self.assertTrue(_n.isnan(d['c'][1]))
+        
+        # Strip nans
+        d.strip_nans()
+        self.assertEqual(len(d[0]), 3)
+        self.assertEqual(len(d[1]), 5)
+        self.assertEqual(len(d['c']), 3)
+        self.assertTrue(_n.isnan(d['c'][1]))
+        
+        # Load with strip_nans=True
+        d = _s.data.load(d.path, strip_nans=True)
+        self.assertEqual(len(d[0]), 3)
+        self.assertEqual(len(d[1]), 5)
+        self.assertEqual(len(d['c']), 3)
+        self.assertTrue(_n.isnan(d['c'][1]))
+        
+        # Clean up.
+        if _os.path.exists('test_mismatched.txt'):        _os.remove('test_mismatched.txt')
+        if _os.path.exists('test_mismatched.txt.backup'): _os.remove('test_mismatched.txt.backup')
+
+    def test_strip_nans(self):
+        
+        a = _s.data.databox()
+        
+        a['x'] = [1,2,3,4,5,6,7,_n.nan]
+        a['a'] = [1,2,_n.nan,3, 4,_n.nan, _n.nan]
+        a['b'] = [1,2,3,4]
+        
+        # Snipe
+        d = a.copy()
+        d.strip_nans('a')
+        self.assertEqual(len(d['a']), 5)
+        self.assertTrue(_n.isnan(d['a'][2]))
+        self.assertTrue(_n.isnan(d['x'][-1]))
+       
+        # Blanket
+        d = a.copy()
+        self.assertTrue(_n.isnan(d['a'][-1]))
+        d.strip_nans()
+        self.assertEqual(len(d['x']), 7)
+        self.assertEqual(len(d['a']), 5)
+
+    def test_load_save_binary(self):
         
         # Start clean.
         if _os.path.exists('test_binary.txt'):        _os.remove('test_binary.txt')
@@ -266,16 +325,13 @@ class Test_databox(_ut.TestCase):
         self.assertEqual(_n.shape(d), (6,500))
         self.assertAlmostEqual(d[4][4], 0.062340055)
         
-
         # Load another difficult one
         d = _s.data.load(path=_os.path.join(self.data_path, "float16.binary"))
         self.assertEqual(_n.shape(d), (6,500))
         self.assertEqual(d[4][4], _n.float16(0.062347))
-        
-        
 
+        
     def test_is_same_as(self):
-        global a, b, c
         
         # Create databoxes
         a = _s.data.databox()
@@ -289,35 +345,35 @@ class Test_databox(_ut.TestCase):
         
         # Some non-thorough self tests 
         self.assertTrue(a.is_same_as(a, headers=True, 
-                                             columns=True, 
-                                             header_order=True, 
-                                             column_order=True, 
-                                             ckeys=True))
+                                        columns=True, 
+                                        header_order=True, 
+                                        column_order=True, 
+                                        ckeys=True))
         
         self.assertTrue(a.is_same_as(a, headers=True, 
-                                             columns=True, 
-                                             header_order=False, 
-                                             column_order=False, 
-                                             ckeys=False))
+                                        columns=True, 
+                                        header_order=False, 
+                                        column_order=False, 
+                                        ckeys=False))
         
         # Wrong number of elements
         b.h(y=4)
         b['y'] = [1,2,1]
         self.assertFalse(a.is_same_as(b, headers=True, 
-                                              columns=True, 
-                                              header_order=True, 
-                                              column_order=True, 
-                                              ckeys=True))
+                                         columns=True, 
+                                         header_order=True, 
+                                         column_order=True, 
+                                         ckeys=True))
         self.assertFalse(a.is_same_as(b, headers=False, 
-                                              columns=True, 
-                                              header_order=True, 
-                                              column_order=True, 
-                                              ckeys=True))
+                                         columns=True, 
+                                         header_order=True, 
+                                         column_order=True, 
+                                         ckeys=True))
         self.assertFalse(a.is_same_as(b, headers=True, 
-                                              columns=False, 
-                                              header_order=True, 
-                                              column_order=True, 
-                                              ckeys=True))
+                                         columns=False, 
+                                         header_order=True, 
+                                         column_order=True, 
+                                         ckeys=True))
         
         # Wrong order
         b.h(x=3)

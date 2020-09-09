@@ -153,7 +153,7 @@ class databox:
 
         return globbies
 
-    def load_file(self, path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False):
+    def load_file(self, path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False, strip_nans=False):
         """
         This will clear the databox, load a file, storing the header info in
         self.headers, and the data in self.columns
@@ -173,17 +173,30 @@ class databox:
         ----------
         path=None
             Path to the file. Using None will bring up a dialog.
+            
         filters='*.*'
             Filter for the file dialog (if path isn't specified)
+                                        
         text='Select a file, FACEPANTS.'
             Prompt on file dialog
+            
         default_directory=None
             Which spinmob.settings key to use for the dialog's default
             directory. Will create one if it doesn't already exist.
+            
         header_only=False
             Only load the header
+            
         quiet=False
             Don't print anything while loading.
+            
+        strip_nans=False
+            If True, runs self.strip_nans() after loading, which will 
+            remove the trailing nan values (useful for mismatched column lengths).
+            
+        Returns
+        -------
+        databox instance
         """
 
         # Set the default directory
@@ -272,9 +285,9 @@ class databox:
 
                         # try the different delimiter schemes until we find one
                         # that produces a number. Otherwise it's ambiguous.
-                        if   _functions.is_a_number(s.split(None)[0]): self.delimiter = None
-                        elif _functions.is_a_number(s.split(',') [0]): self.delimiter = ','
-                        elif _functions.is_a_number(s.split(';') [0]): self.delimiter = ';'
+                        if   _functions.is_a_number(s.split(None)[0], ['_']): self.delimiter = None
+                        elif _functions.is_a_number(s.split(',') [0], ['_']): self.delimiter = ','
+                        elif _functions.is_a_number(s.split(';') [0], ['_']): self.delimiter = ';'
 
                         # quit the loop!
                         break
@@ -401,6 +414,7 @@ class databox:
             # check to see if ckeys is equal in length to the
             # number of data columns. If it isn't, it's a false ckeys line
             if len(ckeys) >= column_count:
+                
                 # it is close enough
                 # if we have too many column keys, mention it
                 while len(ckeys) > column_count:
@@ -432,34 +446,32 @@ class databox:
             for label in self.ckeys: self.columns[label] = []
 
 
+            # # Most used format
+            # try:
+                
+            # Define a function to fix each line of data.
+            def fix(x): return str(x.replace('i','j'))
 
+            # loop over the remaining data lines, converting to numbers
+            z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+                              delimiter=self.delimiter,
+                              missing_values=['_'], filling_values=_n.nan,
+                              dtype=_n.complex)
 
+            # # Alternate format
+            # except:
+            #     print("WOA!")
+            #     def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')
 
-
-
-
-            # Python 2 format
-            #if _sys.version_info[0] == 2:
-            try:
-                def fix(x): return str(x.replace('i','j'))
-
-                # loop over the remaining data lines, converting to numbers
-                z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                                  delimiter=self.delimiter,
-                                  dtype=_n.complex)
-
-            # Python 3 format
-            except:
-                def fix(x): return bytearray(x.replace('i','j'), encoding='utf-8')
-
-                # loop over the remaining data lines, converting to numbers
-                z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
-                                  delimiter=self.delimiter,
-                                  dtype=_n.complex)
+            #     # loop over the remaining data lines, converting to numbers
+            #     z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
+            #                       delimiter=self.delimiter,
+            #                       dtype=_n.complex)
 
             # genfromtxt returns a 1D array if there is only one data line.
             # highly confusing behavior, numpy!
             if len(_n.shape(z)) == 1:
+                
                 # check to make sure the data file contains only 1 column of data
                 rows_of_data = len(lines) - first_data_line
                 if rows_of_data == 1: z = _n.array([z])
@@ -485,9 +497,12 @@ class databox:
             if k in self.columns:
                 self.columns[self.obnoxious_ckeys[k]] = self.columns[k]
 
+        # Strip the nans if we're supposed to
+        if strip_nans: self.strip_nans()
+
         return self
 
-    def save_file(self, path=None, filters='*.dat', force_extension=None, force_overwrite=False, header_only=False, delimiter='use current', binary=None):
+    def save_file(self, path=None, filters='*', force_extension=None, force_overwrite=False, header_only=False, delimiter='use current', binary=None):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
@@ -613,8 +628,14 @@ class databox:
                 for ckey in self.ckeys: elements.append(str(ckey).replace(delimiter,'_'))
                 f.write(delimiter.join(elements) + "\n")
 
-                # now loop over the data
-                for n in range(0, len(self[0])):
+                # Find the longest column
+                N = 0
+                for c in self: 
+                    if len(c) > N: N=len(c)
+
+                # now loop over the longest column length
+                for n in range(0, N):
+                    
                     # loop over each column
                     elements = []
                     for m in range(0, len(self.ckeys)):
@@ -1028,6 +1049,15 @@ class databox:
         return self
     copy_all_from = copy_all
 
+    def copy(self):
+        """
+        Creates a databox instance, copies all the information into it,
+        and returns it.
+        """
+        d = databox()
+        self.copy_all_to(d)
+        return d
+
     def copy_headers_to(self, destination_databox):
         """
         Copies the headers from this databox to the supplied destination databox.
@@ -1321,6 +1351,35 @@ class databox:
         if type(column) is not str: column = self.ckeys[column]
         self.ckeys[self.ckeys.index(column)] = new_name
         self.columns[new_name] = self.columns.pop(column)
+        return self
+
+    def strip_nans(self, columns=None):
+        """
+        Removes the trailing nan values from the specified column or list of columns, or 
+        all columns if columns==None. To remove / replace *all* nans (or infs) use
+        the built-in numpy functionality.
+        
+        Parameters
+        ----------
+        columns=None : None, int, str, or list
+            Columns to strip. If None, strip all columns.
+            
+        Returns
+        -------
+        self
+        """
+        if columns is None: columns = self.ckeys
+        if not type(columns) in [list, tuple]: columns = [columns]
+        
+        # Do the strip
+        for c in columns: 
+            
+            # Get the index of the last non-nan
+            N = _n.where(_n.logical_not(_n.isnan(self[c])))[0][-1]
+            
+            # Keep up to the last number
+            self[c] = self[c][0:N+1]
+        
         return self
 
     def trim(self, *conditions):
@@ -3118,7 +3177,7 @@ class fitter():
 # Dialogs for loading data
 ############################
 
-def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEHEAD.', default_directory='default_directory', quiet=True, header_only=False, transpose=False, **kwargs):
+def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEHEAD.', default_directory='default_directory', quiet=True, header_only=False, transpose=False, strip_nans=False, **kwargs):
     """
     Loads a data file into the databox data class. Returns the data object.
 
@@ -3129,21 +3188,32 @@ def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, 
     ----------
     path=None
         Supply a path to a data file; None means use a dialog.
+    
     first_data_line="auto"
         Specify the index of the first data line, or have it figure this out
         automatically.
+    
     filters="*.*"
         Specify file filters.
+    
     text="Select a file, FACEHEAD."
         Window title text.
+    
     default_directory="default_directory"
         Which directory to start in (by key). This lives in spinmob.settings.
+    
     quiet=True
         Don't print stuff while loading.
+    
     header_only=False
         Load only the header information.
+    
     transpose = False
         Return databox.transpose().
+
+    strip_nans = False
+        If True, runs databox.strip_nans() after loading, which removes all the
+        trailing nan values (useful for files with mismatched column lengths).
 
     Additioinal optional keyword arguments are sent to spinmob.data.databox(),
     so check there for more information.
@@ -3151,14 +3221,14 @@ def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, 
     d = databox(**kwargs)
     d.load_file(path=path, first_data_line=first_data_line,
                 filters=filters, text=text, default_directory=default_directory,
-                header_only=header_only)
+                header_only=header_only, strip_nans=strip_nans)
 
     if not quiet: print("\nloaded", d.path, "\n")
 
     if transpose: return d.transpose()
     return d
 
-def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Select some files, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, **kwargs):
+def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Select some files, FACEHEAD.", default_directory="default_directory", quiet=True, header_only=False, transpose=False, strip_nans=False, **kwargs):
     """
     Loads a list of data files into a list of databox data objects.
     Returns said list.
@@ -3167,22 +3237,34 @@ def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Selec
     ----------
     path=None
         Supply a path to a data file; None means pop up a dialog.
+    
     first_data_line="auto"
         Specify the index of the first data line, or have it figure this out
         automatically.
+    
     filters="*.*"
         Specify file filters.
+    
     text="Select some files, FACEHEAD."
         Window title text.
+    
     default_directory="default_directory"
         Which directory to start in (by key). This lives in spinmob.settings.
+    
     quiet=True
         Don't print stuff while loading.
+    
     header_only=False
         Load only the header information.
+    
     transpose = False
         Return databox.transpose().
+    
+    strip_nans = False
+        If True, runs databox.strip_nans() after loading, which removes all the
+        trailing nan values (useful for files with mismatched column lengths).
 
+    
     Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
     if paths is None: paths = _s.dialogs.load_multiple(filters, text, default_directory)
@@ -3192,7 +3274,7 @@ def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Selec
     for path in paths:
         if _os.path.isfile(path): datas.append(load(path=path, first_data_line=first_data_line,
                 filters=filters, text=text, default_directory=default_directory,
-                header_only=header_only, transpose=transpose, **kwargs))
+                header_only=header_only, transpose=transpose, strip_nans=strip_nans, **kwargs))
 
     return datas
 
