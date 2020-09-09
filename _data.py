@@ -2756,7 +2756,7 @@ class fitter():
 
             # get the next figure
             if self.figures is None: fig = _p.figure(self['first_figure']+n)
-            else: fig = self.figures[n]
+            else:                    fig = self.figures[n]
 
             # turn off interactive mode and clear the figure
             _p.ioff()
@@ -2774,7 +2774,7 @@ class fitter():
             a2.set_yscale(self['yscale'][n])
 
             # Set the window geometry
-            _s.tweaks.set_figure_window_geometry(fig, None, [500,500])
+            #_s.tweaks.set_figure_window_geometry(fig, None, [500,500])
 
             # Get the function xdata
             fxa = self._get_xdata_for_function(n,xa)
@@ -2819,8 +2819,6 @@ class fitter():
 
             # Zoom on just the data for now
             _s.tweaks.auto_zoom(axes=a2, draw=False)
-
-
 
             # PLOT FUNCTIONS
 
