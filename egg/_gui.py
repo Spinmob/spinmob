@@ -3630,7 +3630,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
     styles=[]
         Optional list of dictionaries defining the styles, one for each plotted
-        data set. Stored as self.styles (which you can later set again), each
+        data set. Stored as self._styles (which you can later set again), each
         dictionary is used to send keyword arguments as PlotDataItem(**styles[n])
         for the n'th data set. Note these are the same keyword arguments one
         can supply to pyqtgraph's plot() function. See pyqtgraph examples, e.g.,
@@ -3660,7 +3660,7 @@ class DataboxPlot(_d.databox, GridLayout):
     to create your own.
 
     The script's namespace includes: all of numpy (sin, cos, sqrt, array, etc),
-    all of scipy.special (erf, erfc, etc), d=self, styles=self.styles,
+    all of scipy.special (erf, erfc, etc), d=self, styles=self._styles,
     sm=s=_s=spinmob, and everything in self.plot_script_globals.
 
     Optional additional globals can be defined by setting
@@ -3719,8 +3719,37 @@ class DataboxPlot(_d.databox, GridLayout):
         self.button_load_script = self.grid_script.place_object(Button("Load", tip='Load a script.').set_width(40), 2,2)
         self.button_plot        = self.grid_script.place_object(Button("Plot!", tip='Attempt to plot using the shown script!').set_width(40), 2,3)
 
-        self.script = self.grid_script.place_object(TextBox("", multiline=True), 1,0, row_span=4, alignment=0)
+        self.script = self.grid_script.place_object(TextBox("", multiline=True,
+            tip='Script defining how the data is plotted. The minimum requirement is that\n'+
+                'x and y (arrays, lists of arrays, or None) are defined. Optionally, you may\n'+
+                'also define:\n\n'+
+                
+                '  ey : number, array or list of numbers and/or arrays\n    defines y-error bars for each data set\n\n'+
+                
+                '  xlabels, ylabels : string or list of strings\n    defines axis labels for each data set.\n\n'+
+                
+                '  styles : list of dictionaries and/or or None\'s (default)\n    Keword arguments to be sent to pyqtgraph.PlotDataItem() when\n    creating the curves.\n\n'+
+
+                'The script knows about all numpy objects (sin, cos, sqrt, array, etc),\n'+
+                'scipy.special functions (also via special.), and self.plot_script_globals,\n'+
+                '(dictionary) which allows you to include your own variables and objects.\n'+
+                'Finally, the following variables are defined by default:\n\n'+
+                
+                '  mkPen & mkBrush : from pyqtgraph, used for creating styles.\n\n'+
+                
+                '  d : this DataboxPlot instance\n\n' +
+                
+                '  spinmob, sm, s, and _s : spinmob library'),
+                1,0, row_span=4, alignment=0)
         self.script.set_height(120)
+
+            # g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
+            # g.update(_scipy_special.__dict__, special=_scipy_special)
+            # g.update(dict(mkPen=_pg.mkPen, mkBrush=_pg.mkBrush))
+            # g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self._styles))
+            # g.update(dict(xlabels='x', ylabels='y'))
+            # g.update(dict(spinmob=_s, sm=_s, s=_s, _s=_s))
+            # g.update(self.plot_script_globals)
 
         #self.script.set_style('font-family:monospace; font-size:12;')
         # Windows compatibility
@@ -3781,7 +3810,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self._curves          = []
         self._errors          = []
         self._legend          = None
-        self.styles           = []   # List of dictionaries to send to PlotDataItem's
+        self._styles          = []   # List of dictionaries to send to PlotDataItem's
         self._previous_styles = None # Used to determine if a rebuild is necessary
         self.plot_widgets     = []
         self.ROIs             = []
@@ -4250,12 +4279,13 @@ class DataboxPlot(_d.databox, GridLayout):
             # get globals for sin, cos etc
             g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
             g.update(_scipy_special.__dict__, special=_scipy_special)
-            g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self.styles))
+            g.update(dict(mkPen=_pg.mkPen, mkBrush=_pg.mkBrush))
+            g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self._styles))
             g.update(dict(xlabels='x', ylabels='y'))
             g.update(dict(spinmob=_s, sm=_s, s=_s, _s=_s))
             g.update(self.plot_script_globals)
 
-            # run the script.
+            # run the script. 
             exec(self.script.get_text(), g)
 
             # x & y should now be data arrays, lists of data arrays or Nones
@@ -4284,7 +4314,7 @@ class DataboxPlot(_d.databox, GridLayout):
             while len(ylabels) < len(y): ylabels.append(ylabels[-1])
 
             # Get the styles
-            self.styles = g['styles']
+            self._styles = g['styles']
 
             # make sure we have exactly the right number of plots
             self._set_number_of_plots(y, ey)
@@ -4320,8 +4350,8 @@ class DataboxPlot(_d.databox, GridLayout):
             self.button_script.set_colors(None, None)
 
             # Remember the style of this plot
-            if self.styles: self._previous_styles = list(self.styles)
-            else:           self._previous_styles = self.styles
+            if self._styles: self._previous_styles = list(self._styles)
+            else:           self._previous_styles = self._styles
 
             # Clear the error if present
             self._label_script_error.hide()
@@ -4385,7 +4415,7 @@ class DataboxPlot(_d.databox, GridLayout):
         Checks if curves and plots all match the data and error.
         """
         # First check if the styles have changed
-        if self.styles != self._previous_styles: return False
+        if self._styles != self._previous_styles: return False
 
         N = len(y)
 
@@ -4454,16 +4484,20 @@ class DataboxPlot(_d.databox, GridLayout):
         # Create the new curves and errors
         for i in range(len(y)):
 
-            # Default to the user-supplied self.styles, if they exist.
-            if self.styles and i < len(self.styles) and self.styles[i]: kw = self.styles[i]
-            else:                                                       kw = dict(pen=(i,len(y)))
+            # Default to the user-supplied self._styles, if they exist.
+            if self._styles and i < len(self._styles) and self._styles[i]: 
+                kw = self._styles[i] 
+            else:                                                       
+                kw = dict(pen=_pg.mkPen(color=(i,len(y)), width=2))
 
-            # Append the curve
+            # Append the curve @JACK
             self._curves.append(_pg.PlotDataItem(**kw))
             if ey[i] is None:
                 self._errors.append(None)
             else:
-                self._errors.append(_pg.ErrorBarItem(x=_n.array([0,1]), y=_n.array([0,0]), pen=(i,len(y))))
+                self._errors.append(_pg.ErrorBarItem(
+                    x=_n.array([0,1]), y=_n.array([0,0]), 
+                    pen=_pg.mkPen(color=(i,len(y)), width=2)) )
 
         # figure out the target number of plots
         if self.button_multi.is_checked(): n_plots = len(y)        # one plot per data set
