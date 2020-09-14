@@ -121,16 +121,16 @@ class BaseObject(object):
 
     def set_colors(self, text=None, background=None):
         """
-        Sets the colors of the text area.
+        Sets the text and background colors of the widget.
 
         Parameters
         ----------
         text=None
-            Color of the main text.
+            Color of the main text. None means default
         background=None
-            Color of the background. None means transparent.
+            Color of the background. None means default.
         """
-        self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+self._style+" background-color: "+str(background)+"; color: "+str(text)+"}")
+        self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+self._style+"; background-color: "+str(background)+"; color: "+str(text)+"}")
         return self
 
     def set_style(self, style=''):
@@ -944,6 +944,10 @@ class Button(BaseObject):
 
     signal_toggled=None : function
         Optional function to which signal_toggled will connect.
+        
+    style_checked=None, style_unchecked=None : string
+        Stylesheet for the button when checked and unchecked, e.g.,
+        'font-size:20px; color:white; background-color:red'
 
     Signals
     -------
@@ -957,7 +961,8 @@ class Button(BaseObject):
 
     def __init__(self, text="My Button! No!", checkable=False, checked=False,
                  QPushButton=None, autosettings_path=None, tip=None,
-                 signal_clicked=None, signal_toggled=None):
+                 signal_clicked=None, signal_toggled=None, 
+                 style_checked=None, style_unchecked=None):
 
         # Qt button instance
         if QPushButton is None: self._widget = _pg.Qt.QtGui.QPushButton(text)
@@ -972,6 +977,10 @@ class Button(BaseObject):
         # signals
         self.signal_clicked = self._widget.clicked
         self.signal_toggled = self._widget.toggled
+        
+        # Default colors
+        self._style_unchecked = ''
+        self._style_checked   = ''
 
         # set checkable
         self.set_checkable(checkable)
@@ -987,13 +996,104 @@ class Button(BaseObject):
         # Load any previous settings
         self.load_gui_settings()
 
+        # Update the styles
+        self.set_style_checked_unchecked(style_checked, style_unchecked)
+
+        # Functions to set the colors etc.
+        self.signal_toggled.connect(self._self_toggled)
+
         # Bind to save gui settings when changed
         self.signal_toggled.connect(self.save_gui_settings)
 
         # If other functions were supplied
         if signal_clicked: self.signal_clicked.connect(signal_clicked)
         if signal_toggled: self.signal_toggled.connect(signal_toggled)
+     
 
+    def _self_toggled(self, *a):
+        """
+        Sets the colors etc.
+        """
+        # If we've set any defaults
+        if self._style_checked != '' or self._style_unchecked != '':
+
+            # Get the style string
+            style = self._style_checked if self.is_checked() else self._style_unchecked
+            
+            # If it's checked and we've specified something
+            self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+style+"}")
+            
+    def set_style_unchecked(self, style=None):
+        """
+        Sets the stylesheet of the button when it's unchecked.
+        
+        Parameters
+        ----------
+        style=None : str (optional)
+            Stylesheet string, e.g. 'font-family:monospace; background-color:pink;'
+        """
+        self._style_unchecked = style
+        self._self_toggled()
+        return self
+    
+    def set_style_checked(self, style=None):
+        """
+        Sets the stylesheet of the button when it's checked.
+        
+        Parameters
+        ----------
+        style=None : str (optional)
+            Stylesheet string, e.g. 'font-family:monospace; background-color:pink;'
+        """
+        self._style_checked = style
+        self._self_toggled()
+        return self
+    
+    def set_style_checked_unchecked(self, style_checked=None, style_unchecked=None):
+        """
+        Sets the stylesheet of the button when it's checked and unchecked.
+        
+        Parameters
+        ----------
+        style_checked=None, style_unchecked : str (optional)
+            Stylesheet string, e.g. 'font-family:monospace; background-color:pink;'
+        """
+        if style_checked:   self._style_checked   = style_checked
+        if style_unchecked: self._style_unchecked = style_unchecked
+        self._self_toggled()
+        return self
+ 
+    def set_colors_unchecked(self, text=None, background=None):
+        """
+        Sets the default colors when the button is unchecked. This will override
+        any other styles you may have applied. For more control, see 
+        self.set_style_unchecked().
+       
+        Parameters
+        ----------
+        text=None
+            Color of the main text. None means default.
+        background=None
+            Color of the background. None means default.
+        """
+        self.set_style_unchecked(self._style+" background-color: "+str(background)+"; color: "+str(text))
+        return self
+
+    def set_colors_checked(self, text=None, background=None):
+        """
+        Sets the default colors when the button is checked. This will override
+        any other styles you may have applied. For more control, see 
+        self.set_style_checked().
+        
+        Parameters
+        ----------
+        text=None
+            Color of the main text. None means default.
+        background=None
+            Color of the background. None means default.
+        """
+        self.set_style_checked(self._style+" background-color: "+str(background)+"; color: "+str(text))
+        return self
 
     def is_checked(self):
         """
@@ -1031,6 +1131,7 @@ class Button(BaseObject):
         if block_signals: self._widget.blockSignals(False)
 
         return self
+
 
     def set_text(self, text="MY Button. MINE."):
         """
@@ -2607,7 +2708,7 @@ class TreeDictionary(BaseObject):
         BaseObject.__init__(self)
 
         self._widget             = _pg.parametertree.ParameterTree(showHeader=show_header)
-        self.naughty             = [' ', '\t', '\n', '\r', ',', ';', '|'] # disallowed characters for keys
+        self.naughty             = ['\t', '\n', '\r', ',', ';','|'] # disallowed characters for keys (delimiters, and | for expanded)
         self._autosettings_path  = autosettings_path
         self._connection_lists   = dict()
         self._lazy_load          = dict()
@@ -3538,7 +3639,7 @@ class TreeDictionary(BaseObject):
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
 
         # make the databox object
-        d = _d.databox()
+        d = _d.databox(delimiter='\t')
 
         # only load if it exists
         if _os.path.exists(path): d.load_file(path, header_only=True)
@@ -3776,7 +3877,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.grid_logger.set_column_stretch(2)
         self.number_history = self.grid_logger.add(NumberBox(
             0, step=100, bounds=(0,None), int=True,
-            tip='How many points to keep in the plot when using append_log(). Set to 0 to keep everything.\n'+
+            tip='How many points to keep in the plot when using append_row(). Set to 0 to keep everything.\n'+
                 'You can also use the script to display the last N points with indexing,\n'+
                 'e.g., d[0][-200:], which will not delete the old data.')).set_width(70)
 
@@ -3787,8 +3888,8 @@ class DataboxPlot(_d.databox, GridLayout):
             'Log Data',
             checkable=True,
             signal_toggled=self._button_log_data_toggled,
-            tip='Append incoming data to a text file of your choice when calling self.append_log(). Saves the current data and header first.'
-            )).set_width(70)
+            tip='Append incoming data to a text file of your choice when calling self.append_row(). Saves the current data and header first.'
+            )).set_width(70).set_colors_checked('white', 'red')
 
         self.label_log_path = self.grid_logger.add(Label('')).hide()
         if not show_logger: self.grid_logger.hide()
@@ -4019,14 +4120,29 @@ class DataboxPlot(_d.databox, GridLayout):
         """
         return
 
-    def append_log(self, row, ckeys=None):
+    def append_row(self, row, ckeys=None, history=True):
         """
-        Appends the supplied row of data, using self.append_row(), but with
-        history equal to the shown value in self.number_history. Also, if the
+        Appends the supplied row of data, using databox.append_row(), but with
+        history equal to the current value in self.number_history. Also, if the
         "Log Data" button is enabled, appends the new data to the log file.
+        
+        Parameters
+        ----------
+        row : list or 1D array
+            Values for the new row of data.
+        
+        ckeys=None : list of strings (optional)
+            Column keys the databox must enforce. If they don't match the current
+            keys, the columns will be cleared and the new ckeys will be used.
+        
+        history=True : True or integer
+            Number of previous data points to keep in memory. If True (default),
+            use self.number_history's value. If 0, kep all data.
         """
+        if history is True: history = self.number_history()
+        
         # First append like normal
-        self.append_row(row, ckeys, self.number_history())
+        super().append_row(row, ckeys, history)
 
         # If the dump file is checked, dump the row
         if self.button_log_data() and len(self.label_log_path()):
