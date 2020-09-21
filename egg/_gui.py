@@ -4392,13 +4392,21 @@ class DataboxPlot(_d.databox, GridLayout):
         ##### Try the script and make the curves / plots match
         try:
 
-            # get globals for sin, cos etc
+            # get globals for sin, cos etc and libraries
             g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
             g.update(_scipy_special.__dict__, special=_scipy_special)
-            g.update(dict(mkPen=_pg.mkPen, mkBrush=_pg.mkBrush))
-            g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self._styles))
-            g.update(dict(xlabels='x', ylabels='y'))
             g.update(dict(spinmob=_s, sm=_s, s=_s, _s=_s))
+            
+            # Pyqtgraph globals
+            g.update(dict(mkPen=_pg.mkPen, mkBrush=_pg.mkBrush))
+            
+            # Object globals
+            g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self._styles))
+            
+            # Default values
+            g.update(dict(xlabels='x', ylabels='y'))
+            
+            # Other globals
             g.update(self.plot_script_globals)
 
             # run the script. 
@@ -4467,7 +4475,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
             # Remember the style of this plot
             if self._styles: self._previous_styles = list(self._styles)
-            else:           self._previous_styles = self._styles
+            else:            self._previous_styles = self._styles
 
             # Clear the error if present
             self._label_script_error.hide()
@@ -4604,7 +4612,7 @@ class DataboxPlot(_d.databox, GridLayout):
             if self._styles and i < len(self._styles) and self._styles[i]: 
                 kw = self._styles[i] 
             else:                                                       
-                kw = dict(pen=_pg.mkPen(color=(i,len(y)), width=2))
+                kw = dict(pen=_pg.mkPen(color=(i,len(y)), width=1))
 
             # Append the curve @JACK
             self._curves.append(_pg.PlotDataItem(**kw))
