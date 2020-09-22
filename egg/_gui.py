@@ -4612,7 +4612,7 @@ class DataboxPlot(_d.databox, GridLayout):
             if self._styles and i < len(self._styles) and self._styles[i]: 
                 kw = self._styles[i] 
             else:                                                       
-                kw = dict(pen=_pg.mkPen(color=(i,len(y)), width=1))
+                kw = dict(pen=_pg.mkPen(color=(i,len(y)), width=_s.settings['egg_pen_width']))
 
             # Append the curve @JACK
             self._curves.append(_pg.PlotDataItem(**kw))

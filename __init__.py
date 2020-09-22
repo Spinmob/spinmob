@@ -99,8 +99,11 @@ _defaults = dict(
     dark_theme_qt         = False,
     dark_theme_figures    = False,
     font_size             = 12,
-    font_size_legend      = 9)
+    font_size_legend      = 9,
+    egg_pen_width         = 1,
+    egg_use_opengl        = False,)
 
+# Loop over defaults and set them if they don't already exist
 for _k in _defaults:
     if not _k in settings.keys():
         settings[_k] = _defaults[_k]
@@ -111,6 +114,10 @@ for _k in [
     'dark_theme_figures'
     ]:
     settings[_k] = settings[_k]
+    
+    
+# If we're using opengl
+if _pyqtgraph_ok and settings['egg_use_opengl']: _pyqtgraph.setConfigOptions(useOpenGL=True)
 
 
 

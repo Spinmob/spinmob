@@ -43,7 +43,27 @@ class settings():
         self._databox.load_file(self.path_settings, header_only=True)
 
 
-    def __call__   (self, key): return self.get(key)
+    def set_get(self, *keys, **kwargs): 
+        """
+        Sets all keyword arguments and returns a list of values associated
+        with each supplied key (if any). If only one key is supplied, returns
+        the associated value (not a list).
+        
+        settings.set_get() and settings() are the same function.
+        """
+        # Loop over keyword arguments and set them
+        for key in kwargs: self.set(key, kwargs[key])
+        
+        # Create a list of values
+        values = []
+        for key in keys: values.append(self.get(key))
+
+        # Return the value if there's one or the list if there are multiple
+        if   len(values) == 1: return values[0]
+        elif len(values) >  1: return values
+
+    __call__ = set_get
+
     def __getitem__(self,key):  return self.get(key)
     def __setitem__(self,key,value): self.set(key, value)
     def __str__(self):
@@ -91,7 +111,10 @@ class settings():
         """
         if not key is None:            
             if not value is None: self._databox.h(**{key:value})
-            else:                 self._databox.pop_header(key, ignore_error=True)
+            else:                 
+                self._databox.pop_header(key, ignore_error=True)
+                self.save()
+                return
 
         # If figure theme is provided, update it.
         if key == 'dark_theme_figures':
@@ -150,4 +173,12 @@ class settings():
         """
         self._databox.save_file(self.path_settings, force_overwrite=True)
 
-
+    def reset(self):
+        """
+        Clears any user settings and resets expected settings to their defaults.
+        """
+        self.clear()
+        
+        # Loop over defaults and set them
+        for _k in _s._defaults: self[_k] = _s._defaults[_k]
+        
