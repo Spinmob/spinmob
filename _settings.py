@@ -43,17 +43,17 @@ class settings():
         self._databox.load_file(self.path_settings, header_only=True)
 
 
-    def set_get(self, *keys, **kwargs): 
+    def set_get(self, *keys, **kwargs):
         """
         Sets all keyword arguments and returns a list of values associated
         with each supplied key (if any). If only one key is supplied, returns
         the associated value (not a list).
-        
+
         settings.set_get() and settings() are the same function.
         """
         # Loop over keyword arguments and set them
         for key in kwargs: self.set(key, kwargs[key])
-        
+
         # Create a list of values
         values = []
         for key in keys: values.append(self.get(key))
@@ -76,7 +76,7 @@ class settings():
         s = '\nSPINMOB SETTINGS'
         keys = list(self._databox.hkeys)
         keys.sort()
-        
+
         for key in keys:
             s = s + "\n  " + key + " = " + repr(self._databox.h(key))
         return s
@@ -91,10 +91,10 @@ class settings():
         if key in self._databox.hkeys: return self._databox.h(key)
         else:                          return None
 
-    def _set_theme_figures(self, theme):    
+    def _set_theme_figures(self, theme):
         """
         Sets the matplotlib figure theme.
-        
+
         Parameters
         ----------
         theme : str
@@ -106,12 +106,12 @@ class settings():
     def set(self, key, value=None):
         """
         Sets the key-value pair and dumps to the preferences file.
-        
+
         If value=None, pops / removes the setting.
         """
-        if not key is None:            
+        if not key is None:
             if not value is None: self._databox.h(**{key:value})
-            else:                 
+            else:
                 self._databox.pop_header(key, ignore_error=True)
                 self.save()
                 return
@@ -119,16 +119,18 @@ class settings():
         # If figure theme is provided, update it.
         if key == 'dark_theme_figures':
             self._set_theme_figures('dark_background' if self['dark_theme_figures'] else 'classic')
-            
-            if not self['dark_theme_figures']: 
+
+            if not self['dark_theme_figures']:
                 _s.pylab.rcParams['figure.facecolor'] = 'white'
-            
+
         # Other pylab settings
         if key in ['font_size']:
-             _s.pylab.rcParams.update({
-                 'font.size' : self['font_size']
-                 })
-        
+             _s.pylab.rcParams.update({'font.size' : self['font_size']})
+
+        # pyqtgraph opengl
+        if key in ['egg_use_opengl'] and _s._pyqtgraph_ok:
+            _s._pyqtgraph.setConfigOptions(useOpenGL=self['egg_use_opengl'])
+
         # Save the settings.
         self.save()
 
@@ -178,7 +180,6 @@ class settings():
         Clears any user settings and resets expected settings to their defaults.
         """
         self.clear()
-        
+
         # Loop over defaults and set them
         for _k in _s._defaults: self[_k] = _s._defaults[_k]
-        

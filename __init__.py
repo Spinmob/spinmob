@@ -111,13 +111,13 @@ for _k in _defaults:
 # Touch the keys that affect visuals
 for _k in [
     'font_size',
-    'dark_theme_figures'
+    'dark_theme_figures',
+    'egg_use_opengl'
     ]:
     settings[_k] = settings[_k]
-    
-    
-# If we're using opengl
-if _pyqtgraph_ok and settings['egg_use_opengl']: _pyqtgraph.setConfigOptions(useOpenGL=True)
+
+
+
 
 
 
