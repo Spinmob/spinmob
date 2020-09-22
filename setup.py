@@ -1,4 +1,4 @@
-__version__ = '3.5.6' # Keep this on the first line so it's easy for __init__.py to grab.
+__version__ = '3.5.7' # Keep this on the first line so it's easy for __init__.py to grab.
 
 
 

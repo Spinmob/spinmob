@@ -944,7 +944,7 @@ class Button(BaseObject):
 
     signal_toggled=None : function
         Optional function to which signal_toggled will connect.
-        
+
     style_checked=None, style_unchecked=None : string
         Stylesheet for the button when checked and unchecked, e.g.,
         'font-size:20px; color:white; background-color:red'
@@ -961,7 +961,7 @@ class Button(BaseObject):
 
     def __init__(self, text="My Button! No!", checkable=False, checked=False,
                  QPushButton=None, autosettings_path=None, tip=None,
-                 signal_clicked=None, signal_toggled=None, 
+                 signal_clicked=None, signal_toggled=None,
                  style_checked=None, style_unchecked=None):
 
         # Qt button instance
@@ -977,7 +977,7 @@ class Button(BaseObject):
         # signals
         self.signal_clicked = self._widget.clicked
         self.signal_toggled = self._widget.toggled
-        
+
         # Default colors
         self._style_unchecked = ''
         self._style_checked   = ''
@@ -1008,7 +1008,7 @@ class Button(BaseObject):
         # If other functions were supplied
         if signal_clicked: self.signal_clicked.connect(signal_clicked)
         if signal_toggled: self.signal_toggled.connect(signal_toggled)
-     
+
 
     def _self_toggled(self, *a):
         """
@@ -1019,14 +1019,14 @@ class Button(BaseObject):
 
             # Get the style string
             style = self._style_checked if self.is_checked() else self._style_unchecked
-            
+
             # If it's checked and we've specified something
             self._widget.setStyleSheet(self._widget.__class__.__name__ + " {"+style+"}")
-            
+
     def set_style_unchecked(self, style=None):
         """
         Sets the stylesheet of the button when it's unchecked.
-        
+
         Parameters
         ----------
         style=None : str (optional)
@@ -1035,11 +1035,11 @@ class Button(BaseObject):
         self._style_unchecked = style
         self._self_toggled()
         return self
-    
+
     def set_style_checked(self, style=None):
         """
         Sets the stylesheet of the button when it's checked.
-        
+
         Parameters
         ----------
         style=None : str (optional)
@@ -1048,11 +1048,11 @@ class Button(BaseObject):
         self._style_checked = style
         self._self_toggled()
         return self
-    
+
     def set_style_checked_unchecked(self, style_checked=None, style_unchecked=None):
         """
         Sets the stylesheet of the button when it's checked and unchecked.
-        
+
         Parameters
         ----------
         style_checked=None, style_unchecked : str (optional)
@@ -1062,13 +1062,13 @@ class Button(BaseObject):
         if style_unchecked: self._style_unchecked = style_unchecked
         self._self_toggled()
         return self
- 
+
     def set_colors_unchecked(self, text=None, background=None):
         """
         Sets the default colors when the button is unchecked. This will override
-        any other styles you may have applied. For more control, see 
+        any other styles you may have applied. For more control, see
         self.set_style_unchecked().
-       
+
         Parameters
         ----------
         text=None
@@ -1082,9 +1082,9 @@ class Button(BaseObject):
     def set_colors_checked(self, text=None, background=None):
         """
         Sets the default colors when the button is checked. This will override
-        any other styles you may have applied. For more control, see 
+        any other styles you may have applied. For more control, see
         self.set_style_checked().
-        
+
         Parameters
         ----------
         text=None
@@ -3824,22 +3824,22 @@ class DataboxPlot(_d.databox, GridLayout):
             tip='Script defining how the data is plotted. The minimum requirement is that\n'+
                 'x and y (arrays, lists of arrays, or None) are defined. Optionally, you may\n'+
                 'also define:\n\n'+
-                
+
                 '  ey : number, array or list of numbers and/or arrays\n    defines y-error bars for each data set\n\n'+
-                
+
                 '  xlabels, ylabels : string or list of strings\n    defines axis labels for each data set.\n\n'+
-                
+
                 '  styles : list of dictionaries and/or or None\'s (default)\n    Keword arguments to be sent to pyqtgraph.PlotDataItem() when\n    creating the curves.\n\n'+
 
                 'The script knows about all numpy objects (sin, cos, sqrt, array, etc),\n'+
                 'scipy.special functions (also via special.), and self.plot_script_globals,\n'+
                 '(dictionary) which allows you to include your own variables and objects.\n'+
                 'Finally, the following variables are defined by default:\n\n'+
-                
+
                 '  mkPen & mkBrush : from pyqtgraph, used for creating styles.\n\n'+
-                
+
                 '  d : this DataboxPlot instance\n\n' +
-                
+
                 '  spinmob, sm, s, and _s : spinmob library'),
                 1,0, row_span=4, alignment=0)
         self.script.set_height(120)
@@ -4125,22 +4125,22 @@ class DataboxPlot(_d.databox, GridLayout):
         Appends the supplied row of data, using databox.append_row(), but with
         history equal to the current value in self.number_history. Also, if the
         "Log Data" button is enabled, appends the new data to the log file.
-        
+
         Parameters
         ----------
         row : list or 1D array
             Values for the new row of data.
-        
+
         ckeys=None : list of strings (optional)
             Column keys the databox must enforce. If they don't match the current
             keys, the columns will be cleared and the new ckeys will be used.
-        
+
         history=True : True or integer
             Number of previous data points to keep in memory. If True (default),
             use self.number_history's value. If 0, kep all data.
         """
         if history is True: history = self.number_history()
-        
+
         # First append like normal
         super().append_row(row, ckeys, history)
 
@@ -4396,20 +4396,20 @@ class DataboxPlot(_d.databox, GridLayout):
             g = dict(_n.__dict__, np=_n, _n=_n, numpy=_n)
             g.update(_scipy_special.__dict__, special=_scipy_special)
             g.update(dict(spinmob=_s, sm=_s, s=_s, _s=_s))
-            
+
             # Pyqtgraph globals
             g.update(dict(mkPen=_pg.mkPen, mkBrush=_pg.mkBrush))
-            
+
             # Object globals
             g.update(dict(d=self, x=None, y=None, ex=None, ey=None, styles=self._styles))
-            
+
             # Default values
             g.update(dict(xlabels='x', ylabels='y'))
-            
+
             # Other globals
             g.update(self.plot_script_globals)
 
-            # run the script. 
+            # run the script.
             exec(self.script.get_text(), g)
 
             # x & y should now be data arrays, lists of data arrays or Nones
@@ -4609,9 +4609,9 @@ class DataboxPlot(_d.databox, GridLayout):
         for i in range(len(y)):
 
             # Default to the user-supplied self._styles, if they exist.
-            if self._styles and i < len(self._styles) and self._styles[i]: 
-                kw = self._styles[i] 
-            else:                                                       
+            if self._styles and i < len(self._styles) and self._styles[i]:
+                kw = self._styles[i]
+            else:
                 kw = dict(pen=_pg.mkPen(color=(i,len(y)), width=_s.settings['egg_pen_width']))
 
             # Append the curve @JACK
@@ -4620,8 +4620,8 @@ class DataboxPlot(_d.databox, GridLayout):
                 self._errors.append(None)
             else:
                 self._errors.append(_pg.ErrorBarItem(
-                    x=_n.array([0,1]), y=_n.array([0,0]), 
-                    pen=_pg.mkPen(color=(i,len(y)), width=2)) )
+                    x=_n.array([0,1]), y=_n.array([0,0]),
+                    pen=_pg.mkPen(color=(i,len(y)), width=_s.settings['egg_pen_width'])) )
 
         # figure out the target number of plots
         if self.button_multi.is_checked(): n_plots = len(y)        # one plot per data set
