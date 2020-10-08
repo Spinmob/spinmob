@@ -3558,13 +3558,43 @@ class TreeDictionary(BaseObject):
         # Only want to do this when updating values!
         if not a[1][0][1] == 'childAdded': self.save()
 
-    def save(self, path=None):
+    def save(self, path=None, short_keys=False, include_expanded=True, filters='*', force_extension=None, **kwargs):
         """
         Saves all the parameters to a text file using the databox
-        functionality. If path=None, saves to self._autosettings_path. If
-        self._autosettings_path=None, does not save.
+        functionality. 
+        
+        Parameters
+        ----------
+        path=None: None, str, True
+            Optional path (str) to save the data to. If None, saves to 
+            self._autosettings_path. If self._autosettings_path=None, it does 
+            not save. If True or 'ask', will pop up a dialog.
+        
+        short_keys=False : bool
+            If True, do not prepend self.name to the keys.
+        
+        include_expanded=True : bool
+            If True, save also the information about which branches are expanded.
+        
+        filters='*'
+            File filter for the file dialog (for path=True or 'ask')
+
+        force_extension=None
+            If set to a string, e.g., 'txt', it will enforce that the chosen
+            filename will have this extension. If set to True, will use
+            the supplied filters.
+
+        Other keyword arguments are sent to spinmob.dialogs.save().
+        
+        Returns
+        -------
+        self
         """
-        if path==None:
+        if path in [True, 'ask']: 
+            path = _s.dialogs.save(filters=filters, force_extension=force_extension, **kwargs)
+            if path is None: return self
+        
+        if path is None:
 
             if self._autosettings_path == None: return self
 
@@ -3580,12 +3610,9 @@ class TreeDictionary(BaseObject):
         # make the databox object
         d = _d.databox()
 
-        # get the keys and dictionary
-        keys, dictionary = self.get_dictionary()
-
         # In case someone modified self.name, rebuild _tree_widgets.
         ws = dict()
-        for k in self._tree_widgets:
+        for k in self._tree_widgets: # _tree_widgets is a dictionary; loop over keys.
             w = self._tree_widgets[k]
             k = self._strip(k)
             k = self._unstrip(k)
@@ -3594,13 +3621,14 @@ class TreeDictionary(BaseObject):
 
         # loop over the keys and add them to the databox header
         for k in self._tree_widgets:
-
+            
             # Add the value if there is one
             if type(self._tree_widgets[k]).__name__ not in ['GroupParameter', 'ActionParameter']:
-                d.insert_header(k, dictionary[k])
+                d.insert_header(self._strip(k) if short_keys else k, self[k])
 
             # Add the expanded value
-            d.insert_header(k+'|expanded', self._tree_widgets[k].opts['expanded'])
+            if include_expanded:
+                d.insert_header((self._strip(k) if short_keys else k) + '|expanded', self._tree_widgets[k].opts['expanded'])
 
         # save it
         try:
@@ -3610,24 +3638,43 @@ class TreeDictionary(BaseObject):
 
         return self
 
-    def load(self, path=None, ignore_errors=True, block_key_signals=False):
+    def load(self, path=None, ignore_errors=True, block_key_signals=False, filters='*', **kwargs):
         """
-        Loads all the parameters from a databox text file. If path=None,
+        Loads all the parameters from a databox file. If path=None,
         loads from self._autosettings_path (provided this is not None).
 
         Parameters
         ----------
         path=None
             Path to load the settings from. If None, will load from the
-            specified autosettings_path.
+            specified autosettings_path. If True or 'ask', pop up a dialog.
+            
         ignore_errors=True
             Whether we should raise a stink when a setting doesn't exist.
             When settings do not exist, they are stuffed into the dictionary
             self._lazy_load.
+        
         block_key_signals=False
             If True, the load will not trigger any signals.
+            
+        filters='*'
+            Filters to use if there is a dialog.
+            
+        Other keyword arguments are sent to spinmob.dialogs.load()
+        
+        Returns
+        -------
+        self
+        
+        See also
+        --------
+        self.save(), self.update()
         """
-        if path==None:
+        if path in [True, 'ask']: 
+            path = _s.dialogs.load(filters=filters, **kwargs)
+            if path is None: return self
+        
+        if path is None:
 
             # Bail if there is no path
             if self._autosettings_path == None: return self
@@ -3660,6 +3707,27 @@ class TreeDictionary(BaseObject):
 
         If self.name is a string (not None), '/'+self.name+'/' will be stripped
         from the keys if present.
+        
+        Parameters
+        ----------
+        source_d : databox instance or dictionary
+            Source of key-value pairs (dictionary or header of databox) with 
+            which to update the tree.
+        
+        ignore_errors=True : bool
+            If True, missing keys will simply not be used, with no warnings.
+        
+        block_key_signals=False : bool
+            If True, block signals associated with each key while setting 
+            the parameters.
+            
+        Returns
+        -------
+        self
+        
+        See also
+        --------
+        self.load(), self.save()
         """
         # Make sure d is a dictionary
         if not type(source_d) == dict: source_d = source_d.headers
@@ -3684,8 +3752,6 @@ class TreeDictionary(BaseObject):
                 self._set_value_safe(k, v, ignore_errors, block_key_signals)
 
         return self
-
-    load_from_databox_header = update
 
     def _set_value_safe(self, k, v, ignore_errors=False, block_key_signals=False):
         """
