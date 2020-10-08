@@ -173,27 +173,27 @@ class databox:
         ----------
         path=None
             Path to the file. Using None will bring up a dialog.
-            
+
         filters='*.*'
             Filter for the file dialog (if path isn't specified)
-                                        
+
         text='Select a file, FACEPANTS.'
             Prompt on file dialog
-            
+
         default_directory=None
             Which spinmob.settings key to use for the dialog's default
             directory. Will create one if it doesn't already exist.
-            
+
         header_only=False
             Only load the header
-            
+
         quiet=False
             Don't print anything while loading.
-            
+
         strip_nans=False
-            If True, runs self.strip_nans() after loading, which will 
+            If True, runs self.strip_nans() after loading, which will
             remove the trailing nan values (useful for mismatched column lengths).
-            
+
         Returns
         -------
         databox instance
@@ -414,7 +414,7 @@ class databox:
             # check to see if ckeys is equal in length to the
             # number of data columns. If it isn't, it's a false ckeys line
             if len(ckeys) >= column_count:
-                
+
                 # it is close enough
                 # if we have too many column keys, mention it
                 while len(ckeys) > column_count:
@@ -448,7 +448,7 @@ class databox:
 
             # # Most used format
             # try:
-                
+
             # Define a function to fix each line of data.
             def fix(x): return str(x.replace('i','j'))
 
@@ -471,7 +471,7 @@ class databox:
             # genfromtxt returns a 1D array if there is only one data line.
             # highly confusing behavior, numpy!
             if len(_n.shape(z)) == 1:
-                
+
                 # check to make sure the data file contains only 1 column of data
                 rows_of_data = len(lines) - first_data_line
                 if rows_of_data == 1: z = _n.array([z])
@@ -512,21 +512,28 @@ class databox:
         path=None
             Path for saving the data. If None, this will bring up
             a save file dialog.
+
         filters='*.dat'
             File filter for the file dialog (for path=None)
+
         force_extension=None
             If set to a string, e.g., 'txt', it will enforce that the chosen
-            filename will have this extension.
+            filename will have this extension. If set to True, will use
+            the supplied filters.
+
         force_overwrite=False
             Normally, if the file * exists, this will copy that
             to *.backup. If the backup already exists, this
             function will abort. Setting this to True will
             force overwriting the backup file.
+
         header_only=False
             Only output the header?
+
         delimiter='use current'
             This will set the delimiter of the output file
             'use current' means use self.delimiter
+
         binary=None
             Set to one of the allowed numpy dtypes, e.g., float32, float64,
             complex64, int32, etc. Setting binary=True defaults to float64.
@@ -547,7 +554,8 @@ class databox:
 
         # Force the extension (we do this here redundantly, because the user may have also
         # specified a path explicitly)
-        if  not force_extension is None:
+        if force_extension is True: force_extension = filters
+        if not force_extension is None:
 
             # In case the user put "*.txt" instead of just "txt"
             force_extension = force_extension.replace('*','').replace('.','')
@@ -630,12 +638,12 @@ class databox:
 
                 # Find the longest column
                 N = 0
-                for c in self: 
+                for c in self:
                     if len(c) > N: N=len(c)
 
                 # now loop over the longest column length
                 for n in range(0, N):
-                    
+
                     # loop over each column
                     elements = []
                     for m in range(0, len(self.ckeys)):
@@ -1355,31 +1363,31 @@ class databox:
 
     def strip_nans(self, columns=None):
         """
-        Removes the trailing nan values from the specified column or list of columns, or 
+        Removes the trailing nan values from the specified column or list of columns, or
         all columns if columns==None. To remove / replace *all* nans (or infs) use
         the built-in numpy functionality.
-        
+
         Parameters
         ----------
         columns=None : None, int, str, or list
             Columns to strip. If None, strip all columns.
-            
+
         Returns
         -------
         self
         """
         if columns is None: columns = self.ckeys
         if not type(columns) in [list, tuple]: columns = [columns]
-        
+
         # Do the strip
-        for c in columns: 
-            
+        for c in columns:
+
             # Get the index of the last non-nan
             N = _n.where(_n.logical_not(_n.isnan(self[c])))[0][-1]
-            
+
             # Keep up to the last number
             self[c] = self[c][0:N+1]
-        
+
         return self
 
     def trim(self, *conditions):
@@ -2026,34 +2034,34 @@ class fitter():
             of these two types of objects. The length of such
             a list must be equal to the number of data sets
             supplied to the fit routine.
-        
+
         p='a=1.5, b'
             This must be a comma-separated string list of
             parameters used to fit. If an initial guess value is
             not specified, 1.0 will be used.
             If a function object is supplied, it is assumed that
             this string lists the parameter names in order.
-        
+
         c=None
             Fit _constants; like p, but won't be allowed to float
             during the fit. This can also be None.
-        
+
         bg=None
             Can be functions in the same format as f describing a
             background (which can be subtracted during fits, etc)
-        
+
         g=None
             Can be a dictionary of globals for evaluating functions.
 
         Additional keyword arguments are added to the globals used when
-        evaluating the functions. For example, 
-        
+        evaluating the functions. For example,
+
             set_functions('f(a,x)+b', 'a,b', f=my_function)
-            
+
         or
-        
+
             set_functions('f(a,x)+b', 'a,b', g={'f':my_function})
-        
+
         will work the same.
         """
 
@@ -2145,7 +2153,7 @@ class fitter():
             These can each be a single array of data, a number, or None (generates
             integer arrays), or a list of any combination of these for fitting
             multiple data sets.
-        
+
         dtype=None
             When converting the data to arrays, use this conversion function.
 
@@ -2159,7 +2167,7 @@ class fitter():
         """
         # Send additional kwargs to set
         self(**kwargs)
-        
+
         # SET UP DATA SETS TO MATCH EACH OTHER AND NUMBER OF FUNCTIONS
         xdatas, ydatas = _functions._match_data_sets        (xdata,  ydata)
         eydatas        = _functions._match_error_to_data_set(ydatas, eydata)
@@ -2413,8 +2421,8 @@ class fitter():
 
     def fit(self, autoscale_eydata=False, **kwargs):
         """
-        This will try to determine fit parameters using the least squares 
-        method in lmfit.minimize. This function relies on a previous call 
+        This will try to determine fit parameters using the least squares
+        method in lmfit.minimize. This function relies on a previous call
         of set_data() and set_functions().
 
         Parameters
@@ -2423,7 +2431,7 @@ class fitter():
             If True, runs the fit, runs self.autoscale_eydata(), and runs the fit again.
             Use with caution; this can give some sense of the error, but is
             very hard to justify and generally a bad idea.
-        
+
         **kwargs ar sent to lmfit.minimize().
 
         Notes
@@ -2452,7 +2460,7 @@ class fitter():
 
         # If we're supposed to autoscale, temporarily disable autoplot and do so
         if autoscale_eydata: self.autoscale_eydata().fit(**kwargs)
-            
+
         # plot if necessary
         if self['autoplot'] and not autoscale_eydata: self.plot()
 
@@ -2695,7 +2703,7 @@ class fitter():
         Each data set will be scaled independently, and you may wish to run
         this a few times until it converges.
         """
-            
+
         if not self.results:
             raise Exception("You must complete a fit first.")
             return
@@ -3186,26 +3194,26 @@ def load(path=None, first_data_line='auto', filters='*.*', text='Select a file, 
     ----------
     path=None
         Supply a path to a data file; None means use a dialog.
-    
+
     first_data_line="auto"
         Specify the index of the first data line, or have it figure this out
         automatically.
-    
+
     filters="*.*"
         Specify file filters.
-    
+
     text="Select a file, FACEHEAD."
         Window title text.
-    
+
     default_directory="default_directory"
         Which directory to start in (by key). This lives in spinmob.settings.
-    
+
     quiet=True
         Don't print stuff while loading.
-    
+
     header_only=False
         Load only the header information.
-    
+
     transpose = False
         Return databox.transpose().
 
@@ -3235,34 +3243,34 @@ def load_multiple(paths=None, first_data_line="auto", filters="*.*", text="Selec
     ----------
     path=None
         Supply a path to a data file; None means pop up a dialog.
-    
+
     first_data_line="auto"
         Specify the index of the first data line, or have it figure this out
         automatically.
-    
+
     filters="*.*"
         Specify file filters.
-    
+
     text="Select some files, FACEHEAD."
         Window title text.
-    
+
     default_directory="default_directory"
         Which directory to start in (by key). This lives in spinmob.settings.
-    
+
     quiet=True
         Don't print stuff while loading.
-    
+
     header_only=False
         Load only the header information.
-    
+
     transpose = False
         Return databox.transpose().
-    
+
     strip_nans = False
         If True, runs databox.strip_nans() after loading, which removes all the
         trailing nan values (useful for files with mismatched column lengths).
 
-    
+
     Optional keyword arguments are sent to spinmob.data.load(), so check there for more information.
     """
     if paths is None: paths = _s.dialogs.load_multiple(filters, text, default_directory)
