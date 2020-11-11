@@ -26,4 +26,11 @@ setup(name           = 'Spinmob',
               './egg/DataboxProcessor/*.*',
             ],
           },
+      install_requires=[
+          "scipy",
+          "matplotlib",
+          "lmfit",
+          "pyqtgraph>=0.11",
+          "pyqt5",  # for pyqtgraph
+          ],
      )
