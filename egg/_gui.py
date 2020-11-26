@@ -465,6 +465,9 @@ class GridLayout(BaseObject):
 
         # Qt widget to house the layout
         self._widget = _pg.Qt.QtGui.QWidget()
+        
+        # Resize event
+        self._widget.resizeEvent = self._event_resize 
 
         # Qt layout object
         self._layout = _pg.Qt.QtGui.QGridLayout()
@@ -476,8 +479,8 @@ class GridLayout(BaseObject):
         self._auto_row      = 0
         self._auto_column   = 0
 
-        # 2D list of objects
-        self.objects    = []
+        # list of objects
+        self.objects = []
 
         # other useful functions to wrap
         self.get_row_count    = self._layout.rowCount
@@ -493,6 +496,24 @@ class GridLayout(BaseObject):
         if not hasattr(self, 'hide'): self.hide = self._widget.hide
 
 
+    def _event_resize(self, *a):
+        """
+        Called when it resizes.
+        """
+        # print(self)
+        # # Recursively loop over all sub-objects and call their resizers.
+        # for o in self.objects:
+        #     if type(o) == GridLayout:
+        #         o._event_resize()
+        
+        # Now call this one's customized resizer.
+        self.event_resize()
+
+    def event_resize(self):
+        """
+        Dummy function you can overload when the grid is resized.
+        """
+        return
 
     def __getitem__(self, n): return self.objects[n]
 
@@ -1925,7 +1946,7 @@ class TabArea(BaseObject):
 
         # tab widgets by index
         self.docked_tabs = []
-        self.all_tabs    = []
+        self.objects    = []
         self.popped_tabs = {}
 
         # signals
@@ -1955,7 +1976,7 @@ class TabArea(BaseObject):
         """
         Returns the total tab count (integer).
         """
-        return len(self.all_tabs)
+        return len(self.objects)
 
     def _tab_closed(self, *a):
         """
@@ -1967,7 +1988,7 @@ class TabArea(BaseObject):
 
     def _tab_changed(self, *a): self.save_gui_settings()
 
-    def __getitem__(self, n): return self.all_tabs[n]
+    def __getitem__(self, n): return self.objects[n]
 
     def add_tab(self, title="Yeah!", margins=True, block_signals=True, **kwargs):
         """
@@ -1997,7 +2018,7 @@ class TabArea(BaseObject):
         tab.title = title
 
         # Remember this tab.
-        self.all_tabs.append(tab)
+        self.objects.append(tab)
 
         # create and append the tab to the list
         # Note this makes _widget no longer able to be added to a QGridLayout
@@ -3880,24 +3901,27 @@ class DataboxPlot(_d.databox, GridLayout):
 
         # top row is main controls
         self.grid_controls   = self.place_object(GridLayout(margins=False), alignment=0)
-        #self.grid_controls.place_object(Label("Raw Data:"), alignment=1)
-        self.button_clear    = self.grid_controls.place_object(Button("Clear", tip='Clear all header and columns.').set_width(40), alignment=1)
-        self.button_load     = self.grid_controls.place_object(Button("Load",  tip='Load data from file.')         .set_width(40), alignment=1)
-        self.button_save     = self.grid_controls.place_object(Button("Save",  tip='Save data to file.')           .set_width(40), alignment=1)
-        self.combo_binary    = self.grid_controls.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256'], tip='Format of output file columns.'), alignment=1)
-        self.button_autosave = self.grid_controls.place_object(Button("Auto",   checkable=True, tip='Enable autosaving. Note this will only autosave when self.autosave() is called in the host program.').set_width(40), alignment=1)
-        self.number_file     = self.grid_controls.place_object(NumberBox(int=True, bounds=(0,None), tip='Current autosave file name prefix number. This will increment every autosave().'))
-        self.label_path      = self.grid_controls.place_object(Label(""))
+        self.grid_controls.event_resize = self._event_resize_databox_plot
 
-        self.grid_controls.place_object(Label("")) # spacer
-        self.button_script     = self.grid_controls.place_object(Button  ("Script",      checkable=True, checked=True, tip='Show the script box.').set_width(50)).set_checked(False)
-        self.combo_autoscript  = self.grid_controls.place_object(ComboBox(['Edit', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'], tip='Script mode. Select "Edit" to modify the script.')).set_value(autoscript)
-        self.button_multi      = self.grid_controls.place_object(Button  ("Multi",       checkable=True, tip="If checked, plot with multiple plots. If unchecked, all data on the same plot.").set_width(40)).set_checked(True)
-        self.button_link_x     = self.grid_controls.place_object(Button  ("Link",        checkable=True, tip="Link the x-axes of all plots.").set_width(40)).set_checked(autoscript==1)
-        self.button_enabled    = self.grid_controls.place_object(Button  ("Enable",      checkable=True, tip="Enable this plot.").set_width(50)).set_checked(True)
+        self.grid_controls1  = self.grid_controls.place_object(GridLayout(margins=False), 0,0, alignment=1)
 
-        # keep the buttons shaclackied together
-        self.grid_controls.set_column_stretch(7)
+        self.button_clear    = self.grid_controls1.place_object(Button("Clear", tip='Clear all header and columns.').set_width(40), alignment=1)
+        self.button_load     = self.grid_controls1.place_object(Button("Load",  tip='Load data from file.')         .set_width(40), alignment=1)
+        self.button_save     = self.grid_controls1.place_object(Button("Save",  tip='Save data to file.')           .set_width(40), alignment=1)
+        self.combo_binary    = self.grid_controls1.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256'], tip='Format of output file columns.'), alignment=1)
+        self.button_autosave = self.grid_controls1.place_object(Button("Auto",   checkable=True, tip='Enable autosaving. Note this will only autosave when self.autosave() is called in the host program.').set_width(40), alignment=1)
+        self.number_file     = self.grid_controls1.place_object(NumberBox(int=True, bounds=(0,None), tip='Current autosave file name prefix number. This will increment every autosave().'))
+        
+        self.label_path      = self.grid_controls.place_object(Label(""), 1,0)
+
+        self.grid_controls2 = self.grid_controls.place_object(GridLayout(margins=False), 0,1, alignment=1)
+        self.grid_controls.set_column_stretch(2)
+
+        self.button_script     = self.grid_controls2.place_object(Button  ("Script",      checkable=True, checked=True, tip='Show the script box.').set_width(50)).set_checked(False)
+        self.combo_autoscript  = self.grid_controls2.place_object(ComboBox(['Edit', 'x=d[0]', 'Pairs', 'Triples', 'x=d[0], ey', 'x=None', 'User'], tip='Script mode. Select "Edit" to modify the script.')).set_value(autoscript)
+        self.button_multi      = self.grid_controls2.place_object(Button  ("Multi",       checkable=True, tip="If checked, plot with multiple plots. If unchecked, all data on the same plot.").set_width(40)).set_checked(True)
+        self.button_link_x     = self.grid_controls2.place_object(Button  ("Link",        checkable=True, tip="Link the x-axes of all plots.").set_width(40)).set_checked(autoscript==1)
+        self.button_enabled    = self.grid_controls2.place_object(Button  ("Enable",      checkable=True, tip="Enable this plot.").set_width(50)).set_checked(True)
 
         # second rows is the script
         self.new_autorow()
@@ -4042,6 +4066,14 @@ class DataboxPlot(_d.databox, GridLayout):
         self.load_gui_settings()
         self._synchronize_controls()
 
+    def _event_resize_databox_plot(self):
+        """
+        Called when the widget resizes.
+        """
+        # If we're below a certain width, move the right controls below
+        # if self.grid_controls._widget.width() < 700: self.grid_controls.place_object(self.grid_controls2, 0,1, alignment=1)
+        # else:                                        self.grid_controls.place_object(self.grid_controls2, 2,0, alignment=2)
+        
     def _button_log_data_toggled(self, *a):
         """
         Called when someone toggles the dump button. Ask for a path or remove the path.
@@ -5347,9 +5379,13 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 if __name__ == '__main__':
     import spinmob
     #runfile(spinmob.__path__[0] + '/tests/test__egg.py')
-
-    self = DataboxPlot(autosettings_path='pants')
-    self.show()
+    
+    w = Window()
+    ts = w.add(TabArea())
+    t = ts.add('test')
+    p = t.add(DataboxPlot())
+    
+    w.show()
 
 
 
