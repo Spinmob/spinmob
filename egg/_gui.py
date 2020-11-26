@@ -54,6 +54,7 @@ class BaseObject(object):
     """
 
     log = None
+    _alignment_default = 1 # If alignment is not overridden, use this.
 
     def __init__(self, autosettings_path=None):
         if not _s._pyqtgraph_ok: raise Exception('Cannot create egg GUIs without pyqtgraph v0.11.0 or higher.')
@@ -460,6 +461,7 @@ class GridLayout(BaseObject):
         (including other grid and docked layouts)
         """
         BaseObject.__init__(self, autosettings_path=autosettings_path)
+        #self._alignment_default = 0 # Default grids fill space.
 
         # Qt widget to house the layout
         self._widget = _pg.Qt.QtGui.QWidget()
@@ -494,16 +496,34 @@ class GridLayout(BaseObject):
 
     def __getitem__(self, n): return self.objects[n]
 
-    def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=1):
+    def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=None):
         """
-        This adds either one of our simplified objects or a QWidget to the
+        This adds an egg object or a QWidget to the
         grid at the specified position, appends the object to self.objects.
 
-        alignment=0     Fill the space.
-        alignment=1     Left-justified.
-        alignment=2     Right-justified.
+        Parameters
+        ----------
+        object : egg or QWidget
+            Supply a spinmob egg object or QWidget to place on the grid.
+        
+        column=None, row=None : None or integer
+            Where to place the object on the grid, starting at 0,0 in the upper left.
+            If column isn't specified, the new object will be placed in a new column
+            (i.e., you can add objects like words in a sentence; see also
+            self.new_autorow()).
 
-        If column isn't specified, the new object will be placed in a new column.
+        column_span=1, row_span=1 : integer
+            How many columns or rows the object should span. See also
+            self.set_column_stretch() and self.set_row_stretch().
+        
+        alignment=None : None, 0, 1, or 2
+            How to align the object. If None is supplied, this uses the default
+            value for the object in question. Otherwise, 0 means "fill space",
+            1 means "left justified", 2 means "right justified".
+      
+        Returns
+        -------
+        self
         """
 
         # pick a column
@@ -525,6 +545,7 @@ class GridLayout(BaseObject):
         # allows the user to specify a standard widget
         except: widget = object
 
+        if alignment==None: alignment = object._alignment_default
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
                                _pg.Qt.QtCore.Qt.Alignment(alignment))
@@ -663,6 +684,7 @@ class Window(GridLayout):
 
         # initialize the grid layout
         GridLayout.__init__(self, margins=margins)
+        self._alignment_default = 0 # By default, fills space.
 
         # create the QtMainWindow,
         self._window = _pg.Qt.QtGui.QMainWindow()
@@ -1899,6 +1921,7 @@ class TabArea(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
+        self._alignment_default = 0 # By default, tabs fill all space.
 
         # tab widgets by index
         self.docked_tabs = []
@@ -2425,7 +2448,7 @@ class TextLog(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
-
+        
         # Expose the show and hide functions
         self.show = self._widget.show
         self.hide = self._widget.hide
@@ -3853,6 +3876,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # Do all the parent class initialization; this sets _widget and _layout
         GridLayout.__init__(self, margins=False)
         _d.databox.__init__(self, **kwargs)
+        self._alignment_default = 0 # By default, fill all space.
 
         # top row is main controls
         self.grid_controls   = self.place_object(GridLayout(margins=False), alignment=0)
@@ -4267,13 +4291,25 @@ class DataboxPlot(_d.databox, GridLayout):
 
         return self
 
-    def load_file(self, path=None, just_settings=False):
+    def load_file(self, path=None, just_settings=False, just_data=False):
         """
         Loads a data file. After the file is loaded, calls self.after_load_file(self),
         which you can overwrite if you like!
 
-        just_settings=True will only load the configuration of the controls,
-        and will not plot anything or run after_load_file
+        Parameters
+        ----------
+        path=None
+            Optional path. If not specified, pops up a dialog.
+        
+        just_settings=False
+            Load only the settings, not the data
+        
+        just_data=False
+            Load only the data, not the settings.
+
+        Returns
+        -------
+        self
         """
         # if it's just the settings file, make a new databox
         if just_settings:
@@ -4285,14 +4321,19 @@ class DataboxPlot(_d.databox, GridLayout):
             d = self
             header_only = False
 
+        # Load the file
+        result = _d.databox.load_file(d, path, filters=self.file_type, header_only=header_only, quiet=just_settings)
+
         # import the settings if they exist in the header
-        if not None == _d.databox.load_file(d, path, filters=self.file_type, header_only=header_only, quiet=just_settings):
+        if not just_data:
 
-            # loop over the autosettings and update the gui
-            for x in self._autosettings_controls: self._load_gui_setting(x,d)
-
-        # always sync the internal data
-        self._synchronize_controls()
+            if not None == result:
+    
+                # loop over the autosettings and update the gui
+                for x in self._autosettings_controls: self._load_gui_setting(x,d)
+    
+            # always sync the internal data
+            self._synchronize_controls()
 
         # plot the data if this isn't just a settings load
         if not just_settings:
@@ -4784,6 +4825,7 @@ class DataboxProcessor(Window):
 
         # Run the window init
         Window.__init__(self, 'Databox Processor', autosettings_path=name+'.window', margins=margins)
+        self._alignment_default = 0 # By default, fill all space.
 
         # Store variables and create the window.
         self.name        = name
@@ -4819,7 +4861,7 @@ class DataboxProcessor(Window):
 
         self.settings.add_parameter('PSD',          False, tip='Calculate the power spectral density')
         self.settings.add_parameter('PSD/pow2',     False, tip='Truncate the data into the nearest 2^N data points, to speed up the PSD.')
-        self.settings.add_parameter('PSD/Window',  'None', values=['hanning', 'None'], tip='Apply this windowing function to the time domain prior to PSD.')
+        self.settings.add_parameter('PSD/Window',       1, values=['hanning', 'None'], default_list_index=1, tip='Apply this windowing function to the time domain prior to PSD.')
         self.settings.add_parameter('PSD/Rescale',  False, tip='Whether to rescale the PSD after windowing so that the integrated value is the RMS in the time-domain.')
         self.settings.add_parameter('PSD/Coarsen',      0, bounds=(0,None), tip='Break the PSD data into groups of this many, and average each group into a single data point. 0 to disable.')
 
