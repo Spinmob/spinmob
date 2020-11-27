@@ -4572,9 +4572,13 @@ class DataboxPlot(_d.databox, GridLayout):
             xlabels = list(xlabels)
             ylabels = list(ylabels)
 
-            # Adjust the length
-            while len(xlabels) < len(x): xlabels.append(xlabels[-1])
-            while len(ylabels) < len(y): ylabels.append(ylabels[-1])
+            # Increase the length to match
+            while len(xlabels) < len(x): xlabels.append('')
+            while len(ylabels) < len(y): ylabels.append('')
+
+            # Decrease the label length to match
+            while len(xlabels) > len(x): xlabels.pop(-1)
+            while len(ylabels) > len(y): ylabels.pop(-1)
 
             # Get the styles
             self._styles = g['styles']
