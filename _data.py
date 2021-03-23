@@ -267,7 +267,7 @@ class databox:
         if not 'SPINMOB_BINARY' in self.hkeys:
 
             # For non-binary files, we always read all the lines.
-            f = open(path, 'r')
+            f = open(path, 'r', errors='ignore')
             lines = f.readlines()
             f.close()
 
