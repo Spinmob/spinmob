@@ -566,9 +566,12 @@ class GridLayout(BaseObject):
         # allows the user to specify a standard widget
         except: widget = object
 
+        # Set the alignment. Note we have to check for the default in case a normal Qt object is sent.
         if alignment==None:
             if hasattr(object, '_alignment_default'): alignment = object._alignment_default
-            else:                                     alignment = 0
+            else:                                     alignment = 1 # ultimate default.
+        
+        # Add the widget.
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
                                _pg.Qt.QtCore.Qt.Alignment(alignment))
@@ -4715,12 +4718,11 @@ class DataboxPlot(_d.databox, GridLayout):
         self._legend.clear()
 
         # Loop and append
-        if not type(ylabels) == 'str':
-            for i in range(len(ylabels)):
-        
-                # Only add the legend item if it's interesting
-                if ylabels[i] not in [None, '', False]:
-                    self._legend.addItem(self._curves[i], ylabels[i])
+        for i in range(len(ylabels)):
+
+            # Only add the legend item if it's interesting
+            if ylabels[i] not in [None, '', False]:
+                self._legend.addItem(self._curves[i], ylabels[i])
 
     def _set_number_of_plots(self, y, ey):
         """
