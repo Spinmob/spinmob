@@ -31,6 +31,5 @@ setup(name           = 'Spinmob',
           "matplotlib",
           "lmfit",
           "pyqtgraph>=0.11",
-          "pyqt5",  # for pyqtgraph
           ],
      )
