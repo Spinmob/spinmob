@@ -2,7 +2,7 @@ Overview
 ========
 [![Build Status](https://travis-ci.org/Spinmob/spinmob.svg?branch=travis)](https://travis-ci.org/Spinmob/spinmob)
 
-Spinmob is a scientific data analysis and plotting package I wrote to escape expensive, buggy, poorly-documented programs like Origin, expensive "licensey" programs like Matlab, and weaker programs like Excel. It turns out python is just better than everything else, and it behaves the same on all computers for free. Ultimately, this, the packages it relies on, and Inkscape are all we needed to take, analyze, visualize, and publish our data. 
+Spinmob is a scientific data analysis and plotting package we wrote to escape expensive, buggy, poorly-documented programs like Origin, expensive "licensey" programs like Matlab or Labview, and weaker programs like Excel. It turns out python is just better than everything else, and it behaves the same on all computers for free. Ultimately, this, the packages it relies on, and Inkscape are all we needed to take, analyze, visualize, and publish our data. 
 
 The main features are 
 
