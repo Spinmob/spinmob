@@ -3037,10 +3037,10 @@ class fitter():
         # do exponential ranging if xscale is log
         if self['xscale'][n] == 'log':
             return _n.logspace(_n.log10(min(xdata)), _n.log10(max(xdata)),
-                               self['fpoints'][n], True, 10.0)
+                               int(self['fpoints'][n]), True, 10.0)
 
         # otherwise do linear spacing
-        else: return _n.linspace(min(xdata), max(xdata), self['fpoints'][n])
+        else: return _n.linspace(min(xdata), max(xdata), int(self['fpoints'][n]))
 
     def trim(self, n='all', x=True, y=True):
         """
