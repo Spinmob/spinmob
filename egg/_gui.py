@@ -1646,6 +1646,13 @@ class ComboBox(BaseObject):
         self._widget.addItem(str(text))
         return self
 
+    def clear(self):
+        """
+        Clears out the contents.
+        """
+        self._widget.clear()
+        return self
+
     def remove_item(self, index=0):
         """
         Removes an item from the combobox.
