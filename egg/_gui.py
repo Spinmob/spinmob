@@ -39,11 +39,21 @@ def hasattr_safe(x,a):
     except:
         return False
 
+# Custom egg settings paths
+egg_settings_path = None
+def get_egg_settings_path():
+    """
+    If spinmob.egg.egg_settings_path is not None (is a path!), returns this.
+    If it is None, returns the current/working/directory/egg_settings.
+    """
+    if egg_settings_path not in ['', None]: return egg_settings_path
+    else:                 return _os.path.join(_cwd, 'egg_settings')
+
 def clear_egg_settings():
     """
     Removes the egg_settings directory from the current working directory.
     """
-    _shutil.rmtree('egg_settings', ignore_errors=True)
+    _shutil.rmtree(get_egg_settings_path(), ignore_errors=True)
 
 
 class BaseObject(object):
@@ -305,7 +315,7 @@ class BaseObject(object):
         if self._autosettings_path:
 
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
+            gui_settings_dir = get_egg_settings_path()
 
             # make sure the directory exists
             if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
@@ -351,7 +361,7 @@ class BaseObject(object):
         if self._autosettings_path is not None:
 
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
+            gui_settings_dir = get_egg_settings_path()
 
             # assemble the path with a sub-directory
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
@@ -465,9 +475,9 @@ class GridLayout(BaseObject):
 
         # Qt widget to house the layout
         self._widget = _pg.Qt.QtGui.QWidget()
-        
+
         # Resize event
-        self._widget.resizeEvent = self._event_resize 
+        self._widget.resizeEvent = self._event_resize
 
         # Qt layout object
         self._layout = _pg.Qt.QtGui.QGridLayout()
@@ -505,7 +515,7 @@ class GridLayout(BaseObject):
         # for o in self.objects:
         #     if type(o) == GridLayout:
         #         o._event_resize()
-        
+
         # Now call this one's customized resizer.
         self.event_resize()
 
@@ -526,7 +536,7 @@ class GridLayout(BaseObject):
         ----------
         object : egg or QWidget
             Supply a spinmob egg object or QWidget to place on the grid.
-        
+
         column=None, row=None : None or integer
             Where to place the object on the grid, starting at 0,0 in the upper left.
             If column isn't specified, the new object will be placed in a new column
@@ -536,12 +546,12 @@ class GridLayout(BaseObject):
         column_span=1, row_span=1 : integer
             How many columns or rows the object should span. See also
             self.set_column_stretch() and self.set_row_stretch().
-        
+
         alignment=None : None, 0, 1, or 2
             How to align the object. If None is supplied, this uses the default
             value for the object in question. Otherwise, 0 means "fill space",
             1 means "left justified", 2 means "right justified".
-      
+
         Returns
         -------
         self
@@ -570,7 +580,7 @@ class GridLayout(BaseObject):
         if alignment==None:
             if hasattr(object, '_alignment_default'): alignment = object._alignment_default
             else:                                     alignment = 1 # ultimate default.
-        
+
         # Add the widget.
         self._layout.addWidget(widget, row, column,
                                row_span, column_span,
@@ -818,7 +828,7 @@ class Window(GridLayout):
         if self._autosettings_path == None: return
 
         # Get the gui settings directory
-        gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
+        gui_settings_dir = get_egg_settings_path()
 
         # make sure the directory exists
         if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
@@ -843,7 +853,7 @@ class Window(GridLayout):
         if self._autosettings_path == None: return
 
         # Get the gui settings directory
-        gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
+        gui_settings_dir = get_egg_settings_path()
 
         # make a path with a sub-directory
         path = _os.path.join(gui_settings_dir, self._autosettings_path)
@@ -1696,6 +1706,14 @@ class ComboBox(BaseObject):
         else:
             return str(self._widget.itemText(index))
 
+    def set_text(self, text, block_signals=False, **kwargs):
+        """
+        Sets the selection to the first entry matching the supplied text.
+        """
+        texts = self.get_all_items()
+        n = texts.index(text)
+        if(n >= 0): self.set_index(n, block_signals, **kwargs)
+
     get_value = get_index
     set_value = set_index
 
@@ -2481,7 +2499,7 @@ class TextLog(BaseObject):
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
-        
+
         # Expose the show and hide functions
         self.show = self._widget.show
         self.hide = self._widget.hide
@@ -3617,21 +3635,21 @@ class TreeDictionary(BaseObject):
     def save(self, path=None, short_keys=False, include_expanded=True, filters='*', force_extension=None, **kwargs):
         """
         Saves all the parameters to a text file using the databox
-        functionality. 
-        
+        functionality.
+
         Parameters
         ----------
         path=None: None, str, True
-            Optional path (str) to save the data to. If None, saves to 
-            self._autosettings_path. If self._autosettings_path=None, it does 
+            Optional path (str) to save the data to. If None, saves to
+            self._autosettings_path. If self._autosettings_path=None, it does
             not save. If True or 'ask', will pop up a dialog.
-        
+
         short_keys=False : bool
             If True, do not prepend self.name to the keys.
-        
+
         include_expanded=True : bool
             If True, save also the information about which branches are expanded.
-        
+
         filters='*'
             File filter for the file dialog (for path=True or 'ask')
 
@@ -3641,21 +3659,21 @@ class TreeDictionary(BaseObject):
             the supplied filters.
 
         Other keyword arguments are sent to spinmob.dialogs.save().
-        
+
         Returns
         -------
         self
         """
-        if path in [True, 'ask']: 
+        if path in [True, 'ask']:
             path = _s.dialogs.save(filters=filters, force_extension=force_extension, **kwargs)
             if path is None: return self
-        
+
         if path is None:
 
             if self._autosettings_path == None: return self
 
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
+            gui_settings_dir = get_egg_settings_path()
 
             # make sure the directory exists
             if not _os.path.exists(gui_settings_dir): _os.mkdir(gui_settings_dir)
@@ -3677,7 +3695,7 @@ class TreeDictionary(BaseObject):
 
         # loop over the keys and add them to the databox header
         for k in self._tree_widgets:
-            
+
             # Add the value if there is one
             if type(self._tree_widgets[k]).__name__ not in ['GroupParameter', 'ActionParameter']:
                 d.insert_header(self._strip(k) if short_keys else k, self[k])
@@ -3704,39 +3722,39 @@ class TreeDictionary(BaseObject):
         path=None
             Path to load the settings from. If None, will load from the
             specified autosettings_path. If True or 'ask', pop up a dialog.
-            
+
         ignore_errors=True
             Whether we should raise a stink when a setting doesn't exist.
             When settings do not exist, they are stuffed into the dictionary
             self._lazy_load.
-        
+
         block_key_signals=False
             If True, the load will not trigger any signals.
-            
+
         filters='*'
             Filters to use if there is a dialog.
-            
+
         Other keyword arguments are sent to spinmob.dialogs.load()
-        
+
         Returns
         -------
         self
-        
+
         See also
         --------
         self.save(), self.update()
         """
-        if path in [True, 'ask']: 
+        if path in [True, 'ask']:
             path = _s.dialogs.load(filters=filters, **kwargs)
             if path is None: return self
-        
+
         if path is None:
 
             # Bail if there is no path
             if self._autosettings_path == None: return self
 
             # Get the gui settings directory
-            gui_settings_dir = _os.path.join(_cwd, 'egg_settings')
+            gui_settings_dir = get_egg_settings_path()
 
             # Get the final path
             path = _os.path.join(gui_settings_dir, self._autosettings_path)
@@ -3763,24 +3781,24 @@ class TreeDictionary(BaseObject):
 
         If self.name is a string (not None), '/'+self.name+'/' will be stripped
         from the keys if present.
-        
+
         Parameters
         ----------
         source_d : databox instance or dictionary
-            Source of key-value pairs (dictionary or header of databox) with 
+            Source of key-value pairs (dictionary or header of databox) with
             which to update the tree.
-        
+
         ignore_errors=True : bool
             If True, missing keys will simply not be used, with no warnings.
-        
+
         block_key_signals=False : bool
-            If True, block signals associated with each key while setting 
+            If True, block signals associated with each key while setting
             the parameters.
-            
+
         Returns
         -------
         self
-        
+
         See also
         --------
         self.load(), self.save()
@@ -3923,7 +3941,7 @@ class DataboxPlot(_d.databox, GridLayout):
         self.combo_binary    = self.grid_controls1.place_object(ComboBox(['Text', 'float16', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'complex64', 'complex128', 'complex256'], tip='Format of output file columns.'), alignment=1)
         self.button_autosave = self.grid_controls1.place_object(Button("Auto",   checkable=True, tip='Enable autosaving. Note this will only autosave when self.autosave() is called in the host program.').set_width(40), alignment=1)
         self.number_file     = self.grid_controls1.place_object(NumberBox(int=True, bounds=(0,None), tip='Current autosave file name prefix number. This will increment every autosave().'))
-        
+
         self.label_path      = self.grid_controls.place_object(Label(""), 1,0)
 
         self.grid_controls2 = self.grid_controls.place_object(GridLayout(margins=False), 0,1, alignment=1)
@@ -4085,7 +4103,7 @@ class DataboxPlot(_d.databox, GridLayout):
         # If we're below a certain width, move the right controls below
         # if self.grid_controls._widget.width() < 700: self.grid_controls.place_object(self.grid_controls2, 0,1, alignment=1)
         # else:                                        self.grid_controls.place_object(self.grid_controls2, 2,0, alignment=2)
-        
+
     def _button_log_data_toggled(self, *a):
         """
         Called when someone toggles the dump button. Ask for a path or remove the path.
@@ -4344,10 +4362,10 @@ class DataboxPlot(_d.databox, GridLayout):
         ----------
         path=None
             Optional path. If not specified, pops up a dialog.
-        
+
         just_settings=False
             Load only the settings, not the data
-        
+
         just_data=False
             Load only the data, not the settings.
 
@@ -4372,10 +4390,10 @@ class DataboxPlot(_d.databox, GridLayout):
         if not just_data:
 
             if not None == result:
-    
+
                 # loop over the autosettings and update the gui
                 for x in self._autosettings_controls: self._load_gui_setting(x,d)
-    
+
             # always sync the internal data
             self._synchronize_controls()
 
@@ -5395,12 +5413,12 @@ class DataboxSaveLoad(_d.databox, GridLayout):
 if __name__ == '__main__':
     import spinmob
     #runfile(spinmob.__path__[0] + '/tests/test__egg.py')
-    
+
     w = Window()
     ts = w.add(TabArea())
     t = ts.add('test')
     p = t.add(DataboxPlot())
-    
+
     w.show()
 
 
