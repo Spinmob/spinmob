@@ -162,9 +162,16 @@ class BaseObject(object):
     def set_width(self, width):
         """
         Sets the width of the object. This is only valid for some controls, as
-        it just uses self.setFixedWidth.
+        it just uses self._widget.setFixedWidth.
         """
         self._widget.setFixedWidth(width)
+        return self
+
+    def set_minimum_width(self, width):
+        """
+        Sets the minimum width of the widget, using self._widget.setMinimumWidth.
+        """
+        self._widget.setMinimumWidth(width)
         return self
 
     def set_height(self, height):
