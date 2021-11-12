@@ -502,7 +502,7 @@ class databox:
 
         return self
 
-    def save_file(self, path=None, filters='*', force_extension=None, force_overwrite=False, header_only=False, delimiter='use current', binary=None):
+    def save_file(self, path=None, filters='*', force_extension=None, force_overwrite=False, header_only=False, delimiter='use current', binary=None, data_only=False):
         """
         This will save all the header info and columns to an ascii file with
         the specified path.
@@ -539,6 +539,10 @@ class databox:
             complex64, int32, etc. Setting binary=True defaults to float64.
             Note if the header contains the key SPINMOB_BINARY and binary=None,
             it will save as binary using the header specification.
+            
+        data_only=False
+            If True, this will only save the columns of data, with no header or
+            column keys.
         """
 
         # Make sure there isn't a problem later with no-column databoxes
@@ -582,42 +586,43 @@ class databox:
         # open the temporary file
         f = open(temporary_path, 'w')
 
+        # Write the header info if we're not in "column only" mode.
+        if not data_only:
+            
+            # Override any existing binary if we're supposed to
+            if binary in [False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
+                self.pop_header('SPINMOB_BINARY', True)
+                binary = None
+    
+            # If the binary flag is any kind of binary format, add the key
+            if not binary in [None, False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
+                self.h(SPINMOB_BINARY=binary)
+    
+            # Now use the header element to determine the binary mode
+            if 'SPINMOB_BINARY' in self.hkeys:
+    
+                # Get the binary mode (we'll use this later)
+                binary = self.pop_header('SPINMOB_BINARY')
+    
+                # If it's "True", default to float32
+                if binary in ['True', True, 1]: binary = 'float32'
+    
+                # Write the special first key.
+                f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
+    
+            # Write the usual header
+            for k in self.hkeys:
+                h = self.h(k)
+    
+                # Convert arrays to lists so we can get all the numbers.
+                if type(h) is _n.ndarray: h = h.tolist()
+    
+                # Write it.
+                f.write(k + delimiter + repr(h).replace('\n',' ') + "\n")
+            f.write('\n')
 
 
-        # Override any existing binary if we're supposed to
-        if binary in [False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
-            self.pop_header('SPINMOB_BINARY', True)
-            binary = None
 
-        # If the binary flag is any kind of binary format, add the key
-        if not binary in [None, False, 'text', 'Text', 'ASCII', 'csv', 'CSV']:
-            self.h(SPINMOB_BINARY=binary)
-
-        # Now use the header element to determine the binary mode
-        if 'SPINMOB_BINARY' in self.hkeys:
-
-            # Get the binary mode (we'll use this later)
-            binary = self.pop_header('SPINMOB_BINARY')
-
-            # If it's "True", default to float32
-            if binary in ['True', True, 1]: binary = 'float32'
-
-            # Write the special first key.
-            f.write('SPINMOB_BINARY' + delimiter + binary + '\n')
-
-
-
-
-        # Write the usual header
-        for k in self.hkeys:
-            h = self.h(k)
-
-            # Convert arrays to lists so we can get all the numbers.
-            if type(h) is _n.ndarray: h = h.tolist()
-
-            # Write it.
-            f.write(k + delimiter + repr(h).replace('\n',' ') + "\n")
-        f.write('\n')
 
         # if we're not just supposed to write the header
         if not header_only:
@@ -632,9 +637,10 @@ class databox:
                 if not alles_klar: print('WARNING: You must save in binary mode if your columns have more than 1 dimension.')
 
                 # write the ckeys
-                elements = []
-                for ckey in self.ckeys: elements.append(str(ckey).replace(delimiter,'_'))
-                f.write(delimiter.join(elements) + "\n")
+                if not data_only:
+                    elements = []
+                    for ckey in self.ckeys: elements.append(str(ckey).replace(delimiter,'_'))
+                    f.write(delimiter.join(elements) + "\n")
 
                 # Find the longest column
                 N = 0
