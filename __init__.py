@@ -57,7 +57,7 @@ try:
     if not _qtapp: _qtapp = _qtw.QApplication([])
 
     # Set the dpi scaling
-    _qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
+    #_qtapp.setAttribute(_qtc.Qt.AA_EnableHighDpiScaling, True)
 
     # Standard Fusion light theme
     _qtapp.setStyle('Fusion')
