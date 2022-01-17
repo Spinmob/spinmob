@@ -1473,10 +1473,10 @@ def psd(t, y, pow2=False, window=None, rescale=False):
     f = _n.abs(f[int(len(f)/2)::-1])
     P = _n.abs(Y[int(len(Y)/2)::-1])**2 / (f[1]-f[0])
 
-    # Since this is the same as the positive frequency branch, double the
-    # appropriate frequencies. For even number of points, there is one
-    # extra negative frequency to avoid doubling. For odd, you only need to
-    # avoid the DC value.
+    # Since the negative and positive frequencies have the same magnitude
+    # for real-valued inputs, double the frequencies below the Nyquist
+    # For even number of points, there is one extra negative frequency 
+    # For odd, you only need to avoid the DC value.
     
     # For the even
     if len(t)%2 == 0: P[1:len(P)-1] = P[1:len(P)-1]*2

@@ -37,6 +37,7 @@ class Test_functions(_ut.TestCase):
 
         # Odd number of points
         f, Y = _f.fft([1,2,3,4,5],[1,2,1,2,1])
+        self.assertEqual(len(f), len(Y))
         self.assertEqual(f[0],-0.4)
         self.assertEqual(f[-1],0.4)
         self.assertAlmostEqual(Y[0],-0.1+0.30776835j)
@@ -44,6 +45,7 @@ class Test_functions(_ut.TestCase):
 
         # Even number of points
         f, Y = _f.fft([1,2,3,4],[1,2,1,2])
+        self.assertEqual(len(f), len(Y))
         self.assertEqual(f[0],-0.5)
         self.assertEqual(f[-1],0.25)
         self.assertAlmostEqual(Y[0],-0.5)
