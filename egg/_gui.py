@@ -2254,10 +2254,6 @@ class Table(BaseObject):
         # Other stuff common to all objects
         BaseObject.__init__(self)
 
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-
         if signal_cell_changed: self.signal_cell_changed.connect(signal_cell_changed)
         if signal_cell_clicked: self.signal_cell_clicked.connect(signal_cell_clicked)
         if signal_cell_double_clicked: self.signal_cell_double_clicked.connect(signal_cell_double_clicked)
@@ -2507,11 +2503,6 @@ class TextLog(BaseObject):
         # Other stuff common to all objects
         BaseObject.__init__(self)
 
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-
-
     def get_text(self):
         """
         Returns all the text in the box.
@@ -2590,10 +2581,6 @@ class TextBox(BaseObject):
         # aliases
         self.get_value = self.get_text
         self.set_value = self.set_text
-
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
 
         # Store self as autosettings
         self._autosettings_controls.append('self')
@@ -2800,11 +2787,6 @@ class TreeDictionary(BaseObject):
 
         # Load the previous settings (if any)
         self.load()
-
-        # Expose the show and hide functions
-        self.show = self._widget.show
-        self.hide = self._widget.hide
-
 
     def __repr__(self):
         """
