@@ -317,7 +317,6 @@ class BaseObject(object):
         Saves just the current configuration of the controls if the
         autosettings_path is set.
         """
-
         # only if we're supposed to!
         if self._autosettings_path:
 
@@ -808,15 +807,19 @@ class Window(GridLayout):
         """
         Used to prevent all window move events from saving.
         """
+        #print(e.type())
         # Weird event sequence that happens at the end of a
         # move or resize.
-
+        
         # Covers different sequences on Linux and Windows, with and without a layout
-        if self._last_event_type in [_e.Move, _e.UpdateRequest, _e.LayoutRequest] \
-            and e.type() in [_e.NonClientAreaMouseMove, _e.WindowActivate]:
+        # This is a hack that broke on Windows at some point so I added 175, 173 from
+        # watching the above print statement.
+        if self._last_event_type in [_e.Move, _e.UpdateRequest, _e.LayoutRequest, 175] \
+            and e.type() in [_e.NonClientAreaMouseMove, _e.WindowActivate, 173]:
                 self._save_settings()
                 return True
-
+        #self._save_settings()
+        
         # Remember the last event
         self._last_event_type = e.type()
         return False
