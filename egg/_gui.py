@@ -3189,7 +3189,8 @@ class TreeDictionary(BaseObject):
         # Auto typing for lists specified by either method
         if 'values' in other_kwargs:
             other_kwargs['type'] = 'list'
-            value = other_kwargs['values'][default_list_index]
+            if default_list_index < len(other_kwargs['values']):
+                value = other_kwargs['values'][default_list_index]
 
         # Normal autotyping
         elif other_kwargs['type'] == None: other_kwargs['type'] = type(value).__name__
@@ -3413,7 +3414,7 @@ class TreeDictionary(BaseObject):
             if not value in x.opts['values']:
 
                 # Only choose a default if there exists one
-                if len(x.opts('values')):
+                if len(x.opts['values']):
                     self.set_value(key, x.opts['values'][0])
                     return x.opts['values'][0]
 
@@ -3825,11 +3826,12 @@ class TreeDictionary(BaseObject):
         """
         # for safety: by default assume it's a repr() with python code
         try:
-            self.set_value(k, v, ignore_error       = ignore_errors,
+            self.set_value(k, v, ignore_error      = ignore_errors,
                                  block_key_signals = block_key_signals)
 
         except:
-            raise Exception("Could not set '"+str(k)+"' to '"+str(v)+"'"+'\n'+str(self))
+            if not ignore_errors:
+                raise Exception("Could not set '"+str(k)+"' to '"+str(v)+"'"+'\n'+str(self))
 
 
 
