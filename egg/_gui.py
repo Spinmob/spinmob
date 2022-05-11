@@ -742,9 +742,7 @@ class Window(GridLayout):
         self._window.setCentralWidget(self._widget)
 
         # events for moving, resizing and closing
-        self._last_event_type = None
-        self._window.eventFilter = self._event_filter
-        self._window.installEventFilter(self._window)
+        self._last_state = None
         self._window.closeEvent  = self._event_close
 
         # autosettings path, to remember the window's position and size
@@ -756,7 +754,15 @@ class Window(GridLayout):
         # reload the last settings if they exist
         self._load_settings()
 
+        # Timer for noticing window changes (much less overhead)
+        self._timer_geometry = Timer(500, signal_tick=self._timer_geometry_tick)
+        self._timer_geometry.start()
 
+    def _timer_geometry_tick(self, *a):
+        """
+        Checks for changes to window geometry.
+        """
+        self._save_settings()
 
     def place_docker(self, docker, area='top'):
         """
@@ -803,27 +809,6 @@ class Window(GridLayout):
         """
         self.print_message("Window closed but not destroyed. Use self.show() to bring it back.")
 
-    def _event_filter(self, o, e):
-        """
-        Used to prevent all window move events from saving.
-        """
-        #print(e.type())
-        # Weird event sequence that happens at the end of a
-        # move or resize.
-        
-        # Covers different sequences on Linux and Windows, with and without a layout
-        # This is a hack that broke on Windows at some point so I added 175, 173 from
-        # watching the above print statement.
-        if self._last_event_type in [_e.Move, _e.UpdateRequest, _e.LayoutRequest, 175] \
-            and e.type() in [_e.NonClientAreaMouseMove, _e.WindowActivate, 173]:
-                self._save_settings()
-                return True
-        #self._save_settings()
-        
-        # Remember the last event
-        self._last_event_type = e.type()
-        return False
-
     def _event_close(self, event):
         """
         Don't modify this.
@@ -837,6 +822,11 @@ class Window(GridLayout):
         """
         if self._autosettings_path == None: return
 
+        state = self.get_state()
+        if state == self._last_state: return
+
+        #print('Updating state', state)
+
         # Get the gui settings directory
         gui_settings_dir = get_egg_settings_path()
 
@@ -846,14 +836,13 @@ class Window(GridLayout):
         # make a path with a sub-directory
         path = _os.path.join(gui_settings_dir, self._autosettings_path)
 
-        # Create a Qt settings object
-        settings = _pg.QtCore.QSettings(path, _pg.QtCore.QSettings.IniFormat)
-        settings.clear()
-
         # Save values
-        if hasattr_safe(self._window, "saveState"):
-            settings.setValue('State',self._window.saveState())
-        settings.setValue('Geometry', self._window.saveGeometry())
+        f = open(path, 'w')
+        f.write(str(state))
+        f.close()
+
+        # Remember the state
+        self._last_state = state
 
     def _load_settings(self):
         """
@@ -871,19 +860,14 @@ class Window(GridLayout):
         # make sure the directory exists
         if not _os.path.exists(path): return
 
-        # Create a Qt settings object
-        settings = _pg.QtCore.QSettings(path, _pg.QtCore.QSettings.IniFormat)
+        # Load it
+        f = open(path, 'r')
+        s = f.read()
+        f.close()
 
-        # Load it up! (Extra steps required for windows command line execution)
-        if settings.contains('State') and hasattr_safe(self._window, "restoreState"):
-            x = settings.value('State')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()
-            self._window.restoreState(x)
-
-        if settings.contains('Geometry'):
-            x = settings.value('Geometry')
-            if hasattr(x, "toByteArray"): x = x.toByteArray()
-            self._window.restoreGeometry(x)
+        # Interpret it
+        try:    self.set_state(eval(s))
+        except: print('Warning: bad / old-fashioned geometry file; this is likely just due to a spinmob update and should go away.')
 
     def connect(self, signal, function):
         """
@@ -917,6 +901,44 @@ class Window(GridLayout):
         _a.processEvents()
         return self
 
+    def get_state(self):
+        """
+        Returns [position x, position y, width, height, is maximized]
+        """
+        max = self._window.isMaximized()
+
+        # if it's maximized, we want to remember the previous size
+        if max and self._last_state: return self._last_state[0:4]+[max]
+        else:                        return self.get_geometry()+[max]
+
+    def set_state(self, state=[0,0,700,500,False]):
+        """
+        Set the state according to [position x, position y, width, height, is maximized]
+        """
+        self.set_geometry(state[0:4])
+        if state[4]: self._window.showMaximized()
+        else:        self._window.showNormal()
+
+    def get_geometry(self):
+        """
+        Returns [position x, position y, width, height] for the window.
+        """
+        return self.get_position() + self.get_size()
+
+    def set_geometry(self, geometry=[0,0,800,500]):
+        """
+        Sets the position (first two) and dimensions (second two) of the window.
+        """
+        self.set_position(geometry[0:2])
+        self.set_size(geometry[2:4])
+
+    def get_position(self):
+        """
+        Returns [position x, position y].
+        """
+        p = self._window.pos()
+        return [p.x(), p.y()]
+
     def set_position(self, position=[0,0]):
         """
         This sets the position of the window in pixels, with the upper-left
@@ -925,6 +947,12 @@ class Window(GridLayout):
         self._window.move(position[0], position[1])
         return self
 
+    def get_size(self):
+        """
+        Returns [size x, size y].
+        """
+        s = self._window.size()
+        return [s.width(), s.height()]
 
     def set_size(self, size=[1000,650]):
         """
