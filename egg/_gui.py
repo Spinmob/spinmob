@@ -748,6 +748,9 @@ class Window(GridLayout):
         # autosettings path, to remember the window's position and size
         self._autosettings_path = autosettings_path
 
+        # Whether to maximize next time we show()
+        self._maximize_next_show = False
+
         # If there is a close event
         if event_close: self.event_close = event_close
 
@@ -854,7 +857,7 @@ class Window(GridLayout):
         # Get the gui settings directory
         gui_settings_dir = get_egg_settings_path()
 
-        # make a path with a sub-directory
+        # path with a sub-directory
         path = _os.path.join(gui_settings_dir, self._autosettings_path)
 
         # make sure the directory exists
@@ -916,8 +919,14 @@ class Window(GridLayout):
         Set the state according to [position x, position y, width, height, is maximized]
         """
         self.set_geometry(state[0:4])
-        if state[4]: self._window.showMaximized()
-        else:        self._window.showNormal()
+
+        # Only do this if we're shown
+        if self._window.isVisible():
+            if state[4]: self._window.showMaximized()
+            else:        self._window.showNormal()
+        else:
+            self._maximize_next_show = state[4]
+
 
     def get_geometry(self):
         """
@@ -983,6 +992,12 @@ class Window(GridLayout):
         self._is_open = True
         self._window.show()
         self._window.raise_()
+
+        # If we're supposed to maximize; this can only be true after loading
+        # the gui settings on init. The geometry is already set.
+        if self._maximize_next_show:
+            self._window.showMaximized()
+            self._maximize_next_show = False
 
         # start the blocking loop
         if block_command_line:
