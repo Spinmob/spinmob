@@ -161,8 +161,8 @@ def select_directory(text='Select a directory, POCKETPANTS!', default_directory=
     
     Returns
     -------
-    result : str
-        Selected path.
+    result : str or None
+        Selected path (or None if canceled)
 
     """
     # if this type of pref doesn't exist, we need to make a new one

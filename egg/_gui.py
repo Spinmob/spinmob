@@ -174,6 +174,20 @@ class BaseObject(object):
         self._widget.setMinimumWidth(width)
         return self
 
+    def set_maximum_width(self, width):
+        """
+        Sets the minimum width of the widget, using self._widget.setMinimumWidth.
+        """
+        self._widget.setMaximumWidth(width)
+        return self
+
+    def set_minmax_width(self, min_width, max_width):
+        """
+        Sets the minimum and maximum width of the widget.
+        """
+        self.set_minimum_width(min_width)
+        self.set_maximum_width(max_width)
+
     def set_height(self, height):
         """
         Sets the width of the object. This is only valid for some controls, as
