@@ -1096,11 +1096,11 @@ def image_function(f='sin(5*x)*cos(5*y)', xmin=-1, xmax=1, ymin=-1, ymax=1, xste
 
 
     # generate the grid x and y coordinates
-    xones = _n.linspace(1,1,ysteps)
+    xones = _n.ones(ysteps)
     x     = _n.linspace(xmin, xmax, xsteps)
     xgrid = _n.outer(xones, x)
 
-    yones = _n.linspace(1,1,xsteps)
+    yones = _n.ones(xsteps)
     y     = _n.linspace(ymin, ymax, ysteps)
     ygrid = _n.outer(y, yones)
 

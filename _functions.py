@@ -1058,6 +1058,36 @@ def frange(start, end, inc=1.0):
     return start + ns*inc
 
 
+def generate_xy_grid(xmin=0, xmax=1, xsteps=5, ymin=0, ymax=2, ysteps=3):
+    """
+    Creates and returns two 2D arrays, one with x values and one with y values 
+    over the specified range, covering all x-y combinations.
+
+    Parameters
+    ----------
+    xmin=0, xmax=1, xsteps=5:
+        Min, max and number of steps for the x coordinates.
+    
+    ymin=0, ymax=2, ysteps=3:
+        Min, max and number of steps for the y coordinates.
+
+    Returns
+    -------
+    xgrid, ygrid:
+        2D arrays containing x and y values.
+
+    """
+    # generate the grid x and y coordinates
+    xones = _n.ones(ysteps)
+    x     = _n.linspace(xmin, xmax, xsteps)
+    xgrid = _n.outer(xones, x)
+
+    yones = _n.ones(xsteps)
+    y     = _n.linspace(ymin, ymax, ysteps)
+    ygrid = _n.outer(y, yones)
+    
+    return xgrid, ygrid
+
 def generate_fake_data(f='2*x-5', x=_n.linspace(-5,5,11), ey=1, ex=0, include_errors=False, **kwargs):
     """
     Generates a set of fake data from the underlying "reality" (or mean
