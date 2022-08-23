@@ -547,7 +547,7 @@ class GridLayout(BaseObject):
 
     def __getitem__(self, n): return self.objects[n]
 
-    def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=None):
+    def place_object(self, object, column=None, row=None, column_span=1, row_span=1, alignment=None, new_autorow=False):
         """
         This adds an egg object or a QWidget to the
         grid at the specified position, appends the object to self.objects.
@@ -572,11 +572,17 @@ class GridLayout(BaseObject):
             value for the object in question. Otherwise, 0 means "fill space",
             1 means "left justified", 2 means "right justified".
 
+        new_autorow=False
+            If True, calls self.new_autorow() before placing the object
+            (this is overridden by column and row specification)
+
         Returns
         -------
         self
         """
-
+        # If new_autorow
+        if new_autorow: self.new_autorow()
+        
         # pick a column
         if column==None:
             column = self._auto_column
