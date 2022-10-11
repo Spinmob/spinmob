@@ -3,11 +3,15 @@ import sys          as _sys
 import matplotlib   as _mpl; _mpl.use('qtagg')
 import pylab
 
+# WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD :\
+pylab.ioff()
+pylab.ion()
+
 
 # Try to run the qt magic first
 # try:
 #     if not pylab.get_backend()[0:2] == 'Qt':
-#         get_ipython().run_line_magic('matplotlib', 'tk')
+#         get_ipython().run_line_magic('matplotlib', 'qt')
 # except: pass
 
 import traceback    as _traceback

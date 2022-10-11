@@ -1,9 +1,10 @@
+# home-made code also sets the backend (important!)
+import spinmob as _spinmob
+#_spinmob.plot.xy.data([1,2,3],[1,2,1], autoformat=False)
+
 # existing libraries (install these)
 import pyqtgraph
 import numpy  as _n
-
-# home-made code
-import spinmob as _spinmob
 
 try:    from . import _gui as gui
 except:        import _gui as gui
