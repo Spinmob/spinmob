@@ -1,14 +1,14 @@
 import os           as _os
 import sys          as _sys
-import matplotlib   as _mpl
+import matplotlib   as _mpl; _mpl.use('qtagg')
 import pylab
 
 
 # Try to run the qt magic first
-try:
-    if not pylab.get_backend()[0:2] == 'Qt':
-        get_ipython().run_line_magic('matplotlib', 'qt')
-except: pass
+# try:
+#     if not pylab.get_backend()[0:2] == 'Qt':
+#         get_ipython().run_line_magic('matplotlib', 'tk')
+# except: pass
 
 import traceback    as _traceback
 _sys.excepthook = _traceback.print_exception
