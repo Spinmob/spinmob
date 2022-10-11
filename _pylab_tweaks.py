@@ -366,6 +366,15 @@ def get_figure_window(figure='gcf'):
     if figure == 'gcf': figure = _pylab.gcf()
     return figure.canvas.GetParent()
 
+def get_axes_limits(axes='gca'):
+    """
+    This returns (xmin, xmax, ymin, ymax) for the supplied (or current) axes.
+    """
+    if axes == 'gca': axes = _pylab.gca()
+    xlim = axes.get_xlim()
+    ylim = axes.get_ylim()
+    return (xlim[0],xlim[1],ylim[0],ylim[1])
+
 def get_figure_window_geometry(fig='gcf'):
     """
     This will currently only work for Qt4Agg and WXAgg backends.
