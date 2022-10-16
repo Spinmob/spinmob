@@ -153,7 +153,7 @@ class databox:
 
         return globbies
 
-    def load_file(self, path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False, strip_nans=False):
+    def load_file(self, path=None, first_data_line='auto', filters='*.*', text='Select a file, FACEPANTS.', default_directory=None, header_only=False, quiet=False, strip_nans=False, delimiter=None):
         """
         This will clear the databox, load a file, storing the header info in
         self.headers, and the data in self.columns
@@ -194,6 +194,9 @@ class databox:
             If True, runs self.strip_nans() after loading, which will
             remove the trailing nan values (useful for mismatched column lengths).
 
+        delimiter=None
+            Optional change in the current delimiter prior to loading.
+
         Returns
         -------
         databox instance
@@ -216,6 +219,9 @@ class databox:
         if not _os.path.exists(path):
             if not quiet: print("ERROR: "+repr(path)+" does not exist.")
             return None
+
+        # Set the delimiter
+        if delimiter is not None: self.delimiter = delimiter
 
         # clear all the existing data
         self.clear()

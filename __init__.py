@@ -3,7 +3,7 @@ import sys          as _sys
 import matplotlib   as _mpl; _mpl.use('qtagg')
 import pylab
 
-# WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD :\
+# WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD; no solution for pycharm :\
 pylab.ioff()
 pylab.ion()
 

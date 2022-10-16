@@ -1750,10 +1750,18 @@ class ComboBox(BaseObject):
         self._widget.insertSeparator(index)
         return self
 
-    def get_index(self):
+    def get_index(self, s=None):
         """
         Gets current index.
+        
+        If s is a string, this returns the index of the specified string (or None
+        if not found).
         """
+        if type(s) == str:
+            items = self.get_all_items()
+            if s in items: return items.index(s)
+            else:          return None 
+            
         return self._widget.currentIndex()
 
     def set_index(self, index=0, block_signals=False, **kwargs):
@@ -3035,6 +3043,13 @@ class TreeDictionary(BaseObject):
 
         return self
 
+    def set_expanded(self, key, expanded=True):
+        """
+        Sets the expanded state of the key.
+        """
+        self._tree_widgets[self._unstrip(key)].setOpts(expanded=expanded)
+        return self
+
     def _find_parameter(self, key_list, create_missing=False, quiet=False):
         """
         Recursively tries to find and return the parameter of the specified key. The key
@@ -3080,7 +3095,7 @@ class TreeDictionary(BaseObject):
             # Load the expanded state
             if key+'|expanded' in self._lazy_load:
                 expanded = self._lazy_load.pop(key+'|expanded')
-                self._tree_widgets[self._unstrip(key)].setOpts(expanded=expanded)
+                self.set_expanded(key, expanded)
 
         # loop over the remaining keys, and use a different search method
         for n in s:
@@ -3304,7 +3319,7 @@ class TreeDictionary(BaseObject):
         # And the expanded state
         if key+'|expanded' in self._lazy_load:
             expanded = self._lazy_load.pop(key+'|expanded')
-            self.get_param(key).setOpts(expanded=expanded)
+            self.set_expanded(key, expanded)
 
         # Connect it to autosave (will only create unique connections; will not duplicate)
         self.connect_any_signal_changed(self.autosave)
@@ -4410,7 +4425,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         return self
 
-    def load_file(self, path=None, just_settings=False, just_data=False):
+    def load_file(self, path=None, just_settings=False, just_data=False, delimiter=None):
         """
         Loads a data file. After the file is loaded, calls self.after_load_file(self),
         which you can overwrite if you like!
@@ -4425,6 +4440,9 @@ class DataboxPlot(_d.databox, GridLayout):
 
         just_data=False
             Load only the data, not the settings.
+            
+        delimiter=None
+            Optional change to the existing delimiter before loading.
 
         Returns
         -------
@@ -4441,7 +4459,7 @@ class DataboxPlot(_d.databox, GridLayout):
             header_only = False
 
         # Load the file
-        result = _d.databox.load_file(d, path, filters=self.file_type, header_only=header_only, quiet=just_settings)
+        result = _d.databox.load_file(d, path, filters=self.file_type, header_only=header_only, quiet=just_settings, delimiter=delimiter)
 
         # import the settings if they exist in the header
         if not just_data:
