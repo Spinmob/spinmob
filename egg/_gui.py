@@ -3220,30 +3220,59 @@ class TreeDictionary(BaseObject):
 
         Common Keyword Arguments
         ------------------------
+        format
+            Should be a string, used by a .format() call when displaying a number value.
+            For example, format='{value:.9f}' will give 9 zeros after the decimal
+            for the value. This follows the "SpinBox" format option, there are more
+            arguments than just value:
+
+                value - the unscaled value of the spin box
+
+                prefix - the prefix string
+
+                prefixGap - a single space if a prefix is present, or an empty string otherwise
+
+                suffix - the suffix string
+
+                scaledValue - the scaled value to use when an SI prefix is present
+
+                siPrefix - the SI prefix string (if any), or an empty string if this feature has been disabled
+
+                suffixGap - a single space if a suffix is present, or an empty string otherwise.
+
         type=None
             If set to None, type will be automatically set to type(value).__name__.
             This will not work for all data types, but is
             a nice shortcut for floats, ints, strings, etc.
             If it doesn't work, just specify the type manually (see below).
+
         values
             Not used by default. Only relevant for type='list', or if you simply
             specified a list for this keyword argument, and should then
             be a list of possible values. If you go this route, you can use
             the value argument above to specify which item is selected by
             default.
+
         step=1
             Step size of incrementing numbers
+
         dec=False
+
             Set to True to enable decade increments.
-        bounds
+        limits
+
             Not used by default. Should be a 2-element tuple or list used to
             bound numerical values.
+
         default
             Not used by default. Used to specify the default numerical value
+
         siPrefix=False
             Set to True to display units on numbers
+
         suffix
             Not used by default. Used to add unit labels to elements.
+
         readonly=False
             Whether the user can edit the values.
 
