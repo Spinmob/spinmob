@@ -3353,7 +3353,7 @@ class TreeDictionary(BaseObject):
         # Connect it to autosave (will only create unique connections; will not duplicate)
         self.connect_any_signal_changed(self.autosave)
         if self.new_parameter_signal_changed: self.connect_signal_changed(key, self.new_parameter_signal_changed)
-        if signal_changed:          self.connect_signal_changed(key, signal_changed)
+        if signal_changed:                    self.connect_signal_changed(key, signal_changed)
 
         # Make the tool tip more responsive
         w = self.get_widget(key)
