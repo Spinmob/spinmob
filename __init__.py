@@ -7,7 +7,6 @@ import pylab
 pylab.ioff()
 pylab.ion()
 
-
 # Try to run the qt magic first
 # try:
 #     if not pylab.get_backend()[0:2] == 'Qt':
@@ -57,7 +56,7 @@ try:
     _qtw = _pyqtgraph.Qt.QtGui
 
     # make sure we have a valid qt application for dialogs etc...
-    _qtapp = _qtc.QCoreApplication.instance()
+    _qtapp = _qt.QtWidgets.QApplication.instance()
     if not _qtapp: _qtapp = _qtw.QApplication([])
 
     # Set the dpi scaling
