@@ -1,3 +1,7 @@
+# Try to run the qt magic first, in case we're in ipython
+# try:    get_ipython().run_line_magic('gui', 'qt')
+# except: print('terminal')
+
 import os           as _os
 import sys          as _sys
 import matplotlib   as _mpl; _mpl.use('qtagg')
@@ -7,11 +11,7 @@ import pylab
 pylab.ioff()
 pylab.ion()
 
-# Try to run the qt magic first
-# try:
-#     if not pylab.get_backend()[0:2] == 'Qt':
-#         get_ipython().run_line_magic('matplotlib', 'qt')
-# except: pass
+
 
 import traceback    as _traceback
 _sys.excepthook = _traceback.print_exception

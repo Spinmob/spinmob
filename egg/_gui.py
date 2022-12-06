@@ -2711,7 +2711,7 @@ class Timer():
 
 
         # pyqt objects
-        self._widget     = _pg.QtCore.QTimer();
+        self._widget     = _pg.QtCore.QTimer()
         self.signal_tick = self._widget.timeout
 
         # aliases
