@@ -3105,10 +3105,10 @@ class TreeDictionary(BaseObject):
 
             # try to search for the key
             try: x = x.param(n)
-
+                
             # key doesn't exist
             except:
-
+                
                 # if we're supposed to, create the new branch
                 if create_missing:
                     x = x.addChild(_pg.parametertree.Parameter.create(name=n, type='group', children=[], syncExpanded=True))
@@ -3406,23 +3406,28 @@ class TreeDictionary(BaseObject):
         Hides the specified parameter.
         """
         #print('hiding', key, key.split('/'), self._find_parameter(key.split('/')))
+        
+        if not key in self.keys(): return
+        
         #self.block_signals()
-        if opposite: self._find_parameter(key.split('/')).show()
-        else:        self._find_parameter(key.split('/')).hide()
+        try:
+            if self._find_parameter(key.split('/'), quiet=True):
+                if opposite: self._find_parameter(key.split('/')).show()
+                else:        self._find_parameter(key.split('/')).hide()
+        except: pass
         #self.unblock_signals()
 
     def show_parameter(self, key, opposite=False):
         """
         Hides the specified parameter.
         """
-        self.block_signals()
+        #self.block_signals()
         try:
-            if opposite: self._find_parameter(key.split('/')).hide()
-            else:        self._find_parameter(key.split('/')).show()
-        except:
-            print('issue')
-            pass
-        self.unblock_signals()
+            if self._find_parameter(key.split('/'), quiet=True):
+                if opposite: self._find_parameter(key.split('/')).hide()
+                else:        self._find_parameter(key.split('/')).show()
+        except: pass
+        #self.unblock_signals()
 
     def get_key(self, param):
         """
@@ -3493,7 +3498,7 @@ class TreeDictionary(BaseObject):
         """
         return str(self.get_param(key).opts['type'])
 
-    def get_value(self, key):
+    def get_value(self, key, quiet=False):
         """
         Returns the value of the parameter with the specified key. If self.name
         is a string, removes '/'+self.name+'/' from the key.
@@ -3502,7 +3507,7 @@ class TreeDictionary(BaseObject):
         key = self._clean_up_key(self._strip(key))
 
         # now get the parameter object
-        x = self._find_parameter(key.split('/'))
+        x = self._find_parameter(key.split('/'), quiet=quiet)
 
         # quit if it pooped.
         if x == None: return None
@@ -4283,6 +4288,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
             self.script.set_text(s)
             self.combo_autoscript.set_value(0)
+            self.plot()
 
     def _button_multi_clicked(self, *a):
         """
