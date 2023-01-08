@@ -1441,7 +1441,7 @@ class NumberBox(BaseObject):
                  autosettings_path=None, tip=None, signal_changed=None, **kwargs):
 
         # Fix the weird default behavior
-        kwargs['compactHeight'] = False
+        kwargs['compactHeight'] = True
 
         # pyqtgraph spinbox
         self._widget = _pg.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
@@ -1457,6 +1457,7 @@ class NumberBox(BaseObject):
 
         # set a less ridiculous width
         self.set_width(70)
+        self.set_height(23)
 
         # Store self as autosettings
         self._autosettings_controls.append('self')
