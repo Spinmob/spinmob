@@ -3,8 +3,10 @@ import os              as _os
 import spinmob as _s
 _qtw    = _s._qtw
 _qtcore = _s._qtc
+_qt     = _s._qt
 
-
+if _s._pyqtgraph_version < 0.13: _qfiledialog = _qtw.QFileDialog
+else:                            _qfiledialog = _qt.QtWidgets.QFileDialog
 
 def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_directory', force_extension=None):
     """
@@ -39,7 +41,7 @@ def save(filters='*.*', text='Save THIS, facehead!', default_directory='default_
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qtw.QFileDialog.getSaveFileName(None,text,default,filters)
+    result = _qfiledialog.getSaveFileName(None,text,default,filters)
     
     # If Qt5, take the zeroth element
     if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]    
@@ -94,7 +96,7 @@ def load(filters="*.*", text='Select a file, FACEFACE!', default_directory='defa
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qtw.QFileDialog.getOpenFileName(None,text,default,filters)
+    result = _qfiledialog.getOpenFileName(None,text,default,filters)
     
     # If Qt5, take the zeroth element
     if _s._qt.VERSION_INFO[0:5] == "PyQt5": result = result[0]
@@ -133,7 +135,7 @@ def load_multiple(filters="*.*", text='Select some files, FACEFACE!', default_di
     else:                                     default = ""
     
     # pop up the dialog
-    results = _qtw.QFileDialog.getOpenFileNames(None,text,default,filters)
+    results = _qfiledialog.getOpenFileNames(None,text,default,filters)
     
     # If Qt5, take the zeroth element
     if _s._qt.VERSION_INFO[0:5] == "PyQt5": results = results[0]
@@ -170,7 +172,7 @@ def select_directory(text='Select a directory, POCKETPANTS!', default_directory=
     else:                                     default = ""
     
     # pop up the dialog
-    result = _qtw.QFileDialog.getExistingDirectory(None,text,default)
+    result = _qfiledialog.getExistingDirectory(None,text,default)
     
     # Make sure it's a string
     result = str(result)        

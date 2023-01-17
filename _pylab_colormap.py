@@ -14,14 +14,9 @@ _qtcore = _s._qtc
 
 
 
-# make sure we have an application
+# If we're running this file.
 if __name__ == '__main__':
-    _qtapp = _qtcore.QCoreApplication.instance()
-
-    if not _qtapp:
-        print("_pylab_colormap.py: Creating QApplication")
-        _qtapp = _qtw.QApplication(_os.sys.argv)
-
+    
     from . import _settings
     _settings = _settings.settings()
 

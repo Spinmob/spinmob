@@ -22,6 +22,27 @@ except:     import _syntax
 
 _a = _pg.mkQApp()
 
+# Some backwards compatibility
+if int(_pg.__version__.split('.')[1]) > 12: _qt_widgets = _pg.Qt.QtWidgets
+else:                                       _qt_widgets = _pg.Qt.QtGui
+
+################################
+# PATCH THROUGH pyqtgraph 13.1 #
+################################
+def _updateHeight(self):
+    # SpinBox has very large margins on some platforms; this is a hack to remove those
+    # margins and allow more compact packing of controls.
+    if not self.opts['compactHeight']:
+        self.setMaximumHeight(1000000)
+        return
+    h = _pg.Qt.QtGui.QFontMetrics(self.font()).height()
+    if self._lastFontHeight != h:
+        self._lastFontHeight = h
+        self.setMaximumHeight(h)
+
+_pg.SpinBox._updateHeight = _updateHeight
+
+
 # set the font if we're in linux
 #if _sys.platform in ['linux', 'linux2']: _a.setFont(_pg.QtGui.QFont('Arial', 8))
 
@@ -494,13 +515,13 @@ class GridLayout(BaseObject):
         #self._alignment_default = 0 # Default grids fill space.
 
         # Qt widget to house the layout
-        self._widget = _pg.Qt.QtGui.QWidget()
+        self._widget = _pg.QtWidgets.QWidget()
 
         # Resize event
         self._widget.resizeEvent = self._event_resize
 
         # Qt layout object
-        self._layout = _pg.Qt.QtGui.QGridLayout()
+        self._layout = _qt_widgets.QGridLayout()
 
         # stick the layout into the widget
         self._widget.setLayout(self._layout)
@@ -749,14 +770,14 @@ class Window(GridLayout):
         self._alignment_default = 0 # By default, fills space.
 
         # create the QtMainWindow,
-        self._window = _pg.Qt.QtGui.QMainWindow()
+        self._window = _qt_widgets.QMainWindow()
         self.set_size(size)
         self.set_title(title)
 
         #Set some docking options
-        self._window.setDockOptions(_pg.Qt.QtGui.QMainWindow.AnimatedDocks    |
-                                    _pg.Qt.QtGui.QMainWindow.AllowNestedDocks |
-                                    _pg.Qt.QtGui.QMainWindow.AllowTabbedDocks )
+        self._window.setDockOptions(_qt_widgets.QMainWindow.AnimatedDocks    |
+                                    _qt_widgets.QMainWindow.AllowNestedDocks |
+                                    _qt_widgets.QMainWindow.AllowTabbedDocks )
 
         # set the central widget to that created by GridLayout.__init__
         self._window.setCentralWidget(self._widget)
@@ -1096,7 +1117,7 @@ class Button(BaseObject):
                  style_checked=None, style_unchecked=None):
 
         # Qt button instance
-        if QPushButton is None: self._widget = _pg.Qt.QtGui.QPushButton(text)
+        if QPushButton is None: self._widget = _qt_widgets.QPushButton(text)
         else:                   self._widget = QPushButton
 
         # Other stuff common to all objects
@@ -1315,7 +1336,7 @@ class Image(BaseObject):
     def __init__(self, image_path):
 
         # Create the widget and label
-        self._widget = _pg.Qt.QtGui.QLabel()
+        self._widget = _qt_widgets.QLabel()
         self._pixmap = _pg.Qt.QtGui.QPixmap(image_path)
         self._widget.setPixmap(self._pixmap)
 
@@ -1340,7 +1361,7 @@ class Label(BaseObject):
     def __init__(self, text="My Label. NO!", autosettings_path=None):
 
         # Create the widget
-        self._widget = _pg.Qt.QtGui.QLabel(text)
+        self._widget = _qt_widgets.QLabel(text)
 
         # Other stuff common to all objects
         BaseObject.__init__(self, autosettings_path=autosettings_path)
@@ -1441,7 +1462,7 @@ class NumberBox(BaseObject):
                  autosettings_path=None, tip=None, signal_changed=None, **kwargs):
 
         # Fix the weird default behavior
-        kwargs['compactHeight'] = True
+        kwargs['compactHeight'] = False
 
         # pyqtgraph spinbox
         self._widget = _pg.SpinBox(value=value, step=step, bounds=bounds, int=int, **kwargs)
@@ -1457,7 +1478,7 @@ class NumberBox(BaseObject):
 
         # set a less ridiculous width
         self.set_width(70)
-        self.set_height(23)
+        #self.set_height(23)
 
         # Store self as autosettings
         self._autosettings_controls.append('self')
@@ -1574,7 +1595,7 @@ class CheckBox(GridLayout):
                  **kwargs):
 
         # pyqt objects
-        self._widget_checkbox = _pg.QtGui.QCheckBox()
+        self._widget_checkbox = _qt_widgets.QCheckBox()
         self._widget_checkbox.setToolTip(tip)
 
         # Other stuff common to all objects
@@ -1694,7 +1715,7 @@ class ComboBox(BaseObject):
                  default_index=0, signal_changed=None, signal_activated=None):
 
         # pyqt objects
-        self._widget = _pg.QtGui.QComboBox()
+        self._widget = _qt_widgets.QComboBox()
         self._widget.setToolTip(tip)
 
         # Other stuff common to all objects
@@ -1877,7 +1898,7 @@ class Slider(GridLayout):
         self.signal_lower_changed = self.number_lower_bound.signal_changed
 
         self.new_autorow()
-        self._widget_slider = self.add(_pg.QtGui.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
+        self._widget_slider = self.add(_qt_widgets.QSlider(_pg.QtCore.Qt.Horizontal), column_span=3, alignment=0)
         self._widget_slider.setMinimum(0)
         self.set_steps(steps)
         self.set_row_stretch(3)
@@ -2049,7 +2070,7 @@ class TabArea(BaseObject):
                  signal_tab_close_requested=None):
 
         # tab widget
-        self._widget = _pg.Qt.QtGui.QTabWidget()
+        self._widget = _qt_widgets.QTabWidget()
         self._widget.setTabsClosable(True)
 
         # Other stuff common to all objects
@@ -2315,7 +2336,7 @@ class Table(BaseObject):
                  signal_cell_double_clicked=None):
 
         # create the widget
-        self._widget = _pg.Qt.QtGui.QTableWidget(rows, columns)
+        self._widget = _qt_widgets.QTableWidget(rows, columns)
 
         # default behavior
         self.set_row_heights(18)
@@ -2382,7 +2403,7 @@ class Table(BaseObject):
         while row    > self._widget.rowCount()   -1: self._widget.insertRow(   self._widget.rowCount())
 
         # set the value
-        self._widget.setItem(row, column, _pg.Qt.QtGui.QTableWidgetItem(str(value)))
+        self._widget.setItem(row, column, _qt_widgets.QTableWidgetItem(str(value)))
 
         if block_signals: self.unblock_signals()
 
@@ -2573,7 +2594,7 @@ class TextLog(BaseObject):
     """
 
     def __init__(self):
-        self._widget = _pg.QtGui.QTextEdit()
+        self._widget = _qt_widgets.QTextEdit()
 
         # Other stuff common to all objects
         BaseObject.__init__(self)
@@ -2632,7 +2653,7 @@ class TextBox(BaseObject):
 
         # pyqt objects
         if multiline:
-            self._widget = _pg.QtGui.QTextEdit()
+            self._widget = _qt_widgets.QTextEdit()
 
             # Python highlighting
             self._highlighter = _syntax.PythonHighlighter(self._widget.document())
@@ -2640,7 +2661,7 @@ class TextBox(BaseObject):
 
         # Single-line
         else:
-            self._widget = _pg.QtGui.QLineEdit()
+            self._widget = _qt_widgets.QLineEdit()
             self.signal_return_pressed = self._widget.returnPressed
 
         # Set the text
@@ -4105,7 +4126,7 @@ class DataboxPlot(_d.databox, GridLayout):
 
         #self.script.set_style('font-family:monospace; font-size:12;')
         # Windows compatibility
-        font = _s._qtw.QFont()
+        font = _pg.Qt.QtGui.QFont()
         font.setFamily("monospace")
         font.setFixedPitch(True)
         font.setPointSize(10)

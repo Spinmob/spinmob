@@ -47,13 +47,15 @@ def _warn(*args):
 
 try:
     import pyqtgraph as _pyqtgraph
-    _pyqtgraph_ok = float('.'.join(_pyqtgraph.__version__.split('.')[0:2])) > 0.1
+    _pyqtgraph_version = float('.'.join(_pyqtgraph.__version__.split('.')[0:2]))
+    _pyqtgraph_ok = _pyqtgraph_version >= 0.11 # Used elsewhere
 
     if not _pyqtgraph_ok: _warn('Spinmob requires pyqtgraph version 0.11 or higher. Previous versions are no longer supported.')
 
     _qtc = _pyqtgraph.Qt.QtCore
     _qt  = _pyqtgraph.Qt
-    _qtw = _pyqtgraph.Qt.QtGui
+    if _pyqtgraph_version < 0.13: _qtw = _pyqtgraph.Qt.QtGui
+    else:                         _qtw = _pyqtgraph.Qt.QtWidgets
 
     # make sure we have a valid qt application for dialogs etc...
     _qtapp = _qt.QtWidgets.QApplication.instance()
@@ -69,7 +71,8 @@ try:
     if settings['dark_theme_qt']: from . import _theme_fusion_dark
 
 
-except:
+except Exception as e:
+    print(e)
     _warn("pyqtgraph version 0.11 or higher is required (use a conda or pip install).")
 
     _qtc = None

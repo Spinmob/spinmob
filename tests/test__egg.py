@@ -7,7 +7,8 @@ import shutil   as _sh
 import spinmob.egg as _e
 import numpy as _n
 _g = _e.gui
-        
+
+
 
 x = None
 
