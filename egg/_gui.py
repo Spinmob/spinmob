@@ -515,7 +515,7 @@ class GridLayout(BaseObject):
         #self._alignment_default = 0 # Default grids fill space.
 
         # Qt widget to house the layout
-        self._widget = _pg.QtWidgets.QWidget()
+        self._widget = _s._qtw.QWidget()
 
         # Resize event
         self._widget.resizeEvent = self._event_resize
