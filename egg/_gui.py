@@ -3169,9 +3169,11 @@ class TreeDictionary(BaseObject):
         for n in self.naughty: key = key.replace(n, '_')
         return key
 
-    def add_button(self, key, checkable=False, checked=False, tip=None):
+    def add_button(self, key, checkable=False, checked=False, tip=None, **kwargs):
         """
         Adds (and returns) a button at the specified location.
+
+        Extra keyword arguments are sent to Button()
         """
 
         # first clean up the key
@@ -3213,7 +3215,7 @@ class TreeDictionary(BaseObject):
         # Connect it to autosave (will only create unique connections)
         self.connect_any_signal_changed(self.autosave)
 
-        return Button(key, checkable, checked, list(ap.items.keys())[0].button, tip=tip)
+        return Button(key, checkable, checked, list(ap.items.keys())[0].button, tip=tip, **kwargs)
 
     def add_parameter(self, key='test', value=42.0, default_list_index=0, signal_changed=None, **kwargs):
         """
