@@ -4,7 +4,17 @@
 
 import os           as _os
 import sys          as _sys
-import matplotlib   as _mpl; _mpl.use('qtagg')
+import matplotlib   as _mpl
+try: _mpl.use('qtagg')
+except Exception as e:
+    print("WARNING: Failed to use 'qtagg' matplotlib backend. This may \
+be because you don't have the latest version either of Spinmob or \
+a Spinmob dependency. Try updating your libraries. This issue has been \
+known to occur in Jupyter Notebooks but may also be due to \
+incompatabilities with Apple's ARM silicon architecture.")
+    print(f"\nThe error that would have been raised is:\n{e}\n")
+    pass
+
 import pylab
 
 # WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD; no solution for pycharm :\
