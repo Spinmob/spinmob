@@ -4,7 +4,14 @@
 
 import os           as _os
 import sys          as _sys
-import matplotlib   as _mpl; _mpl.use('qtagg')
+import matplotlib   as _mpl
+
+try: _mpl.use('Qt5Agg')
+except Exception as e:
+    try:    _mpl.use('qtagg')
+    except Exception as e:
+        print('ERROR: could not use Qt5Agg or qtagg.',e)
+
 import pylab
 
 # WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD; no solution for pycharm :\
