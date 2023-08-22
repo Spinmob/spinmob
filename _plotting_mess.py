@@ -952,9 +952,18 @@ def function(f='sin(x)', xmin=-1, xmax=1, steps=200, p='x', g=None, erange=False
     ydatas = []
     labels = []
     for fs in f:
-        if type(fs) == str:
+
+        # If it's just a number, make a function string
+        if _fun.is_a_number(fs):
+            a = eval('lambda ' + p + ': ' + str(fs) + '+0*' + p, g)
+            a.__name__ = str(fs)
+
+        # String function
+        elif type(fs) == str:
             a = eval('lambda ' + p + ': ' + fs, g)
             a.__name__ = fs
+
+        # Normal function
         else:
             a = fs
 
