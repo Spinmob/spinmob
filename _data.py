@@ -462,7 +462,7 @@ class databox:
             z = _n.genfromtxt((fix(x) for x in lines[first_data_line:]),
                               delimiter=self.delimiter,
                               missing_values=['_'], filling_values=_n.nan,
-                              dtype=_n.complex)
+                              dtype=complex)
 
             # # Alternate format
             # except:
