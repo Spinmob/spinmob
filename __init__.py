@@ -117,6 +117,7 @@ _defaults = dict(
     egg_use_opengl        = False,)
 
 # Loop over defaults and set them if they don't already exist
+data._s.settings = settings
 for _k in _defaults:
     if not _k in settings.keys():
         settings[_k] = _defaults[_k]
