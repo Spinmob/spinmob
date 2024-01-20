@@ -1939,8 +1939,7 @@ class fitter():
         # If we do have data, give mor information
         else:
             s = s + "\nINPUT PARAMETERS (reduced chi^2 = {:s}, {} DOF)\n".format(
-                self._format_value_error(self.get_reduced_chi_squared(self.p_in),
-                                         _n.sqrt(_n.divide(2.0,self.get_degrees_of_freedom()))),
+                self._format_value_error(self.get_reduced_chi_squared(self.p_in), self.get_reduced_chi_squared_error(self.p_in)),
                         self.get_degrees_of_freedom())
 
         # Always print the guess parameters
@@ -2289,7 +2288,7 @@ class fitter():
         d['chi2']               = self.results.chisqr
         d['chi2s']              = self.get_chi_squareds()
         d['reduced_chi2']       = self.results.redchi
-        d['reduced_chi2.std']   = _n.sqrt(2.0/self.get_degrees_of_freedom())
+        d['reduced_chi2.std']   = self.get_reduced_chi_squared_error()
         d['reduced_chi2s']      = self.get_reduced_chi_squareds()
         d['get_degrees_of_freedom'] = self.get_degrees_of_freedom()
 
@@ -2708,6 +2707,19 @@ class fitter():
 
         # Safe divider.
         return _n.divide(self.get_chi_squared(p), self.get_degrees_of_freedom())
+    
+    def get_reduced_chi_squared_error(self, p=None):
+        """
+        Returns the error on the reduced chi squared for all processed data sets.
+
+        p=None means use the fit results if defined, then use guess results.
+        """
+        chi2 = self.get_chi_squared(p)
+        dof  = self.get_degrees_of_freedom()
+        if not chi2 or not dof: return None
+
+        # Safe divider.
+        return _n.divide(_n.sqrt(2.0/dof), dof)
 
     def autoscale_eydata(self):
         """
@@ -2998,7 +3010,7 @@ class fitter():
             if self.results and hasattr(self.results, 'covar'):
                 t1 = "Fit: "+', '.join(fit_strings) + \
                     ', $\chi^2_r$={} ({} DOF)'.format(
-                        self._format_value_error(self.get_reduced_chi_squared(), _n.sqrt(_n.divide(2.0,self.get_degrees_of_freedom())), '$\pm$'),
+                        self._format_value_error(self.get_reduced_chi_squared(), self.get_reduced_chi_squared_error(), '$\pm$'),
                         int(self.get_degrees_of_freedom()))
                 t = t + '\n' + _textwrap.fill(t1, wrap, subsequent_indent=indent)
 
