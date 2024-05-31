@@ -2608,9 +2608,9 @@ class fitter():
         except:
             return str(v)+pm+str(e)
 
-    def get_studentized_residuals(self, p=None):
+    def get_normalized_residuals(self, p=None):
         """
-        Calculates the studentized residuals for each processed data set / function.
+        Calculates the normalized residuals for each processed data set / function.
 
         Parameters
         ----------
@@ -2628,6 +2628,11 @@ class fitter():
         self._process_data()
         return self._studentized_residuals(p, self._xdatas_processed, self._ydatas_processed, self._eydatas_processed)
 
+    def get_studentized_residuals(self, p=None):
+        """Deprecated. Use get_normalized_residuals() instead."""
+        print('WARNING: get_studentized_residuals() is deprecated. Please use get_normalized_residuals() instead.')
+        return self.get_normalized_residuals(p)
+
     def get_chi_squareds(self, p=None):
         """
         Returns a list of chi squared for each processed data set.
@@ -2635,7 +2640,7 @@ class fitter():
         p=None means use the fit results if possible, and guess results otherwise.
         """
         # get the residuals
-        rs = self.get_studentized_residuals(p)
+        rs = self.get_normalized_residuals(p)
 
         # will be None if no data, etc
         if rs:
@@ -2680,7 +2685,7 @@ class fitter():
         """
         if len(self._xdatas_given)==0 or len(self._ydatas_given)==0: return None
 
-        r = self.get_studentized_residuals(p)
+        r = self.get_normalized_residuals(p)
 
         # In case it's not possible to calculate
         if r is None: return
@@ -2762,7 +2767,7 @@ class fitter():
         for k in kwargs: self[k] = kwargs[k]
 
         # Calculate all studentized residuals
-        if len(self.f) > 0: rt = self.get_studentized_residuals()
+        if len(self.f) > 0: rt = self.get_normalized_residuals()
 
         # make a new figure for each data set
         for n in range(len(self._xdatas_given)):
@@ -2960,7 +2965,7 @@ class fitter():
                     ylabel=ylabel+' - bg['+str(n)+']'
                 a2.set_ylabel(ylabel)
             else:                         a2.set_ylabel(self['ylabel'][n])
-            a1.set_ylabel('Studentized\nResiduals')
+            a1.set_ylabel('Normalized\nResiduals')
 
 
             # Assemble the title
