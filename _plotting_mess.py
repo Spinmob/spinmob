@@ -1068,6 +1068,7 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
         if _colormap: _colormap.close()
         _colormap = _pt.image_colormap(colormap, image=a.images[0])
 
+    return a
 
 
 
