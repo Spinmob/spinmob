@@ -33,8 +33,8 @@ def _get_standard_title():
     title = 'Plot created ' + _time.asctime()
         
     # Try to add the last command to the title.
-    try: 
-        command = list(get_ipython().history_manager.get_range())[-1][2]
+    try:        
+        command = _fun.get_shell_history() # list(get_ipython().history_manager.get_range())[-1][2]
         
         # Get the path of the runfile()
         if command[0:8] == 'runfile(':
@@ -682,14 +682,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
 
     # add the commands to the title
     else:
-        title = str(title)
-        history = _fun.get_shell_history()
-        for n in range(0, min(shell_history, len(history))):
-            title = title + "\n" + history[n].split('\n')[0].strip()
-
-        title = title + '\n' + _get_standard_title()
-        
-        
+        title = str(title) + '\n' + _get_standard_title()
         axes.set_title(title)
 
     if grid: _pylab.grid(True)
@@ -1039,6 +1032,11 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
 
     _pylab.imshow(Z, extent=[X[0]-x_width/2.0, X[-1]+x_width/2.0,
                              Y[0]-y_width/2.0, Y[-1]+y_width/2.0], **kwargs)
+    
+    # Handle Nones
+    if zmin is None: zmin = _n.min(Z)
+    if zmax is None: zmax = _n.max(Z)
+
     cb = _pylab.colorbar()
     _pt.image_set_clim(zmin,zmax)
     _pt.image_set_aspect(aspect)
@@ -1057,6 +1055,9 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
         title = title + "\n" + history[n].split('\n')[0].strip()
 
     title = title + '\n' + _get_standard_title()
+    
+    print('GET\n', repr(_get_standard_title()))
+
     a.set_title(title.strip())
 
     if autoformat: _pt.image_format_figure(fig)
