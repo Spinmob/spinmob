@@ -1056,8 +1056,6 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
 
     title = title + '\n' + _get_standard_title()
     
-    print('GET\n', repr(_get_standard_title()))
-
     a.set_title(title.strip())
 
     if autoformat: _pt.image_format_figure(fig)
