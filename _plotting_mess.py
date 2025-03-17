@@ -25,7 +25,7 @@ from scipy.special import *
 _colormap = None
 
 
-def _get_standard_title():
+def _get_standard_title(shell_history=None):
     """
     Gets the standard title.
     """
@@ -47,6 +47,13 @@ def _get_standard_title():
             
         title = title + '\n' + command
     except: pass
+
+    # Try to get command history
+    if shell_history:
+        history = _fun.get_shell_history()
+        for n in range(0, min([shell_history, len(history)])):
+            title = title + "\n" + history[n].split('\n')[0].strip()
+
     return title
         
 
@@ -682,7 +689,7 @@ def xy_data(xdata, ydata, eydata=None, exdata=None, label=None, xlabel='', ylabe
 
     # add the commands to the title
     else:
-        title = str(title) + '\n' + _get_standard_title()
+        title = str(title) + '\n' + _get_standard_title(shell_history)
         axes.set_title(title)
 
     if grid: _pylab.grid(True)
@@ -1050,11 +1057,7 @@ def image_data(Z, X=[0,1.0], Y=[0,1.0], aspect=1.0, zmin=None, zmax=None, clear=
     #_pt.image_sliders()
 
     # title
-    history = _fun.get_shell_history()
-    for n in range(0, min(shell_history, len(history))):
-        title = title + "\n" + history[n].split('\n')[0].strip()
-
-    title = title + '\n' + _get_standard_title()
+    title = title + '\n' + _get_standard_title(shell_history)
     
     a.set_title(title.strip())
 
