@@ -3,7 +3,7 @@ __version__ = '3.10.1' # Keep this on the first line so it's easy for __init__.p
 
 
 from setuptools import setup
-setup(name           = 'Spinmob',
+setup(name           = 'spinmob',
       version        = __version__,
       description    = 'Data handling, plotting, analysis, and GUI building for scientific labs',
       author         = 'Jack Sankey',
