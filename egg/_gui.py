@@ -3281,10 +3281,9 @@ class TreeDictionary(BaseObject):
             Step size of incrementing numbers
 
         dec=False
-
             Set to True to enable decade increments.
+        
         limits
-
             Not used by default. Should be a 2-element tuple or list used to
             bound numerical values.
 

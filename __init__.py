@@ -13,6 +13,9 @@ except Exception as e:
         print('ERROR: could not use Qt5Agg or qtagg.',e)
 
 import pylab
+import numpy
+#numpy.NAN = numpy.nan # Terrible thing we have to do until some libraries catch up with deprecation (added 2025-04-07)
+
 
 # WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD; no solution for pycharm :\
 pylab.ioff()

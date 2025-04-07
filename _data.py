@@ -2597,7 +2597,7 @@ class fitter():
         """
         # If we have weird stuff
         if not _functions.is_a_number(v) or not _functions.is_a_number(e) \
-            or v in [_n.inf, _n.nan, _n.NAN] or e in [_n.inf, _n.nan, _n.NAN]:
+            or v in [_n.inf, _n.nan] or e in [_n.inf, _n.nan]:
             return str(v)+pm+str(e)
 
         # Normal values.

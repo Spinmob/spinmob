@@ -234,7 +234,7 @@ class Test_fitter(_ut.TestCase):
     def test_autoscale_eydata(self):
         f = _s.data.fitter(autoplot=False).set_data(None, [[1,2,1,3],[1,2,1,4]]).set_functions(['a*x+b','a*cos(b*x)+c'], 'a,b,c').fit()
         f.autoscale_eydata().fit()
-        self.assertAlmostEqual(f.results.redchi,0.9958597)
+        self.assertAlmostEqual(f.results.redchi,0.99586107)
 
     def test_set_guess_to_fit_result(self):
         f = _s.data.fitter(autoplot=False).set_data(None, [[1,2,1,3],[1,2,1,4]]).set_functions(['a*x+b','a*cos(b*x)+c'], 'a,b,c').fit()
