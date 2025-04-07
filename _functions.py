@@ -1080,11 +1080,11 @@ def generate_xy_grid(xmin=0, xmax=1, xsteps=5, ymin=0, ymax=2, ysteps=3):
     # generate the grid x and y coordinates
     xones = _n.ones(ysteps)
     x     = _n.linspace(xmin, xmax, xsteps)
-    xgrid = _n.outer(xones, x)
+    xgrid = _n.outer(x, xones)
 
     yones = _n.ones(xsteps)
     y     = _n.linspace(ymin, ymax, ysteps)
-    ygrid = _n.outer(y, yones)
+    ygrid = _n.outer(yones, y)
     
     return xgrid, ygrid
 

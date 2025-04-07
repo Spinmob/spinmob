@@ -1,9 +1,9 @@
-__version__ = '3.5.19' # Keep this on the first line so it's easy for __init__.py to grab.
+__version__ = '3.10.1' # Keep this on the first line so it's easy for __init__.py to grab.
 
 
 
 from setuptools import setup
-setup(name           = 'Spinmob',
+setup(name           = 'spinmob',
       version        = __version__,
       description    = 'Data handling, plotting, analysis, and GUI building for scientific labs',
       author         = 'Jack Sankey',
