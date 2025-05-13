@@ -1766,8 +1766,8 @@ class fitter():
             raise Exception("You need to install lmfit to use the new fitter. You can install it with 'pip install lmfit'.")
             return
 
-        self.f  = []    # list of functions
-        self.bg = []    # list of background functions (for subtracting etc)
+        self.functions   = []    # list of functions
+        self.backgrounds = []    # list of background functions (for subtracting etc)
         self.p_in    = _s._lm.Parameters() # Parameters for the fit
         self.p_fit   = None             # Shortcut to self.results.params
         self.results = None             # output from the fitter.
@@ -1891,7 +1891,7 @@ class fitter():
                 if not type(value) in [list]: value = [value]
 
                 # make sure it matches the data, unless it's a dictionary
-                while len(value) < max(len(self.f), len(self._xdatas_given), len(self._ydatas_given)):
+                while len(value) < max(len(self.functions), len(self._xdatas_given), len(self._ydatas_given)):
                     value.append(value[0])
 
             # set the value
@@ -1933,7 +1933,7 @@ class fitter():
         l = str(l)
 
         # If we don't have any data.
-        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0 or len(self.f)==0:
+        if len(self._xdatas_given)==0 or len(self._ydatas_given)==0 or len(self.functions)==0:
             s = s + "\nINPUT PARAMETERS\n"
 
         # If we do have data, give mor information
@@ -2107,8 +2107,8 @@ class fitter():
         Uses internal settings to update the functions.
         """
 
-        self.f             = []
-        self.bg            = []
+        self.functions     = []
+        self.backgrounds   = []
         self._fnames       = []
         self._bgnames      = []
 
@@ -2128,22 +2128,22 @@ class fitter():
 
             # if f[n] is a string, define a function on the fly.
             if isinstance(f[n], str):
-                self.f.append( eval('lambda ' + pstring + ': ' + f[n],  self._globals))
+                self.functions.append( eval('lambda ' + pstring + ': ' + f[n],  self._globals))
                 self._fnames.append(f[n])
 
             # Otherwise, just append it.
             else:
-                self.f.append(f[n])
+                self.functions.append(f[n])
                 self._fnames.append(f[n].__name__)
 
             # if bg[n] is a string, define a function on the fly.
             if isinstance(bg[n], str):
-                self.bg.append(eval('lambda ' + pstring + ': ' + bg[n], self._globals))
+                self.backgrounds.append(eval('lambda ' + pstring + ': ' + bg[n], self._globals))
                 self._bgnames.append(bg[n])
 
             # Otherwise assume it's an actual function or None
             else:
-                self.bg.append(bg[n])
+                self.backgrounds.append(bg[n])
                 if bg[n] is None: self._bgnames.append('None')
                 else:             self._bgnames.append(bg[n].__name__)
 
@@ -2331,6 +2331,8 @@ class fitter():
         coarsen
             Break the data set(s) into this many groups of points, and average
             each group into one point, propagating errors.
+
+        Returns a list of xdatas, ydatas, and eydatas, one for each data set.
         """
 
         # get the data
@@ -2419,8 +2421,8 @@ class fitter():
         # Collect the residuals for each data set
         rs = []
         for n in range(len(ydatas)):
-            if n < len(self.f):
-                rs.append( (ydatas[n] - self.f[n](xdatas[n], *ps)) / eydatas[n])
+            if n < len(self.functions):
+                rs.append( (ydatas[n] - self.functions[n](xdatas[n], *ps)) / eydatas[n])
 
         # Concatenate and return
         return rs
@@ -2456,7 +2458,7 @@ class fitter():
             raise Exception("No data. Please use set_data() prior to fitting.")
         if self._f_raw is None:
             raise Exception("No functions. Please use set_functions() prior to fitting.")
-        if len(self.f) != len(self._xdatas_given):
+        if len(self.functions) != len(self._xdatas_given):
             raise Exception("The number of functions must equal the number of data sets.")
 
 
@@ -2583,13 +2585,13 @@ class fitter():
         """
         Evaluates a single function n for arbitrary xdata and parameters p.
         """
-        return self.f[n](xdata, *self._parameters_to_list(p))
+        return self.functions[n](xdata, *self._parameters_to_list(p))
 
     def _evaluate_bg(self, n, xdata, p=None):
         """
         Evaluates a single background function n for arbitrary xdata and parameters p.
         """
-        if self.bg[n]: return self.bg[n](xdata, *self._parameters_to_list(p))
+        if self.backgrounds[n]: return self.backgrounds[n](xdata, *self._parameters_to_list(p))
 
     def _format_value_error(self, v, e, pm=" +/- "):
         """
@@ -2663,7 +2665,7 @@ class fitter():
         """
         Returns the number of degrees of freedom for processed data.
         """
-        if len(self.f) == 0 or len(self._ydatas_given) == 0:
+        if len(self.functions) == 0 or len(self._ydatas_given) == 0:
             raise Exception("You have to call self.set_functions() and self.set_data() first.")
 
         # Get the studentized residuals, which uses the processed data
@@ -2767,7 +2769,7 @@ class fitter():
         for k in kwargs: self[k] = kwargs[k]
 
         # Calculate all studentized residuals
-        if len(self.f) > 0: rt = self.get_normalized_residuals()
+        if len(self.functions) > 0: rt = self.get_normalized_residuals()
 
         # make a new figure for each data set
         for n in range(len(self._xdatas_given)):
@@ -2802,11 +2804,11 @@ class fitter():
             #_s.tweaks.set_figure_window_geometry(fig, None, [500,500])
 
             # Get the function xdata
-            fxa = self._get_xdata_for_function(n,xa)
-            fxt = self._get_xdata_for_function(n,xt)
+            fxa = self.generate_xdata(n,xa,self['fpoints'][n],self['xscale'][n])
+            fxt = self.generate_xdata(n,xt,self['fpoints'][n],self['xscale'][n])
 
             # get the values to subtract from ydata if subtracting the background
-            if self['subtract_bg'][n] and not self.bg[n] is None:
+            if self['subtract_bg'][n] and not self.backgrounds[n] is None:
 
                 # if we have a fit, use that for the background
                 if self.results: p = self.p_fit
@@ -2847,7 +2849,7 @@ class fitter():
 
             # PLOT FUNCTIONS
 
-            if n < len(self.f): # If there are any functions to plot
+            if n < len(self.functions): # If there are any functions to plot
 
 
                 # Plot the GUESS under the fit
@@ -2860,7 +2862,7 @@ class fitter():
                         style_guess = dict(self['style_guess'][n]); style_guess['alpha'] = alpha
 
                         # FULL background GUESS
-                        if self['plot_bg'][n] and self.bg[n] is not None:
+                        if self['plot_bg'][n] and self.backgrounds[n] is not None:
                             bg_gya = self._evaluate_bg(n, fxa, self.p_in)
                             a2.plot(fxa, bg_gya-d_fya, zorder=9, **style_guess)
 
@@ -2874,7 +2876,7 @@ class fitter():
                     # TRIMMED GUESS BACKGROUND
 
                     # TRIMMED guess background curve
-                    if self['plot_bg'][n] and self.bg[n] is not None:
+                    if self['plot_bg'][n] and self.backgrounds[n] is not None:
                         bg_gyt = self._evaluate_bg(n, fxt, self.p_in)
                         a2.plot(fxt, bg_gyt-d_fyt, zorder=9, **self['style_guess'][n])
 
@@ -2894,7 +2896,7 @@ class fitter():
                         style_fit = dict(self['style_fit'][n]); style_fit['alpha'] = alpha
 
                         # FULL background fit
-                        if self['plot_bg'][n] and self.bg[n] is not None:
+                        if self['plot_bg'][n] and self.backgrounds[n] is not None:
                             bg_fya = self._evaluate_bg(n, fxa, self.results.params)
                             a2.plot(fxa, bg_fya-d_fya, zorder=10, **style_fit)
 
@@ -2906,7 +2908,7 @@ class fitter():
                         [fxt] = _functions.trim_data_uber([fxt], [fxt>=min(xt), fxt<=max(xt)])
 
                     # TRIMMED FIT BACKGROUND
-                    if self['plot_bg'][n] and self.bg[n] is not None:
+                    if self['plot_bg'][n] and self.backgrounds[n] is not None:
                         bg_fyt = self._evaluate_bg(n, fxt, self.results.params)
                         a2.plot(fxt, bg_fyt-d_fyt, zorder=10, **self['style_fit'][n])
 
@@ -2918,7 +2920,7 @@ class fitter():
 
 
             # plot the residuals only if there are functions defined
-            if len(self.f):
+            if len(self.functions):
 
                 # If we're supposed to also plot all the data, we have to
                 # Manually calculate the residuals. Clunky, I know.
@@ -2961,7 +2963,7 @@ class fitter():
             else:                         a2.set_xlabel(self['xlabel'][n])
             if self['ylabel'][n] is None:
                 ylabel='ydata['+str(n)+']'
-                if self['subtract_bg'][n] and self.bg[n] is not None:
+                if self['subtract_bg'][n] and self.backgrounds[n] is not None:
                     ylabel=ylabel+' - bg['+str(n)+']'
                 a2.set_ylabel(ylabel)
             else:                         a2.set_ylabel(self['ylabel'][n])
@@ -2973,7 +2975,7 @@ class fitter():
             indent = '      '
 
             # Include the function names if available
-            if n < len(self.f):
+            if n < len(self.functions):
                 t = _textwrap.fill('Function ('+str(n)+'/'+str(len(self._fnames)-1)+'): y = '+self._fnames[n], wrap, subsequent_indent=indent)
             else:
                 t = "No functions defined. Use set_functions()."
@@ -3030,33 +3032,53 @@ class fitter():
         # End of new figure for each data set loop
         return self
 
-    def _get_xdata_for_function(self, n, xdata):
+    def get_fit_function(self, n=0):
         """
-        Generates the x-data for plotting the function.
+        Returns a simple python function (of only x) for the n'th data set using the 
+        current fit parameters. You need to have done a fit first!
+        """
+        def f(x): return self.functions[n](x, *self.get_fit_parameters())
+        return f
+
+    def generate_xdata(self, n=0, xdata=None, fpoints=1000, xscale='linear'):
+        """
+        Generates the x-data for plotting the curves on top of the data.
 
         Parameters
         ----------
         n
             Which data set we're using
-        xdata
-            Data set upon which to base this
+        xdata=None
+            Optional xdata set upon which to base this. If set to None, this will just 
+            use the n'th data set's processed xdata, i.e., self.get_processed_data()[0][n].
+            This can also just be an array of limits, e.g., [xmin,xmax]
+        fpoints=1000
+            Number of data points to use between the limits of the data. If set to
+            None or 0, it will just return xdata.
+        xscale='linear'
+            Can also be 'log' to return equal-ratio points suitable for a logarithmic
+            x-axis.
 
         Returns
         -------
         float
         """
 
+        # If we don't specify a data set, use the processed version of the
+        # n'th data set's xdata.
+        if xdata is None: xdata = self.get_processed_data()[0][n]
+
         # Use the xdata itself for the function
-        if self['fpoints'][n] in [None, 0]: return _n.array(xdata)
+        if fpoints in [None, 0]: return _n.array(xdata)
 
         # Otherwise, generate xdata with the number of fpoints
 
-        # do exponential ranging if xscale is log
-        if self['xscale'][n] == 'log':
+        # Exponential ranging if xscale is log
+        if xscale == 'log':
             return _n.logspace(_n.log10(min(xdata)), _n.log10(max(xdata)),
                                int(self['fpoints'][n]), True, 10.0)
 
-        # otherwise do linear spacing
+        # Otherwise do linear spacing
         else: return _n.linspace(min(xdata), max(xdata), int(self['fpoints'][n]))
 
     def trim(self, n='all', x=True, y=True):
