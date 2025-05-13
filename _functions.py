@@ -611,18 +611,32 @@ def decompose_covariance(c):
 
 def derivative(xdata, ydata):
     """
-    performs d(ydata)/d(xdata) with nearest-neighbor slopes
-    must be well-ordered, returns new arrays [xdata, dydx_data]
-
-    neighbors:
+    Performs d(ydata)/d(xdata) with nearest-neighbor slopes. See also derivative_fit
+    which performs an analytical linear fit to more than one nearest neighbor.
+    
+    Parameters
+    ----------
+    xdata
+        Array of x-data. Must be monotonically increasing for this to make sense.
+    ydata
+        Array of y-data. Must match the length of xdata.
+    
+    Returns
+    -------
+    Arrays x, dy/dx that are one element shorter (the midpoints between each 
+    supplied data point).
     """
-    D_ydata = []
-    D_xdata = []
-    for n in range(1, len(xdata)-1):
-        D_xdata.append(xdata[n])
-        D_ydata.append((ydata[n+1]-ydata[n-1])/(xdata[n+1]-xdata[n-1]))
+    xdata = _n.array(xdata)
+    ydata = _n.array(ydata)
 
-    return [D_xdata, D_ydata]
+    # Shifted and unshifted data
+    x2 = xdata[1:]
+    x1 = xdata[0:len(xdata)-1]
+    y2 = ydata[1:]
+    y1 = ydata[0:len(ydata)-1]
+
+    # Return the average of the x-points, and their slope
+    return (x1+x2)*0.5, (y2-y1)/(x2-x1)
 
 def derivative_fit(xdata, ydata, neighbors=1):
     """
