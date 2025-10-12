@@ -14,7 +14,7 @@ except Exception as e:
 
 import pylab
 import numpy
-#numpy.NAN = numpy.nan # Terrible thing we have to do until some libraries catch up with deprecation (added 2025-04-07)
+numpy.NAN = numpy.nan # Terrible thing we have to do until some libraries catch up with deprecation (added 2025-04-07)
 
 
 # WEIRD HACK THAT MAKES QT WORK IN SPYDER, WINDOWS CMD; no solution for pycharm :\
