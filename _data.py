@@ -691,7 +691,7 @@ class databox:
         f.close()
 
         # now move it
-        _shutil.move(temporary_path, path)
+        _shutil.move(temporary_path, path, copy_function=_shutil.copyfile)
 
         return self
 
